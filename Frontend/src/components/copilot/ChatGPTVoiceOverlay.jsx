@@ -13,15 +13,23 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const [voiceStatus, setVoiceStatus] = useState('idle'); // 'idle' | 'listening' | 'processing' | 'speaking'
   const [transcript, setTranscript] = useState('');
   const [lastAgentReply, setLastAgentReply] = useState('');
+  const [micErrorMessage, setMicErrorMessage] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
+  const voiceStatusRef = useRef('idle');
+
+  const updateVoiceStatus = (status) => {
+    voiceStatusRef.current = status;
+    setVoiceStatus(status);
+  };
 
   // Stop TTS and speech recognition on unmount or close
   useEffect(() => {
     if (!isOpen) {
       stopVoiceLoop();
     } else {
+      setMicErrorMessage('');
       startListening();
     }
     return () => {
@@ -30,6 +38,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   }, [isOpen, lang]);
 
   const stopVoiceLoop = () => {
+    updateVoiceStatus('idle');
     stopSpeaking();
     if (recognitionRef.current) {
       try {
@@ -43,15 +52,29 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
-    setVoiceStatus('idle');
   };
 
-  const startListening = () => {
+  const startListening = async () => {
     stopSpeaking();
+    setMicErrorMessage('');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
+      setMicErrorMessage("Speech recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
       return;
+    }
+
+    // Explicitly verify / request mic permission
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Close stream tracks once permission is verified so SpeechRecognition can access mic cleanly
+        stream.getTracks().forEach(track => track.stop());
+      } catch (micErr) {
+        console.warn("[VoiceAgent] Mic access denied:", micErr);
+        setMicErrorMessage("Microphone access was denied. Please click the lock/settings icon in your browser address bar and allow Microphone.");
+        updateVoiceStatus('idle');
+        return;
+      }
     }
 
     try {
@@ -66,7 +89,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
 
       recognition.onstart = () => {
-        setVoiceStatus('listening');
+        updateVoiceStatus('listening');
         setTranscript('');
       };
 
@@ -86,30 +109,41 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         if (currentText) {
           setTranscript(currentText);
 
-          // Debounce auto-send after user stops talking for 1.6s
+          // Debounce auto-send after user stops talking for 1.8s
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
             if (currentText.trim().length > 2) {
               handleVoiceQuerySubmit(currentText.trim());
             }
-          }, 1600);
+          }, 1800);
         }
       };
 
       recognition.onerror = (e) => {
         console.warn("[VoiceAgent] Recognition error:", e.error);
-        if (e.error !== 'no-speech') {
-          setVoiceStatus('idle');
+        if (e.error === 'not-allowed') {
+          setMicErrorMessage("Microphone permission blocked. Please allow microphone access in your browser settings.");
+          updateVoiceStatus('idle');
+        } else if (e.error === 'network') {
+          setMicErrorMessage("Network issue with speech service. Check your internet connection.");
+          updateVoiceStatus('idle');
+        } else if (e.error === 'no-speech') {
+          // Normal timeout when quiet — do not abort if still supposed to listen
+          if (voiceStatusRef.current === 'listening') {
+            try { recognition.start(); } catch (err) {}
+          }
+        } else {
+          updateVoiceStatus('idle');
         }
       };
 
       recognition.onend = () => {
         // If not speaking or processing, keep listening active
-        if (voiceStatus === 'listening') {
+        if (voiceStatusRef.current === 'listening') {
           try {
             recognition.start();
           } catch (e) {
-            setVoiceStatus('idle');
+            console.warn('[VoiceAgent] onend restart error:', e);
           }
         }
       };
@@ -117,7 +151,8 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       recognition.start();
     } catch (err) {
       console.error("[VoiceAgent] Start error:", err);
-      setVoiceStatus('idle');
+      setMicErrorMessage(err.message || "Failed to start microphone.");
+      updateVoiceStatus('idle');
     }
   };
 
@@ -125,6 +160,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     if (!queryText || sending) return;
     
     // Stop listening while AI thinks
+    updateVoiceStatus('processing');
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
@@ -305,6 +341,13 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             </span>
           </span>
         </div>
+
+        {/* Microphone Error Alert */}
+        {micErrorMessage && (
+          <div className="mb-4 px-4 py-2.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs font-medium max-w-md mx-auto animate-in fade-in">
+            ⚠️ {micErrorMessage}
+          </div>
+        )}
 
         {/* Live Spoken Transcript */}
         <div className="min-h-[60px] max-h-36 overflow-y-auto w-full px-4 text-center">

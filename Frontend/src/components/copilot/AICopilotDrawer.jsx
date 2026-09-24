@@ -100,7 +100,7 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
   const recognitionRef = useRef(null);
 
   // Toggle Web Speech Voice Input
-  const handleToggleVoice = useCallback(() => {
+  const handleToggleVoice = useCallback(async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
@@ -115,25 +115,46 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
       return;
     }
 
+    // Explicitly prompt/verify mic access
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      } catch (micErr) {
+        console.warn("[VoiceInput] Microphone access was blocked:", micErr);
+        alert("Microphone permission was denied. Please allow microphone access in your browser address bar.");
+        setIsListening(false);
+        return;
+      }
+    }
+
     try {
       const recognition = new SpeechRecognition();
-      recognition.lang = 'en-IN'; // Robust support for English, Hindi, and Hinglish queries
+      // Support Indian English, Hindi, and Hinglish queries
+      const currentAppLang = localStorage.getItem('discovery_lang') || 'en';
+      recognition.lang = currentAppLang === 'hi' ? 'hi-IN' : 'en-IN';
       recognition.interimResults = true;
-      recognition.continuous = false;
+      recognition.continuous = true;
 
       recognition.onstart = () => {
         setIsListening(true);
       };
 
       recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(res => res[0].transcript)
-          .join('');
-        setInput(transcript);
+        let fullTranscript = '';
+        for (let i = 0; i < event.results.length; ++i) {
+          fullTranscript += event.results[i][0].transcript;
+        }
+        if (fullTranscript) {
+          setInput(fullTranscript);
+        }
       };
 
       recognition.onerror = (event) => {
         console.warn("[VoiceInput] Speech recognition error:", event.error);
+        if (event.error === 'not-allowed') {
+          alert("Microphone access is blocked. Please allow microphone permissions in browser site settings.");
+        }
         setIsListening(false);
       };
 
