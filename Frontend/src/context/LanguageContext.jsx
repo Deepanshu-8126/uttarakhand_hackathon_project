@@ -78,11 +78,7 @@ export const translations = {
 export const LanguageProvider = ({ children }) => {
   const [lang, setLang] = useState(() => {
     try {
-      const saved = localStorage.getItem('discovery_lang');
-      if (saved) return saved;
-      // Check cookies
-      const match = document.cookie.match(/googtrans=\/en\/([a-z]{2})/i);
-      return match ? match[1] : 'en';
+      return localStorage.getItem('discovery_lang') || 'en';
     } catch {
       return 'en';
     }
@@ -90,18 +86,17 @@ export const LanguageProvider = ({ children }) => {
 
   const applyGoogleTranslate = (targetLang) => {
     try {
-      // 1. Set Google Translate Cookies for root and current domain
       const host = window.location.hostname;
       const domainParts = host.split('.');
       const topDomain = domainParts.length > 1 ? `.${domainParts.slice(-2).join('.')}` : host;
 
-      document.cookie = `googtrans=/en/${targetLang}; path=/;`;
-      document.cookie = `googtrans=/en/${targetLang}; domain=${host}; path=/;`;
-      if (topDomain !== host) {
-        document.cookie = `googtrans=/en/${targetLang}; domain=${topDomain}; path=/;`;
-      }
-
-      if (targetLang === 'en') {
+      if (targetLang === 'hi') {
+        document.cookie = `googtrans=/en/hi; path=/;`;
+        document.cookie = `googtrans=/en/hi; domain=${host}; path=/;`;
+        if (topDomain !== host) {
+          document.cookie = `googtrans=/en/hi; domain=${topDomain}; path=/;`;
+        }
+      } else {
         document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${host}; path=/;`;
         if (topDomain !== host) {
@@ -109,25 +104,14 @@ export const LanguageProvider = ({ children }) => {
         }
       }
 
-      // 2. Programmatically trigger Google Translate select combo if present
+      // Safely check for Google combo without reloading the whole browser
       const select = document.querySelector('.goog-te-combo');
-      if (select) {
+      if (select && select.value !== targetLang) {
         select.value = targetLang;
         select.dispatchEvent(new Event('change'));
-      } else {
-        // If Google Translate element isn't attached yet, reload briefly to apply cookie
-        setTimeout(() => {
-          const combo = document.querySelector('.goog-te-combo');
-          if (combo) {
-            combo.value = targetLang;
-            combo.dispatchEvent(new Event('change'));
-          } else if (targetLang !== 'en') {
-            window.location.reload();
-          }
-        }, 300);
       }
     } catch (err) {
-      console.warn('Google translate dispatch error:', err);
+      console.warn('Translate sync error:', err);
     }
   };
 
@@ -144,12 +128,15 @@ export const LanguageProvider = ({ children }) => {
     const nextLang = lang === 'en' ? 'hi' : 'en';
     setLang(nextLang);
     applyGoogleTranslate(nextLang);
-    if (nextLang === 'en') {
-      // When resetting back to English, reload ensures pristine original DOM text
-      setTimeout(() => {
-        window.location.reload();
-      }, 150);
-    }
+
+    // If switching back to English, reset Google Translate combo
+    setTimeout(() => {
+      const select = document.querySelector('.goog-te-combo');
+      if (select) {
+        select.value = nextLang;
+        select.dispatchEvent(new Event('change'));
+      }
+    }, 100);
   };
 
   const t = (key) => {
@@ -175,4 +162,5 @@ export const useLanguage = () => {
   }
   return context;
 };
+
 
