@@ -21,7 +21,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
 import { useLanguage } from '../context/LanguageContext';
-import { Languages } from 'lucide-react';
+import { Languages, MapPin } from 'lucide-react';
+import GlobalLocationModal from './GlobalLocationModal';
+import { getStoredUserLocation } from '../utils/geoHelpers';
 
 export default function Navbar() {
   const location = useLocation();
@@ -32,8 +34,21 @@ export default function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState(getStoredUserLocation());
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   const userRef = useRef(null);
+
+  // Sync global location updates
+  useEffect(() => {
+    const handleLocationUpdate = (e) => {
+      if (e.detail) {
+        setUserLocation(e.detail);
+      }
+    };
+    window.addEventListener('discovery_location_updated', handleLocationUpdate);
+    return () => window.removeEventListener('discovery_location_updated', handleLocationUpdate);
+  }, []);
 
   // Auto-hide Navbar on auth / dedicated full dashboard pages
   const hiddenRoutes = ['/login', '/register', '/admin', '/partner'];
@@ -131,9 +146,23 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* ── 3. Right: Language Switcher + Profile / Sign In + Hamburger ─ */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* ── 3. Right: Location Pill + Language Switcher + Profile / Sign In + Hamburger ─ */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             
+            {/* Global Location Selector Pill (Clickable Anywhere) */}
+            <button
+              type="button"
+              onClick={() => setShowLocationModal(true)}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-stone-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-[11px] font-bold text-slate-800 transition cursor-pointer shadow-2xs group shrink-0"
+              title="Change origin or detect current GPS location"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <MapPin size={12} className="text-emerald-800 shrink-0" />
+              <span className="truncate max-w-[65px] sm:max-w-[100px] text-stone-700 group-hover:text-emerald-900">
+                {userLocation?.city || 'Location'}
+              </span>
+            </button>
+
             {/* Language Switcher Button (Desktop & Mobile) */}
             <button
               type="button"
@@ -378,6 +407,12 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Global Location & Gateway Modal */}
+      <GlobalLocationModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+      />
     </>
   );
 }
