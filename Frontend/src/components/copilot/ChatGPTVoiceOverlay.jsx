@@ -24,13 +24,44 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     setVoiceStatus(status);
   };
 
+  const GREETINGS = {
+    hi: "नमस्ते! मैं आपका हिमालयन AI वॉइस गाइड हूँ। आप मुझसे केदारनाथ का रास्ता, बद्रीनाथ का मौसम या होमस्टे बुकिंग के बारे में पूछ सकते हैं।",
+    en: "Namaste! I am your Himalayan AI Voice Copilot. Ask me anything about routes, mountain weather, or verified homestay bookings across Uttarakhand."
+  };
+
+  const playGreetingAndListen = useCallback(() => {
+    stopSpeaking();
+    const greetingText = GREETINGS[lang] || GREETINGS.en;
+    setLastAgentReply(greetingText);
+    
+    if (!isMuted) {
+      updateVoiceStatus('speaking');
+      speakText(greetingText, {
+        lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
+        rate: 1.05,
+        onStart: () => updateVoiceStatus('speaking'),
+        onEnd: () => {
+          updateVoiceStatus('listening');
+          startListening();
+        },
+        onError: () => {
+          updateVoiceStatus('listening');
+          startListening();
+        }
+      });
+    } else {
+      updateVoiceStatus('listening');
+      startListening();
+    }
+  }, [lang, isMuted]);
+
   // Stop TTS and speech recognition on unmount or close
   useEffect(() => {
     if (!isOpen) {
       stopVoiceLoop();
     } else {
       setMicErrorMessage('');
-      startListening();
+      playGreetingAndListen();
     }
     return () => {
       stopVoiceLoop();
@@ -59,7 +90,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     setMicErrorMessage('');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setMicErrorMessage("Speech recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
+      setMicErrorMessage("Speech recognition is not supported in this browser. Please use Google Chrome, Brave, or Microsoft Edge.");
       return;
     }
 
@@ -67,11 +98,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Close stream tracks once permission is verified so SpeechRecognition can access mic cleanly
         stream.getTracks().forEach(track => track.stop());
       } catch (micErr) {
         console.warn("[VoiceAgent] Mic access denied:", micErr);
-        setMicErrorMessage("Microphone access was denied. Please click the lock/settings icon in your browser address bar and allow Microphone.");
+        setMicErrorMessage("Microphone access was denied. Please allow microphone permissions in your browser address bar.");
         updateVoiceStatus('idle');
         return;
       }
@@ -128,7 +158,6 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
           setMicErrorMessage("Network issue with speech service. Check your internet connection.");
           updateVoiceStatus('idle');
         } else if (e.error === 'no-speech') {
-          // Normal timeout when quiet — do not abort if still supposed to listen
           if (voiceStatusRef.current === 'listening') {
             try { recognition.start(); } catch (err) {}
           }
@@ -138,7 +167,6 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       };
 
       recognition.onend = () => {
-        // If not speaking or processing, keep listening active
         if (voiceStatusRef.current === 'listening') {
           try {
             recognition.start();
@@ -159,14 +187,12 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const handleVoiceQuerySubmit = async (queryText) => {
     if (!queryText || sending) return;
     
-    // Stop listening while AI thinks
+    // Stop listening while AI processes
     updateVoiceStatus('processing');
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-    setVoiceStatus('processing');
 
     const pageContext = {
       currentRoute: window.location?.pathname || '/copilot',
@@ -186,27 +212,27 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       setLastAgentReply(cleanReply);
 
       if (!isMuted && cleanReply) {
-        setVoiceStatus('speaking');
+        updateVoiceStatus('speaking');
         speakText(cleanReply, {
           lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
           rate: 1.05,
-          onStart: () => setVoiceStatus('speaking'),
+          onStart: () => updateVoiceStatus('speaking'),
           onEnd: () => {
-            setVoiceStatus('listening');
+            updateVoiceStatus('listening');
             startListening();
           },
           onError: () => {
-            setVoiceStatus('listening');
+            updateVoiceStatus('listening');
             startListening();
           }
         });
       } else {
-        setVoiceStatus('listening');
+        updateVoiceStatus('listening');
         startListening();
       }
     } catch (err) {
       console.error("[VoiceAgent] Query failed:", err);
-      setVoiceStatus('idle');
+      updateVoiceStatus('idle');
     }
   };
 
@@ -216,29 +242,29 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     <div className="fixed inset-0 z-[9999] bg-[#061911] flex flex-col justify-between p-5 sm:p-10 text-white animate-in fade-in duration-200 overflow-hidden">
       
       {/* ── Top Header Controls ── */}
-      <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
-            <Sparkles size={16} />
+      <div className="flex items-center justify-between max-w-4xl mx-auto w-full shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-sm shadow-emerald-950">
+            <Sparkles size={18} />
           </div>
           <div>
-            <span className="font-extrabold text-sm tracking-tight block">ChatGPT Himalayan Voice</span>
-            <span className="text-[10px] text-emerald-300/80 font-medium">Real-time Conversational Agent</span>
+            <span className="font-black text-sm sm:text-base tracking-tight block text-white">Himalayan AI Voice Agent</span>
+            <span className="text-[10px] text-emerald-300/80 font-semibold uppercase tracking-wider">Interactive Live Voice Guide</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Language Switcher in Voice Mode */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Language Switcher */}
           <button
             type="button"
             onClick={() => {
               setLang(lang === 'en' ? 'hi' : 'en');
               stopSpeaking();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold transition-all cursor-pointer"
           >
             <Languages size={13} className="text-emerald-300" />
-            <span>{lang === 'en' ? 'हिन्दी (Hindi)' : 'English'}</span>
+            <span>{lang === 'en' ? '🇮🇳 हिन्दी (Hindi)' : '🇬🇧 English'}</span>
           </button>
 
           {/* Mute Toggle */}
@@ -270,35 +296,39 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       </div>
 
       {/* ── Central Animated Wave Visualizer / Orb ── */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full text-center my-6">
+      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full text-center my-4 min-h-0">
         
         {/* Glowing Orb Animation */}
-        <div className="relative mb-8 flex items-center justify-center">
+        <div className="relative mb-6 flex items-center justify-center shrink-0">
           
           {/* Pulse Ripple Rings */}
           {voiceStatus === 'listening' && (
             <>
-              <div className="absolute w-44 h-44 rounded-full bg-emerald-500/20 animate-ping opacity-60 pointer-events-none" />
-              <div className="absolute w-56 h-56 rounded-full bg-emerald-400/10 animate-pulse pointer-events-none" />
+              <div className="absolute w-44 h-44 rounded-full bg-emerald-500/25 animate-ping opacity-75 pointer-events-none" />
+              <div className="absolute w-56 h-56 rounded-full bg-emerald-400/15 animate-pulse pointer-events-none" />
             </>
           )}
 
           {voiceStatus === 'speaking' && (
             <>
-              <div className="absolute w-48 h-48 rounded-full bg-teal-400/25 animate-ping opacity-80 pointer-events-none" />
-              <div className="absolute w-60 h-60 rounded-full bg-cyan-400/15 animate-pulse pointer-events-none" />
+              <div className="absolute w-48 h-48 rounded-full bg-teal-400/30 animate-ping opacity-85 pointer-events-none" />
+              <div className="absolute w-60 h-60 rounded-full bg-cyan-400/20 animate-pulse pointer-events-none" />
             </>
           )}
 
           {voiceStatus === 'processing' && (
-            <div className="absolute w-40 h-40 rounded-full border-2 border-dashed border-emerald-400/40 animate-spin pointer-events-none" />
+            <div className="absolute w-40 h-40 rounded-full border-3 border-dashed border-emerald-400/50 animate-spin pointer-events-none" />
           )}
 
-          {/* Central Main Button */}
+          {/* Central Main Orb Button */}
           <button
             type="button"
             onClick={() => {
-              if (voiceStatus === 'listening') {
+              if (voiceStatus === 'speaking') {
+                stopSpeaking();
+                updateVoiceStatus('listening');
+                startListening();
+              } else if (voiceStatus === 'listening') {
                 stopVoiceLoop();
               } else {
                 startListening();
@@ -306,11 +336,11 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             }}
             className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 cursor-pointer ${
               voiceStatus === 'listening'
-                ? 'bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white scale-105 shadow-emerald-500/40'
+                ? 'bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white scale-105 shadow-emerald-500/50 ring-4 ring-emerald-400/30'
                 : voiceStatus === 'speaking'
-                ? 'bg-gradient-to-tr from-teal-600 to-cyan-400 text-white scale-105 shadow-cyan-500/40'
+                ? 'bg-gradient-to-tr from-teal-600 to-cyan-400 text-white scale-105 shadow-cyan-500/50 ring-4 ring-cyan-400/30'
                 : voiceStatus === 'processing'
-                ? 'bg-gradient-to-tr from-slate-800 to-emerald-900 text-emerald-300'
+                ? 'bg-gradient-to-tr from-stone-800 to-emerald-950 text-emerald-300'
                 : 'bg-white/15 hover:bg-white/25 text-white'
             }`}
           >
@@ -326,17 +356,39 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
           </button>
         </div>
 
+        {/* Dynamic Sound Wave Bars */}
+        <div className="flex items-center justify-center gap-1.5 h-8 my-2">
+          {[35, 70, 50, 90, 65, 85, 45, 95, 60, 40].map((h, i) => (
+            <span
+              key={i}
+              style={{
+                height: voiceStatus === 'speaking' || voiceStatus === 'listening' ? `${h}%` : '20%',
+                animationDelay: `${i * 0.12}s`
+              }}
+              className={`w-1 rounded-full transition-all duration-300 ${
+                voiceStatus === 'speaking'
+                  ? 'bg-gradient-to-t from-teal-500 to-cyan-300 animate-pulse'
+                  : voiceStatus === 'listening'
+                  ? 'bg-gradient-to-t from-emerald-600 to-emerald-300 animate-pulse'
+                  : voiceStatus === 'processing'
+                  ? 'bg-amber-400/80 animate-ping'
+                  : 'bg-stone-700'
+              }`}
+            />
+          ))}
+        </div>
+
         {/* Status Indicator Pill */}
-        <div className="mb-4">
+        <div className="my-2 shrink-0">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-widest text-emerald-300 backdrop-blur-md">
-            <Radio size={13} className={voiceStatus === 'listening' ? 'animate-pulse text-emerald-400' : 'text-slate-400'} />
+            <Radio size={13} className={voiceStatus === 'listening' || voiceStatus === 'speaking' ? 'animate-pulse text-emerald-400' : 'text-stone-400'} />
             <span>
               {voiceStatus === 'listening'
                 ? (lang === 'hi' ? 'आपकी आवाज़ सुन रहे हैं…' : 'Listening to you…')
                 : voiceStatus === 'processing'
-                ? (lang === 'hi' ? 'उत्तर तैयार किया जा रहा है…' : 'Generating response…')
+                ? (lang === 'hi' ? 'उत्तर तैयार किया जा रहा है…' : 'Thinking & fetching facts…')
                 : voiceStatus === 'speaking'
-                ? (lang === 'hi' ? 'AI साथी बोल रहा है…' : 'AI Copilot Speaking…')
+                ? (lang === 'hi' ? 'AI गाइड बोल रहा है (Tap to interrupt)' : 'AI Copilot Speaking (Tap to stop)')
                 : (lang === 'hi' ? 'बोलने के लिए माइक दबाएं' : 'Tap Mic to Start')}
             </span>
           </span>
@@ -344,23 +396,23 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
         {/* Microphone Error Alert */}
         {micErrorMessage && (
-          <div className="mb-4 px-4 py-2.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs font-medium max-w-md mx-auto animate-in fade-in">
+          <div className="mb-3 px-4 py-2 rounded-2xl bg-rose-500/25 border border-rose-400/40 text-rose-200 text-xs font-medium max-w-md mx-auto animate-in fade-in">
             ⚠️ {micErrorMessage}
           </div>
         )}
 
-        {/* Live Spoken Transcript */}
-        <div className="min-h-[60px] max-h-36 overflow-y-auto w-full px-4 text-center">
+        {/* Live Spoken Transcript or Last AI Reply */}
+        <div className="min-h-[50px] max-h-32 overflow-y-auto w-full px-4 text-center">
           {transcript ? (
-            <p className="text-base sm:text-lg font-medium text-emerald-100 leading-relaxed drop-shadow-sm">
+            <p className="text-base sm:text-lg font-bold text-emerald-200 leading-relaxed drop-shadow-sm animate-in fade-in">
               “{transcript}”
             </p>
           ) : lastAgentReply ? (
-            <p className="text-xs sm:text-sm text-emerald-200/80 line-clamp-3 leading-relaxed">
+            <p className="text-xs sm:text-sm text-emerald-100/90 line-clamp-3 leading-relaxed font-medium">
               {lastAgentReply}
             </p>
           ) : (
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-stone-400 font-medium">
               {lang === 'hi'
                 ? '“केदारनाथ जाने का सबसे अच्छा समय क्या है?” या “मुनस्यारी के लिए 3 दिन का प्लान बताओ”'
                 : '“What is the best route to Kedarnath?” or “Suggest a 4-day trek in Munsyari”'}
@@ -371,8 +423,8 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       </div>
 
       {/* ── Bottom Controls & Prompts ── */}
-      <div className="max-w-xl mx-auto w-full text-center">
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+      <div className="max-w-xl mx-auto w-full text-center shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
           {[
             lang === 'hi' ? 'बद्रीनाथ का मौसम कैसा है?' : 'Weather in Badrinath',
             lang === 'hi' ? 'वैली ऑफ फ्लावर्स ट्रेक प्लान' : 'Plan Valley of Flowers trek',
@@ -385,15 +437,15 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
                 setTranscript(sample);
                 handleVoiceQuerySubmit(sample);
               }}
-              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-medium text-emerald-200 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-bold text-emerald-200 hover:text-white transition-all cursor-pointer shadow-2xs"
             >
               {sample}
             </button>
           ))}
         </div>
 
-        <p className="text-[11px] text-slate-400">
-          Powered by Himalayan Multi-Agent Reasoning Engine · Speech recognition &amp; TTS active
+        <p className="text-[11px] text-stone-400 font-medium">
+          Himalayan Multi-Agent Reasoning Engine · Speech Recognition &amp; Conversational TTS
         </p>
       </div>
 
