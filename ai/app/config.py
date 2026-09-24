@@ -22,17 +22,17 @@ class Settings(BaseSettings):
     # OmniRoute Gateway
     OMNIROUTE_BASE_URL: str = "http://127.0.0.1:20128/v1"
     OMNIROUTE_API_KEY: str = "omniroute-local"
-    OMNIROUTE_MODEL: str = "openai/gpt-oss-120b"
+    OMNIROUTE_MODEL: str = "auto/fast"
     OMNIROUTE_ENABLED: bool = True
     
     # Direct Groq
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     
     # Direct Gemini
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.6-flash"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     
     # Direct OpenAI
     OPENAI_API_KEY: str = ""
