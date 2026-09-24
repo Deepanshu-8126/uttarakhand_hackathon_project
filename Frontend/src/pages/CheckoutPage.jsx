@@ -26,11 +26,13 @@ import {
 import { getStayById, getStays } from '../api/stayApi';
 import { getRentalById, getRentals } from '../api/rentalApi';
 import { getDestinationBySlug, getDestinations } from '../api/destinationApi';
+import { useAuth } from '../context/AuthContext';
 
 export default function CheckoutPage() {
   const { type, id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isAuthenticated, currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState(null);
@@ -44,13 +46,21 @@ export default function CheckoutPage() {
     searchParams.get('endDate') || new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10)
   );
   const [guests, setGuests] = useState(Number(searchParams.get('guests')) || 2);
-  const [fullName, setFullName] = useState('Deepanshu Sharma');
-  const [phoneNumber, setPhoneNumber] = useState('+91 98765 43210');
-  const [email, setEmail] = useState('traveler@uttarakhand.in');
+  const [fullName, setFullName] = useState(currentUser?.name || '');
+  const [phoneNumber, setPhoneNumber] = useState(currentUser?.phone || '');
+  const [email, setEmail] = useState(currentUser?.email || '');
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'upi' | 'card' | 'netbanking'
   const [upiApp, setUpiApp] = useState('gpay'); // 'gpay' | 'phonepe' | 'paytm' | 'qr'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.name && !fullName) setFullName(currentUser.name);
+      if (currentUser.phone && !phoneNumber) setPhoneNumber(currentUser.phone);
+      if (currentUser.email && !email) setEmail(currentUser.email);
+    }
+  }, [currentUser]);
 
   // Calculate duration in days/nights
   const calculateDays = () => {
@@ -154,6 +164,17 @@ export default function CheckoutPage() {
   const totalAmount = subtotal + taxes;
 
   const handlePayAndSecure = () => {
+    // 🔒 STRICT AUTHENTICATION GUARD
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
+
+    if (!fullName.trim() || !phoneNumber.trim()) {
+      alert('Please enter your full name and contact number for the booking check-in pass.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -166,6 +187,10 @@ export default function CheckoutPage() {
         id: bookingId,
         _id: bookingId,
         bookingReference: bookingId,
+        userId: currentUser?._id || currentUser?.id,
+        userEmail: currentUser?.email || email,
+        userName: currentUser?.name || fullName,
+        userPhone: currentUser?.phone || phoneNumber,
         itemTitle: item?.name || item?.title || 'Mountain Booking',
         itemType,
         location: item?.city || item?.district || 'Uttarakhand',
@@ -297,6 +322,29 @@ export default function CheckoutPage() {
             Your funds remain safely locked in escrow and are only released to the local partner after you physically meet and provide your 4-digit OTP.
           </p>
         </div>
+
+        {/* Unauthenticated Alert Banner */}
+        {!isAuthenticated && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs animate-fadeIn">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100/80 text-amber-800 flex items-center justify-center shrink-0">
+                <Lock size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-stone-900">Sign in required to complete booking</h4>
+                <p className="text-[11px] text-stone-600 mt-0.5">
+                  Please log in to link your booking to your profile, generate your check-in QR pass, and enable Escrow protection.
+                </p>
+              </div>
+            </div>
+            <Link
+              to={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}
+              className="px-4 py-2 rounded-xl bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
+            >
+              Sign In to Reserve →
+            </Link>
+          </div>
+        )}
 
         {/* Mobile Horizontal Escrow Handshake Indicator (<1024px) */}
         <div className="lg:hidden mb-6 bg-white rounded-2xl p-4 border border-stone-200 shadow-2xs">
@@ -717,13 +765,18 @@ export default function CheckoutPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>{paymentMethod === 'cash' ? 'Generating 4-Digit Check-in Voucher...' : 'Locking Funds in Escrow...'}</span>
                   </>
+                ) : !isAuthenticated ? (
+                  <>
+                    <Lock size={16} className="text-amber-300" />
+                    <span>Sign In to Complete &amp; Reserve</span>
+                  </>
                 ) : (
                   <>
-                    <Lock size={16} className="text-emerald-300" />
+                    <ShieldCheck size={18} className="text-emerald-300" />
                     <span>
                       {paymentMethod === 'cash' 
                         ? `Confirm Booking (Pay ₹${totalAmount?.toLocaleString('en-IN')} in Cash on Arrival)`
-                        : `Pay & Secure Booking (₹${totalAmount?.toLocaleString('en-IN')})`}
+                        : `Pay & Secure Booking with Razorpay (₹${totalAmount?.toLocaleString('en-IN')})`}
                     </span>
                   </>
                 )}
