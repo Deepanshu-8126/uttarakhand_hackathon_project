@@ -46,26 +46,36 @@ export default function DayCard({
     ? day.journeySegments
     : [day.transportSegment].filter(Boolean);
 
-  const defaultStartString = typeof defaultStartLocation === 'string' ? defaultStartLocation : (defaultStartLocation?.name || 'Origin');
-  const defaultDestString = typeof defaultDestination === 'string' ? defaultDestination : (defaultDestination?.name || 'Destination');
-  const dayLocationString = typeof day.location === 'string' ? day.location : (day.location?.name || defaultDestString);
+  const defaultStartString = typeof defaultStartLocation === 'string' ? defaultStartLocation : (defaultStartLocation?.name || defaultStartLocation?.address || 'Origin');
+  const defaultDestString = typeof defaultDestination === 'string' ? defaultDestination : (defaultDestination?.name || defaultDestination?.address || 'Destination');
+  const dayLocationString = typeof day.location === 'string' ? day.location : (day.location?.name || day.location?.address || defaultDestString);
 
   const routeStops = Array.isArray(day.routeStops) && day.routeStops.length > 0
-    ? day.routeStops
+    ? day.routeStops.map(s => typeof s === 'string' ? s : (s?.name || s?.address || defaultDestString))
     : [defaultStartString, defaultDestString];
 
   const timelineItems = Array.isArray(day.timeline) && day.timeline.length > 0
-    ? day.timeline
+    ? day.timeline.map(item => ({
+        ...item,
+        title: typeof item.title === 'string' ? item.title : (item.title?.name || item.name || 'Activity'),
+        desc: typeof item.desc === 'string' ? item.desc : ''
+      }))
     : (day.activities || []).map((act, aIdx) => ({
         period: aIdx === 0 ? 'Morning' : aIdx === 1 ? 'Afternoon' : 'Evening',
         time: aIdx === 0 ? '09:00 AM' : aIdx === 1 ? '01:30 PM' : '06:00 PM',
-        title: act,
-        desc: ''
+        title: typeof act === 'string' ? act : (act?.name || 'Mountain Exploration'),
+        desc: typeof act === 'object' ? (act?.desc || act?.description || '') : ''
       }));
 
   const placesToVisit = Array.isArray(day.places) && day.places.length > 0
-    ? day.places
-    : (day.activities || []).slice(0, 3).map(a => ({ name: a, category: 'Attraction' }));
+    ? day.places.map(p => ({
+        name: typeof p === 'string' ? p : (p?.name || 'Attraction'),
+        category: typeof p === 'object' ? (p?.category || 'Attraction') : 'Attraction'
+      }))
+    : (day.activities || []).slice(0, 3).map(a => ({
+        name: typeof a === 'string' ? a : (a?.name || 'Attraction'),
+        category: 'Attraction'
+      }));
 
   const currentStay = day.stay;
   const currentRental = day.rental;
@@ -188,7 +198,7 @@ export default function DayCard({
                 <div key={sIdx} className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-900">
-                      Leg {seg.legIndex || sIdx + 1}: {seg.from || defaultStartLocation} → {seg.to || defaultDestination}
+                      Leg {seg.legIndex || sIdx + 1}: {typeof seg.from === 'string' ? seg.from : (seg.from?.name || seg.from?.address || defaultStartString)} → {typeof seg.to === 'string' ? seg.to : (seg.to?.name || seg.to?.address || defaultDestString)}
                     </span>
                     <span className="px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">
                       {seg.operator || 'Scheduled Transport / Private Vehicle'}
@@ -446,7 +456,7 @@ export default function DayCard({
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Pickup: <strong>{currentRental?.pickupLocation || defaultStartLocation || 'Dehradun Station'} (09:00 AM)</strong> • Return: <strong>{currentRental?.dropoffTime || '07:00 PM'}</strong> • ₹{currentRental?.pricePerDay || 1200}/day
+                    Pickup: <strong>{typeof currentRental?.pickupLocation === 'string' ? currentRental.pickupLocation : (currentRental?.pickupLocation?.name || defaultStartString || 'Dehradun Station')} (09:00 AM)</strong> • Return: <strong>{currentRental?.dropoffTime || '07:00 PM'}</strong> • ₹{currentRental?.pricePerDay || 1200}/day
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
                     Handover requires your 6-digit OTP. Money released to local partner only upon physical handover.

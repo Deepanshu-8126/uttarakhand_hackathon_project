@@ -88,7 +88,7 @@ export default function AdaptiveMountainDock() {
         >
           <Compass size={13} className="text-emerald-400" />
           <span className="truncate max-w-[110px] sm:max-w-[140px]">
-            {plannerForm?.destination ? `Trip to ${plannerForm.destination}` : 'Plan Trip'}
+            {plannerForm?.destination ? `Trip to ${typeof plannerForm.destination === 'string' ? plannerForm.destination : (plannerForm.destination?.name || 'Uttarakhand')}` : 'Plan Trip'}
           </span>
         </Link>
 

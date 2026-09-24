@@ -250,6 +250,8 @@ export default function MyTripPage() {
   const dest = session?.destination;
   const dayPlans = session?.dayPlans || [];
   const startLoc = session?.startingLocation || { name: 'Delhi' };
+  const destName = typeof dest === 'string' ? dest : (dest?.name || dest?.title || 'Uttarakhand');
+  const startName = typeof startLoc === 'string' ? startLoc : (startLoc?.name || startLoc?.address || 'Delhi');
 
   // Calculate strict duration display
   const exactDurationText = useMemo(() => {
@@ -648,14 +650,14 @@ export default function MyTripPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-900 font-display leading-tight tracking-tight">
-                My {dest.name} Trip
+                My {destName} Trip
               </h1>
               <p className="text-sm md:text-base font-bold text-slate-600 mt-1.5 flex items-center gap-2 flex-wrap">
                 <span className="text-forest-green font-extrabold flex items-center gap-1">
-                  <MapPin size={16} /> {startLoc.name}
+                  <MapPin size={16} /> {startName}
                 </span>
                 <span className="text-slate-400">→</span>
-                <span className="text-slate-900 font-extrabold">{dest.name}</span>
+                <span className="text-slate-900 font-extrabold">{destName}</span>
                 <span className="text-slate-400">•</span>
                 <span>{session.startDate ? `${session.startDate} – ${session.endDate || ''}` : '15 Oct – 18 Oct'}</span>
                 <span className="text-slate-400">•</span>
@@ -668,7 +670,7 @@ export default function MyTripPage() {
             {/* Compact Action Buttons */}
             <div className="flex items-center gap-2.5 flex-wrap">
               {dest.coordinates && dest.coordinates.length === 2 && (
-                <WeatherWidget lat={dest.coordinates[0]} lng={dest.coordinates[1]} name={dest.name} />
+                <WeatherWidget lat={dest.coordinates[0]} lng={dest.coordinates[1]} name={destName} />
               )}
 
               <button
@@ -724,8 +726,8 @@ export default function MyTripPage() {
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1 flex items-center gap-1.5">
                 <Navigation size={13} className="text-forest-green" /> Route
               </span>
-              <strong className="text-sm font-extrabold text-slate-900 block truncate" title={`${startLoc.name} → ${dest.name}`}>
-                {startLoc.name} → {dest.name}
+              <strong className="text-sm font-extrabold text-slate-900 block truncate" title={`${startName} → ${destName}`}>
+                {startName} → {destName}
               </strong>
             </div>
 
@@ -1000,7 +1002,7 @@ export default function MyTripPage() {
                     Other Stays You May Like
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                    Optional recommendations near {dest.district || dest.name} (Not your confirmed overnight stay)
+                    Optional recommendations near {typeof dest === 'string' ? dest : (dest?.district || destName)} (Not your confirmed overnight stay)
                   </p>
                 </div>
                 <Link to="/stays" className="text-xs sm:text-sm font-extrabold text-forest-green hover:underline">
@@ -1040,7 +1042,7 @@ export default function MyTripPage() {
                         {stay.name}
                       </h4>
                       <p className="text-xs text-slate-500 mt-1">
-                        📍 {typeof stay.location === 'string' ? stay.location : (stay.city || stay.district || 'Uttarakhand')}
+                        📍 {typeof stay.location === 'string' ? stay.location : (stay.location?.address || stay.location?.name || stay.city || stay.district || 'Uttarakhand')}
                       </p>
                     </div>
 
@@ -1067,7 +1069,7 @@ export default function MyTripPage() {
                     Other Local Guides
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                    Certified and experienced mountain guides available for hire in {dest.district || dest.name}
+                    Certified and experienced mountain guides available for hire in {typeof dest === 'string' ? dest : (dest?.district || destName)}
                   </p>
                 </div>
                 <Link to="/guides" className="text-xs sm:text-sm font-extrabold text-forest-green hover:underline">
@@ -1093,7 +1095,7 @@ export default function MyTripPage() {
                           {guide.verifiedByGovt && <ShieldCheck size={14} className="text-forest-green shrink-0" />}
                         </h4>
                         <p className="text-xs text-slate-500">
-                          📍 {typeof guide.location === 'string' ? guide.location : (guide.city || guide.district || 'Uttarakhand')}
+                          📍 {typeof guide.location === 'string' ? guide.location : (guide.location?.address || guide.location?.name || guide.city || guide.district || 'Uttarakhand')}
                         </p>
                       </div>
                     </div>

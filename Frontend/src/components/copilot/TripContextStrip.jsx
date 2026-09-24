@@ -5,7 +5,12 @@ import './TripContextStrip.css';
 export default function TripContextStrip({ tripContext }) {
   if (!tripContext) return null;
 
-  const { destination, origin, startDate, duration, travelers, budget } = tripContext;
+  const rawDest = tripContext.destination;
+  const rawOrigin = tripContext.origin || tripContext.startingLocation;
+  const destination = typeof rawDest === 'string' ? rawDest : (rawDest?.name || rawDest?.address || rawDest?.city || '');
+  const origin = typeof rawOrigin === 'string' ? rawOrigin : (rawOrigin?.name || rawOrigin?.address || rawOrigin?.city || '');
+  const { startDate, duration, travelers, budget } = tripContext;
+
   if (!destination && !origin && !budget) return null;
 
   return (

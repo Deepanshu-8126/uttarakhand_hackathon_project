@@ -82,7 +82,7 @@ export default function WomenSosModal({ isOpen, onClose, destination = "Rishikes
               <div className="p-5 border rounded-2xl bg-rose-950/20 border-rose-500/30 space-y-2 text-left">
                 <div className="font-bold text-white flex items-center gap-2">
                   <MapPin size={16} className="text-rose-400" />
-                  <span>Current Valley Region: {destination}</span>
+                  <span>Current Valley Region: {typeof destination === 'string' ? destination : (destination?.name || destination?.city || 'Uttarakhand')}</span>
                 </div>
                 <p className="text-[11px] text-slate-300">
                   Zero phone network? SOS queue stores locally and transmits automatically across peer mesh & SMS.

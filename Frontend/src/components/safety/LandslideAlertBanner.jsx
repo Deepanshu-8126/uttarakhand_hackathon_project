@@ -16,6 +16,9 @@ export default function LandslideAlertBanner({
   const [isRerouted, setIsRerouted] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  const locStr = typeof location === 'string' ? location : (location?.name || location?.address || 'Joshimath Corridor (NH-58)');
+  const routeStr = typeof alternateRoute === 'string' ? alternateRoute : (alternateRoute?.name || 'Tharali Valley Bypass (+34km)');
+
   const handleActivateReroute = () => {
     setIsRerouted(true);
     if (onRerouteActivated) onRerouteActivated();
@@ -30,7 +33,7 @@ export default function LandslideAlertBanner({
           <AlertTriangle size={14} className="text-amber-400" />
           <span className="font-bold text-amber-300">⚠️ Active Hazard:</span>
           <span className="text-slate-300 truncate max-w-sm sm:max-w-md">
-            {location} BLOCKED → Auto-reroute via {alternateRoute}
+            {locStr} BLOCKED → Auto-reroute via {routeStr}
           </span>
         </div>
         <button
@@ -66,7 +69,7 @@ export default function LandslideAlertBanner({
             </div>
             
             <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
-              ⚠️ {location} BLOCKED → Auto-reroute via {alternateRoute}
+              ⚠️ {locStr} BLOCKED → Auto-reroute via {routeStr}
             </h4>
             
             <p className="text-xs text-slate-300 leading-relaxed">
@@ -75,7 +78,7 @@ export default function LandslideAlertBanner({
                   <CheckCircle2 size={13} /> 100% Free homestay re-allocation and zero-delay detour active.
                 </span>
               ) : (
-                <>BRO clearance team active on site. Safe all-weather bypass recommended via <strong className="text-amber-300">{alternateRoute}</strong>.</>
+                <>BRO clearance team active on site. Safe all-weather bypass recommended via <strong className="text-amber-300">{routeStr}</strong>.</>
               )}
             </p>
           </div>

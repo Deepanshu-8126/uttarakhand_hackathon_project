@@ -47,6 +47,8 @@ export default function AltitudeGuardModal({
     onClose();
   };
 
+  const destName = typeof destination === 'string' ? destination : (destination?.name || destination?.city || 'High Altitude Destination');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn font-sans">
       <div className="relative w-full max-w-lg overflow-hidden border rounded-3xl bg-[#0e1d17] border-[#224233] shadow-[0_20px_60px_rgba(0,0,0,0.6)] text-slate-100">
@@ -69,7 +71,7 @@ export default function AltitudeGuardModal({
                 <Wind size={12} /> High Altitude Guard ({altitude}m)
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight">
-                {destination} Health Clearance
+                {destName} Health Clearance
               </h3>
             </div>
           </div>

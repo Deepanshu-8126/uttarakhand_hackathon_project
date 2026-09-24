@@ -835,7 +835,7 @@ const ProfilePage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {trips.map((trip) => {
                       const destNames = Array.isArray(trip.destinations)
-                        ? trip.destinations.map((d) => d.name || d).filter(Boolean)
+                        ? trip.destinations.map((d) => typeof d === 'string' ? d : (d?.name || d?.title || '')).filter(Boolean)
                         : [];
 
                       return (
