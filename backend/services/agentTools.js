@@ -20,6 +20,7 @@ import TransitLiveAdapter from "./adapters/transitLiveAdapter.js";
 import { mergeAllowlist } from "./agentSessionStore.js";
 import { resolveDestination } from "./destinationResolver.js";
 import { applyTripMutation } from "./tripMutationService.js";
+import googlePlacesService from "./googlePlacesService.js";
 
 const TOOL_TIMEOUT_MS = 8000;
 
@@ -494,7 +495,33 @@ async function _planRoute(args) {
     }, "UNKNOWN");
   }
 
-  // Attempt real OSRM driving calculation
+  // 1. Attempt real Geoapify live routing calculation
+  try {
+    const geoRoute = await googlePlacesService.getRouteDirections({
+      fromLat: fc[1],
+      fromLng: fc[0],
+      toLat: tc[1],
+      toLng: tc[0]
+    });
+    if (geoRoute && geoRoute.distance_km) {
+      return successResult({
+        from: args.from,
+        to: args.to,
+        routeAvailable: true,
+        estimatedDistanceKm: parseFloat(geoRoute.distance_km),
+        estimatedDurationHours: Math.round((geoRoute.time_seconds / 3600) * 10) / 10,
+        timeFormatted: geoRoute.time_formatted,
+        transportMode: geoRoute.mode,
+        geometry: null,
+        provenance: "LIVE",
+        note: `Verified live Geoapify navigation (${geoRoute.mode} mode).`
+      }, "LIVE", [{ source: "Geoapify Live Routing Engine", freshness: "LIVE" }]);
+    }
+  } catch (geoErr) {
+    console.warn("[AgentTools] Geoapify route error:", geoErr.message);
+  }
+
+  // 2. Secondary OSRM driving calculation fallback
   try {
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${fc[0]},${fc[1]};${tc[0]},${tc[1]}?overview=false`;
     const res = await withTimeout(fetch(osrmUrl).then(r => r.json()), 3000, "osrmRoute");
@@ -508,13 +535,13 @@ async function _planRoute(args) {
         routeAvailable: true,
         estimatedDistanceKm: distKm,
         estimatedDurationHours: hrs,
-        geometry: null, // strictly NO fake straight-line geometry
+        geometry: null,
         provenance: "LIVE",
         note: "Verified OSRM driving route."
       }, "LIVE", [{ source: "OSRM Routing Engine", freshness: "LIVE" }]);
     }
   } catch {
-    // OSRM failed or offline - do NOT fabricate straight-line geometry
+    // OSRM failed or offline
   }
 
   return successResult({
