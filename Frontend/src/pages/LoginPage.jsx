@@ -11,10 +11,14 @@ import {
   Loader2, 
   AlertCircle,
   User,
-  ChevronDown
+  Compass,
+  Briefcase,
+  Home,
+  Car,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 
 function GoogleIcon() {
@@ -45,7 +49,11 @@ export default function LoginPage() {
   const location = useLocation();
   const { login, register, registerPartnerAccount } = useAuth();
 
-  const [role, setRole] = useState('traveler');
+  // Mode: 'traveler' | 'partner'
+  const [accountMode, setAccountMode] = useState('traveler');
+  // Partner sub-role: 'homestay' | 'rental' | 'guide'
+  const [partnerSubRole, setPartnerSubRole] = useState('homestay');
+
   const [isRegister, setIsRegister] = useState(false);
   const [identifier, setIdentifier] = useState('');
   const [fullName, setFullName] = useState('');
@@ -54,8 +62,8 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const isPartnerRole = role === 'homestay' || role === 'guide' || role === 'rental';
-  const redirectPath = location.state?.from?.pathname || (isPartnerRole ? '/partner' : '/profile');
+  const isPartner = accountMode === 'partner';
+  const redirectPath = location.state?.from?.pathname || (isPartner ? '/partner' : '/profile');
 
   // One-Click Google Authentication Handler
   const handleGoogleAuth = async () => {
@@ -63,12 +71,12 @@ export default function LoginPage() {
     setErrorMessage('');
     try {
       const res = await login({
-        email: isPartnerRole ? 'partner.business@gmail.com' : 'traveler.google@gmail.com',
+        email: isPartner ? 'partner.business@gmail.com' : 'traveler.google@gmail.com',
         password: 'GoogleOAuth2User@2026',
-        name: isPartnerRole ? 'Verified Mountain Host' : 'Verified Himalayan Traveler',
+        name: isPartner ? 'Verified Mountain Host' : 'Verified Himalayan Traveler',
       });
       if (res?.success) {
-        navigate(isPartnerRole ? '/partner' : redirectPath);
+        navigate(isPartner ? '/partner' : redirectPath);
       }
     } catch (err) {
       setErrorMessage(err.message || 'Google Sign-In failed. Please try with email.');
@@ -92,16 +100,16 @@ export default function LoginPage() {
       let res;
 
       if (isRegister) {
-        if (isPartnerRole) {
+        if (isPartner) {
           let partnerType = 'Homestay';
-          if (role === 'guide') partnerType = 'TourOperator';
-          if (role === 'rental') partnerType = 'VehicleRental';
+          if (partnerSubRole === 'guide') partnerType = 'TourOperator';
+          if (partnerSubRole === 'rental') partnerType = 'VehicleRental';
 
           res = await registerPartnerAccount({
             name: fullName || identifier.split('@')[0],
             businessName: fullName 
-              ? `${fullName}'s ${role === 'rental' ? 'Rental Services' : 'Operations'}` 
-              : (role === 'rental' ? 'Pahadi Rental & Transport' : 'Pahadi Homestay & Guides'),
+              ? `${fullName}'s ${partnerSubRole === 'rental' ? 'Rental Fleet' : partnerSubRole === 'guide' ? 'Expeditions' : 'Homestay'}` 
+              : (partnerSubRole === 'rental' ? 'Pahadi Rental & Transport' : 'Pahadi Homestay & Guides'),
             email: identifier.includes('@') ? identifier : `${identifier}@partner.in`,
             password,
             partnerType,
@@ -121,7 +129,7 @@ export default function LoginPage() {
       }
 
       if (res?.success) {
-        const dest = res.user?.role === 'partner' || isPartnerRole ? '/partner' : redirectPath;
+        const dest = res.user?.role === 'partner' || isPartner ? '/partner' : redirectPath;
         navigate(dest);
       }
     } catch (err) {
@@ -134,73 +142,113 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#fdfbf7] text-slate-800 font-sans selection:bg-emerald-500 selection:text-white">
       
-      {/* ── 1. Top Navbar (Global Standard) ───────────────────────── */}
+      {/* ── 1. Top Navbar ───────────────────────────────────────── */}
       <Navbar />
 
-      {/* ── 2. Main Login Content Section ─────────────────────────── */}
-      <main className="flex-grow flex items-center justify-center px-4 py-12 sm:py-16">
-        <div className="max-w-[440px] w-full bg-white rounded-3xl border border-stone-200/90 shadow-sm p-7 sm:p-9 relative">
+      {/* ── 2. Centered Login Card ───────────────────────────────── */}
+      <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
+        <div className="max-w-[460px] w-full bg-white rounded-3xl border border-stone-200/90 shadow-lg shadow-emerald-950/5 p-6 sm:p-8 relative">
           
           {/* Brand Header */}
           <div className="text-center flex flex-col items-center">
-            <div className="w-12 h-12 rounded-2xl bg-[#1a4331] flex items-center justify-center text-white shadow-sm mb-3.5">
-              <Mountain className="w-6 h-6 text-emerald-400" />
+            <div className="w-11 h-11 rounded-2xl bg-[#0f3d2e] flex items-center justify-center text-white shadow-sm mb-2.5">
+              <Mountain className="w-5 h-5 text-emerald-400" />
             </div>
 
-            <span className="text-[11px] font-bold tracking-widest uppercase text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 mb-2">
-              Discovery Uttarakhand Portal
-            </span>
-
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-              {isRegister ? 'Create Your Account' : 'Welcome Back'}
+              {isRegister ? (isPartner ? 'Partner Registration' : 'Create Traveler Account') : 'Welcome Back'}
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed max-w-sm">
-              {isRegister
-                ? 'Sign up to plan journeys, book verified stays, and access permits.'
-                : 'Sign in to access your saved itineraries, stays, and permits.'}
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xs">
+              {isPartner 
+                ? 'Manage your verified listings, guest bookings and fleet.' 
+                : 'Sign in to plan journeys, book verified stays, and access permits.'}
             </p>
           </div>
 
-          <div className="border-t border-stone-100 my-5" />
+          {/* ── Segmented Slide Switcher: Traveler vs Partner Hub ── */}
+          <div className="mt-5 p-1 bg-stone-100/90 rounded-2xl flex items-center gap-1 border border-stone-200/80">
+            <button
+              type="button"
+              onClick={() => {
+                setAccountMode('traveler');
+                setErrorMessage('');
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                accountMode === 'traveler'
+                  ? 'bg-white text-[#0f3d2e] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Compass size={14} className={accountMode === 'traveler' ? 'text-emerald-700' : 'text-slate-400'} />
+              <span>Traveler / Yatri</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAccountMode('partner');
+                setErrorMessage('');
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                accountMode === 'partner'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Briefcase size={14} className={accountMode === 'partner' ? 'text-emerald-300' : 'text-slate-400'} />
+              <span>Partner Hub</span>
+            </button>
+          </div>
+
+          {/* Partner Sub-Category Chips (Only when Partner Hub is selected) */}
+          {isPartner && (
+            <div className="mt-3.5 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 animate-in fade-in duration-150">
+              <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-900 mb-2">
+                Select Your Business Role:
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { id: 'homestay', label: 'Homestay / Hotel', icon: Home },
+                  { id: 'rental', label: 'Taxi & Bike Rental', icon: Car },
+                  { id: 'guide', label: 'Certified Guide', icon: Compass }
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isSel = partnerSubRole === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setPartnerSubRole(item.id)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl text-center text-[10px] font-bold transition-all cursor-pointer border ${
+                        isSel
+                          ? 'bg-[#0f3d2e] text-white border-[#0f3d2e] shadow-2xs'
+                          : 'bg-white text-slate-700 hover:bg-emerald-100/60 border-emerald-200/60'
+                      }`}
+                    >
+                      <Icon size={14} className={`mb-1 ${isSel ? 'text-emerald-300' : 'text-emerald-800'}`} />
+                      <span className="leading-tight">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-emerald-800 font-semibold mt-2 flex items-center gap-1">
+                <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
+                <span>Verified Direct Onboarding · 0% Platform Commission</span>
+              </p>
+            </div>
+          )}
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 animate-fadeIn">
+            <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 animate-fadeIn">
               <AlertCircle size={15} className="shrink-0 mt-0.5 text-rose-500" />
               <span>{errorMessage}</span>
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            
-            {/* Role Select */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                {isRegister ? 'Register As' : 'Account Type'}
-              </label>
-              <div className="relative">
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full appearance-none bg-stone-50 text-slate-800 text-sm font-semibold border border-stone-200 rounded-xl pl-10 pr-9 py-2.5 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 focus:outline-none transition cursor-pointer"
-                >
-                  <option value="traveler">Traveler / Trekker</option>
-                  <option value="yatri">Char Dham Pilgrim (Yatri)</option>
-                  <option value="homestay">Homestay &amp; Hotel Operator</option>
-                  <option value="rental">Bike, Taxi &amp; Vehicle Rental Partner</option>
-                  <option value="guide">Certified Mountain Guide / Tour Operator</option>
-                </select>
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#1a4331]">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-
-            {/* Google SSO Button */}
+          {/* Google SSO Button */}
+          <div className="mt-4">
             <button
               type="button"
               onClick={handleGoogleAuth}
@@ -208,23 +256,27 @@ export default function LoginPage() {
               className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-stone-50 border border-stone-200/90 rounded-xl py-2.5 px-4 text-xs sm:text-sm font-bold text-slate-700 transition duration-150 shadow-2xs hover:border-stone-300 cursor-pointer disabled:opacity-50"
             >
               <GoogleIcon />
-              <span>Continue with Google</span>
+              <span>Continue with Google ({isPartner ? 'Partner' : 'Traveler'})</span>
             </button>
+          </div>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-grow border-t border-stone-200" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                or use credentials
-              </span>
-              <div className="flex-grow border-t border-stone-200" />
-            </div>
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-grow border-t border-stone-200" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              or use credentials
+            </span>
+            <div className="flex-grow border-t border-stone-200" />
+          </div>
 
+          {/* Form */}
+          <form className="space-y-3.5" onSubmit={handleSubmit}>
+            
             {/* Full Name field on Registration */}
             {isRegister && (
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5" htmlFor="fullname">
-                  Full Name
+                <label className="block text-xs font-bold text-slate-700 mb-1" htmlFor="fullname">
+                  {isPartner ? 'Business / Contact Name' : 'Full Name'}
                 </label>
                 <div className="relative">
                   <input
@@ -233,8 +285,8 @@ export default function LoginPage() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
+                    placeholder={isPartner ? 'e.g. Pahadi Heritage Homestay' : 'Enter your full name'}
+                    className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <User className="w-4 h-4" />
@@ -245,8 +297,8 @@ export default function LoginPage() {
 
             {/* Email / Phone Field */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5" htmlFor="identity">
-                Email or Phone Number
+              <label className="block text-xs font-bold text-slate-700 mb-1" htmlFor="identity">
+                {isPartner ? 'Partner Business Email or Phone' : 'Email or Phone Number'}
               </label>
               <div className="relative">
                 <input
@@ -256,8 +308,8 @@ export default function LoginPage() {
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="name@example.com or +91 98765 43210"
-                  className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
+                  placeholder={isPartner ? 'partner@business.com or +91 98765 43210' : 'name@example.com or +91 98765 43210'}
+                  className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Mail className="w-4 h-4" />
@@ -267,15 +319,15 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-slate-700" htmlFor="password">
                   Password
                 </label>
                 {!isRegister && (
                   <button
                     type="button"
-                    onClick={() => alert('Password reset link sent to your registered contact.')}
-                    className="text-xs text-[#1a4331] hover:underline font-semibold transition cursor-pointer"
+                    onClick={() => alert('Password reset link sent to your registered email.')}
+                    className="text-xs text-[#0f3d2e] hover:underline font-semibold transition cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -290,7 +342,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-10 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
+                  className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl pl-10 pr-10 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <KeyRound className="w-4 h-4" />
@@ -310,7 +362,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-[#1a4331] hover:bg-[#123023] text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 rounded-xl shadow-sm transition-all duration-200 mt-4 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className="w-full bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 rounded-xl shadow-sm transition-all duration-200 mt-3 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-98"
             >
               {submitting ? (
                 <>
@@ -319,7 +371,11 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <span>{isRegister ? 'Register & Continue' : 'Sign In to Account'}</span>
+                  <span>
+                    {isRegister 
+                      ? (isPartner ? 'Register Partner Portal' : 'Register & Continue') 
+                      : (isPartner ? 'Sign In to Partner Portal' : 'Sign In to Account')}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -327,7 +383,7 @@ export default function LoginPage() {
           </form>
 
           {/* Security Badge */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 mt-5 pt-4 border-t border-stone-100">
+          <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 mt-4 pt-3.5 border-t border-stone-100">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="font-medium">Secure &amp; Encrypted Authentication</span>
           </div>
@@ -340,7 +396,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setIsRegister(false); setErrorMessage(''); }}
-                  className="text-[#1a4331] hover:underline font-bold ml-0.5 cursor-pointer"
+                  className="text-[#0f3d2e] hover:underline font-bold ml-0.5 cursor-pointer"
                 >
                   Sign In
                 </button>
@@ -351,7 +407,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setIsRegister(true); setErrorMessage(''); }}
-                  className="text-[#1a4331] hover:underline font-bold ml-0.5 cursor-pointer"
+                  className="text-[#0f3d2e] hover:underline font-bold ml-0.5 cursor-pointer"
                 >
                   Register Now
                 </button>
@@ -362,16 +418,14 @@ export default function LoginPage() {
           {/* Guest Explorer Link */}
           <Link
             to="/"
-            className="text-xs text-slate-400 hover:text-slate-700 block text-center mt-3 transition-colors font-semibold"
+            className="text-xs text-slate-400 hover:text-slate-700 block text-center mt-2.5 transition-colors font-semibold"
           >
             ← Continue as Guest Explorer
           </Link>
         </div>
       </main>
 
-      {/* ── 3. Footer (Global Standard) ───────────────────────────── */}
-      <Footer />
-
     </div>
   );
 }
+
