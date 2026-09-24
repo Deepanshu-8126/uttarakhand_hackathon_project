@@ -212,7 +212,7 @@ export default function Stays() {
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-[#1a4331]/10 group">
                   <div 
                     className="w-full h-80 bg-cover bg-center transform group-hover:scale-105 transition-transform duration-700" 
-                    style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBuHaOS-NtEfCcrj-hssENWdc7eu9tV6sCv19L-WdK6Gi3q36Zav6RO352bow2cdlgbTL-5LKEou5iKyCJCM2QWnQ1eDv2QwtOzZp4GQNPGxL3NIPR1KdM2wVL-1m2SIqZUn67gu-1ynBSpANpKYzUEz2HmXl77HIIrIHDkIPVR7xkkFEUB4fnYag7-letO0dcSIkuKcsGV480Dk1HV457QHZzBfYM9D5t53HIZCOBhX8MG4QwUgu20XQ')" }}
+                    style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1200&q=80')" }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#123023]/95 via-transparent to-transparent flex flex-col justify-end p-6 text-[#fdfbf7]">
                     <div className="absolute top-4 right-4 bg-emerald-500 text-[#123023] px-3 py-1 rounded-full text-xs font-bold shadow-md">
