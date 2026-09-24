@@ -153,6 +153,10 @@ export const AuthProvider = ({ children }) => {
     setAuthModalOpen(true);
   };
 
+  const updateUser = (updatedData) => {
+    setCurrentUser((prev) => ({ ...prev, ...updatedData }));
+  };
+
   const value = {
     currentUser,
     isAuthenticated,
@@ -161,6 +165,7 @@ export const AuthProvider = ({ children }) => {
     register,
     registerPartnerAccount,
     logout,
+    updateUser,
     authModalOpen,
     setAuthModalOpen,
     authError,
