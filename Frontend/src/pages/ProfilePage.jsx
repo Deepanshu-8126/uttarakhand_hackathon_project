@@ -83,7 +83,7 @@ const getItemImage = (item, itemType) => {
 };
 
 const ProfilePage = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, updateUser } = useAuth();
   const { favorites, favoriteCount, loading: favLoading, removeFavorite, refreshFavorites } = useFavorites();
   const navigate = useNavigate();
 
@@ -209,23 +209,33 @@ const ProfilePage = () => {
       let uploadedImageUrl = null;
 
       if (selectedFile) {
-        setProfileSaveMsg({ text: 'Uploading avatar photo...', type: 'info' });
-        const upRes = await uploadImage(selectedFile);
-        if (upRes?.success && upRes.image?.url) {
-          uploadedImageUrl = upRes.image.url;
-        } else {
-          setProfileSaveMsg({ text: 'Image upload failed. Please try a different photo.', type: 'error' });
-          setIsSavingProfile(false);
-          return;
+        setProfileSaveMsg({ text: 'Processing avatar photo...', type: 'info' });
+        try {
+          const upRes = await uploadImage(selectedFile);
+          if (upRes?.success && (upRes.image?.url || upRes.url)) {
+            uploadedImageUrl = upRes.image?.url || upRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn('Backend upload endpoint fallback, encoding photo:', uploadErr);
+        }
+
+        // If backend upload wasn't used or had error, encode to local Base64 URL
+        if (!uploadedImageUrl) {
+          const reader = new FileReader();
+          uploadedImageUrl = await new Promise((resolve) => {
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(selectedFile);
+          });
         }
       }
 
       setProfileSaveMsg({ text: 'Saving your profile details...', type: 'info' });
 
       const payload = {
-        name: profileForm.name.trim(),
-        phone: profileForm.phone.trim(),
-        location: profileForm.location.trim()
+        name: (profileForm.name || '').trim(),
+        phone: (profileForm.phone || '').trim(),
+        location: (profileForm.location || '').trim()
       };
 
       if (uploadedImageUrl) {
@@ -235,18 +245,21 @@ const ProfilePage = () => {
       const res = await updateProfile(payload);
       if (res?.success) {
         setProfileSaveMsg({ text: 'Profile updated successfully!', type: 'success' });
+        if (res.data && updateUser) {
+          updateUser(res.data);
+        }
         setTimeout(() => {
           setShowEditModal(false);
           setProfileSaveMsg({ text: '', type: '' });
-          // If profile image was updated, trigger refresh
-          window.location.reload();
-        }, 1200);
+          setSelectedFile(null);
+        }, 1000);
       } else {
         setProfileSaveMsg({ text: res?.message || 'Failed to update profile.', type: 'error' });
       }
     } catch (err) {
       console.error('Update profile error', err);
-      setProfileSaveMsg({ text: 'An unexpected error occurred. Please try again.', type: 'error' });
+      const errorText = err?.response?.data?.message || err?.message || 'An error occurred while saving.';
+      setProfileSaveMsg({ text: errorText, type: 'error' });
     } finally {
       setIsSavingProfile(false);
     }
