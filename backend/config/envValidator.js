@@ -17,7 +17,8 @@ export const validateEnv = () => {
     missing.push('JWT_SECRET');
   }
   if (!process.env.FRONTEND_URL) {
-    missing.push('FRONTEND_URL');
+    console.warn('[WARN] FRONTEND_URL is not set. Defaulting CORS to allow all origins temporarily.');
+    process.env.FRONTEND_URL = '*';
   }
 
   if (missing.length > 0) {
