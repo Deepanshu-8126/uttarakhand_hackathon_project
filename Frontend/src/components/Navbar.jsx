@@ -91,7 +91,8 @@ export default function Navbar() {
     { label: t('nav_planner'), path: '/trip-planner', icon: Navigation },
     { label: t('nav_stays'), path: '/stays', icon: Bed },
     { label: t('nav_rentals'), path: '/rentals', icon: Car },
-    { label: t('nav_spiritual'), path: '/spiritual', icon: Landmark },
+    { label: 'AI Copilot', path: '/copilot', icon: Sparkles, badge: 'AI' },
+    { label: 'Web3 & Tech', path: '/innovations', icon: ShieldCheck, badge: 'Web3' },
     { label: t('nav_map'), path: '/map', icon: Map },
   ];
 
@@ -120,7 +121,7 @@ export default function Navbar() {
           </div>
 
           {/* ── 2. Center: Desktop Navigation Links (>1024px) ─────────────── */}
-          <nav className="hidden lg:flex items-center gap-7 font-medium text-sm text-slate-700">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-6 font-medium text-sm text-slate-700">
             {navLinks.map((link) => {
               const isCurrent = link.path === '/' 
                 ? location.pathname === '/' 
@@ -142,11 +143,16 @@ export default function Navbar() {
                 <Link
                   key={link.label}
                   to={link.path}
-                  className={`transition-colors font-semibold tracking-tight ${
+                  className={`inline-flex items-center gap-1.5 transition-colors font-semibold tracking-tight ${
                     isCurrent ? 'text-[#0f3d2e] font-bold border-b-2 border-[#0f3d2e] pb-1' : 'hover:text-[#0f3d2e]'
                   }`}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-100 text-[#0f3d2e] border border-emerald-300/80 shadow-2xs">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -400,10 +406,17 @@ export default function Navbar() {
                       key={link.label}
                       to={link.path}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white border border-stone-200/80 hover:border-[#0f3d2e] text-stone-800 font-bold text-xs shadow-2xs transition-all"
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-stone-200/80 hover:border-[#0f3d2e] text-stone-800 font-bold text-xs shadow-2xs transition-all"
                     >
-                      <Icon size={16} className="text-[#0f3d2e]" />
-                      <span>{link.label}</span>
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className="text-[#0f3d2e]" />
+                        <span>{link.label}</span>
+                      </div>
+                      {link.badge && (
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#0f3d2e] border border-emerald-200">
+                          {link.badge}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
