@@ -19,6 +19,7 @@ import InnovationShowcasePage from './pages/InnovationShowcasePage';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -35,75 +36,77 @@ import GlobalAiCopilotLauncher from './components/copilot/GlobalAiCopilotLaunche
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <FavoritesProvider>
-          <CartProvider>
-            <Router>
-              <AddToTripModal />
-              <GlobalToast />
-              <GlobalAiCopilotLauncher />
-              <BottomNavBar />
-              <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/rentals" element={<Rentals />} />
-            <Route path="/stays" element={<Stays />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/checkout/:type/:id" element={<CheckoutPage />} />
-            <Route path="/spiritual" element={<Spiritual />} />
-            <Route path="/culture" element={<Culture />} />
-            <Route path="/activities" element={<Activities />} />
-            <Route path="/guides" element={<Guides />} />
-            <Route path="/guides/:slug" element={<GuideProfilePage />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/trip-planner" element={<TripPlanner />} />
-            <Route path="/copilot" element={<CopilotPage />} />
-            <Route path="/innovations" element={<InnovationShowcasePage />} />
-            <Route path="/features" element={<InnovationShowcasePage />} />
-            <Route path="/audit" element={<ProductAuditPage />} />
-            <Route path="/system-health" element={<ProductAuditPage />} />
-            <Route path="/my-trip/:tripId" element={<MyTripPage />} />
-            <Route path="/my-trip" element={<MyTripPage />} />
-            <Route path="/verify/listing/:id" element={<VerificationProofPage />} />
-            <Route path="/verify/vehicle/:vehicleNumber" element={<VerificationProofPage />} />
-            <Route path="/destinations" element={<Navigate to="/" replace />} />
-            <Route path="/destinations/:slug" element={<DestinationDetails />} />
-            <Route path="/:category/:slug" element={<DetailPage />} />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            } />
-            <Route path="/partner" element={
-              <ProtectedRoute partnerOnly={true}>
-                <PartnerDashboardPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/partner/:tab" element={
-              <ProtectedRoute partnerOnly={true}>
-                <PartnerDashboardPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/partner/*" element={
-              <ProtectedRoute partnerOnly={true}>
-                <PartnerDashboardPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute adminOnly={true}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/:type" element={
-              <ProtectedRoute adminOnly={true}>
-                <AdminManagement />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </Router>
-      </CartProvider>
-    </FavoritesProvider>
-  </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <FavoritesProvider>
+            <CartProvider>
+              <Router>
+                <AddToTripModal />
+                <GlobalToast />
+                <GlobalAiCopilotLauncher />
+                <BottomNavBar />
+                <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/rentals" element={<Rentals />} />
+              <Route path="/stays" element={<Stays />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/checkout/:type/:id" element={<CheckoutPage />} />
+              <Route path="/spiritual" element={<Spiritual />} />
+              <Route path="/culture" element={<Culture />} />
+              <Route path="/activities" element={<Activities />} />
+              <Route path="/guides" element={<Guides />} />
+              <Route path="/guides/:slug" element={<GuideProfilePage />} />
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/trip-planner" element={<TripPlanner />} />
+              <Route path="/copilot" element={<CopilotPage />} />
+              <Route path="/innovations" element={<InnovationShowcasePage />} />
+              <Route path="/features" element={<InnovationShowcasePage />} />
+              <Route path="/audit" element={<ProductAuditPage />} />
+              <Route path="/system-health" element={<ProductAuditPage />} />
+              <Route path="/my-trip/:tripId" element={<MyTripPage />} />
+              <Route path="/my-trip" element={<MyTripPage />} />
+              <Route path="/verify/listing/:id" element={<VerificationProofPage />} />
+              <Route path="/verify/vehicle/:vehicleNumber" element={<VerificationProofPage />} />
+              <Route path="/destinations" element={<Navigate to="/" replace />} />
+              <Route path="/destinations/:slug" element={<DestinationDetails />} />
+              <Route path="/:category/:slug" element={<DetailPage />} />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/partner" element={
+                <ProtectedRoute partnerOnly={true}>
+                  <PartnerDashboardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/partner/:tab" element={
+                <ProtectedRoute partnerOnly={true}>
+                  <PartnerDashboardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/partner/*" element={
+                <ProtectedRoute partnerOnly={true}>
+                  <PartnerDashboardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/:type" element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminManagement />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Router>
+        </CartProvider>
+      </FavoritesProvider>
+    </AuthProvider>
+  </LanguageProvider>
 </ErrorBoundary>
 );
 }

@@ -20,11 +20,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
+import { useLanguage } from '../context/LanguageContext';
+import { Languages } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, currentUser, logout } = useAuth();
+  const { lang, toggleLanguage, t } = useLanguage();
   const activeTripSession = useMapStore((state) => state.activeTripSession);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -63,38 +66,38 @@ export default function Navbar() {
     : '/my-trip';
 
   const navLinks = [
-    { label: 'Explore', path: '/#explore', icon: Compass },
-    { label: 'Trip Planner', path: '/trip-planner', icon: Navigation },
-    { label: 'Stays', path: '/stays', icon: Bed },
-    { label: 'Rentals', path: '/rentals', icon: Car },
-    { label: 'Spiritual', path: '/spiritual', icon: Landmark },
-    { label: 'Map', path: '/map', icon: Map },
+    { label: t('nav_explore'), path: '/#explore', icon: Compass },
+    { label: t('nav_planner'), path: '/trip-planner', icon: Navigation },
+    { label: t('nav_stays'), path: '/stays', icon: Bed },
+    { label: t('nav_rentals'), path: '/rentals', icon: Car },
+    { label: t('nav_spiritual'), path: '/spiritual', icon: Landmark },
+    { label: t('nav_map'), path: '/map', icon: Map },
   ];
 
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           
           {/* ── 1. Left: Brand Logo ───────────────────────────────────────── */}
-          <div className="flex items-center space-x-3 mr-4 sm:mr-6">
-            <Link to="/" className="flex items-center space-x-2.5 sm:space-x-3 group">
-              <div className="w-10 h-10 rounded-xl bg-[#0f3d2e] flex items-center justify-center text-[#fdfbf7] shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                <Mountain size={22} className="text-emerald-400" />
+          <div className="flex items-center space-x-2.5 sm:space-x-3 mr-2 sm:mr-6">
+            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0f3d2e] flex items-center justify-center text-[#fdfbf7] shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                <Mountain size={20} className="text-emerald-400" />
               </div>
               <div>
-                <span className="text-base sm:text-lg font-black tracking-tight block text-[#0f3d2e] leading-none">
+                <span className="text-sm sm:text-lg font-black tracking-tight block text-[#0f3d2e] leading-none">
                   Discovery
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-emerald-700">
-                  Uttarakhand
+                <span className="text-[8px] sm:text-[10px] font-bold tracking-widest uppercase text-emerald-700">
+                  {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}
                 </span>
               </div>
             </Link>
           </div>
 
           {/* ── 2. Center: Desktop Navigation Links (>1024px) ─────────────── */}
-          <nav className="hidden lg:flex items-center gap-8 font-medium text-sm text-slate-700">
+          <nav className="hidden lg:flex items-center gap-7 font-medium text-sm text-slate-700">
             {navLinks.map((link) => {
               const isCurrent = link.path === '/' 
                 ? location.pathname === '/' 
@@ -126,10 +129,21 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* ── 3. Right: Profile + Tablet Hamburger / Desktop CTA ─ */}
-          <div className="flex items-center gap-3.5 sm:gap-4">
+          {/* ── 3. Right: Language Switcher + Profile / Sign In + Hamburger ─ */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
             
-            {/* User Profile Menu */}
+            {/* Language Switcher Button (Desktop & Mobile) */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-stone-200 bg-stone-50/90 hover:bg-emerald-50 hover:border-emerald-300 text-[11px] font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+              title={lang === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}
+            >
+              <Languages size={13} className="text-emerald-700" />
+              <span>{lang === 'en' ? 'हिन्दी' : 'EN'}</span>
+            </button>
+
+            {/* User Profile / Sign In Button (ALWAYS VISIBLE on Mobile & Desktop) */}
             <div className="relative" ref={userRef}>
               {isAuthenticated ? (
                 <button
@@ -138,7 +152,7 @@ export default function Navbar() {
                   className="flex items-center space-x-1.5 p-1 rounded-full border border-stone-200 bg-white hover:bg-stone-50 transition-colors cursor-pointer shadow-2xs"
                   aria-label="User Menu"
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#0f3d2e] text-white flex items-center justify-center font-bold text-xs">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0f3d2e] text-white flex items-center justify-center font-bold text-xs">
                     {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={14} />}
                   </div>
                   <ChevronDown size={13} className="text-slate-400 pr-1 hidden sm:block" />
@@ -147,10 +161,10 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-stone-300 hover:bg-stone-50 text-slate-700 text-xs font-semibold transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
                 >
-                  <User size={14} className="text-slate-500" />
-                  <span>Sign In</span>
+                  <User size={13} className="text-emerald-300" />
+                  <span>{t('nav_signin')}</span>
                 </button>
               )}
 
@@ -181,7 +195,7 @@ export default function Navbar() {
                       className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
                     >
                       <User size={14} className="text-slate-400" />
-                      <span>Profile &amp; Bookings</span>
+                      <span>{t('nav_profile')} &amp; Bookings</span>
                     </Link>
 
                     {currentUser?.role === 'partner' && (
@@ -212,54 +226,36 @@ export default function Navbar() {
                         setUserDropdownOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors text-left font-semibold"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors text-left font-semibold cursor-pointer"
                     >
                       <LogOut size={14} />
-                      <span>Sign Out</span>
+                      <span>{t('nav_signout')}</span>
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Global State Indicator: Active Trip in Progress */}
-            {activeTripDestination && (
-              <Link
-                to={activeTripUrl}
-                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#0f3d2e] text-xs font-bold transition-all shadow-2xs group"
-                title="View Active Trip Itinerary Dashboard"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
-                </span>
-                <span className="truncate max-w-[130px] md:max-w-[200px]">
-                  Trip in Progress: <span className="font-extrabold text-emerald-950">{activeTripDestination}</span> {activeTripDuration ? `(${activeTripDuration})` : ''}
-                </span>
-                <ArrowRight size={12} className="text-emerald-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
-              </Link>
-            )}
-
             {/* Desktop Plan Trip CTA (>1024px) */}
             <div className="hidden lg:block">
               <Link
                 to="/trip-planner"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#0f3d2e] text-xs font-bold uppercase tracking-wider transition-all shadow-2xs active:scale-95"
               >
-                <Sparkles size={13} className="text-emerald-300" />
-                <span>Plan Trip</span>
+                <Sparkles size={13} className="text-emerald-700" />
+                <span>{t('nav_plantrip')}</span>
               </Link>
             </div>
 
-            {/* Tablet Hamburger Button (768px - 1024px) */}
-            <div className="hidden md:block lg:hidden">
+            {/* Mobile & Tablet Hamburger Button (<1024px) */}
+            <div className="block lg:hidden">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="w-9 h-9 rounded-full border border-stone-200 bg-white flex items-center justify-center text-slate-700 hover:text-[#0f3d2e] transition-colors"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-stone-200 bg-white flex items-center justify-center text-slate-700 hover:text-[#0f3d2e] transition-colors cursor-pointer"
                 aria-label="Toggle menu"
               >
-                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                {mobileMenuOpen ? <X size={17} /> : <Menu size={17} />}
               </button>
             </div>
 
@@ -268,19 +264,36 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* ── Tablet Slide-Out Drawer (768px - 1024px) ── */}
+      {/* ── Mobile Slide-Out Drawer (<1024px) ── */}
       {mobileMenuOpen && (
-        <div className="hidden md:block lg:hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-[#fdfbf7] p-6 shadow-2xl border-l border-stone-200 flex flex-col justify-between animate-in slide-in-from-right duration-200">
+        <div className="block lg:hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-[#fdfbf7] p-5 sm:p-6 shadow-2xl border-l border-stone-200 flex flex-col justify-between animate-in slide-in-from-right duration-200">
             <div>
-              <div className="flex items-center justify-between pb-4 border-b border-stone-200 mb-6">
-                <span className="font-bold text-sm text-[#0f3d2e]">Navigation Menu</span>
+              <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#0f3d2e] flex items-center justify-center text-white">
+                    <Mountain size={15} className="text-emerald-400" />
+                  </div>
+                  <span className="font-bold text-sm text-[#0f3d2e]">Discovery Portal</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-8 h-8 rounded-full bg-stone-200/70 hover:bg-stone-300 flex items-center justify-center text-stone-700"
+                  className="w-8 h-8 rounded-full bg-stone-200/70 hover:bg-stone-300 flex items-center justify-center text-stone-700 cursor-pointer"
                 >
                   <X size={16} />
+                </button>
+              </div>
+
+              {/* Language Switch in Drawer */}
+              <div className="mb-4 flex items-center justify-between p-3 rounded-2xl bg-white border border-stone-200/90">
+                <span className="text-xs font-bold text-slate-700">Language / भाषा:</span>
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800"
+                >
+                  {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
                 </button>
               </div>
 
@@ -289,7 +302,7 @@ export default function Navbar() {
                 <Link
                   to={activeTripUrl}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#0f3d2e] block shadow-2xs group"
+                  className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#0f3d2e] block shadow-2xs group"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
@@ -298,16 +311,13 @@ export default function Navbar() {
                     </span>
                     <ArrowRight size={13} className="text-emerald-700 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="font-extrabold text-sm text-emerald-950 truncate">
+                  <div className="font-extrabold text-xs text-emerald-950 truncate">
                     {activeTripDestination} {activeTripDuration ? `(${activeTripDuration})` : ''}
                   </div>
-                  <span className="text-[11px] text-emerald-700 font-medium">
-                    Tap to open Live Workspace →
-                  </span>
                 </Link>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   return (
@@ -315,9 +325,9 @@ export default function Navbar() {
                       key={link.label}
                       to={link.path}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white border border-stone-200/80 hover:border-[#0f3d2e] text-stone-800 font-bold text-sm shadow-2xs transition-all"
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white border border-stone-200/80 hover:border-[#0f3d2e] text-stone-800 font-bold text-xs shadow-2xs transition-all"
                     >
-                      <Icon size={18} className="text-[#0f3d2e]" />
+                      <Icon size={16} className="text-[#0f3d2e]" />
                       <span>{link.label}</span>
                     </Link>
                   );
@@ -325,14 +335,40 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div>
+            <div className="pt-4 border-t border-stone-200 space-y-2">
+              {!isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate('/login');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border border-stone-300 text-slate-800 font-bold text-xs shadow-2xs"
+                >
+                  <User size={14} className="text-slate-500" />
+                  <span>{t('nav_signin')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs"
+                >
+                  <LogOut size={14} />
+                  <span>{t('nav_signout')}</span>
+                </button>
+              )}
+
               <Link
                 to="/trip-planner"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-[#0f3d2e] text-white font-black text-xs uppercase tracking-wider shadow-md"
+                className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-[#0f3d2e] text-white font-black text-xs uppercase tracking-wider shadow-md"
               >
-                <Sparkles size={15} className="text-emerald-300" />
-                <span>Plan Your Trip</span>
+                <Sparkles size={14} className="text-emerald-300" />
+                <span>{t('nav_plantrip')}</span>
               </Link>
             </div>
           </div>

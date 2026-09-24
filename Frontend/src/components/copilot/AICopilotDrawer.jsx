@@ -4,6 +4,7 @@ import { streamAgentMessage, sendAgentMessage } from "../../api/agentApi";
 import { executeAgentAction, setActiveRequestId } from "../../utils/agentActionExecutor";
 import CopilotMessage from "./CopilotMessage";
 import TripContextStrip from "./TripContextStrip";
+import ChatGPTVoiceOverlay from "./ChatGPTVoiceOverlay";
 import { 
   Sparkles, 
   Plus, 
@@ -16,7 +17,8 @@ import {
   MessageSquare,
   RefreshCw,
   Mic,
-  MicOff
+  MicOff,
+  Radio
 } from "lucide-react";
 import "./AICopilotDrawer.css";
 
@@ -91,6 +93,7 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
   const [loading, setLoading] = useState(false);
   const [activeStatus, setActiveStatus] = useState("Ready");
   const [isListening, setIsListening] = useState(false);
+  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -469,6 +472,16 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
               <History size={17} />
             </button>
 
+            {/* Live ChatGPT Voice Mode Button */}
+            <button
+              className="copilot-header__btn text-emerald-400 hover:text-emerald-300"
+              onClick={() => setVoiceOverlayOpen(true)}
+              title="Open Fullscreen ChatGPT Live Voice Mode"
+              aria-label="Live Voice Mode"
+            >
+              <Radio size={16} className="animate-pulse" />
+            </button>
+
             {/* New Chat */}
             <button
               className="copilot-header__btn"
@@ -638,6 +651,13 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
           </div>
         </div>
       </div>
+
+      {/* Fullscreen ChatGPT Live Voice Overlay */}
+      <ChatGPTVoiceOverlay
+        isOpen={voiceOverlayOpen}
+        onClose={() => setVoiceOverlayOpen(false)}
+        tripIdContext={tripId}
+      />
     </>
   );
 }

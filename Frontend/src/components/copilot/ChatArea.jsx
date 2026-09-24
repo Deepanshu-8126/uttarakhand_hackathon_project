@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Info, Loader2, ChevronLeft, Sparkles, Copy, Check, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { MessageSquare, Info, Loader2, ChevronLeft, Sparkles, Copy, Check, Mic, MicOff, Volume2, VolumeX, Radio } from 'lucide-react';
 import useChatStore from '../../store/chatStore';
 import { useMapStore } from '../../store/mapStore';
 import StructuredTravelCards from './StructuredTravelCards';
 import TripContextStrip from './TripContextStrip';
+import ChatGPTVoiceOverlay from './ChatGPTVoiceOverlay';
 import { executeAgentAction } from '../../utils/agentActionExecutor';
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../../utils/speechSynthesis';
 
@@ -14,6 +15,7 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [speakingIndex, setSpeakingIndex] = useState(null);
   const [isListening, setIsListening] = useState(false);
+  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const { sendMessage, sending, error, agentStatus, agentStreaming, abortStream } = useChatStore();
   const [isAutoScroll, setIsAutoScroll] = useState(true);
@@ -180,9 +182,23 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
           <div className="chat-title-sub text-xs text-muted-text">Himalayan Travel Companion · Verified Local Intelligence</div>
         </div>
 
-        <button className="mobile-toggle flex items-center gap-1.5" onClick={onToggleContext}>
-          <Info size={14} /> <span>Trip</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Live ChatGPT Voice Mode Button */}
+          <button
+            type="button"
+            onClick={() => setVoiceOverlayOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-bold shadow-xs cursor-pointer transition-transform active:scale-95"
+            title="Open Fullscreen ChatGPT Live Voice Mode"
+          >
+            <Radio size={13} className="animate-pulse text-emerald-300" />
+            <span className="hidden sm:inline">Live Voice Mode</span>
+            <span className="sm:hidden">Voice</span>
+          </button>
+
+          <button className="mobile-toggle flex items-center gap-1.5" onClick={onToggleContext}>
+            <Info size={14} /> <span>Trip</span>
+          </button>
+        </div>
       </div>
 
       {latestTripContext && <TripContextStrip tripContext={latestTripContext} />}
@@ -394,15 +410,11 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
         <form onSubmit={onSubmitForm} className="chat-input-form flex items-center gap-2">
           <button
             type="button"
-            onClick={startVoiceInput}
-            title={isListening ? "Listening... (Boliye)" : "Voice: Bol ke bolo (Hinglish/Hindi)"}
-            className={`p-2.5 rounded-xl border transition-all flex items-center justify-center shrink-0 cursor-pointer ${
-              isListening 
-                ? 'bg-rose-500 text-white border-rose-600 animate-pulse' 
-                : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
-            }`}
+            onClick={() => setVoiceOverlayOpen(true)}
+            title="Open Fullscreen ChatGPT Live Voice Mode"
+            className="p-2.5 rounded-xl border bg-gradient-to-r from-emerald-700 to-teal-700 text-white border-emerald-600 hover:from-emerald-800 hover:to-teal-800 transition-all flex items-center justify-center shrink-0 cursor-pointer shadow-xs active:scale-95"
           >
-            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+            <Radio size={16} className="animate-pulse text-emerald-300" />
           </button>
           <textarea 
             value={input}
@@ -418,6 +430,13 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
           </button>
         </form>
       </div>
+
+      {/* Fullscreen ChatGPT Live Voice Overlay */}
+      <ChatGPTVoiceOverlay
+        isOpen={voiceOverlayOpen}
+        onClose={() => setVoiceOverlayOpen(false)}
+        tripIdContext={activeChat?.tripId || tripIdContext}
+      />
     </div>
   );
 }
