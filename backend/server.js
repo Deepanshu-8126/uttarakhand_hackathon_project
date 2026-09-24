@@ -55,29 +55,15 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-let allowedOrigins = true;
-if (process.env.NODE_ENV === 'production') {
-  if (process.env.FRONTEND_URL) {
-    const rawOrigins = process.env.FRONTEND_URL.split(',').map(u => u.trim());
-    allowedOrigins = (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server, SSE)
-      if (!origin) return callback(null, true);
-      if (rawOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS policy blocked access from origin: ${origin}`));
-    };
-  } else {
-    console.warn('[SECURITY WARNING] FRONTEND_URL is not configured in production mode.');
-    allowedOrigins = false;
-  }
-}
-
+// Permissive CORS for seamless production deployment across Vercel, Render, and Localhost
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow all origins (Vercel preview domains, production domains, localhost, mobile, etc.)
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 // Serve static uploaded assets
