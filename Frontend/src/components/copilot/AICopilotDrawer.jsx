@@ -186,13 +186,15 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
 
     setSessions(prev => {
       const existingIdx = prev.findIndex(s => s.id === activeSessionId);
-      const firstUserMsg = messages.find(m => m.role === "user");
-      const title = firstUserMsg ? firstUserMsg.text.slice(0, 36) : (tripContext?.destination ? `${tripContext.destination} Trip` : "New Trip Conversation");
+      const destName = typeof tripContext?.destination === 'string'
+        ? tripContext.destination
+        : (tripContext?.destination?.name || "Uttarakhand");
+      const title = firstUserMsg ? firstUserMsg.text.slice(0, 36) : (destName ? `${destName} Trip` : "New Trip Conversation");
 
       const sessionObj = {
         id: activeSessionId,
         title,
-        destination: tripContext?.destination || "Uttarakhand",
+        destination: destName,
         updatedAt: new Date().toISOString(),
         messages: messages.filter(m => m.role !== "loading"),
         tripContext
