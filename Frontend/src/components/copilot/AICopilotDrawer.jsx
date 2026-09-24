@@ -493,14 +493,15 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
               <History size={17} />
             </button>
 
-            {/* Live ChatGPT Voice Mode Button */}
+            {/* Live Interactive Voice Agent Button */}
             <button
-              className="copilot-header__btn text-emerald-400 hover:text-emerald-300"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 text-xs font-black transition-all cursor-pointer shadow-2xs"
               onClick={() => setVoiceOverlayOpen(true)}
-              title="Open Fullscreen ChatGPT Live Voice Mode"
+              title="Open Fullscreen Interactive AI Voice Agent"
               aria-label="Live Voice Mode"
             >
-              <Radio size={16} className="animate-pulse" />
+              <Radio size={12} className="animate-pulse text-emerald-600" />
+              <span className="text-[11px] uppercase tracking-wide">Voice Agent</span>
             </button>
 
             {/* New Chat */}
