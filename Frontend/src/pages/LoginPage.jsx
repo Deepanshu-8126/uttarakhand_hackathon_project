@@ -234,7 +234,7 @@ export default function LoginPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
-                    className="w-full bg-stone-50 text-slate-800 text-sm border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
+                    className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <User className="w-4 h-4" />
@@ -257,7 +257,7 @@ export default function LoginPage() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="name@example.com or +91 98765 43210"
-                  className="w-full bg-stone-50 text-slate-800 text-sm border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
+                  className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Mail className="w-4 h-4" />
@@ -290,7 +290,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full bg-stone-50 text-slate-800 text-sm border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-10 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
+                  className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#1a4331] focus:ring-2 focus:ring-[#1a4331]/20 rounded-xl pl-10 pr-10 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <KeyRound className="w-4 h-4" />
