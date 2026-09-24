@@ -6,18 +6,7 @@ import RentalCard from '../components/RentalCard';
 import CategoryHero from '../components/CategoryHero';
 import Pagination from '../components/common/Pagination';
 import { useRentals } from '../hooks/useRentals';
-import { 
-  MapPin, 
-  Navigation, 
-  LocateFixed, 
-  Sparkles, 
-  CheckCircle2, 
-  ShieldCheck, 
-  RotateCcw,
-  Compass,
-  ArrowRight,
-  X
-} from 'lucide-react';
+import { LocateFixed, X } from 'lucide-react';
 import { 
   detectBrowserLocation, 
   findNearestHub, 
