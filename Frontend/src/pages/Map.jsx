@@ -976,128 +976,157 @@ export default function MapPage() {
             </div>
           )}
 
-          {/* Top Left: Map Layer Switchers (Geoapify HD & Carto) */}
-          <div className="absolute top-4 left-4 z-[400] flex items-center gap-1 bg-white/95 backdrop-blur-md rounded-xl p-1 shadow-md border border-slate-200/90 text-xs font-medium">
-            <button
-              type="button"
-              onClick={() => setActiveTile('geoapify')}
-              className={`px-3 py-1 rounded-lg transition-all font-bold ${
-                activeTile === 'geoapify'
-                  ? 'bg-[#0f3d2e] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Geoapify HD
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTile('voyager')}
-              className={`px-3 py-1 rounded-lg transition-all font-bold ${
-                activeTile === 'voyager'
-                  ? 'bg-[#0f3d2e] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Highways
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTile('satellite')}
-              className={`px-3 py-1 rounded-lg transition-all font-bold ${
-                activeTile === 'satellite'
-                  ? 'bg-[#0f3d2e] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Satellite 3D
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTile('dark')}
-              className={`px-3 py-1 rounded-lg transition-all font-bold ${
-                activeTile === 'dark'
-                  ? 'bg-[#0f3d2e] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Night
-            </button>
-          </div>
+          {/* Top Left: Unified Premium Glassmorphic Map Control Dock */}
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-[400] flex items-center gap-1.5 select-none">
+            <div className="flex items-center bg-white/95 backdrop-blur-md rounded-2xl p-1 shadow-md border border-stone-200/90 text-xs font-medium">
+              {/* Map Tile Switchers */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveTile('geoapify')}
+                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                    activeTile === 'geoapify'
+                      ? 'bg-[#0f3d2e] text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <Compass size={13} className={activeTile === 'geoapify' ? 'text-emerald-300' : 'text-stone-400'} />
+                  <span>Geoapify HD</span>
+                </button>
 
-          {/* Top Left (Below Layers): Mountain Safety Radar Toggle */}
-          <div className="absolute top-16 left-4 z-[400]">
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/90 overflow-hidden max-w-xs transition-all">
-              <button
-                type="button"
-                onClick={() => setSafetyPanelOpen(!safetyPanelOpen)}
-                className="w-full px-3 py-2 flex items-center justify-between gap-2 hover:bg-slate-50 transition-colors cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTile('voyager')}
+                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                    activeTile === 'voyager'
+                      ? 'bg-[#0f3d2e] text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <Navigation size={13} className={activeTile === 'voyager' ? 'text-emerald-300' : 'text-stone-400'} />
+                  <span>Highways</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTile('satellite')}
+                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                    activeTile === 'satellite'
+                      ? 'bg-[#0f3d2e] text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <Layers size={13} className={activeTile === 'satellite' ? 'text-emerald-300' : 'text-stone-400'} />
+                  <span>Satellite 3D</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTile('dark')}
+                  className={`px-2.5 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                    activeTile === 'dark'
+                      ? 'bg-[#0f3d2e] text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <span>🌙</span>
+                  <span className="hidden sm:inline">Night</span>
+                </button>
+              </div>
+
+              {/* Vertical Divider */}
+              <div className="h-5 w-px bg-stone-200 mx-1 shrink-0" />
+
+              {/* Safety Radar Dropdown Trigger in Same Dock */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSafetyPanelOpen(!safetyPanelOpen)}
+                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 cursor-pointer ${
+                    safetyPanelOpen || Object.values(safetyLayers).some(Boolean)
+                      ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs'
+                      : 'text-stone-700 hover:bg-stone-100'
+                  }`}
+                >
+                  <span className="relative flex h-2 w-2 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                   </span>
-                  <ShieldAlert size={14} className="text-amber-600" />
-                  <span className="text-xs font-bold text-slate-800">Safety Radar</span>
-                </div>
-                {safetyPanelOpen ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
-              </button>
+                  <ShieldAlert size={14} className="text-amber-600 shrink-0" />
+                  <span className="text-xs">Safety Radar</span>
+                  {safetyPanelOpen ? (
+                    <ChevronUp size={13} className="text-stone-400" />
+                  ) : (
+                    <ChevronDown size={13} className="text-stone-400" />
+                  )}
+                </button>
 
-              {safetyPanelOpen && (
-                <div className="p-3 border-t border-slate-100 space-y-2 text-xs bg-slate-50/50">
-                  <label className="flex items-center justify-between gap-2 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle size={13} className="text-rose-600" />
-                      <span className="font-semibold text-slate-700">Landslide Risk Corridors</span>
+                {/* Safety Radar Dropdown Popover */}
+                {safetyPanelOpen && (
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200/90 p-3 space-y-2 text-xs animate-in fade-in slide-in-from-top-1 duration-150 z-50">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-stone-100">
+                      <span className="font-extrabold text-stone-800 text-[11px] uppercase tracking-wider">
+                        Mountain Safety GIS
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800">
+                        Live Sentinel
+                      </span>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={safetyLayers.landslideRisk}
-                      onChange={(e) => setSafetyLayers((s) => ({ ...s, landslideRisk: e.target.checked }))}
-                      className="w-4 h-4 rounded text-rose-600 accent-rose-600 cursor-pointer"
-                    />
-                  </label>
 
-                  <label className="flex items-center justify-between gap-2 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Mountain size={13} className="text-amber-600" />
-                      <span className="font-semibold text-slate-700">Altitude Zones (&gt;3,000m)</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={safetyLayers.altitudeWarning}
-                      onChange={(e) => setSafetyLayers((s) => ({ ...s, altitudeWarning: e.target.checked }))}
-                      className="w-4 h-4 rounded text-amber-600 accent-amber-600 cursor-pointer"
-                    />
-                  </label>
+                    <label className="flex items-center justify-between gap-2 cursor-pointer hover:bg-stone-50 p-1.5 rounded-xl transition">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <AlertTriangle size={13} className="text-rose-600 shrink-0" />
+                        <span className="font-semibold text-stone-700 truncate text-[11px]">Landslide Risk Corridors</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={safetyLayers.landslideRisk}
+                        onChange={(e) => setSafetyLayers((s) => ({ ...s, landslideRisk: e.target.checked }))}
+                        className="w-4 h-4 rounded text-rose-600 accent-rose-600 cursor-pointer shrink-0"
+                      />
+                    </label>
 
-                  <label className="flex items-center justify-between gap-2 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <CloudRain size={13} className="text-blue-600" />
-                      <span className="font-semibold text-slate-700">Weather Alert Areas</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={safetyLayers.weatherAlert}
-                      onChange={(e) => setSafetyLayers((s) => ({ ...s, weatherAlert: e.target.checked }))}
-                      className="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
-                    />
-                  </label>
+                    <label className="flex items-center justify-between gap-2 cursor-pointer hover:bg-stone-50 p-1.5 rounded-xl transition">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Mountain size={13} className="text-amber-600 shrink-0" />
+                        <span className="font-semibold text-stone-700 truncate text-[11px]">Altitude Zones (&gt;3,000m)</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={safetyLayers.altitudeWarning}
+                        onChange={(e) => setSafetyLayers((s) => ({ ...s, altitudeWarning: e.target.checked }))}
+                        className="w-4 h-4 rounded text-amber-600 accent-amber-600 cursor-pointer shrink-0"
+                      />
+                    </label>
 
-                  <label className="flex items-center justify-between gap-2 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Radio size={13} className="text-emerald-600" />
-                      <span className="font-semibold text-slate-700">Sentinel SOS Beacons</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={safetyLayers.safetyGrid}
-                      onChange={(e) => setSafetyLayers((s) => ({ ...s, safetyGrid: e.target.checked }))}
-                      className="w-4 h-4 rounded text-emerald-600 accent-emerald-600 cursor-pointer"
-                    />
-                  </label>
-                </div>
-              )}
+                    <label className="flex items-center justify-between gap-2 cursor-pointer hover:bg-stone-50 p-1.5 rounded-xl transition">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CloudRain size={13} className="text-blue-600 shrink-0" />
+                        <span className="font-semibold text-stone-700 truncate text-[11px]">Weather Alert Areas</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={safetyLayers.weatherAlert}
+                        onChange={(e) => setSafetyLayers((s) => ({ ...s, weatherAlert: e.target.checked }))}
+                        className="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer shrink-0"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between gap-2 cursor-pointer hover:bg-stone-50 p-1.5 rounded-xl transition">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Radio size={13} className="text-emerald-600 shrink-0" />
+                        <span className="font-semibold text-stone-700 truncate text-[11px]">Sentinel SOS Beacons</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={safetyLayers.safetyGrid}
+                        onChange={(e) => setSafetyLayers((s) => ({ ...s, safetyGrid: e.target.checked }))}
+                        className="w-4 h-4 rounded text-emerald-600 accent-emerald-600 cursor-pointer shrink-0"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
