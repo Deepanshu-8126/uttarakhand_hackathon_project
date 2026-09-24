@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, X, Sparkles, Languages, Radio, RefreshCw, Loader2 } from 'lucide-react';
 import useChatStore from '../../store/chatStore';
 import { useMapStore } from '../../store/mapStore';
+import { sendAgentMessage } from '../../api/agentApi';
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../../utils/speechSynthesis';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -185,7 +186,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   };
 
   const handleVoiceQuerySubmit = async (queryText) => {
-    if (!queryText || sending) return;
+    if (!queryText) return;
     
     // Stop listening while AI processes
     updateVoiceStatus('processing');
@@ -204,12 +205,17 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     };
 
     try {
-      const response = await sendMessage(activeChat?._id, queryText, activeChat?.tripId || tripIdContext, pageContext);
-      
-      const replyContent = response?.data?.reply || response?.data?.message || (typeof response === 'string' ? response : '');
+      const res = await sendAgentMessage({
+        message: queryText,
+        chatId: activeChat?._id || null,
+        tripId: activeChat?.tripId || tripIdContext,
+        pageContext
+      });
+
+      const replyContent = res?.response?.message || res?.message || (typeof res === 'string' ? res : '');
       const cleanReply = typeof replyContent === 'string' ? replyContent : (replyContent?.text || replyContent?.response || '');
 
-      setLastAgentReply(cleanReply);
+      setLastAgentReply(cleanReply || (lang === 'hi' ? 'उत्तर तैयार है।' : 'I have analyzed your request.'));
 
       if (!isMuted && cleanReply) {
         updateVoiceStatus('speaking');
@@ -232,6 +238,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       }
     } catch (err) {
       console.error("[VoiceAgent] Query failed:", err);
+      setLastAgentReply(lang === 'hi' ? 'माफ़ करें, उत्तर प्राप्त करने में समस्या हुई।' : 'Sorry, failed to process query.');
       updateVoiceStatus('idle');
     }
   };
