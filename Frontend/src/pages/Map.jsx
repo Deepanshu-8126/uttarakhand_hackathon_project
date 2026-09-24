@@ -441,23 +441,34 @@ export default function MapPage() {
   // Himalayan Route Drawer State
   const [transitDrawerOpen, setTransitDrawerOpen] = useState(false);
   const [activeCorridorId, setActiveCorridorId] = useState(null);
+  const [routeTarget, setRouteTarget] = useState(null);
 
-  const handleFlyToCorridor = useCallback((corridorId) => {
-    if (!corridorId) return;
-    const corridor = HIMALAYAN_CORRIDORS[corridorId];
-    if (corridor && corridor.stations.length > 0) {
-      const lats = corridor.stations.map((s) => s.coords[0]);
-      const lngs = corridor.stations.map((s) => s.coords[1]);
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-      setFlyCoords({
-        bounds: [
-          [minLat, minLng],
-          [maxLat, maxLng],
-        ],
-      });
+  const handleOpenRouteForPlace = useCallback((place, direction = 'to') => {
+    if (!place) return;
+    setRouteTarget({ place, direction, timestamp: Date.now() });
+    setTransitDrawerOpen(true);
+  }, []);
+
+  const handleFlyToCorridor = useCallback((target) => {
+    if (!target) return;
+    if (typeof target === 'string') {
+      const corridor = HIMALAYAN_CORRIDORS[target];
+      if (corridor && corridor.stations.length > 0) {
+        const lats = corridor.stations.map((s) => s.coords[0]);
+        const lngs = corridor.stations.map((s) => s.coords[1]);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+        setFlyCoords({
+          bounds: [
+            [minLat, minLng],
+            [maxLat, maxLng],
+          ],
+        });
+      }
+    } else if (Array.isArray(target) && target.length === 2) {
+      setFlyCoords({ coords: target, zoom: 14 });
     }
   }, []);
 
@@ -1090,6 +1101,43 @@ export default function MapPage() {
             </div>
           </div>
 
+          {/* Active Himalayan Corridor Floating Status Pill */}
+          {activeCorridorId && !transitDrawerOpen && HIMALAYAN_CORRIDORS[activeCorridorId] && (
+            <div className="absolute top-4 right-4 z-[400] flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-3 h-3 rounded-full shrink-0 shadow-xs"
+                  style={{ backgroundColor: HIMALAYAN_CORRIDORS[activeCorridorId].color }}
+                />
+                <div className="text-left">
+                  <p className="text-xs font-black text-stone-900 leading-tight">
+                    {HIMALAYAN_CORRIDORS[activeCorridorId].name}
+                  </p>
+                  <p className="text-[10px] text-stone-500 font-semibold">
+                    {HIMALAYAN_CORRIDORS[activeCorridorId].totalKm} • {HIMALAYAN_CORRIDORS[activeCorridorId].duration}
+                  </p>
+                </div>
+              </div>
+              <div className="h-5 w-px bg-stone-200 shrink-0" />
+              <button
+                type="button"
+                onClick={() => setTransitDrawerOpen(true)}
+                className="text-xs font-bold text-[#0f3d2e] bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-xl transition cursor-pointer flex items-center gap-1"
+              >
+                <span>Details</span>
+                <ChevronRight size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveCorridorId(null)}
+                className="w-6 h-6 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 flex items-center justify-center transition cursor-pointer"
+                title="Clear Corridor Layer"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
           {/* Leaflet Map Engine */}
           <MapContainer
             center={MAP_CENTER}
@@ -1287,6 +1335,17 @@ export default function MapPage() {
                               {loc.type === 'stay' ? 'Book Direct →' : 'Explore →'}
                             </Link>
                           )}
+                          {/* 🧭 Direct Himalayan Route Navigator from this Popup */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRouteForPlace(loc, 'to')}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-[#0f3d2e] text-[#0f3d2e] hover:text-white border border-emerald-200 transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+                            title={`Find Himalayan Route to ${loc.name}`}
+                          >
+                            <Navigation size={12} />
+                            <span>Route</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleToggleTrip(loc)}
@@ -1526,13 +1585,14 @@ export default function MapPage() {
 
       </main>
 
-      {/* ── 4. Himalayan Transit & Route Finder Slide-Over Drawer (YoMetro Style) ── */}
+      {/* ── 4. Himalayan Route Finder Slide-Over Drawer ── */}
       <TransitRouteDrawer
         isOpen={transitDrawerOpen}
         onClose={() => setTransitDrawerOpen(false)}
         activeCorridorId={activeCorridorId}
         onSelectCorridor={setActiveCorridorId}
         onFlyToCorridor={handleFlyToCorridor}
+        routeTarget={routeTarget}
       />
 
     </div>
