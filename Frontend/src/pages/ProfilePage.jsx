@@ -160,9 +160,18 @@ const ProfilePage = () => {
     }
   };
 
+  // If user is a Partner, auto-redirect to dedicated Partner Hub Dashboard
   useEffect(() => {
-    loadUserData();
-  }, []);
+    if (currentUser?.role === 'partner') {
+      navigate('/partner', { replace: true });
+    }
+  }, [currentUser, navigate]);
+
+  useEffect(() => {
+    if (currentUser?.role !== 'partner') {
+      loadUserData();
+    }
+  }, [currentUser]);
 
   const handleLogout = async () => {
     await logout();

@@ -32,7 +32,18 @@ export default function AddToTripModal() {
         { dayNumber: 3, title: 'Day 3: Scenic Views & Return', activities: [], stays: [], rentals: [] }
       ];
 
-  const destName = activeTripSession?.destination?.name || activeTripSession?.destination || item.location || item.city || item.district || 'Uttarakhand';
+  const formatLoc = (loc) => {
+    if (!loc) return '';
+    if (typeof loc === 'string') return loc;
+    if (typeof loc.name === 'string') return loc.name;
+    if (typeof loc.address === 'string') return loc.address;
+    if (typeof loc.city === 'string') return loc.city;
+    if (typeof loc.district === 'string') return loc.district;
+    return '';
+  };
+
+  const itemLocationStr = formatLoc(item.location) || item.city || item.district || 'Uttarakhand';
+  const destName = (activeTripSession?.destination?.name || (typeof activeTripSession?.destination === 'string' ? activeTripSession.destination : '')) || itemLocationStr;
   const activeDuration = activeTripSession?.duration || `${days.length} Days`;
 
   const handleConfirm = () => {
@@ -41,7 +52,7 @@ export default function AddToTripModal() {
       const params = new URLSearchParams({
         rental_id: item._id || item.id || '',
         rental_name: item.name || '',
-        location: item.city || item.location || item.district || 'Haldwani',
+        location: itemLocationStr,
         price: String(item.pricePerDay || item.price || 500),
         type: item.type || (isRental ? 'Bike' : 'Stay')
       });

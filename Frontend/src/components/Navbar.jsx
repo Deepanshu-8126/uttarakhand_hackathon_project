@@ -214,44 +214,80 @@ export default function Navbar() {
                   </div>
 
                   <div className="py-1 space-y-0.5 text-xs font-medium text-slate-700">
-                    <Link
-                      to="/my-trip"
-                      onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors text-emerald-800 font-semibold"
-                    >
-                      <Compass size={14} />
-                      <span>My Active Trips &amp; SOS</span>
-                    </Link>
+                    {currentUser?.role === 'partner' ? (
+                      <>
+                        <Link
+                          to="/partner"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/80 hover:bg-emerald-100 text-[#0f3d2e] font-bold transition-colors"
+                        >
+                          <Briefcase size={14} className="text-emerald-700" />
+                          <span>Partner Business Hub</span>
+                        </Link>
+                        <Link
+                          to="/partner/listings"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-semibold transition-colors"
+                        >
+                          <Building size={14} className="text-slate-400" />
+                          <span>Manage Listings</span>
+                        </Link>
+                        <Link
+                          to="/partner/bookings"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-semibold transition-colors"
+                        >
+                          <Calendar size={14} className="text-slate-400" />
+                          <span>Guest Bookings &amp; OTP</span>
+                        </Link>
+                        <Link
+                          to="/partner/profile"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-semibold transition-colors"
+                        >
+                          <ShieldCheck size={14} className="text-slate-400" />
+                          <span>Business KYC &amp; Profile</span>
+                        </Link>
+                      </>
+                    ) : currentUser?.role === 'admin' ? (
+                      <>
+                        <Link
+                          to="/admin"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors text-[#0f3d2e] font-bold"
+                        >
+                          <ShieldCheck size={14} />
+                          <span>Admin Management</span>
+                        </Link>
+                        <Link
+                          to="/profile"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
+                        >
+                          <User size={14} className="text-slate-400" />
+                          <span>Admin Profile</span>
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          to="/my-trip"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors text-emerald-800 font-semibold"
+                        >
+                          <Compass size={14} />
+                          <span>My Active Trips &amp; SOS</span>
+                        </Link>
 
-                    <Link
-                      to="/profile"
-                      onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
-                    >
-                      <User size={14} className="text-slate-400" />
-                      <span>{t('nav_profile')} &amp; Bookings</span>
-                    </Link>
-
-                    {currentUser?.role === 'partner' && (
-                      <Link
-                        to="/partner"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors text-[#0f3d2e] font-semibold"
-                      >
-                        <Briefcase size={14} />
-                        <span>Partner Portal</span>
-                      </Link>
-                    )}
-
-                    {currentUser?.role === 'admin' && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors text-[#0f3d2e] font-semibold"
-                      >
-                        <ShieldCheck size={14} />
-                        <span>Admin Management</span>
-                      </Link>
+                        <Link
+                          to="/profile"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
+                        >
+                          <User size={14} className="text-slate-400" />
+                          <span>{t('nav_profile')} &amp; Bookings</span>
+                        </Link>
+                      </>
                     )}
 
                     <button
