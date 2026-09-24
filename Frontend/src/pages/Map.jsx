@@ -544,7 +544,7 @@ export default function MapPage() {
             if (p.location?.lat && p.location?.lng) {
               all.push({
                 id: p.place_id || `radar-gem-${idx}`,
-                name: p.name,
+                name: (p.name && p.name !== '?' && p.name.trim() !== '') ? p.name : (p.vicinity || 'Himalayan Radar Gem'),
                 slug: `radar-${p.place_id || idx}`,
                 type: 'radar',
                 category: 'radar',
@@ -900,6 +900,16 @@ export default function MapPage() {
               </span>
             </button>
 
+            {/* Divider */}
+            <div className="h-5 w-px bg-stone-300 shrink-0 mx-1" />
+
+            {/* Himalayan Transit Corridors & YoMetro Route Finder */}
+            <HimalayanTransitCorridors
+              activeCorridorId={activeCorridorId}
+              onSelectCorridor={setActiveCorridorId}
+              onFlyToCorridor={handleFlyToCorridor}
+            />
+
           </div>
 
           {/* Right Count Indicator, Partner Hub CTA & Sidebar Toggle */}
@@ -922,21 +932,12 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold transition"
+              className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold transition cursor-pointer shadow-2xs"
             >
               {sidebarOpen ? 'Hide List' : 'Show List'}
             </button>
           </div>
 
-        </div>
-
-        {/* ── 2B. Sub-Navbar Row 2: Himalayan Transit Corridors (YoMetro Style) ── */}
-        <div className="pt-2 border-t border-stone-200/70">
-          <HimalayanTransitCorridors
-            activeCorridorId={activeCorridorId}
-            onSelectCorridor={setActiveCorridorId}
-            onFlyToCorridor={handleFlyToCorridor}
-          />
         </div>
       </div>
 

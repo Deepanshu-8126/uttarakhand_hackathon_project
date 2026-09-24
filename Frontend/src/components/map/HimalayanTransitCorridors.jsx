@@ -15,10 +15,11 @@ import {
   Layers, 
   Compass, 
   CheckCircle2,
-  Sparkles,
-  ExternalLink
+  ChevronDown,
+  ChevronUp,
+  Sparkles
 } from 'lucide-react';
-import { Polyline, CircleMarker, Tooltip, Popup } from 'react-leaflet';
+import { Polyline, CircleMarker, Tooltip } from 'react-leaflet';
 
 // ─── 5 Himalayan Pilgrimage & Transit Corridors (YoMetro Style) ───
 export const HIMALAYAN_CORRIDORS = {
@@ -34,7 +35,7 @@ export const HIMALAYAN_CORRIDORS = {
     duration: '9-10 hrs road',
     totalKm: '298 km',
     highway: 'NH-07 (All-Weather Char Dham Highway)',
-    description: 'The great Alaknanda valley artery connecting Rishikesh railhead to the holy shrine of Badrinath and Auli ski resort.',
+    description: 'The great Alaknanda valley artery connecting Rishikesh railhead to Badrinath & Auli.',
     stations: [
       { name: 'Rishikesh Railhead Hub', coords: [30.0869, 78.2676], type: 'interchange', altitude: '372m', modes: ['Train', 'UTC Bus', 'Taxi'] },
       { name: 'Devprayag Sangam', coords: [30.1459, 78.5990], type: 'junction', altitude: '618m', modes: ['Bus', 'Shared Taxi'] },
@@ -70,7 +71,7 @@ export const HIMALAYAN_CORRIDORS = {
     duration: '7 hrs road + 6 hrs trek / 8m heli',
     totalKm: '228 km',
     highway: 'NH-107 Mandakini River Corridor',
-    description: 'The sacred Mandakini river highway connecting Rudraprayag interchange with Guptkashi, heli bases, and the high-altitude shrine.',
+    description: 'The sacred Mandakini river highway to Guptkashi, Phata heli bases, and Kedarnath shrine.',
     stations: [
       { name: 'Rudraprayag Junction', coords: [30.2858, 78.9811], type: 'interchange', altitude: '895m', modes: ['NH-07 Interchange', 'Bus'] },
       { name: 'Augustmuni Helipad', coords: [30.3950, 79.0230], type: 'station', altitude: '920m', modes: ['Heli Services', 'Taxi'] },
@@ -104,9 +105,9 @@ export const HIMALAYAN_CORRIDORS = {
     duration: '10 hrs scenic drive',
     totalKm: '280 km',
     highway: 'NH-109 / SH-37 Himalayan Vista Highway',
-    description: 'Scenic gateway corridor connecting Kathgodam railhead with Nainital, Almora heritage town, Kausani, and Munsiyari Panchachuli.',
+    description: 'Scenic gateway corridor connecting Kathgodam railhead with Nainital, Almora, and Munsiyari.',
     stations: [
-      { name: 'Kathgodam Railhead', coords: [29.2730, 79.5390], type: 'interchange', altitude: '554m', modes: ['Shatabdi/Ranikhet Exp', 'UTC Bus'] },
+      { name: 'Kathgodam Railhead', coords: [29.2730, 79.5390], type: 'interchange', altitude: '554m', modes: ['Train Hub', 'UTC Bus'] },
       { name: 'Bhimtal / Nainital Fork', coords: [29.3500, 79.5500], type: 'junction', altitude: '1,370m', modes: ['Lake Tourism', 'Shared Cab'] },
       { name: 'Bhowali Pine Junction', coords: [29.3800, 79.5200], type: 'station', altitude: '1,706m', modes: ['Fruit Market', 'Taxi'] },
       { name: 'Almora Cultural Hub', coords: [29.5971, 79.6591], type: 'junction', altitude: '1,638m', modes: ['Bal Mithai', 'Heritage TRH'] },
@@ -140,7 +141,7 @@ export const HIMALAYAN_CORRIDORS = {
     duration: '8-9 hrs road',
     totalKm: '260 km',
     highway: 'NH-34 Bhagirathi & Yamuna Highway',
-    description: 'High glacier source corridor linking Dehradun capital to Mussoorie, Uttarkashi, and the twin holy origins Gangotri and Yamunotri.',
+    description: 'High glacier source corridor linking Dehradun to Mussoorie, Uttarkashi, and Gangotri/Yamunotri.',
     stations: [
       { name: 'Dehradun Capital Hub', coords: [30.3165, 78.0322], type: 'interchange', altitude: '640m', modes: ['Jolly Grant Airport', 'Train', 'ISBT'] },
       { name: 'Mussoorie Queen of Hills', coords: [30.4598, 78.0644], type: 'station', altitude: '2,005m', modes: ['Hill Station', 'Taxi'] },
@@ -174,7 +175,7 @@ export const HIMALAYAN_CORRIDORS = {
     duration: '14 hrs (Inner Line Permit Req.)',
     totalKm: '325 km',
     highway: 'BRO Kailash-Mansarovar Road',
-    description: 'High-altitude Himalayan border frontier leading past Dharchula to Gunji village, Nabidang (Om Parvat) and Jolinkong (Adi Kailash).',
+    description: 'High-altitude Himalayan border frontier leading to Gunji village, Om Parvat and Adi Kailash.',
     stations: [
       { name: 'Tanakpur Railhead', coords: [29.0720, 80.1110], type: 'interchange', altitude: '255m', modes: ['Train', 'UTC Bus'] },
       { name: 'Champawat Cultural Stop', coords: [29.3300, 80.0900], type: 'station', altitude: '1,610m', modes: ['Golju Temple', 'Taxi'] },
@@ -199,7 +200,7 @@ export const HIMALAYAN_CORRIDORS = {
   }
 };
 
-// ─── Preset Multi-Modal Transit Routes (YoMetro Style) ───
+// ─── Preset Multi-Modal Transit Routes ───
 export const TRANSIT_CATALOG = [
   {
     from: 'delhi',
@@ -209,385 +210,248 @@ export const TRANSIT_CATALOG = [
     corridorId: 'kedarnath',
     duration: '14-16 hrs total',
     totalDistance: '450 km',
-    bestSeason: 'May - Jun & Sep - Oct',
-    roadStatus: 'NH-107 Open (Good Condition)',
+    roadStatus: 'NH-107 Open',
     legs: [
-      { mode: 'train', title: 'Leg 1: Train / Express Bus to Railhead', route: 'New Delhi ➔ Rishikesh / Haridwar', time: '4.5 hrs', cost: '₹280 (Sleeper) - ₹1,150 (Vande Bharat)' },
-      { mode: 'bus', title: 'Leg 2: Mountain Highway Bus / Shared Maxx', route: 'Rishikesh ➔ Sonprayag via NH-107', time: '7.5 hrs', cost: '₹450 (UTC Govt Bus) / ₹900 (Shared Cab)' },
-      { mode: 'car', title: 'Leg 3: Local Shuttle Jeep', route: 'Sonprayag ➔ Gaurikund Base Gate', time: '20 mins', cost: '₹50 (Standard Jeep Ticket)' },
-      { mode: 'trek', title: 'Leg 4: Himalayan Mountain Trek / Heli', route: 'Gaurikund ➔ Kedarnath Temple (16 km)', time: '6-7 hrs Trek OR 8 mins Heli from Phata', cost: '₹0 (Trek) / ₹2,500 (Pony) / ₹4,900 (Heli)' }
+      { mode: 'train', title: 'Leg 1: Train to Railhead', route: 'New Delhi ➔ Rishikesh / Haridwar', time: '4.5 hrs', cost: '₹280 - ₹1,150' },
+      { mode: 'bus', title: 'Leg 2: Mountain Highway Bus', route: 'Rishikesh ➔ Sonprayag via NH-107', time: '7.5 hrs', cost: '₹450 (UTC) / ₹900 (Cab)' },
+      { mode: 'car', title: 'Leg 3: Shuttle Jeep', route: 'Sonprayag ➔ Gaurikund Gate', time: '20 mins', cost: '₹50' },
+      { mode: 'trek', title: 'Leg 4: Mountain Trek / Heli', route: 'Gaurikund ➔ Kedarnath (16 km)', time: '6-7 hrs / 8m Heli', cost: '₹0 / ₹4,900 Heli' }
     ],
-    advisories: ['Biometric Registration mandatory at Sonprayag', 'AMS risk above 3,000m (Carry Diamox & warm layers)', 'Helicopter booking requires official IRCTC HeliYatra ticket']
   },
   {
     from: 'haridwar',
     fromLabel: 'Haridwar (Railhead)',
     to: 'badrinath',
-    toLabel: 'Badrinath Dham & Mana Village',
+    toLabel: 'Badrinath Dham & Mana',
     corridorId: 'badrinath',
     duration: '10 hrs road',
     totalDistance: '320 km',
-    bestSeason: 'May - Oct',
-    roadStatus: 'NH-07 All-Weather Road Open',
+    roadStatus: 'NH-07 All-Weather Road Clear',
     legs: [
-      { mode: 'bus', title: 'Leg 1: Direct UTC Mountain Bus / Taxi', route: 'Haridwar / Rishikesh ➔ Joshimath Base', time: '8.5 hrs', cost: '₹520 (UTC Bus) / ₹1,200 (Shared Maxx)' },
-      { mode: 'car', title: 'Leg 2: High Mountain Ascent', route: 'Joshimath ➔ Badrinath Temple (45 km)', time: '1.5 hrs', cost: '₹120 (Local Bus) / ₹250 (Shared Cab)' },
-      { mode: 'trek', title: 'Leg 3: India\'s Last Village Excursion', route: 'Badrinath ➔ Mana Village & Saraswati River (3 km)', time: '15 mins', cost: '₹30 (E-Rickshaw/Jeep)' }
+      { mode: 'bus', title: 'Leg 1: Highway Bus / Maxx', route: 'Haridwar ➔ Joshimath Base', time: '8.5 hrs', cost: '₹520 (UTC Bus)' },
+      { mode: 'car', title: 'Leg 2: High Mountain Ascent', route: 'Joshimath ➔ Badrinath Dham (45 km)', time: '1.5 hrs', cost: '₹120 (Bus)' },
     ],
-    advisories: ['Night driving prohibited past Joshimath gate after 8:00 PM', 'All-Weather Road double-laned with smooth driving conditions']
   },
   {
     from: 'kathgodam',
-    fromLabel: 'Kathgodam (Kumaon Railhead)',
+    fromLabel: 'Kathgodam (Railhead)',
     to: 'munsiyari',
     toLabel: 'Munsiyari (Panchachuli Base)',
     corridorId: 'kumaon',
-    duration: '10 hrs scenic drive',
-    totalKm: '280 km',
-    bestSeason: 'All Year (Snow in Dec-Feb)',
+    duration: '10 hrs drive',
+    totalDistance: '280 km',
     roadStatus: 'Kalamuni Pass Open',
     legs: [
-      { mode: 'car', title: 'Leg 1: Kumaon Vista Highway', route: 'Kathgodam ➔ Almora ➔ Kausani', time: '4.5 hrs', cost: '₹350 (Shared Cab) / ₹2,200 (Private Taxi)' },
-      { mode: 'bus', title: 'Leg 2: Mountain Ridge Crossing', route: 'Kausani ➔ Bageshwar ➔ Chaukori ➔ Thal', time: '3.5 hrs', cost: '₹280 (Local Bus)' },
-      { mode: 'car', title: 'Leg 3: Kalamuni Pass Ascent to Valley', route: 'Thal ➔ Kalamuni Top (2,700m) ➔ Munsiyari', time: '2 hrs', cost: '₹180 (Shared Maxx)' }
+      { mode: 'car', title: 'Leg 1: Kumaon Vista Drive', route: 'Kathgodam ➔ Almora ➔ Kausani', time: '4.5 hrs', cost: '₹350 (Shared Cab)' },
+      { mode: 'bus', title: 'Leg 2: Ridge Highway', route: 'Kausani ➔ Bageshwar ➔ Thal ➔ Munsiyari', time: '5.5 hrs', cost: '₹400' },
     ],
-    advisories: ['Spectacular close-up views of Panchachuli Peaks', 'Carry snow chains in winter between Birthi and Kalamuni']
   },
   {
     from: 'dehradun',
-    fromLabel: 'Dehradun (Airport/ISBT)',
+    fromLabel: 'Dehradun (Airport)',
     to: 'auli',
-    toLabel: 'Auli Himalayan Ski Resort',
+    toLabel: 'Auli Ski Resort',
     corridorId: 'badrinath',
-    duration: '8.5 hrs road + Cable Car',
+    duration: '8.5 hrs + Ropeway',
     totalDistance: '290 km',
-    bestSeason: 'Jan - Mar (Skiing) / May - Nov (Lush Meadows)',
-    roadStatus: 'Rishikesh-Joshimath Highway Clear',
+    roadStatus: 'Highway Clear',
     legs: [
-      { mode: 'bus', title: 'Leg 1: Highway Drive', route: 'Dehradun ➔ Rishikesh ➔ Srinagar ➔ Joshimath', time: '8 hrs', cost: '₹480 (UTC Deluxe) / ₹1,100 (Shared Cab)' },
-      { mode: 'car', title: 'Leg 2: Asia\'s Longest Ropeway / 4x4 Mountain Road', route: 'Joshimath ➔ Auli Top (4 km Cable Car or 14 km Road)', time: '22 mins (Cable Car)', cost: '₹1,000 (Roundtrip Ropeway) / ₹400 (4x4 Taxi)' }
+      { mode: 'bus', title: 'Leg 1: Valley Transit', route: 'Dehradun ➔ Srinagar ➔ Joshimath', time: '8 hrs', cost: '₹480' },
+      { mode: 'car', title: 'Leg 2: Ropeway / 4x4', route: 'Joshimath ➔ Auli Top (Cable Car)', time: '22 mins', cost: '₹1,000 Ropeway' },
     ],
-    advisories: ['Asia\'s highest artificial lake and Nanda Devi 7,816m panoramic viewpoint', 'In peak winter, 4x4 vehicles with tire chains required from Joshimath']
-  },
-  {
-    from: 'haridwar',
-    fromLabel: 'Haridwar / Rishikesh',
-    to: 'chopta',
-    toLabel: 'Chopta - Tungnath & Chandrashila',
-    corridorId: 'kedarnath',
-    duration: '6.5 hrs road + 3.5 km trek',
-    totalDistance: '205 km',
-    bestSeason: 'Apr - Jun & Sep - Dec',
-    roadStatus: 'Kund-Ukhimath-Chopta Road Open',
-    legs: [
-      { mode: 'bus', title: 'Leg 1: Valley Transit', route: 'Rishikesh ➔ Devprayag ➔ Rudraprayag ➔ Kund', time: '5 hrs', cost: '₹380 (UTC Bus)' },
-      { mode: 'car', title: 'Leg 2: Pine & Rhododendron Forest Drive', route: 'Kund ➔ Ukhimath ➔ Chopta Meadow', time: '1.5 hrs', cost: '₹150 (Shared Cab) / ₹900 (Taxi)' },
-      { mode: 'trek', title: 'Leg 3: World\'s Highest Shiva Temple Trek', route: 'Chopta Base ➔ Tungnath Temple (3,680m) ➔ Chandrashila Peak (4,000m)', time: '3.5 km (3 hrs hike)', cost: '₹0 (Paved Trail) / ₹1,200 (Pony)' }
-    ],
-    advisories: ['Known as the "Mini Switzerland of Uttarakhand"', 'Trek is paved with stone steps and accessible for beginners']
   }
 ];
 
+/**
+ * Clean, Compact Floating Transit Navigator Card (YoMetro Style)
+ * Sits gracefully on top of the Leaflet Map without pushing layout down!
+ */
 export default function HimalayanTransitCorridors({
   activeCorridorId,
   onSelectCorridor,
   onFlyToCorridor
 }) {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [fromLocation, setFromLocation] = useState('delhi');
   const [toLocation, setToLocation] = useState('kedarnath');
-  const [activeTab, setActiveTab] = useState('navigator'); // 'navigator' | 'corridors'
 
-  // Selected corridor object
-  const activeCorridor = useMemo(() => {
-    return activeCorridorId ? HIMALAYAN_CORRIDORS[activeCorridorId] : null;
-  }, [activeCorridorId]);
-
-  // Matching transit route result
   const calculatedRoute = useMemo(() => {
-    const directMatch = TRANSIT_CATALOG.find(
-      r => r.from === fromLocation && r.to === toLocation
-    );
-    if (directMatch) return directMatch;
-
-    // Smart fallback generation based on destination
-    const fallbackTemplate = TRANSIT_CATALOG.find(r => r.to === toLocation) || TRANSIT_CATALOG[0];
+    const match = TRANSIT_CATALOG.find(r => r.from === fromLocation && r.to === toLocation);
+    if (match) return match;
+    const fallback = TRANSIT_CATALOG.find(r => r.to === toLocation) || TRANSIT_CATALOG[0];
     return {
-      ...fallbackTemplate,
+      ...fallback,
       from: fromLocation,
-      fromLabel: fromLocation === 'delhi' ? 'Delhi NCR' : fromLocation === 'haridwar' ? 'Haridwar / Rishikesh' : fromLocation === 'dehradun' ? 'Dehradun ISBT' : 'Kathgodam Railhead',
-      toLabel: fallbackTemplate.toLabel
+      fromLabel: fromLocation === 'delhi' ? 'Delhi NCR' : fromLocation === 'haridwar' ? 'Haridwar' : fromLocation === 'dehradun' ? 'Dehradun' : 'Kathgodam',
     };
   }, [fromLocation, toLocation]);
 
   const handleSwap = () => {
-    // Quick flip animation
-    const oldFrom = fromLocation;
+    const old = fromLocation;
     setFromLocation(toLocation === 'kedarnath' ? 'haridwar' : 'delhi');
-    setToLocation(oldFrom === 'delhi' ? 'badrinath' : 'kedarnath');
+    setToLocation(old === 'delhi' ? 'badrinath' : 'kedarnath');
   };
 
-  const handleFocusRoute = () => {
+  const handleHighlight = () => {
     if (calculatedRoute.corridorId) {
       onSelectCorridor(calculatedRoute.corridorId);
-      if (onFlyToCorridor) {
-        onFlyToCorridor(calculatedRoute.corridorId);
-      }
+      if (onFlyToCorridor) onFlyToCorridor(calculatedRoute.corridorId);
     }
-    setModalOpen(false);
   };
 
   return (
-    <>
-      {/* ── 1. Top Ribbon: YoMetro Style Mountain Lines Layer Controller ── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-        
-        {/* Transit Navigator Launch Pill */}
+    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+      
+      {/* 1. YoMetro Floating Route Calculator Pill */}
+      <div className="relative shrink-0">
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-[#0f3d2e] to-emerald-700 text-white shadow-md hover:shadow-lg transition-all cursor-pointer border border-emerald-500/30 group"
-          title="Open Himalayan Transit Route Calculator"
+          onClick={() => setExpanded(!expanded)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-[#0f3d2e] hover:bg-[#185340] text-white shadow-sm transition cursor-pointer border border-emerald-500/40"
         >
-          <Navigation size={13} className="text-emerald-300 animate-pulse group-hover:rotate-45 transition-transform" />
+          <Navigation size={13} className="text-emerald-300 animate-pulse" />
           <span>Kaise Pahunche?</span>
-          <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-400/30 text-emerald-100">
-            YoMetro
+          <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-400 text-[#0f3d2e]">
+            Route
           </span>
+          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
 
-        {/* Corridor Line Pills (Metro Line Badges) */}
-        {Object.values(HIMALAYAN_CORRIDORS).map((line) => {
-          const isActive = activeCorridorId === line.id;
-          return (
-            <button
-              key={line.id}
-              type="button"
-              onClick={() => {
-                const next = isActive ? null : line.id;
-                onSelectCorridor(next);
-                if (next && onFlyToCorridor) onFlyToCorridor(next);
-              }}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
-                isActive
-                  ? `${line.lightBg} ${line.textColor} ${line.borderColor} ring-2 ring-emerald-500/40 shadow-xs font-black`
-                  : 'bg-white hover:bg-stone-50 text-stone-700 border-stone-200'
-              }`}
-            >
-              <span className={`w-2.5 h-2.5 rounded-full ${line.badgeBg} shrink-0 shadow-xs`} />
-              <span className="whitespace-nowrap">{line.name}</span>
-              <span className={`text-[10px] font-mono px-1 rounded ${isActive ? 'bg-black/10' : 'bg-stone-100 text-stone-500'}`}>
-                {line.code}
-              </span>
-            </button>
-          );
-        })}
-
-        {/* Clear corridor selection button if active */}
-        {activeCorridorId && (
-          <button
-            type="button"
-            onClick={() => onSelectCorridor(null)}
-            className="shrink-0 p-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 transition"
-            title="Clear active corridor highlight"
-          >
-            <X size={13} />
-          </button>
-        )}
-      </div>
-
-      {/* ── 2. Interactive Route & Transit Navigator Modal (YoMetro Style) ── */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-[1200] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-          <div 
-            className="bg-[#fdfbf7] rounded-3xl shadow-2xl border border-stone-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-[#1a4331] font-sans"
-            role="dialog"
-            aria-modal="true"
-          >
-            {/* Modal Header */}
-            <div className="px-6 py-4 bg-gradient-to-r from-[#0f3d2e] via-[#1a4331] to-[#123023] text-white flex items-center justify-between shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 shadow-inner">
-                  <Navigation size={20} className="text-emerald-300" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-black tracking-tight">Himalayan Transit Navigator</h3>
-                    <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-black bg-emerald-400 text-[#0f3d2e]">
-                      Live Routes
-                    </span>
-                  </div>
-                  <p className="text-xs text-emerald-200/80 font-normal">
-                    Step-by-step train, mountain bus, shared taxi, & high-altitude trek circuits
-                  </p>
-                </div>
+        {/* Floating Dropdown Card (Sits on top with high z-index) */}
+        {expanded && (
+          <div className="absolute top-10 left-0 z-[1000] w-80 sm:w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-stone-200/90 p-4 space-y-3 font-sans text-stone-900 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+              <div className="flex items-center gap-2">
+                <Navigation size={15} className="text-emerald-700" />
+                <h4 className="text-xs font-black text-stone-900 uppercase tracking-wider">Himalayan Route Finder</h4>
               </div>
               <button
                 type="button"
-                onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
-                aria-label="Close"
+                onClick={() => setExpanded(false)}
+                className="w-6 h-6 rounded-full hover:bg-stone-100 text-stone-500 flex items-center justify-center cursor-pointer"
               >
-                <X size={16} />
+                <X size={13} />
               </button>
             </div>
 
-            {/* Modal Search Controls Box */}
-            <div className="p-5 bg-white border-b border-stone-200/80 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-11 gap-2.5 items-center">
-                
-                {/* From Station */}
-                <div className="sm:col-span-5 bg-[#fdfbf7] p-2.5 rounded-2xl border border-stone-200 shadow-2xs">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-1">
-                    From Station / Origin Hub
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Train size={15} className="text-emerald-700 shrink-0" />
-                    <select
-                      value={fromLocation}
-                      onChange={(e) => setFromLocation(e.target.value)}
-                      className="w-full bg-transparent font-bold text-xs sm:text-sm text-stone-900 focus:outline-hidden cursor-pointer"
-                    >
-                      <option value="delhi">New Delhi / NCR (Air / Train Hub)</option>
-                      <option value="haridwar">Haridwar (Garhwal Railhead)</option>
-                      <option value="rishikesh">Rishikesh Yog Nagari (Gateway)</option>
-                      <option value="dehradun">Dehradun (Airport / ISBT)</option>
-                      <option value="kathgodam">Kathgodam (Kumaon Railhead)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Swap Button */}
-                <div className="sm:col-span-1 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleSwap}
-                    className="w-8 h-8 rounded-full bg-stone-100 hover:bg-emerald-100 text-stone-700 hover:text-emerald-800 flex items-center justify-center transition shadow-2xs border border-stone-200 cursor-pointer"
-                    title="Swap Origin & Destination"
-                  >
-                    <ArrowLeftRight size={14} />
-                  </button>
-                </div>
-
-                {/* To Destination */}
-                <div className="sm:col-span-5 bg-[#fdfbf7] p-2.5 rounded-2xl border border-stone-200 shadow-2xs">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-1">
-                    To Mountain Destination
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Mountain size={15} className="text-emerald-700 shrink-0" />
-                    <select
-                      value={toLocation}
-                      onChange={(e) => setToLocation(e.target.value)}
-                      className="w-full bg-transparent font-bold text-xs sm:text-sm text-stone-900 focus:outline-hidden cursor-pointer"
-                    >
-                      <option value="kedarnath">Kedarnath Dham (3,583m)</option>
-                      <option value="badrinath">Badrinath Dham & Mana</option>
-                      <option value="auli">Auli Himalayan Ski Resort</option>
-                      <option value="chopta">Chopta - Tungnath (Mini Switzerland)</option>
-                      <option value="munsiyari">Munsiyari (Panchachuli Base)</option>
-                      <option value="gangotri">Gangotri Glacier Source</option>
-                    </select>
-                  </div>
-                </div>
-
+            {/* Inputs */}
+            <div className="space-y-2">
+              <div className="p-2 bg-stone-50 rounded-xl border border-stone-200 flex items-center gap-2">
+                <Train size={14} className="text-emerald-700 shrink-0" />
+                <select
+                  value={fromLocation}
+                  onChange={(e) => setFromLocation(e.target.value)}
+                  className="w-full bg-transparent text-xs font-bold text-stone-800 focus:outline-hidden cursor-pointer"
+                >
+                  <option value="delhi">New Delhi / NCR</option>
+                  <option value="haridwar">Haridwar Railhead</option>
+                  <option value="rishikesh">Rishikesh Gateway</option>
+                  <option value="dehradun">Dehradun ISBT</option>
+                  <option value="kathgodam">Kathgodam Railhead</option>
+                </select>
               </div>
 
-              {/* Quick Info Ribbon */}
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-emerald-50/80 p-3 rounded-xl border border-emerald-200/80">
-                <div className="flex items-center gap-2 font-bold text-[#0f3d2e]">
-                  <Clock size={14} className="text-emerald-700" />
-                  <span>Total Duration: {calculatedRoute.duration}</span>
-                </div>
-                <div className="flex items-center gap-2 font-bold text-slate-700">
-                  <MapPin size={14} className="text-emerald-700" />
-                  <span>Distance: {calculatedRoute.totalDistance || calculatedRoute.totalKm}</span>
-                </div>
-                <div className="flex items-center gap-1.5 font-bold text-emerald-800">
-                  <Shield size={14} className="text-emerald-600" />
-                  <span>{calculatedRoute.roadStatus}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body: Multi-Modal Steps */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-wider text-stone-500">
-                Multi-Modal Transit Breakdown (Step-by-Step)
-              </h4>
-
-              <div className="space-y-3 relative before:absolute before:top-3 before:bottom-3 before:left-4 before:w-0.5 before:bg-emerald-200">
-                {calculatedRoute.legs.map((leg, idx) => (
-                  <div 
-                    key={idx} 
-                    className="relative pl-9 flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 bg-white rounded-2xl border border-stone-200 shadow-2xs hover:shadow-xs transition"
-                  >
-                    <div className="absolute left-2.5 top-4 w-3.5 h-3.5 rounded-full bg-[#0f3d2e] border-2 border-white ring-2 ring-emerald-300 flex items-center justify-center text-[8px] text-white font-bold">
-                      {idx + 1}
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-[#0f3d2e]">
-                          {leg.mode}
-                        </span>
-                        <h5 className="text-xs sm:text-sm font-bold text-stone-900">{leg.title}</h5>
-                      </div>
-                      <p className="text-xs font-semibold text-emerald-800">{leg.route}</p>
-                    </div>
-
-                    <div className="text-left sm:text-right shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-stone-100">
-                      <div className="text-xs font-bold text-stone-800">{leg.cost}</div>
-                      <div className="text-[11px] text-stone-500 font-medium">⏱️ {leg.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Safety & Permit Advisories */}
-              {calculatedRoute.advisories && calculatedRoute.advisories.length > 0 && (
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
-                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
-                    <AlertTriangle size={15} className="text-amber-600" />
-                    <span>Important Travel Advisories</span>
-                  </div>
-                  <ul className="text-xs text-amber-900/90 space-y-1 pl-5 list-disc font-medium">
-                    {calculatedRoute.advisories.map((adv, i) => (
-                      <li key={i}>{adv}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer CTA */}
-            <div className="px-6 py-4 bg-white border-t border-stone-200 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xs text-stone-500 font-medium">
-                Corridor: <strong className="text-stone-800">{HIMALAYAN_CORRIDORS[calculatedRoute.corridorId]?.name}</strong>
-              </div>
-              <div className="flex items-center gap-2">
+              <div className="flex justify-center -my-1">
                 <button
                   type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-stone-600 hover:bg-stone-100 text-xs font-bold transition"
+                  onClick={handleSwap}
+                  className="p-1 rounded-full bg-white border border-stone-200 shadow-2xs hover:bg-emerald-50 text-stone-600"
                 >
-                  Close
+                  <ArrowLeftRight size={12} />
                 </button>
-                <button
-                  type="button"
-                  onClick={handleFocusRoute}
-                  className="px-5 py-2.5 rounded-xl bg-[#0f3d2e] hover:bg-[#1b4332] text-white text-xs font-bold shadow-md inline-flex items-center gap-2 transition cursor-pointer"
+              </div>
+
+              <div className="p-2 bg-stone-50 rounded-xl border border-stone-200 flex items-center gap-2">
+                <Mountain size={14} className="text-emerald-700 shrink-0" />
+                <select
+                  value={toLocation}
+                  onChange={(e) => setToLocation(e.target.value)}
+                  className="w-full bg-transparent text-xs font-bold text-stone-800 focus:outline-hidden cursor-pointer"
                 >
-                  <Compass size={14} />
-                  <span>Highlight Route on Map</span>
-                </button>
+                  <option value="kedarnath">Kedarnath Dham (3,583m)</option>
+                  <option value="badrinath">Badrinath Dham & Mana</option>
+                  <option value="auli">Auli Ski Resort</option>
+                  <option value="munsiyari">Munsiyari (Panchachuli)</option>
+                </select>
               </div>
             </div>
 
+            {/* Quick Result */}
+            <div className="p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200/80 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between font-bold text-[#0f3d2e]">
+                <span>⏱️ {calculatedRoute.duration}</span>
+                <span>🛣️ {calculatedRoute.totalDistance}</span>
+              </div>
+              <div className="text-[11px] text-emerald-800 font-semibold">
+                Status: {calculatedRoute.roadStatus}
+              </div>
+            </div>
+
+            {/* Step-by-Step Mini Legs */}
+            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+              {calculatedRoute.legs.map((leg, i) => (
+                <div key={i} className="p-2 bg-white rounded-lg border border-stone-200/70 text-[11px] space-y-0.5 shadow-2xs">
+                  <div className="flex items-center justify-between font-bold text-stone-800">
+                    <span>{leg.title}</span>
+                    <span className="text-emerald-700">{leg.cost}</span>
+                  </div>
+                  <div className="text-stone-500 font-medium truncate">{leg.route}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <button
+              type="button"
+              onClick={handleHighlight}
+              className="w-full py-2 rounded-xl bg-[#0f3d2e] hover:bg-[#185340] text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 transition cursor-pointer"
+            >
+              <Compass size={13} />
+              <span>Show Corridor on Map</span>
+            </button>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* 2. Corridor Line Pills (L1, L2, L3, L4, L5) */}
+      {Object.values(HIMALAYAN_CORRIDORS).map((line) => {
+        const isActive = activeCorridorId === line.id;
+        return (
+          <button
+            key={line.id}
+            type="button"
+            onClick={() => {
+              const next = isActive ? null : line.id;
+              onSelectCorridor(next);
+              if (next && onFlyToCorridor) onFlyToCorridor(next);
+            }}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
+              isActive
+                ? `${line.lightBg} ${line.textColor} ${line.borderColor} ring-2 ring-emerald-500/40 shadow-xs font-black`
+                : 'bg-white hover:bg-stone-50 text-stone-700 border-stone-200'
+            }`}
+          >
+            <span className={`w-2.5 h-2.5 rounded-full ${line.badgeBg} shrink-0 shadow-xs`} />
+            <span className="whitespace-nowrap">{line.name}</span>
+            <span className={`text-[10px] font-mono px-1 rounded ${isActive ? 'bg-black/10' : 'bg-stone-100 text-stone-500'}`}>
+              {line.code}
+            </span>
+          </button>
+        );
+      })}
+
+      {activeCorridorId && (
+        <button
+          type="button"
+          onClick={() => onSelectCorridor(null)}
+          className="shrink-0 p-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 transition"
+          title="Clear active line highlight"
+        >
+          <X size={13} />
+        </button>
       )}
-    </>
+
+    </div>
   );
 }
 
@@ -600,7 +464,6 @@ export function HimalayanCorridorsLayer({ activeCorridorId }) {
 
   return (
     <>
-      {/* 1. Main Glowing Highway Polyline */}
       <Polyline
         positions={corridor.polyline}
         pathOptions={{
@@ -622,7 +485,6 @@ export function HimalayanCorridorsLayer({ activeCorridorId }) {
         </Tooltip>
       </Polyline>
 
-      {/* 2. Corridor Glow Background Polyline */}
       <Polyline
         positions={corridor.polyline}
         pathOptions={{
@@ -634,7 +496,6 @@ export function HimalayanCorridorsLayer({ activeCorridorId }) {
         }}
       />
 
-      {/* 3. Station Nodes (Subway-style Dots on Map) */}
       {corridor.stations.map((st, idx) => (
         <CircleMarker
           key={`st-${idx}`}
@@ -655,9 +516,6 @@ export function HimalayanCorridorsLayer({ activeCorridorId }) {
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5">
                 ⛰️ Altitude: <strong>{st.altitude}</strong> • Type: <span className="uppercase font-semibold">{st.type}</span>
-              </div>
-              <div className="text-[10px] text-emerald-800 font-medium mt-0.5">
-                Modes: {st.modes.join(' • ')}
               </div>
             </div>
           </Tooltip>
