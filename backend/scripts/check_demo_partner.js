@@ -14,21 +14,20 @@ async function main() {
   let partnerUser = await User.findOne({ email: 'partner@discovery.com' });
   if (!partnerUser) {
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('partner123', salt);
     partnerUser = await User.create({
       name: 'Ramesh Singh (Himalayan Stays & Rentals)',
       email: 'partner@discovery.com',
-      password: hashedPassword,
+      password: 'partner123',
       role: 'partner',
       phone: '+91 9876543210'
     });
     console.log('Created demo partner user: partner@discovery.com / partner123');
   } else {
-    // Ensure role is partner
-    if (partnerUser.role !== 'partner') {
-      partnerUser.role = 'partner';
-      await partnerUser.save();
-    }
+    // Ensure role is partner and password is set correctly
+    partnerUser.role = 'partner';
+    partnerUser.password = 'partner123';
+    await partnerUser.save();
+    console.log('Reset existing partner password to partner123');
   }
 
   // Ensure Partner profile exists
