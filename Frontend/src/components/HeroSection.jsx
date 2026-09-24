@@ -484,35 +484,50 @@ export default function HeroSection() {
         {/* Top Spacer */}
         <div className="relative z-10" />
 
-        {/* ── Main Hero Typography & Dynamic Destination ── */}
+        {/* ── Main Hero Typography & Dynamic Destination (Clickable) ── */}
         <div className="relative z-10 max-w-2xl mb-4 sm:mb-6">
           
           {/* Location & Altitude Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-medium text-white/95 mb-3.5 shadow-xs">
+          <Link
+            to={`/destinations/${currentMedia.slug}`}
+            className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-xs font-medium text-white/95 mb-3.5 shadow-xs transition-colors group/pill"
+          >
             <MapPin size={13} className="text-emerald-300" />
             <span>{currentMedia.location}</span>
             <span className="text-white/40">•</span>
             <span className="text-emerald-200 font-semibold">{currentMedia.altitude}</span>
-          </div>
+            <ArrowRight size={11} className="text-emerald-300 opacity-0 group-hover/pill:opacity-100 group-hover/pill:translate-x-0.5 transition-all" />
+          </Link>
 
           {/* Clean, Bold White Hero Headline */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] mb-3 text-white drop-shadow-md">
-            Experience Sacred{' '}
-            <span 
-              key={currentMedia.name}
-              className="text-emerald-300 transition-colors duration-500 inline-block hero-content-animate"
-            >
-              {currentMedia.name}.
-            </span>
-          </h1>
+          <Link to={`/destinations/${currentMedia.slug}`} className="block group/head">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] mb-3 text-white drop-shadow-md">
+              Experience Sacred{' '}
+              <span 
+                key={currentMedia.name}
+                className="text-emerald-300 group-hover/head:underline decoration-emerald-400 underline-offset-8 transition-colors duration-500 inline-block hero-content-animate"
+              >
+                {currentMedia.name}.
+              </span>
+            </h1>
+          </Link>
 
           {/* Clean 1-Line Subtitle */}
           <p 
             key={currentMedia.subtitle}
-            className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-lg drop-shadow-xs hero-content-animate"
+            className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-lg drop-shadow-xs hero-content-animate mb-3.5"
           >
             {currentMedia.subtitle}
           </p>
+
+          {/* Direct Explore Destination Action Pill */}
+          <Link
+            to={`/destinations/${currentMedia.slug}`}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider backdrop-blur-md shadow-md transition-all active:scale-95"
+          >
+            <span>Explore {currentMedia.name}</span>
+            <ArrowRight size={13} />
+          </Link>
         </div>
 
         {/* ── Slideshow Indicator Dots ── */}
@@ -520,7 +535,12 @@ export default function HeroSection() {
           {slides.map((media, idx) => (
             <button
               key={idx}
-              onClick={() => setCurrentIndex(idx)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCurrentIndex(idx);
+              }}
               className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
                 idx === currentIndex
                   ? 'w-8 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]'
