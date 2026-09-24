@@ -278,15 +278,15 @@ const AuthModal = () => {
     try {
       let result;
       if (isLogin) {
-        result = await login({ email: form.email, password: form.password });
+        result = await login({ email: form.email.trim(), password: form.password.trim() });
       } else if (isPartner) {
         result = await registerPartnerAccount({
-          name: form.name, email: form.email, password: form.password,
-          phone: form.phone, businessName: form.businessName || form.name,
+          name: form.name.trim(), email: form.email.trim(), password: form.password.trim(),
+          phone: form.phone.trim(), businessName: form.businessName.trim() || form.name.trim(),
           partnerType: form.partnerType,
         });
       } else {
-        result = await register({ name: form.name, email: form.email, password: form.password });
+        result = await register({ name: form.name.trim(), email: form.email.trim(), password: form.password.trim() });
       }
 
       if (result?.success) {
@@ -309,6 +309,8 @@ const AuthModal = () => {
               : '/';
           navigate(safePath, { replace: true });
         }
+      } else {
+        setValidation(result?.message || 'Login failed. Please check your credentials.');
       }
     } finally {
       setLoading(false);

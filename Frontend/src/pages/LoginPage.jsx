@@ -123,14 +123,16 @@ export default function LoginPage() {
         }
       } else {
         res = await login({
-          email: identifier,
-          password,
+          email: identifier.trim(),
+          password: password.trim(),
         });
       }
 
       if (res?.success) {
         const dest = res.user?.role === 'partner' || isPartner ? '/partner' : redirectPath;
         navigate(dest);
+      } else {
+        setErrorMessage(res?.message || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
       setErrorMessage(err.message || 'Authentication failed. Please verify your credentials.');

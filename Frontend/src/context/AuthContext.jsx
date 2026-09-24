@@ -76,8 +76,9 @@ export const AuthProvider = ({ children }) => {
         }
         return { success: true, user: res.data, redirectTo: getPostLoginPath(res.data) };
       }
+      return { success: false, message: res.message || 'Login failed' };
     } catch (error) {
-      const msg = error.response?.data?.message || 'Login failed. Please try again.';
+      const msg = error.response?.data?.message || error.message || 'Login failed. Please try again.';
       setAuthError(msg);
       return { success: false, message: msg };
     }
