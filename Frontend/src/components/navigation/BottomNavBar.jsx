@@ -18,8 +18,8 @@ export default function BottomNavBar() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Hide on auth / specialized full-screen admin routes if needed
-  const hiddenRoutes = ['/login', '/register', '/admin'];
+  // Hide on auth / specialized full-screen pages
+  const hiddenRoutes = ['/login', '/register', '/admin', '/copilot'];
   const isHidden = hiddenRoutes.some(path => location.pathname.startsWith(path));
 
   if (isHidden) {

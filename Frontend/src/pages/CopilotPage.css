@@ -2,14 +2,17 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding-top: 104px; /* Comfortable offset for floating Navbar */
+  height: 100dvh;
+  padding-top: 0;
   background: var(--bg-primary, #ffffff);
   color: var(--text-primary, #1e293b);
+  overflow: hidden;
 }
 
 .copilot-layout {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   position: relative;
 }
@@ -468,12 +471,36 @@
     left: 0;
     top: 0;
     bottom: 0;
-    z-index: 10;
+    z-index: 30;
     transform: translateX(-100%);
   }
   .copilot-col-left.open {
     transform: translateX(0);
     box-shadow: 4px 0 16px rgba(0,0,0,0.1);
+  }
+  .chat-header {
+    padding: 8px 12px;
+  }
+  .chat-title-main {
+    font-size: 0.9rem;
+  }
+  .chat-title-sub {
+    display: none;
+  }
+  .chat-messages-container {
+    padding: 12px 10px;
+  }
+  .chat-input-area {
+    padding: 8px 10px 12px;
+  }
+  .chat-input-form {
+    padding: 5px 10px;
+    gap: 8px;
+  }
+  .suggestion-btns {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 16px;
   }
 }
 
