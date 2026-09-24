@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, X, Sparkles, Languages, Radio, RefreshCw, Loader2 } from 'lucide-react';
 import useChatStore from '../../store/chatStore';
 import { useMapStore } from '../../store/mapStore';
