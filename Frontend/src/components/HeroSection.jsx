@@ -422,13 +422,19 @@ export default function HeroSection() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      const cleanQuery = searchQuery.trim().toLowerCase().replace(/,\s*uttarakhand/i, '').replace(/,/g, '').trim();
       const match = POPULAR_DESTINATIONS.find(
-        (d) => d.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+        (d) => d.name.toLowerCase().includes(cleanQuery) || cleanQuery.includes(d.name.toLowerCase()) || d.slug === cleanQuery
       );
       if (match) {
         navigate(`/destinations/${match.slug}`);
       } else {
-        navigate(`/destinations/${encodeURIComponent(searchQuery.trim().toLowerCase().replace(/\s+/g, '-'))}`);
+        const params = new URLSearchParams({
+          destination: cleanQuery,
+          dates: season,
+          travelers: travelers
+        });
+        navigate(`/trip-planner?${params.toString()}`);
       }
     } else {
       navigate('/#explore');
