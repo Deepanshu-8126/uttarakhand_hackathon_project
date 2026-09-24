@@ -186,6 +186,7 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
 
     setSessions(prev => {
       const existingIdx = prev.findIndex(s => s.id === activeSessionId);
+      const firstUserMsg = messages.find(m => m.role === "user");
       const destName = typeof tripContext?.destination === 'string'
         ? tripContext.destination
         : (tripContext?.destination?.name || "Uttarakhand");
