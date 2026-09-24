@@ -416,7 +416,7 @@ export default function MapPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeLocation, setActiveLocation] = useState(null);
   const [flyCoords, setFlyCoords] = useState(null);
-  const [activeTile, setActiveTile] = useState('terrain'); // Default to Topographic
+  const [activeTile, setActiveTile] = useState('geoapify'); // Default to Geoapify HD
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchFocused, setSearchFocused] = useState(false);
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'altitude'
@@ -955,36 +955,25 @@ export default function MapPage() {
             </div>
           )}
 
-          {/* Top Left: Map Layer Switchers */}
+          {/* Top Left: Map Layer Switchers (Geoapify HD & Carto) */}
           <div className="absolute top-4 left-4 z-[400] flex items-center gap-1 bg-white/95 backdrop-blur-md rounded-xl p-1 shadow-md border border-slate-200/90 text-xs font-medium">
             <button
               type="button"
-              onClick={() => setActiveTile('terrain')}
-              className={`px-3 py-1 rounded-lg transition-all font-semibold ${
-                activeTile === 'terrain'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
+              onClick={() => setActiveTile('geoapify')}
+              className={`px-3 py-1 rounded-lg transition-all font-bold ${
+                activeTile === 'geoapify'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Topographic
+              Geoapify HD
             </button>
             <button
               type="button"
-              onClick={() => setActiveTile('satellite')}
-              className={`px-3 py-1 rounded-lg transition-all font-semibold ${
-                activeTile === 'satellite'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Satellite
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTile('map')}
-              className={`px-3 py-1 rounded-lg transition-all font-semibold ${
-                activeTile === 'map'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
+              onClick={() => setActiveTile('voyager')}
+              className={`px-3 py-1 rounded-lg transition-all font-bold ${
+                activeTile === 'voyager'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -992,14 +981,25 @@ export default function MapPage() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTile('dark')}
-              className={`px-3 py-1 rounded-lg transition-all font-semibold ${
-                activeTile === 'dark'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
+              onClick={() => setActiveTile('satellite')}
+              className={`px-3 py-1 rounded-lg transition-all font-bold ${
+                activeTile === 'satellite'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Dark
+              Satellite 3D
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTile('dark')}
+              className={`px-3 py-1 rounded-lg transition-all font-bold ${
+                activeTile === 'dark'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Night
             </button>
           </div>
 
