@@ -109,8 +109,10 @@ export default function Stays() {
 
       let matchBudget = true;
       const price = stay.price?.amount || stay.pricePerNight || (typeof stay.price === 'number' ? stay.price : 0);
-      if (maxBudget === 'Under ₹1,500') matchBudget = price > 0 && price <= 1500;
-      else if (maxBudget === 'Under ₹3,000') matchBudget = price > 0 && price <= 3000;
+      if (maxBudget === 'Under ₹800 (Budget Dorms)') matchBudget = price > 0 && price <= 800;
+      else if (maxBudget === 'Under ₹1,500 (Homestays)') matchBudget = price > 0 && price <= 1500;
+      else if (maxBudget === 'Under ₹3,000 (Comfort)') matchBudget = price > 0 && price <= 3000;
+      else if (maxBudget === '₹3,000+ (Luxury)') matchBudget = price >= 3000;
 
       let matchRating = true;
       const rate = stay.rating || 4.8;
@@ -317,9 +319,11 @@ export default function Stays() {
                 onChange={(e) => setMaxBudget(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl bg-[#fdfbf7] border border-[#1a4331]/10 text-xs text-[#1a4331] font-semibold focus:outline-hidden cursor-pointer"
               >
-                <option value="Any">Max Budget / Night: Any</option>
-                <option value="Under ₹1,500">Under ₹1,500</option>
-                <option value="Under ₹3,000">Under ₹3,000</option>
+                <option value="Any">Budget / Night: All Budgets</option>
+                <option value="Under ₹800 (Budget Dorms)">Under ₹800 (Budget Camps / Dorms)</option>
+                <option value="Under ₹1,500 (Homestays)">Under ₹1,500 (Pahadi Homestays)</option>
+                <option value="Under ₹3,000 (Comfort)">Under ₹3,000 (Comfort Stays)</option>
+                <option value="₹3,000+ (Luxury)">₹3,000+ (Luxury Resorts)</option>
               </select>
             </div>
 
