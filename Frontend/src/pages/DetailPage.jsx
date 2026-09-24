@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ReviewSection from '../components/ReviewSection';
-import { ArrowLeft, Star, MapPin, Calendar, Compass, Phone, ShieldCheck, ChevronRight, Mountain } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Calendar, Compass, Phone, ShieldCheck, ChevronRight, Mountain, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createBooking } from '../api/bookingApi';
 import { useMapStore } from '../store/mapStore';
@@ -94,14 +94,14 @@ const DetailPage = () => {
 
         if (!found) {
           let res;
-          if (category === 'rentals') res = await getRentals();
-          else if (category === 'stays') res = await getStays();
+          if (category === 'rentals' || category === 'rental') res = await getRentals();
+          else if (category === 'stays' || category === 'stay') res = await getStays();
           else if (category === 'spiritual') res = await getSpiritualPlaces();
           else if (category === 'culture') res = await getCulturePlaces();
-          else if (category === 'activities') res = await getActivities();
+          else if (category === 'activities' || category === 'activity') res = await getActivities();
 
-          if (res && res.success) {
-            found = res.data.find(i => i.slug === slug);
+          if (res && res.success && Array.isArray(res.data)) {
+            found = res.data.find(i => i.slug === slug || i._id === slug);
           }
         }
 

@@ -41,10 +41,16 @@ function App() {
           <FavoritesProvider>
             <CartProvider>
               <Router>
-                <AddToTripModal />
+                <ErrorBoundary fallback={null}>
+                  <AddToTripModal />
+                </ErrorBoundary>
                 <GlobalToast />
-                <GlobalAiCopilotLauncher />
-                <BottomNavBar />
+                <ErrorBoundary fallback={null}>
+                  <GlobalAiCopilotLauncher />
+                </ErrorBoundary>
+                <ErrorBoundary fallback={null}>
+                  <BottomNavBar />
+                </ErrorBoundary>
                 <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<LoginPage />} />
