@@ -59,10 +59,6 @@ import { getStays } from '../api/stayApi';
 import { getRentals } from '../api/rentalApi';
 import { placesApi } from '../api/placesApi';
 import { useMapStore } from '../store/mapStore';
-import HimalayanTransitCorridors, {
-  HimalayanCorridorsLayer,
-  HIMALAYAN_CORRIDORS,
-} from '../components/map/HimalayanTransitCorridors';
 import {
   TILE_PRESETS,
   MAP_CENTER,
@@ -430,19 +426,6 @@ export default function MapPage() {
     safetyGrid: false,
   });
   const [safetyPanelOpen, setSafetyPanelOpen] = useState(false);
-
-  // Himalayan Transit Corridors State (YoMetro Style)
-  const [activeCorridorId, setActiveCorridorId] = useState(null);
-
-  const handleFlyToCorridor = useCallback((corridorId) => {
-    if (!corridorId) return;
-    const corridor = HIMALAYAN_CORRIDORS[corridorId];
-    if (corridor && corridor.stations.length > 0) {
-      const midIdx = Math.floor(corridor.stations.length / 2);
-      const centerCoords = corridor.stations[midIdx]?.coords || corridor.polyline[0];
-      setFlyCoords(centerCoords);
-    }
-  }, []);
 
   const { addTripDestination, tripDestinations, removeTripDestination } = useMapStore();
   const tripIds = useMemo(
@@ -900,16 +883,6 @@ export default function MapPage() {
               </span>
             </button>
 
-            {/* Divider */}
-            <div className="h-5 w-px bg-stone-300 shrink-0 mx-1" />
-
-            {/* Himalayan Transit Corridors & YoMetro Route Finder */}
-            <HimalayanTransitCorridors
-              activeCorridorId={activeCorridorId}
-              onSelectCorridor={setActiveCorridorId}
-              onFlyToCorridor={handleFlyToCorridor}
-            />
-
           </div>
 
           {/* Right Count Indicator, Partner Hub CTA & Sidebar Toggle */}
@@ -1099,9 +1072,6 @@ export default function MapPage() {
             />
 
             <MapResizerAndFlyTo coords={flyCoords} selectedTile={activeTile} />
-
-            {/* ── 0. Himalayan Transit Corridors & Subway Stations Layer (YoMetro Style) ── */}
-            <HimalayanCorridorsLayer activeCorridorId={activeCorridorId} />
 
             {/* Bottom-Left Navigation Tools inside Leaflet Context */}
             <div className="absolute bottom-20 left-4 z-[400]">
