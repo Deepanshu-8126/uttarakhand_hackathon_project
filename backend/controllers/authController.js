@@ -60,11 +60,16 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    const cleanEmail = email ? email.trim() : '';
+    const cleanPassword = password ? password.trim() : '';
+
+    if (!cleanEmail || !cleanPassword) {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+    });
 
     if (user && (await user.matchPassword(password))) {
       res.json({
