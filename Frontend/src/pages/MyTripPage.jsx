@@ -265,9 +265,12 @@ export default function MyTripPage() {
   useEffect(() => {
     if (session && dest && Array.isArray(session.dayPlans) && session.dayPlans.length > 0) {
       const firstDay = session.dayPlans[0];
-      const hasLegacyGateway = firstDay?.where?.includes('Gateway') || 
-                              firstDay?.stay?.location?.includes('Gateway') ||
-                              firstDay?.stay?.name?.includes('Corbett');
+      const whereStr = typeof firstDay?.where === 'string' ? firstDay.where : (firstDay?.where?.name || '');
+      const stayLocStr = typeof firstDay?.stay?.location === 'string' ? firstDay.stay.location : (firstDay?.stay?.location?.name || firstDay?.stay?.location?.address || '');
+      const stayNameStr = typeof firstDay?.stay?.name === 'string' ? firstDay.stay.name : '';
+      const hasLegacyGateway = whereStr.includes('Gateway') || 
+                              stayLocStr.includes('Gateway') ||
+                              stayNameStr.includes('Corbett');
       if (hasLegacyGateway) {
         const upgradedPlans = generatePersonalizedTripPlan({
           startingLocation: session.startingLocation || { name: 'Delhi' },
@@ -347,10 +350,11 @@ export default function MyTripPage() {
   const displayRentals = useMemo(() => {
     if (!allRentals || allRentals.length === 0) return [];
     const district = dest?.district?.toLowerCase() || '';
-    const matches = allRentals.filter(r => 
-      (r.city && r.city.toLowerCase().includes(district)) ||
-      (r.location && r.location.toLowerCase().includes(district))
-    );
+    const matches = allRentals.filter(r => {
+      const rCity = typeof r.city === 'string' ? r.city.toLowerCase() : '';
+      const rLoc = typeof r.location === 'string' ? r.location.toLowerCase() : (r.location?.name?.toLowerCase() || '');
+      return district && (rCity.includes(district) || rLoc.includes(district));
+    });
     return (matches.length > 0 ? matches : allRentals).slice(0, 3);
   }, [allRentals, dest]);
 
@@ -365,10 +369,11 @@ export default function MyTripPage() {
       })).slice(0, 3);
     }
     const district = dest?.district?.toLowerCase() || '';
-    const matches = (guides || []).filter(g => 
-      g.location?.toLowerCase().includes(district) ||
-      g.district?.toLowerCase().includes(district)
-    );
+    const matches = (guides || []).filter(g => {
+      const gLoc = typeof g.location === 'string' ? g.location.toLowerCase() : (g.location?.name?.toLowerCase() || '');
+      const gDist = typeof g.district === 'string' ? g.district.toLowerCase() : '';
+      return district && (gLoc.includes(district) || gDist.includes(district));
+    });
     return (matches.length > 0 ? matches : guides).slice(0, 3);
   }, [engineRecs.guides, guides, dest]);
 
