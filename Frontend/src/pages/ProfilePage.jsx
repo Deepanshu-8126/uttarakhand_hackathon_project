@@ -297,52 +297,52 @@ const ProfilePage = () => {
     (typeof currentUser?.profileImage === 'string' ? currentUser?.profileImage : null);
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] pt-28 md:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#faf9f6] pt-4 sm:pt-6 pb-28 sm:pb-16 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* ── Top Header ──────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border-light/80">
+        {/* ── Top Sleek Header ──────────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 pb-4 border-b border-border-light/80">
           <div>
-            <div className="flex flex-wrap items-center gap-3 mb-2.5">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <button
                 onClick={() => navigate('/')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 hover:text-forest-green font-bold text-xs sm:text-sm border border-slate-200/80 shadow-xs transition-all duration-200 group cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-slate-50 text-slate-800 hover:text-forest-green font-bold text-xs border border-slate-200/80 shadow-2xs transition-all duration-200 group cursor-pointer"
               >
-                <ChevronLeft size={16} className="text-forest-green group-hover:-translate-x-0.5 transition-transform" />
+                <ChevronLeft size={14} className="text-forest-green group-hover:-translate-x-0.5 transition-transform" />
                 <span>Back to Home</span>
               </button>
-              <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-forest-green bg-forest-green/10 px-3 py-1 rounded-full border border-forest-green/20">
+              <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-forest-green bg-forest-green/10 px-2.5 py-0.5 rounded-full border border-forest-green/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-forest-green animate-pulse"></span>
                 Discovery Uttarakhand
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight font-display">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight font-display">
               My Travel Profile
             </h1>
-            <p className="text-slate-600 text-sm sm:text-base font-medium mt-1">
+            <p className="text-slate-600 text-xs sm:text-sm font-medium mt-0.5">
               Plan your journeys, save places and manage your personal trips in Uttarakhand.
             </p>
           </div>
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl transition-all duration-200 border border-rose-200/70 text-xs uppercase tracking-wider shadow-sm hover:shadow cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl transition-all duration-200 border border-rose-200/70 text-xs uppercase tracking-wider shadow-2xs hover:shadow cursor-pointer"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             <span>Logout</span>
           </button>
         </div>
 
         {/* ── Main Layout: Profile Sidebar + Tabs Panel ───────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: User Profile Card (4 cols) */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="bg-white rounded-3xl p-6 md:p-8 card-shadow border border-border-light/60 flex flex-col items-center text-center relative overflow-hidden">
+          <div className="lg:col-span-4 flex flex-col gap-5">
+            <div className="bg-white rounded-2xl p-5 md:p-6 card-shadow border border-border-light/60 flex flex-col items-center text-center relative overflow-hidden">
               {/* Subtle decorative background accent */}
-              <div className="absolute -top-16 -right-16 w-36 h-36 bg-beige/50 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -top-12 -right-12 w-28 h-28 bg-beige/50 rounded-full blur-xl pointer-events-none" />
 
               {/* Avatar */}
-              <div className="relative mb-5 group">
-                <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-br from-forest-green to-dark-green flex items-center justify-center text-white text-3xl font-black font-display select-none">
+              <div className="relative mb-3 group">
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden border-3 border-white shadow-md bg-gradient-to-br from-forest-green to-dark-green flex items-center justify-center text-white text-2xl font-black font-display select-none">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -358,58 +358,58 @@ const ProfilePage = () => {
                 </div>
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="absolute bottom-1 right-1 p-2 bg-white text-text-dark hover:text-forest-green rounded-full shadow-md border border-border-light transition-colors"
+                  className="absolute bottom-0 right-0 p-1.5 bg-white text-text-dark hover:text-forest-green rounded-full shadow-md border border-border-light transition-colors cursor-pointer"
                   title="Edit Avatar"
                   aria-label="Edit Avatar"
                 >
-                  <Camera size={14} />
+                  <Camera size={13} />
                 </button>
               </div>
 
               {/* Name & Role */}
-              <h2 className="text-xl font-black text-text-dark uppercase tracking-wide leading-tight mb-1 font-display">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-wide leading-tight mb-0.5 font-display">
                 {currentUser?.name || 'Uttarakhand Traveler'}
               </h2>
-              <p className="text-xs text-muted-text font-medium break-all mb-3">
+              <p className="text-xs text-slate-500 font-medium break-all mb-2.5">
                 {currentUser?.email}
               </p>
 
-              <div className="flex items-center gap-1.5 mb-5">
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-forest-green/10 text-forest-green text-[11px] font-black uppercase tracking-wider rounded-full border border-forest-green/20">
-                  <ShieldCheck size={13} />
+              <div className="flex items-center gap-1.5 mb-4">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-forest-green/10 text-forest-green text-[10px] font-black uppercase tracking-wider rounded-full border border-forest-green/20">
+                  <ShieldCheck size={12} />
                   {currentUser?.role === 'admin' ? 'Administrator' : 'Traveler'}
                 </span>
                 {currentUser?.location && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-beige text-text-dark text-[11px] font-bold rounded-full border border-border-light">
-                    <MapPin size={11} className="text-earth-brown" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-beige text-text-dark text-[10px] font-bold rounded-full border border-border-light">
+                    <MapPin size={10} className="text-earth-brown" />
                     {currentUser.location}
                   </span>
                 )}
               </div>
 
               {/* Real Stats Counters */}
-              <div className="w-full grid grid-cols-3 gap-2 py-4 px-2 my-2 bg-[#faf9f6] rounded-2xl border border-border-light/60">
+              <div className="w-full grid grid-cols-3 gap-1.5 py-3 px-2 my-1 bg-[#faf9f6] rounded-xl border border-border-light/60">
                 <div className="flex flex-col items-center">
-                  <span className="text-xl font-black text-forest-green tabular-nums font-display">
+                  <span className="text-lg font-black text-forest-green tabular-nums font-display">
                     {favoriteCount}
                   </span>
-                  <span className="text-[11px] font-bold text-muted-text uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-muted-text uppercase tracking-wider">
                     Saved
                   </span>
                 </div>
                 <div className="flex flex-col items-center border-x border-border-light/80">
-                  <span className="text-xl font-black text-forest-green tabular-nums font-display">
+                  <span className="text-lg font-black text-forest-green tabular-nums font-display">
                     {trips.length}
                   </span>
-                  <span className="text-[11px] font-bold text-muted-text uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-muted-text uppercase tracking-wider">
                     Trips
                   </span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-xl font-black text-forest-green tabular-nums font-display">
+                  <span className="text-lg font-black text-forest-green tabular-nums font-display">
                     {reviews.length}
                   </span>
-                  <span className="text-[11px] font-bold text-muted-text uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-muted-text uppercase tracking-wider">
                     Reviews
                   </span>
                 </div>
@@ -418,31 +418,31 @@ const ProfilePage = () => {
               {/* Edit Profile Button */}
               <button
                 onClick={() => setShowEditModal(true)}
-                className="w-full mt-4 py-2.5 px-4 bg-white hover:bg-beige/40 text-forest-green hover:text-dark-green font-bold text-xs uppercase tracking-wider rounded-xl border border-forest-green/30 hover:border-forest-green transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+                className="w-full mt-3 py-2 px-3 bg-white hover:bg-beige/40 text-forest-green hover:text-dark-green font-bold text-xs uppercase tracking-wider rounded-xl border border-forest-green/30 hover:border-forest-green transition-all duration-200 flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-98"
               >
-                <Edit2 size={14} />
+                <Edit2 size={13} />
                 <span>Edit Profile</span>
               </button>
             </div>
 
             {/* Quick Trip Planner Banner */}
-            <div className="bg-gradient-to-br from-forest-green to-dark-green text-white rounded-3xl p-6 card-shadow flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-forest-green to-dark-green text-white rounded-2xl p-5 card-shadow flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-black tracking-widest uppercase text-white/70 bg-white/10 px-2 py-0.5 rounded-full inline-block mb-3">
+                <span className="text-[9px] font-black tracking-widest uppercase text-white/80 bg-white/10 px-2 py-0.5 rounded-full inline-block mb-2">
                   Interactive Route Tool
                 </span>
-                <h3 className="text-lg font-black font-display leading-snug mb-2">
+                <h3 className="text-base font-black font-display leading-snug mb-1.5">
                   Plan Your Uttarakhand Journey
                 </h3>
-                <p className="text-xs text-white/80 leading-relaxed mb-4">
+                <p className="text-xs text-white/80 leading-relaxed mb-3.5">
                   Add saved destinations to your route and visualize scenic driving times through the Himalayas.
                 </p>
               </div>
               <Link
                 to="/trip-planner"
-                className="inline-flex items-center justify-center gap-2 bg-white text-forest-green hover:bg-beige font-black text-xs uppercase tracking-wider py-2.5 px-4 rounded-xl transition-all duration-200 shadow-sm"
+                className="inline-flex items-center justify-center gap-1.5 bg-white text-forest-green hover:bg-beige font-black text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition-all duration-200 shadow-2xs cursor-pointer"
               >
-                <Compass size={14} />
+                <Compass size={13} />
                 <span>Open Trip Planner</span>
               </Link>
             </div>
