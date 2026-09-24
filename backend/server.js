@@ -35,6 +35,7 @@ import chatRoutes from './routes/chatRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import truthRoutes from './routes/truthRoutes.js';
 import safetyRoutes from './routes/safetyRoutes.js';
+import placesRoutes from './routes/placesRoutes.js';
 import internalAgentRoutes from './routes/internalAgentRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
@@ -137,6 +138,7 @@ app.use('/api/chats', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/truth', truthRoutes);
 app.use('/api/safety', safetyRoutes);
+app.use('/api/places', placesRoutes);
 app.use('/internal/agent', internalAgentRoutes);
 
 // Liveness & Application Health Check

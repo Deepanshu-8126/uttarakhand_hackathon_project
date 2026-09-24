@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import DestinationMap from '../components/DestinationMap';
+import GooglePlacesRadarWidget from '../components/GooglePlacesRadarWidget';
 import FloatingTripBasket from '../components/planner/FloatingTripBasket';
 import { getDestinationBySlug, getDestinationRelated } from '../api/destinationApi';
 import { normalizeDiscoveryCandidate } from '../utils/discoveryAdapter';
@@ -860,6 +861,15 @@ export default function DestinationDetails() {
                 </div>
               </div>
             )}
+
+            {/* Google Places Live Visuals & Hidden Dhabas Radar */}
+            <GooglePlacesRadarWidget 
+              locationName={destination.name}
+              coordinates={{
+                lat: destination.coordinates?.lat || destination.location?.coordinates?.[1] || 30.0667,
+                lng: destination.coordinates?.lng || destination.location?.coordinates?.[0] || 79.0193
+              }}
+            />
 
           </div>
 

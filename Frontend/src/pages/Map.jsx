@@ -55,6 +55,7 @@ import { getDestinations } from '../api/destinationApi';
 import { getSpiritualPlaces } from '../api/spiritualApi';
 import { getActivities } from '../api/activityApi';
 import { getStays } from '../api/stayApi';
+import { placesApi } from '../api/placesApi';
 import { useMapStore } from '../store/mapStore';
 import {
   TILE_PRESETS,
@@ -109,6 +110,14 @@ const CATEGORY_STYLES = {
     text: 'text-[#0f3d2e]',
     badgeText: '🏡 PARTNER STAY',
     iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3h6v4H9z"/></svg>`,
+  },
+  radar: {
+    color: '#059669',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-300',
+    text: 'text-emerald-800',
+    badgeText: '🌟 GOOGLE RADAR',
+    iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
   },
 };
 
@@ -446,11 +455,12 @@ export default function MapPage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [destRes, spirRes, actRes, stayRes] = await Promise.allSettled([
+        const [destRes, spirRes, actRes, stayRes, placesRes] = await Promise.allSettled([
           getDestinations(),
           getSpiritualPlaces(),
           getActivities(),
           getStays(),
+          placesApi.getNearbyPlaces({ lat: 30.0667, lng: 79.0193, radius: 50000 })
         ]);
 
         const all = [];
@@ -488,6 +498,35 @@ export default function MapPage() {
           arr.forEach((st) => {
             const n = normaliseRecord(st, 'stay', '/stays', (r) => r.category || 'Stay');
             if (n) all.push(n);
+          });
+        }
+
+        if (placesRes.status === 'fulfilled') {
+          const arr = Array.isArray(placesRes.value?.data) ? placesRes.value.data : [];
+          arr.forEach((p, idx) => {
+            if (p.location?.lat && p.location?.lng) {
+              all.push({
+                id: p.place_id || `radar-gem-${idx}`,
+                name: p.name,
+                slug: `radar-${p.place_id || idx}`,
+                type: 'radar',
+                category: 'radar',
+                categoryLabel: p.is_hidden_gem ? 'Hidden Gem' : 'Google Radar',
+                badgeText: p.is_hidden_gem ? 'Hidden Gem' : 'Google Radar',
+                district: p.vicinity || 'Uttarakhand',
+                region: 'Himalayan Radar',
+                coordinates: [p.location.lat, p.location.lng],
+                altitude: '2,200m',
+                altitudeNum: 2200,
+                image: p.photo_urls?.[0] || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
+                description: p.highlight || p.vicinity || 'Verified Google Places spot in Uttarakhand.',
+                link: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.name} ${p.vicinity}`)}`,
+                isExternal: true,
+                rating: p.rating || 4.8,
+                user_ratings_total: p.user_ratings_total || 50,
+                _raw: p
+              });
+            }
           });
         }
 
@@ -537,7 +576,7 @@ export default function MapPage() {
 
   // Category counts
   const categoryCounts = useMemo(() => {
-    const counts = { All: locations.length, destination: 0, spiritual: 0, activity: 0, stay: 0 };
+    const counts = { All: locations.length, destination: 0, spiritual: 0, activity: 0, stay: 0, radar: 0 };
     locations.forEach((l) => {
       if (counts[l.type] !== undefined) counts[l.type]++;
     });
@@ -787,6 +826,23 @@ export default function MapPage() {
               </span>
               <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-200/60 text-[#0f3d2e]">
                 0% Host
+              </span>
+            </button>
+
+            {/* Category Filter Chip: Google Places Live Radar */}
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('radar')}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                selectedCategory === 'radar'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs ring-2 ring-emerald-400/50'
+                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
+              }`}
+            >
+              <Sparkles size={13} className={selectedCategory === 'radar' ? 'text-emerald-300' : 'text-emerald-600'} />
+              <span>Google Places Radar</span>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'radar' ? 'text-emerald-200' : 'text-stone-400'}`}>
+                {categoryCounts.radar || 0}
               </span>
             </button>
 
@@ -1137,12 +1193,24 @@ export default function MapPage() {
                         </div>
 
                         <div className="flex items-center gap-1.5 pt-2 border-t border-stone-200">
-                          <Link
-                            to={loc.link}
-                            className="flex-1 bg-[#0f3d2e] hover:bg-[#15533f] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors"
-                          >
-                            {loc.type === 'stay' ? 'Book Direct →' : 'Explore →'}
-                          </Link>
+                          {loc.isExternal ? (
+                            <a
+                              href={loc.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 bg-[#0f3d2e] hover:bg-[#15533f] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors inline-flex items-center justify-center gap-1"
+                            >
+                              <span>Google Maps</span>
+                              <ExternalLink size={11} />
+                            </a>
+                          ) : (
+                            <Link
+                              to={loc.link}
+                              className="flex-1 bg-[#0f3d2e] hover:bg-[#15533f] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors"
+                            >
+                              {loc.type === 'stay' ? 'Book Direct →' : 'Explore →'}
+                            </Link>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleToggleTrip(loc)}
