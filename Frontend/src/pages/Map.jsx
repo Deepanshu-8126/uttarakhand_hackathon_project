@@ -50,11 +50,13 @@ import {
   Home,
   Briefcase,
   ExternalLink,
+  Car,
 } from 'lucide-react';
 import { getDestinations } from '../api/destinationApi';
 import { getSpiritualPlaces } from '../api/spiritualApi';
 import { getActivities } from '../api/activityApi';
 import { getStays } from '../api/stayApi';
+import { getRentals } from '../api/rentalApi';
 import { placesApi } from '../api/placesApi';
 import { useMapStore } from '../store/mapStore';
 import {
@@ -118,6 +120,14 @@ const CATEGORY_STYLES = {
     text: 'text-emerald-800',
     badgeText: '🌟 GOOGLE RADAR',
     iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  },
+  rental: {
+    color: '#0284c7',
+    bg: 'bg-sky-50',
+    border: 'border-sky-300',
+    text: 'text-sky-800',
+    badgeText: '🚗 VEHICLE FLEET',
+    iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>`,
   },
 };
 
@@ -455,11 +465,12 @@ export default function MapPage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [destRes, spirRes, actRes, stayRes, placesRes] = await Promise.allSettled([
+        const [destRes, spirRes, actRes, stayRes, rentalRes, placesRes] = await Promise.allSettled([
           getDestinations(),
           getSpiritualPlaces(),
           getActivities(),
           getStays(),
+          getRentals(),
           placesApi.getNearbyPlaces({ lat: 30.0667, lng: 79.0193, radius: 50000 })
         ]);
 
@@ -497,6 +508,15 @@ export default function MapPage() {
                     : Array.isArray(stayRes.value) ? stayRes.value : [];
           arr.forEach((st) => {
             const n = normaliseRecord(st, 'stay', '/stays', (r) => r.category || 'Stay');
+            if (n) all.push(n);
+          });
+        }
+
+        if (rentalRes.status === 'fulfilled') {
+          const arr = Array.isArray(rentalRes.value?.data) ? rentalRes.value.data
+                    : Array.isArray(rentalRes.value) ? rentalRes.value : [];
+          arr.forEach((rt) => {
+            const n = normaliseRecord(rt, 'rental', '/rentals', (r) => r.type || 'Vehicle Rental');
             if (n) all.push(n);
           });
         }
@@ -576,7 +596,7 @@ export default function MapPage() {
 
   // Category counts
   const categoryCounts = useMemo(() => {
-    const counts = { All: locations.length, destination: 0, spiritual: 0, activity: 0, stay: 0, radar: 0 };
+    const counts = { All: locations.length, destination: 0, spiritual: 0, activity: 0, stay: 0, rental: 0, radar: 0 };
     locations.forEach((l) => {
       if (counts[l.type] !== undefined) counts[l.type]++;
     });
@@ -822,10 +842,27 @@ export default function MapPage() {
               <Hotel size={13} className={selectedCategory === 'stay' ? 'text-emerald-300' : 'text-[#0f3d2e]'} />
               <span>Partner Stays</span>
               <span className={`text-[11px] font-semibold ${selectedCategory === 'stay' ? 'text-emerald-200' : 'text-[#0f3d2e]'}`}>
-                {categoryCounts.stay}
+                {categoryCounts.stay || 0}
               </span>
               <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-200/60 text-[#0f3d2e]">
                 0% Host
+              </span>
+            </button>
+
+            {/* Category Filter Chip: Rentals & Vehicle Fleets */}
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('rental')}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                selectedCategory === 'rental'
+                  ? 'bg-sky-700 text-white shadow-xs ring-2 ring-sky-400/50'
+                  : 'bg-sky-50/70 hover:bg-sky-100 text-sky-800 border border-sky-200'
+              }`}
+            >
+              <Car size={13} className={selectedCategory === 'rental' ? 'text-sky-200' : 'text-sky-600'} />
+              <span>Rentals & Fleets</span>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'rental' ? 'text-sky-200' : 'text-sky-700'}`}>
+                {categoryCounts.rental || 0}
               </span>
             </button>
 
