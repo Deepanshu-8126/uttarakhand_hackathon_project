@@ -84,59 +84,16 @@ export const LanguageProvider = ({ children }) => {
     }
   });
 
-  const applyGoogleTranslate = (targetLang) => {
-    try {
-      const host = window.location.hostname;
-      const domainParts = host.split('.');
-      const topDomain = domainParts.length > 1 ? `.${domainParts.slice(-2).join('.')}` : host;
-
-      if (targetLang === 'hi') {
-        document.cookie = `googtrans=/en/hi; path=/;`;
-        document.cookie = `googtrans=/en/hi; domain=${host}; path=/;`;
-        if (topDomain !== host) {
-          document.cookie = `googtrans=/en/hi; domain=${topDomain}; path=/;`;
-        }
-      } else {
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${host}; path=/;`;
-        if (topDomain !== host) {
-          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${topDomain}; path=/;`;
-        }
-      }
-
-      // Safely check for Google combo without reloading the whole browser
-      const select = document.querySelector('.goog-te-combo');
-      if (select && select.value !== targetLang) {
-        select.value = targetLang;
-        select.dispatchEvent(new Event('change'));
-      }
-    } catch (err) {
-      console.warn('Translate sync error:', err);
-    }
-  };
-
   useEffect(() => {
     try {
       localStorage.setItem('discovery_lang', lang);
-      applyGoogleTranslate(lang);
     } catch (e) {
       console.warn('Language persistence error:', e);
     }
   }, [lang]);
 
   const toggleLanguage = () => {
-    const nextLang = lang === 'en' ? 'hi' : 'en';
-    setLang(nextLang);
-    applyGoogleTranslate(nextLang);
-
-    // If switching back to English, reset Google Translate combo
-    setTimeout(() => {
-      const select = document.querySelector('.goog-te-combo');
-      if (select) {
-        select.value = nextLang;
-        select.dispatchEvent(new Event('change'));
-      }
-    }, 100);
+    setLang((prev) => (prev === 'en' ? 'hi' : 'en'));
   };
 
   const t = (key) => {
@@ -162,5 +119,6 @@ export const useLanguage = () => {
   }
   return context;
 };
+
 
 
