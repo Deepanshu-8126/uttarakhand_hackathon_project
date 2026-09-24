@@ -45,6 +45,12 @@ const PHOTO_POOLS = {
   spiritual: [
     'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1600100397608-f010f443a6d7?auto=format&fit=crop&w=1000&q=80'
+  ],
+  rental: [
+    'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80', // Himalayan Adventure
+    'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=80', // Classic 350
+    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80', // Thar 4x4
+    'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80'  // Mountain Cruiser Sedan
   ]
 };
 
@@ -267,11 +273,12 @@ class GooglePlacesService {
     const lat = coords[1];
 
     const cats = Array.isArray(p.categories) ? p.categories : [];
+    const isRental = cats.some(c => c.includes('rental') || c.includes('vehicle') || c.includes('bicycle')) || /rental|bike|car|taxi|scooter|wheels/i.test(p.name || '');
     const isFood = cats.some(c => c.includes('catering') || c.includes('restaurant'));
     const isStay = cats.some(c => c.includes('accommodation') || c.includes('hotel'));
     const isViewpoint = cats.some(c => c.includes('mountain') || c.includes('natural') || c.includes('sights'));
 
-    const photoPool = isFood ? PHOTO_POOLS.dhaba : isStay ? PHOTO_POOLS.stay : PHOTO_POOLS.viewpoint;
+    const photoPool = isRental ? PHOTO_POOLS.rental : isFood ? PHOTO_POOLS.dhaba : isStay ? PHOTO_POOLS.stay : PHOTO_POOLS.viewpoint;
     const photoUrl = photoPool[index % photoPool.length];
 
     const isHidden = isViewpoint || (p.distance && p.distance < 8000) || /waterfall|bugyal|peak|cave|pass|ghat|dhaba/i.test(p.name || '');
