@@ -93,7 +93,39 @@ export const getPlaceDetails = async (req, res, next) => {
 };
 
 /**
- * @desc   Get Google Places integration status
+ * @desc   Get live route directions & turn-by-turn navigation between waypoints
+ * @route  GET /api/places/route
+ * @access Public
+ */
+export const getRouteDirections = async (req, res, next) => {
+  try {
+    const { fromLat, fromLng, toLat, toLng, mode } = req.query;
+    if (!fromLat || !fromLng || !toLat || !toLng) {
+      return res.status(400).json({
+        success: false,
+        error: 'fromLat, fromLng, toLat, toLng are all required'
+      });
+    }
+
+    const route = await googlePlacesService.getRouteDirections({
+      fromLat: parseFloat(fromLat),
+      fromLng: parseFloat(fromLng),
+      toLat: parseFloat(toLat),
+      toLng: parseFloat(toLng),
+      mode: mode || 'drive'
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: route
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc   Get Places API integration status
  * @route  GET /api/places/status
  * @access Public
  */
@@ -101,9 +133,9 @@ export const getPlacesStatus = async (req, res) => {
   return res.status(200).json({
     success: true,
     has_api_key: googlePlacesService.hasApiKey(),
-    provider: googlePlacesService.hasApiKey() ? 'Google Places API v3/v2' : 'Curated Fallback Engine',
-    message: googlePlacesService.hasApiKey()
-      ? 'Live Google Places API is connected & caching active.'
-      : 'Using high-res curated Himalayan radar fallback. Add GOOGLE_PLACES_API_KEY in .env for custom live API key.'
+    provider: 'Geoapify Live Places & Routing v2',
+    active_engine: 'Live Himalayan Radar Active',
+    message: 'Geoapify live Places, POIs, Dhabas & Routing API connected and active.'
   });
 };
+

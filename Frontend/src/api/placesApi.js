@@ -33,6 +33,13 @@ export const placesApi = {
   getStatus: async () => {
     const res = await api.get('/places/status');
     return res.data;
+  },
+
+  // Get live turn-by-turn route directions
+  getRouteDirections: async ({ fromLat, fromLng, toLat, toLng, mode = 'drive' }) => {
+    const params = { fromLat, fromLng, toLat, toLng, mode };
+    const res = await api.get('/places/route', { params });
+    return res.data;
   }
 };
 

@@ -3,6 +3,7 @@ import {
   searchPlaces,
   getNearbyPlaces,
   getPlaceDetails,
+  getRouteDirections,
   getPlacesStatus
 } from '../controllers/placesController.js';
 
@@ -13,5 +14,6 @@ router.get('/status', getPlacesStatus);
 router.get('/search', searchPlaces);
 router.get('/nearby', getNearbyPlaces);
 router.get('/details', getPlaceDetails);
+router.get('/route', getRouteDirections);
 
 export default router;
