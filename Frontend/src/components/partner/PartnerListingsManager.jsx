@@ -165,46 +165,83 @@ export default function PartnerListingsManager() {
   // Not a partner yet: Show Partner Onboarding CTA
   if (!partner) {
     return (
-      <div className="bg-white rounded-3xl p-8 border border-border-light text-center max-w-xl mx-auto my-6">
-        <div className="w-12 h-12 rounded-2xl bg-forest-green/10 text-forest-green flex items-center justify-center mx-auto mb-3">
-          <Building size={24} />
+      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-stone-200/90 text-center max-w-2xl mx-auto my-4 shadow-sm shadow-emerald-950/5">
+        <div className="w-14 h-14 rounded-2xl bg-[#0f3d2e] text-white flex items-center justify-center mx-auto mb-4 shadow-sm">
+          <Building size={28} className="text-emerald-400" />
         </div>
-        <h3 className="font-display font-black text-xl text-text-dark mb-2">
+        
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100/80 text-emerald-900 border border-emerald-200 mb-2">
+          <Sparkles size={12} className="text-emerald-700" /> Direct Host & Partner Network
+        </span>
+
+        <h3 className="font-display font-black text-2xl text-slate-900 mb-2.5">
           Become a Discovery Uttarakhand Partner
         </h3>
-        <p className="text-xs text-muted-text leading-relaxed mb-6">
-          List your authentic Kumaoni or Garhwali homestay, licensed mountain guide services, or registered taxi rental with transparent administrative verification.
+        
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6 max-w-lg mx-auto">
+          List your authentic Himalayan homestay, registered taxi &amp; rental fleet, or certified mountain guide services. Enjoy <strong className="text-[#0f3d2e]">0% platform commission</strong> and direct payments with administrative escrow security.
         </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left mb-8">
+          <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80">
+            <span className="text-base block mb-1">🏡</span>
+            <div className="font-bold text-xs text-slate-900">Homestays &amp; Lodges</div>
+            <p className="text-[11px] text-slate-500 mt-0.5">Direct bookings from pilgrims &amp; trekkers</p>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80">
+            <span className="text-base block mb-1">🚗</span>
+            <div className="font-bold text-xs text-slate-900">Taxi &amp; 4x4 Fleet</div>
+            <p className="text-[11px] text-slate-500 mt-0.5">Himalayan road-trip &amp; Yatra car rentals</p>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80">
+            <span className="text-base block mb-1">🧭</span>
+            <div className="font-bold text-xs text-slate-900">Licensed Guides</div>
+            <p className="text-[11px] text-slate-500 mt-0.5">High-altitude expedition expeditions</p>
+          </div>
+        </div>
+
         <button
+          type="button"
           onClick={() => setShowApplyModal(true)}
-          className="btn-primary text-xs py-2.5 px-6 rounded-xl inline-flex items-center gap-2"
+          className="bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold text-xs sm:text-sm py-3 px-8 rounded-xl inline-flex items-center gap-2 shadow-sm transition active:scale-98 cursor-pointer"
         >
-          <Sparkles size={14} /> Register as Partner
+          <Sparkles size={16} className="text-emerald-400" />
+          <span>Register Business Partner Account</span>
         </button>
 
         {/* Onboarding Modal */}
         {showApplyModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 text-left shadow-xl border border-border-light">
-              <h3 className="font-black text-lg text-text-dark mb-3">Partner Registration</h3>
-              <form onSubmit={handleApplyPartner} className="space-y-3 text-xs">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 text-left shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
+                <h3 className="font-black text-lg text-slate-900">Partner Registration</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowApplyModal(false)}
+                  className="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleApplyPartner} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-muted-text mb-1">Business / Host Name</label>
+                  <label className="block font-bold text-slate-700 mb-1">Business / Host Name</label>
                   <input
                     type="text"
                     required
                     value={partnerForm.businessName}
                     onChange={(e) => setPartnerForm({ ...partnerForm, businessName: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
                     placeholder="e.g. Nanda Devi Eco Homestay"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-muted-text mb-1">Partner Type</label>
+                  <label className="block font-bold text-slate-700 mb-1">Partner Type</label>
                   <select
                     value={partnerForm.partnerType}
                     onChange={(e) => setPartnerForm({ ...partnerForm, partnerType: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none cursor-pointer"
                   >
                     <option value="Homestay">Homestay Host</option>
                     <option value="Hotel">Hotel / Lodge</option>
@@ -216,53 +253,53 @@ export default function PartnerListingsManager() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block font-bold text-muted-text mb-1">Phone</label>
+                    <label className="block font-bold text-slate-700 mb-1">Phone</label>
                     <input
                       type="text"
                       required
                       value={partnerForm.phone}
                       onChange={(e) => setPartnerForm({ ...partnerForm, phone: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
-                      placeholder="+91 9876543210"
+                      className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
+                      placeholder="+91 98765 43210"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-muted-text mb-1">Email</label>
+                    <label className="block font-bold text-slate-700 mb-1">Email</label>
                     <input
                       type="email"
                       required
                       value={partnerForm.email}
                       onChange={(e) => setPartnerForm({ ...partnerForm, email: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                      className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
                       placeholder="host@example.com"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block font-bold text-muted-text mb-1">Operating District</label>
+                  <label className="block font-bold text-slate-700 mb-1">Operating District</label>
                   <input
                     type="text"
                     required
                     value={partnerForm.district}
                     onChange={(e) => setPartnerForm({ ...partnerForm, district: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
                     placeholder="e.g. Chamoli, Pithoragarh, Nainital"
                   />
                 </div>
-                <div className="flex items-center justify-end gap-2 pt-3">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
                   <button
                     type="button"
                     onClick={() => setShowApplyModal(false)}
-                    className="px-4 py-2 text-xs font-bold text-muted-text"
+                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="btn-primary text-xs py-2 px-5 rounded-xl"
+                    className="bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold text-xs py-2.5 px-5 rounded-xl cursor-pointer disabled:opacity-50"
                   >
-                    Submit Application
+                    {isSubmitting ? 'Registering…' : 'Submit Application'}
                   </button>
                 </div>
               </form>
@@ -273,32 +310,48 @@ export default function PartnerListingsManager() {
     );
   }
 
-  // Registered Partner Dashboard
+  // Registered Partner Dashboard inside Profile
   return (
     <div className="space-y-6">
       {/* Partner Business Banner */}
-      <div className="bg-white rounded-3xl p-6 border border-border-light shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-sm shadow-emerald-950/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-forest-green bg-forest-green/10 px-2.5 py-0.5 rounded-full">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#0f3d2e] bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full">
               {partner.partnerType} Partner
             </span>
+            <span className="text-[10px] font-bold text-emerald-800 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <CheckCircle size={10} className="text-emerald-600" /> 0% Commission Host
+            </span>
           </div>
-          <h2 className="text-xl font-black text-text-dark font-display">
+          <h2 className="text-xl font-black text-slate-900 font-display">
             {partner.businessName}
           </h2>
-          <p className="text-xs text-muted-text flex items-center gap-1.5 mt-0.5">
-            <MapPin size={12} /> {partner.district} District • {partner.phone} • {partner.email}
+          <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+            <MapPin size={12} className="text-slate-400" /> {partner.district} District • {partner.phone} • {partner.email}
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="btn-primary text-xs py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-2xs self-start md:self-auto"
-        >
-          <Plus size={14} /> New Listing Draft
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <a
+            href="/partner"
+            className="bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] border border-emerald-200 text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <span>Full Partner Portal</span>
+            <span className="text-xs">↗</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-98 cursor-pointer"
+          >
+            <Plus size={14} /> 
+            <span>New Listing Draft</span>
+          </button>
+        </div>
       </div>
+
 
       {message && (
         <div className="p-3 rounded-xl text-xs font-bold bg-green-50 text-forest-green border border-green-200">
@@ -308,84 +361,91 @@ export default function PartnerListingsManager() {
 
       {/* Listings List */}
       <div>
-        <h3 className="font-bold text-sm text-text-dark uppercase tracking-wider mb-3">
-          My Marketplace Listings ({listings.length})
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+            My Marketplace Listings ({listings.length})
+          </h3>
+          <span className="text-[11px] text-slate-500">Managed with 0% commission</span>
+        </div>
 
         {listings.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 border border-dashed border-border-light text-center">
-            <p className="text-xs text-muted-text">No listings created yet. Click "New Listing Draft" above.</p>
+          <div className="bg-white rounded-3xl p-8 border border-dashed border-stone-200 text-center">
+            <p className="text-xs text-slate-500">No listings created yet. Click "New Listing Draft" above.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {listings.map((l) => {
-              const statusColors = {
-                DRAFT: 'bg-gray-100 text-gray-800',
-                PENDING_VERIFICATION: 'bg-amber-100 text-amber-800',
-                VERIFIED: 'bg-blue-100 text-blue-800',
-                ACTIVE: 'bg-green-100 text-forest-green',
-                REJECTED: 'bg-red-100 text-red-800'
+              const statusBadgeClasses = {
+                DRAFT: 'bg-stone-100 text-slate-700 border-stone-200',
+                PENDING_VERIFICATION: 'bg-amber-50 text-amber-800 border-amber-200',
+                VERIFIED: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                ACTIVE: 'bg-emerald-100/80 text-[#0f3d2e] border-emerald-300 font-black',
+                REJECTED: 'bg-rose-50 text-rose-800 border-rose-200'
               };
 
               return (
-                <div key={l._id} className="bg-white rounded-2xl p-4 border border-border-light shadow-2xs flex flex-col justify-between">
+                <div key={l._id} className="bg-white rounded-3xl p-5 border border-stone-200/90 shadow-sm shadow-emerald-950/5 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${statusColors[l.status] || 'bg-gray-100'}`}>
+                      <span className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold ${statusBadgeClasses[l.status] || 'bg-stone-100 text-slate-700 border-stone-200'}`}>
                         {l.status}
                       </span>
-                      <span className="text-[10px] text-muted-text font-semibold">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {l.listingType}
                       </span>
                     </div>
-                    <h4 className="font-bold text-text-dark text-sm">{l.title}</h4>
-                    <p className="text-xs text-muted-text mt-1 flex items-center gap-1">
-                      <MapPin size={11} /> {l.district}
+                    <h4 className="font-bold text-slate-900 text-sm">{l.title}</h4>
+                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                      <MapPin size={11} className="text-slate-400" /> {l.district}
                     </p>
-                    <div className="mt-2 text-xs font-mono font-bold text-forest-green">
-                      ₹{l.pricing?.amount} / {l.pricing?.unit}
-                      <span className="text-[9px] font-normal text-muted-text block">
-                        Provenance: {l.pricing?.provenance}
+                    <div className="mt-2 text-xs font-bold text-[#0f3d2e] bg-emerald-50/60 border border-emerald-100 p-2 rounded-xl flex items-center justify-between">
+                      <span>Tariff: ₹{l.pricing?.amount} / {l.pricing?.unit}</span>
+                      <span className="text-[9px] font-medium text-slate-500">
+                        {l.pricing?.provenance || 'Host direct'}
                       </span>
                     </div>
 
                     {/* Rejection Feedback if any */}
                     {l.status === 'REJECTED' && l.verificationNotes && (
-                      <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-xl text-[11px] text-red-800">
+                      <div className="mt-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-800">
                         <strong>Admin Feedback:</strong> "{l.verificationNotes}"
                       </div>
                     )}
                   </div>
 
                   {/* State Action Buttons */}
-                  <div className="pt-3 border-t border-border-light flex items-center justify-end gap-2 mt-4 text-xs">
+                  <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-2 mt-4 text-xs">
                     {l.status === 'DRAFT' && (
                       <button
+                        type="button"
                         onClick={() => handleSubmitVerification(l._id)}
-                        className="px-3 py-1.5 font-bold text-white bg-forest-green hover:bg-forest-green/90 rounded-lg flex items-center gap-1.5 shadow-2xs"
+                        className="px-3.5 py-1.5 font-bold text-white bg-[#0f3d2e] hover:bg-[#144c3a] rounded-xl flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
                       >
-                        <Send size={12} /> Submit for Verification
+                        <Send size={12} /> 
+                        <span>Submit for Verification</span>
                       </button>
                     )}
 
                     {l.status === 'REJECTED' && (
                       <button
+                        type="button"
                         onClick={() => handleReopen(l._id)}
-                        className="px-3 py-1.5 font-bold text-text-dark bg-beige hover:bg-beige/80 rounded-lg flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 font-bold text-slate-800 bg-stone-100 hover:bg-stone-200 rounded-xl flex items-center gap-1.5 transition cursor-pointer"
                       >
-                        <RotateCcw size={12} /> Reopen to DRAFT
+                        <RotateCcw size={12} /> 
+                        <span>Reopen to DRAFT</span>
                       </button>
                     )}
 
                     {l.status === 'ACTIVE' && (
-                      <span className="text-[11px] font-bold text-forest-green flex items-center gap-1">
-                        <CheckCircle size={12} /> Published on Marketplace
+                      <span className="text-[11px] font-bold text-emerald-800 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        <CheckCircle size={12} className="text-emerald-600" /> Published on Marketplace
                       </span>
                     )}
 
                     {l.status === 'PENDING_VERIFICATION' && (
-                      <span className="text-[11px] text-amber-700 flex items-center gap-1">
-                        <Clock size={12} /> Awaiting Admin Audit
+                      <span className="text-[11px] font-bold text-amber-800 flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                        <Clock size={12} className="text-amber-600" /> Awaiting Admin Verification
                       </span>
                     )}
                   </div>
@@ -398,16 +458,26 @@ export default function PartnerListingsManager() {
 
       {/* Create Listing Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-border-light">
-            <h3 className="font-black text-lg text-text-dark mb-3">Create Listing Draft</h3>
-            <form onSubmit={handleCreateListing} className="space-y-3 text-xs">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
+              <h3 className="font-black text-lg text-slate-900">Create Listing Draft</h3>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateListing} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-bold text-muted-text mb-1">Listing Type</label>
+                <label className="block font-bold text-slate-700 mb-1">Listing Type</label>
                 <select
                   value={listingForm.listingType}
                   onChange={(e) => setListingForm({ ...listingForm, listingType: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none cursor-pointer"
                 >
                   <option value="Stay">Stay / Homestay</option>
                   <option value="Guide">Local Guide Service</option>
@@ -416,35 +486,35 @@ export default function PartnerListingsManager() {
                 </select>
               </div>
               <div>
-                <label className="block font-bold text-muted-text mb-1">Title</label>
+                <label className="block font-bold text-slate-700 mb-1">Title</label>
                 <input
                   type="text"
                   required
                   value={listingForm.title}
                   onChange={(e) => setListingForm({ ...listingForm, title: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
                   placeholder="e.g. Traditional Himalayan Cedar Wood Cottage"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-bold text-muted-text mb-1">Tariff (₹)</label>
+                  <label className="block font-bold text-slate-700 mb-1">Tariff (₹)</label>
                   <input
                     type="number"
                     required
                     min="1"
                     value={listingForm.pricingAmount}
                     onChange={(e) => setListingForm({ ...listingForm, pricingAmount: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
                     placeholder="2500"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-muted-text mb-1">Pricing Unit</label>
+                  <label className="block font-bold text-slate-700 mb-1">Pricing Unit</label>
                   <select
                     value={listingForm.pricingUnit}
                     onChange={(e) => setListingForm({ ...listingForm, pricingUnit: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none cursor-pointer"
                   >
                     <option value="night">Per Night</option>
                     <option value="day">Per Day</option>
@@ -454,40 +524,40 @@ export default function PartnerListingsManager() {
                 </div>
               </div>
               <div>
-                <label className="block font-bold text-muted-text mb-1">District</label>
+                <label className="block font-bold text-slate-700 mb-1">District</label>
                 <input
                   type="text"
                   required
                   value={listingForm.district}
                   onChange={(e) => setListingForm({ ...listingForm, district: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
-                  placeholder="e.g. Nainital"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
+                  placeholder="e.g. Nainital, Chamoli"
                 />
               </div>
               <div>
-                <label className="block font-bold text-muted-text mb-1">Description</label>
+                <label className="block font-bold text-slate-700 mb-1">Description</label>
                 <textarea
                   rows={3}
                   value={listingForm.description}
                   onChange={(e) => setListingForm({ ...listingForm, description: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-border-light bg-[#faf9f6]"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-slate-900 text-xs focus:bg-white focus:border-[#0f3d2e] focus:outline-none"
                   placeholder="Describe your authentic experience and facilities..."
                 />
               </div>
-              <div className="flex items-center justify-end gap-2 pt-3">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-xs font-bold text-muted-text"
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary text-xs py-2 px-5 rounded-xl"
+                  className="bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold text-xs py-2.5 px-5 rounded-xl cursor-pointer disabled:opacity-50"
                 >
-                  Save Draft
+                  {isSubmitting ? 'Saving…' : 'Save Draft'}
                 </button>
               </div>
             </form>
@@ -497,3 +567,4 @@ export default function PartnerListingsManager() {
     </div>
   );
 }
+
