@@ -123,7 +123,7 @@ export default function AddToTripModal() {
             </h4>
             <p className="text-[11px] text-slate-500 truncate flex items-center gap-1 mt-0.5">
               <MapPin size={11} className="text-emerald-700 shrink-0" />
-              <span>{item.location || item.city || item.district || 'Uttarakhand'}</span>
+              <span>{itemLocationStr}</span>
             </p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function AddToTripModal() {
                   const params = new URLSearchParams({
                     rental_id: item._id || item.id || '',
                     rental_name: item.name || '',
-                    location: item.city || item.location || item.district || 'Haldwani',
+                    location: itemLocationStr,
                     price: String(item.pricePerDay || item.price || 500),
                     type: item.type || (isRental ? 'Bike' : 'Stay')
                   });
@@ -261,7 +261,7 @@ export default function AddToTripModal() {
                     </span>
                   </div>
                   <p className="text-[11px] text-emerald-800/90 mt-0.5">
-                    Trip Planner will automatically lock this {item.name} as the trip anchor and craft the optimal mountain route from {item.city || item.location || 'Haldwani'}.
+                    Trip Planner will automatically lock this {item.name} as the trip anchor and craft the optimal mountain route from {itemLocationStr || 'Haldwani'}.
                   </p>
                 </div>
               </div>

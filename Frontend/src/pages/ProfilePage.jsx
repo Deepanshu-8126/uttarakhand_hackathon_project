@@ -123,7 +123,7 @@ const ProfilePage = () => {
         name: currentUser.name || '',
         email: currentUser.email || '',
         phone: currentUser.phone || '',
-        location: currentUser.location || ''
+        location: typeof currentUser.location === 'string' ? currentUser.location : (currentUser.location?.address || currentUser.location?.name || '')
       });
       setPreviewUrl(
         currentUser.profileImage?.url ||
@@ -391,7 +391,7 @@ const ProfilePage = () => {
                 {currentUser?.location && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-beige text-text-dark text-[10px] font-bold rounded-full border border-border-light">
                     <MapPin size={10} className="text-earth-brown" />
-                    {currentUser.location}
+                    {typeof currentUser.location === 'string' ? currentUser.location : (currentUser.location?.address || currentUser.location?.name || 'Uttarakhand')}
                   </span>
                 )}
               </div>

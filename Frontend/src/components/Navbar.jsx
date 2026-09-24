@@ -16,12 +16,15 @@ import {
   Bed,
   Car,
   Landmark,
-  Map
+  Map,
+  Building,
+  Calendar,
+  Languages,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
 import { useLanguage } from '../context/LanguageContext';
-import { Languages, MapPin } from 'lucide-react';
 import GlobalLocationModal from './GlobalLocationModal';
 import { getStoredUserLocation } from '../utils/geoHelpers';
 
