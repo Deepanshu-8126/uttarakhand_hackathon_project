@@ -132,6 +132,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout error', error);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('discovery_active_trip');
       setCurrentUser(null);
       setIsAuthenticated(false);
     }

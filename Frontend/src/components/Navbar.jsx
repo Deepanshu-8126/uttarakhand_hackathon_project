@@ -74,7 +74,10 @@ export default function Navbar() {
     return null;
   }
 
-  const activeTripDestination = activeTripSession?.destination?.name || activeTripSession?.destination || null;
+  // Only show active trip in progress if user is authenticated and has an active trip
+  const activeTripDestination = (isAuthenticated && activeTripSession)
+    ? (activeTripSession?.destination?.name || activeTripSession?.destination || null)
+    : null;
   const activeTripDuration = activeTripSession?.duration || (activeTripSession?.dayPlans?.length ? `${activeTripSession.dayPlans.length} Days` : null);
   const activeTripUrl = activeTripSession?._id || activeTripSession?.tripId 
     ? `/my-trip/${activeTripSession._id || activeTripSession.tripId}` 

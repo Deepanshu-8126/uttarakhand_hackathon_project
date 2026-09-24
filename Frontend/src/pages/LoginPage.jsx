@@ -63,7 +63,9 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const isPartner = accountMode === 'partner';
-  const redirectPath = location.state?.from?.pathname || (isPartner ? '/partner' : '/profile');
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const redirectPath = redirectParam || location.state?.from?.pathname || (isPartner ? '/partner' : '/profile');
 
   // One-Click Google Authentication Handler
   const handleGoogleAuth = async () => {
