@@ -156,11 +156,10 @@ export default function CheckoutPage() {
   const handlePayAndSecure = () => {
     setIsSubmitting(true);
 
-    // Simulate instant escrow lock & OTP generation
-    setTimeout(() => {
-      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-      const bookingId = `DU-ESCROW-${Date.now().toString().slice(-6)}`;
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    const bookingId = `DU-ESCROW-${Date.now().toString().slice(-6)}`;
 
+    const finalizeBooking = (paymentDetails = {}) => {
       const bookingRecord = {
         bookingId,
         id: bookingId,
@@ -182,14 +181,12 @@ export default function CheckoutPage() {
         paidAt: new Date().toISOString(),
         paymentMethod: paymentMethod.toUpperCase(),
         partnerVerified: true,
-        verificationProof: 'GPS Geofenced • Video KYC Match'
+        verificationProof: 'GPS Geofenced • Video KYC Match',
+        ...paymentDetails
       };
 
-      // Save to localStorage for MyTripPage to read
       try {
         localStorage.setItem('active_escrow_booking', JSON.stringify(bookingRecord));
-        
-        // Also update discovery_active_trip if trip exists
         const existingTrip = localStorage.getItem('discovery_active_trip');
         if (existingTrip) {
           const parsed = JSON.parse(existingTrip);
@@ -202,7 +199,57 @@ export default function CheckoutPage() {
 
       setConfirmedBooking(bookingRecord);
       setIsSubmitting(false);
-    }, 1200);
+    };
+
+    // If Razorpay SDK is available, launch official payment modal
+    if (window.Razorpay) {
+      try {
+        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag';
+        const options = {
+          key: razorpayKey,
+          amount: Math.round(totalAmount * 100), // in paise
+          currency: "INR",
+          name: "Discovery Uttarakhand",
+          description: `Escrow Protected Booking - ${item?.name || item?.title || 'Mountain Experience'}`,
+          image: "/logo.png",
+          handler: function (response) {
+            finalizeBooking({
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature
+            });
+          },
+          prefill: {
+            name: travelerName || "Traveler",
+            email: travelerEmail || "traveler@discovery.com",
+            contact: travelerPhone || "+919876543210"
+          },
+          theme: {
+            color: "#0f3d2e"
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          alert(`Payment Failed: ${response.error?.description || 'Transaction declined'}`);
+          setIsSubmitting(false);
+        });
+        rzp.open();
+        return;
+      } catch (err) {
+        console.warn("Razorpay popup launch fallback:", err);
+      }
+    }
+
+    // Direct fallback if script was offline or popup blocked
+    setTimeout(() => {
+      finalizeBooking();
+    }, 600);
   };
 
   return (
