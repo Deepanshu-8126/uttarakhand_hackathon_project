@@ -91,7 +91,6 @@ export default function Navbar() {
     { label: t('nav_planner'), path: '/trip-planner', icon: Navigation },
     { label: t('nav_stays'), path: '/stays', icon: Bed },
     { label: t('nav_rentals'), path: '/rentals', icon: Car },
-    { label: 'Transit & Routes', path: '/transit', icon: Navigation, badge: 'Metro' },
     { label: 'AI Copilot', path: '/copilot', icon: Sparkles, badge: 'AI' },
     { label: 'Web3 & Tech', path: '/innovations', icon: ShieldCheck, badge: 'Web3' },
     { label: t('nav_map'), path: '/map', icon: Map },
