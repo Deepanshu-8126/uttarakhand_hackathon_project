@@ -1,10 +1,11 @@
 import axios from 'axios';
 
+const LIVE_BACKEND_URL = "https://uttarakhand-hackathon-project.onrender.com/api";
+
 let baseURL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 if (!baseURL) {
   if (import.meta.env.PROD) {
-    // In production without explicit env, fall back to relative /api (served via reverse proxy)
-    baseURL = '/api';
+    baseURL = LIVE_BACKEND_URL;
   } else {
     baseURL = 'http://localhost:5000/api';
   }
