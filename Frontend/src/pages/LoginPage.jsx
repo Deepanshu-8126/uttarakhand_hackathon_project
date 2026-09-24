@@ -153,9 +153,11 @@ export default function LoginPage() {
           
           {/* Brand Header */}
           <div className="text-center flex flex-col items-center">
-            <div className="w-11 h-11 rounded-2xl bg-[#0f3d2e] flex items-center justify-center text-white shadow-sm mb-2.5">
-              <Mountain className="w-5 h-5 text-emerald-400" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Discovery Uttarakhand"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-2xl shadow-sm mb-3 border border-emerald-900/10 bg-white"
+            />
 
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
               {isRegister ? (isPartner ? 'Partner Registration' : 'Create Traveler Account') : 'Welcome Back'}

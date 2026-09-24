@@ -78,9 +78,11 @@ const PartnerSidebar = ({ activeTab, setActiveTab, partnerProfile, isOpen, onClo
         {/* Brand / Logo */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-forest-green flex items-center justify-center text-white font-bold shadow-md shadow-forest-green/20">
-              DU
-            </div>
+            <img
+              src="/logo.png"
+              alt="Discovery Uttarakhand"
+              className="w-11 h-11 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
+            />
             <div>
               <div className="text-sm font-bold text-gray-900 tracking-tight leading-none">
                 Discovery Uttarakhand

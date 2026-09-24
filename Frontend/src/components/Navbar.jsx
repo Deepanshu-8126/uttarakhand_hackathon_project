@@ -82,9 +82,11 @@ export default function Navbar() {
           {/* ── 1. Left: Brand Logo ───────────────────────────────────────── */}
           <div className="flex items-center space-x-2.5 sm:space-x-3 mr-2 sm:mr-6">
             <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0f3d2e] flex items-center justify-center text-[#fdfbf7] shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                <Mountain size={20} className="text-emerald-400" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="Discovery Uttarakhand"
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-2xl shadow-sm group-hover:scale-105 transition-transform shrink-0 border border-emerald-900/10 bg-white"
+              />
               <div>
                 <span className="text-sm sm:text-lg font-black tracking-tight block text-[#0f3d2e] leading-none">
                   Discovery
@@ -270,11 +272,13 @@ export default function Navbar() {
           <div className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-[#fdfbf7] p-5 sm:p-6 shadow-2xl border-l border-stone-200 flex flex-col justify-between animate-in slide-in-from-right duration-200">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#0f3d2e] flex items-center justify-center text-white">
-                    <Mountain size={15} className="text-emerald-400" />
-                  </div>
-                  <span className="font-bold text-sm text-[#0f3d2e]">Discovery Portal</span>
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="/logo.png"
+                    alt="Discovery Uttarakhand"
+                    className="w-8 h-8 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
+                  />
+                  <span className="font-bold text-sm text-[#0f3d2e]">Discovery Uttarakhand</span>
                 </div>
                 <button
                   type="button"
