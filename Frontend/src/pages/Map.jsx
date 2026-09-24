@@ -215,8 +215,15 @@ function MapResizerAndFlyTo({ coords, selectedTile }) {
   }, [map, selectedTile]);
 
   useEffect(() => {
-    if (coords && isValidCoord(coords)) {
+    if (!coords) return;
+    if (Array.isArray(coords) && isValidCoord(coords)) {
       map.flyTo(coords, 13, { duration: 1.2, easeLinearity: 0.25 });
+    } else if (typeof coords === 'object') {
+      if (coords.bounds && Array.isArray(coords.bounds)) {
+        map.fitBounds(coords.bounds, { padding: [50, 50], maxZoom: 11, duration: 1.2 });
+      } else if (coords.coords && isValidCoord(coords.coords)) {
+        map.flyTo(coords.coords, coords.zoom || 9, { duration: 1.2, easeLinearity: 0.25 });
+      }
     }
   }, [coords, map]);
 
@@ -431,7 +438,7 @@ export default function MapPage() {
   });
   const [safetyPanelOpen, setSafetyPanelOpen] = useState(false);
 
-  // Himalayan Transit & Route Drawer State (YoMetro Style)
+  // Himalayan Route Drawer State
   const [transitDrawerOpen, setTransitDrawerOpen] = useState(false);
   const [activeCorridorId, setActiveCorridorId] = useState(null);
 
@@ -439,9 +446,18 @@ export default function MapPage() {
     if (!corridorId) return;
     const corridor = HIMALAYAN_CORRIDORS[corridorId];
     if (corridor && corridor.stations.length > 0) {
-      const midIdx = Math.floor(corridor.stations.length / 2);
-      const centerCoords = corridor.stations[midIdx]?.coords || corridor.polyline[0];
-      setFlyCoords(centerCoords);
+      const lats = corridor.stations.map((s) => s.coords[0]);
+      const lngs = corridor.stations.map((s) => s.coords[1]);
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+      setFlyCoords({
+        bounds: [
+          [minLat, minLng],
+          [maxLat, maxLng],
+        ],
+      });
     }
   }, []);
 
@@ -858,12 +874,9 @@ export default function MapPage() {
               }`}
             >
               <Hotel size={13} className={selectedCategory === 'stay' ? 'text-emerald-300' : 'text-[#0f3d2e]'} />
-              <span>Partner Stays</span>
+              <span>Stays & Lodges</span>
               <span className={`text-[11px] font-semibold ${selectedCategory === 'stay' ? 'text-emerald-200' : 'text-[#0f3d2e]'}`}>
                 {categoryCounts.stay || 0}
-              </span>
-              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-200/60 text-[#0f3d2e]">
-                0% Host
               </span>
             </button>
 
@@ -884,24 +897,28 @@ export default function MapPage() {
               </span>
             </button>
 
-            {/* Category Filter Chip: Google Places Live Radar */}
+            {/* Divider */}
+            <div className="h-5 w-px bg-stone-200 shrink-0 mx-0.5" />
+
+            {/* Live Feature: Google Places Finder / Radar */}
             <button
               type="button"
-              onClick={() => setSelectedCategory('radar')}
+              onClick={() => setSelectedCategory(selectedCategory === 'radar' ? 'All' : 'radar')}
               className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'radar'
                   ? 'bg-[#0f3d2e] text-white shadow-xs ring-2 ring-emerald-400/50'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
               }`}
+              title="Search Google Places Live Radar"
             >
               <Sparkles size={13} className={selectedCategory === 'radar' ? 'text-emerald-300' : 'text-emerald-600'} />
-              <span>Google Places Radar</span>
+              <span>Google Places Finder</span>
               <span className={`text-[11px] font-semibold ${selectedCategory === 'radar' ? 'text-emerald-200' : 'text-stone-400'}`}>
                 {categoryCounts.radar || 0}
               </span>
             </button>
 
-            {/* Himalayan Route Finder Trigger */}
+            {/* Live Feature: Himalayan Route Finder Trigger */}
             <button
               type="button"
               onClick={() => setTransitDrawerOpen(true)}
@@ -909,23 +926,13 @@ export default function MapPage() {
               title="Open Himalayan Route & Corridor Finder"
             >
               <Navigation size={13} className="text-emerald-300 group-hover:rotate-12 transition-transform" />
-              <span>Himalayan Routes</span>
+              <span>Himalayan Routes Finder</span>
             </button>
 
           </div>
 
-          {/* Right Count Indicator, Partner Hub CTA & Sidebar Toggle */}
+          {/* Right Count Indicator & Sidebar Toggle */}
           <div className="flex items-center gap-2.5 text-xs font-medium text-stone-500 shrink-0">
-            {/* Direct Partner Hub portal link */}
-            <Link
-              to="/login?role=partner"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-[#0f3d2e] hover:text-white text-stone-700 font-bold border border-stone-200/80 transition-all text-xs"
-              title="Open 0% Commission Partner Hub Portal"
-            >
-              <ShieldCheck size={13} className="text-emerald-600 group-hover:text-white" />
-              <span>Partner Hub</span>
-              <ExternalLink size={11} className="opacity-60" />
-            </Link>
 
             <span className="hidden xl:inline-block text-stone-400 font-medium">
               {filteredLocations.length} of {locations.length} places
