@@ -32,6 +32,7 @@ import {
   X,
   Send,
   Hotel,
+  Car,
   Activity as ActivityIcon
 } from 'lucide-react';
 
@@ -97,7 +98,7 @@ export default function DestinationDetails() {
   const [subSearch, setSubSearch] = useState('');
 
   const tripIds = useMemo(
-    () => new Set(tripDestinations.map((d) => d._id || d.id || d.slug)),
+    () => new Set((Array.isArray(tripDestinations) ? tripDestinations : []).map((d) => d._id || d.id || d.slug)),
     [tripDestinations]
   );
 
@@ -235,7 +236,7 @@ export default function DestinationDetails() {
         <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
           <div className="w-12 h-12 border-3 border-emerald-200 border-t-[#1b4332] rounded-full animate-spin mb-4" />
           <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wider">
-            Loading {slug.replace(/-/g, ' ')}…
+            Loading {(slug || 'Destination').replace(/-/g, ' ')}…
           </h2>
           <p className="text-slate-500 text-xs mt-1">Connecting to Himalayan database</p>
         </main>

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Rentals from './pages/Rentals';
 import Stays from './pages/Stays';
@@ -66,6 +66,7 @@ function App() {
             <Route path="/my-trip" element={<MyTripPage />} />
             <Route path="/verify/listing/:id" element={<VerificationProofPage />} />
             <Route path="/verify/vehicle/:vehicleNumber" element={<VerificationProofPage />} />
+            <Route path="/destinations" element={<Navigate to="/" replace />} />
             <Route path="/destinations/:slug" element={<DestinationDetails />} />
             <Route path="/:category/:slug" element={<DetailPage />} />
             <Route path="/profile" element={
