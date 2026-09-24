@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Star, ShieldCheck, CheckCircle2, ChevronRight, Car, Bike, X, Plus } from 'lucide-react';
+import { Star, ShieldCheck, CheckCircle2, ChevronRight, Car, Bike, X, Plus, Navigation } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
 import ImageCarousel from './common/ImageCarousel';
 import { getCardImages } from '../utils/imageHelpers';
 import { useMapStore } from '../store/mapStore';
+import { calculateDistanceKm, UTTARAKHAND_CITY_COORDINATES } from '../utils/geoHelpers';
 
-export default function RentalCard({ rental }) {
+export default function RentalCard({ rental, userCoords }) {
   const navigate = useNavigate();
   const [showTooltip, setShowTooltip] = useState(false);
   const [showMobileSheet, setShowMobileSheet] = useState(false);
@@ -44,6 +45,28 @@ export default function RentalCard({ rental }) {
       setShowTooltip(!showTooltip);
     }
   };
+
+  const distanceKm = useMemo(() => {
+    if (!userCoords || !Array.isArray(userCoords) || userCoords.length !== 2) return null;
+    const [userLat, userLng] = userCoords;
+    let rLat = null;
+    let rLng = null;
+    if (rental.location?.coordinates && rental.location.coordinates.length === 2) {
+      rLng = rental.location.coordinates[0];
+      rLat = rental.location.coordinates[1];
+    } else if (rental.city) {
+      const cityKey = rental.city.trim().toLowerCase();
+      const coords = UTTARAKHAND_CITY_COORDINATES[cityKey];
+      if (coords) {
+        rLat = coords[0];
+        rLng = coords[1];
+      }
+    }
+    if (rLat !== null && rLng !== null) {
+      return calculateDistanceKm(userLat, userLng, rLat, rLng);
+    }
+    return null;
+  }, [userCoords, rental]);
 
   return (
     <>
@@ -124,10 +147,22 @@ export default function RentalCard({ rental }) {
               {rental.name}
             </h3>
 
-            <p className="text-xs text-slate-500 font-medium mb-3 flex items-center gap-1">
-              <span className="text-slate-400">📍</span>
-              <span className="truncate">{locationText}</span>
-            </p>
+            <div className="text-xs text-slate-500 font-medium mb-3 flex items-center justify-between gap-1">
+              <span className="flex items-center gap-1 truncate">
+                <span className="text-slate-400">📍</span>
+                <span className="truncate">{locationText}</span>
+              </span>
+              {distanceKm !== null && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1 ${
+                  distanceKm <= 8 
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                    : 'bg-stone-100 text-stone-600 border border-stone-200'
+                }`}>
+                  <Navigation size={9} className="rotate-45" />
+                  <span>{distanceKm <= 8 ? 'In your city' : `~${distanceKm} km`}</span>
+                </span>
+              )}
+            </div>
 
             {rental.features && (
               <div className="flex flex-wrap gap-1.5 mb-3">

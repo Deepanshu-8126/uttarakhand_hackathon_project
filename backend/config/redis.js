@@ -82,10 +82,10 @@ export const cacheDelPattern = async (pattern) => {
       const result = await redisClient.scan(cursor, { match: pattern, count: 100 });
       cursor = result[0];
       const keys = result[1];
-      if (keys.length > 0) {
+      if (keys && keys.length > 0) {
         for (const key of keys) await redisClient.del(key);
       }
-    } while (cursor !== 0);
+    } while (cursor !== 0 && cursor !== '0' && Number(cursor) !== 0);
   } catch {
     // Silent
   }

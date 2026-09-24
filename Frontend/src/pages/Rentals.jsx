@@ -6,6 +6,26 @@ import RentalCard from '../components/RentalCard';
 import CategoryHero from '../components/CategoryHero';
 import Pagination from '../components/common/Pagination';
 import { useRentals } from '../hooks/useRentals';
+import { 
+  MapPin, 
+  Navigation, 
+  LocateFixed, 
+  Sparkles, 
+  CheckCircle2, 
+  ShieldCheck, 
+  RotateCcw,
+  Compass,
+  ArrowRight,
+  X
+} from 'lucide-react';
+import { 
+  detectBrowserLocation, 
+  findNearestHub, 
+  getStoredUserLocation, 
+  setStoredUserLocation, 
+  calculateDistanceKm, 
+  UTTARAKHAND_CITY_COORDINATES 
+} from '../utils/geoHelpers';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -23,6 +43,11 @@ const Rentals = () => {
   const [minRating, setMinRating] = useState('0');
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Global Geolocation States
+  const [userLocation, setUserLocation] = useState(getStoredUserLocation());
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationNotice, setLocationNotice] = useState(null);
+
   // Extract unique cities and categories dynamically from data safely
   const cities = useMemo(() => {
     const set = new Set();
@@ -30,6 +55,15 @@ const Rentals = () => {
       if (r.city) set.add(r.city);
     });
     return ['All', ...Array.from(set).sort()];
+  }, [rentals]);
+
+  // Count vehicles per city for the pills
+  const cityCounts = useMemo(() => {
+    const counts = {};
+    rentals.forEach(r => {
+      if (r.city) counts[r.city] = (counts[r.city] || 0) + 1;
+    });
+    return counts;
   }, [rentals]);
 
   const categories = useMemo(() => {
@@ -40,6 +74,69 @@ const Rentals = () => {
     });
     return ['All', ...Array.from(set).sort()];
   }, [rentals]);
+
+  // Listen to global location updates
+  useEffect(() => {
+    const handleLocationUpdate = (e) => {
+      if (e.detail) {
+        setUserLocation(e.detail);
+      }
+    };
+    window.addEventListener('discovery_location_updated', handleLocationUpdate);
+    return () => window.removeEventListener('discovery_location_updated', handleLocationUpdate);
+  }, []);
+
+  // Handle GPS Auto-Detection
+  const handleDetectLocation = async () => {
+    setIsDetectingLocation(true);
+    try {
+      const res = await detectBrowserLocation();
+      if (res.success && res.coordinates) {
+        const [lat, lng] = res.coordinates;
+        const nearest = findNearestHub(lat, lng, cities);
+        
+        const locationData = {
+          city: nearest?.city || res.name.split(',')[0].trim(),
+          detectedName: res.name,
+          coordinates: [lat, lng],
+          nearestHub: nearest
+        };
+
+        setUserLocation(locationData);
+        setStoredUserLocation(locationData);
+
+        if (nearest && nearest.city) {
+          setSelectedCity(nearest.city);
+          setSearchQuery('');
+          if (nearest.isExactMatch) {
+            setLocationNotice({
+              type: 'exact',
+              title: `📍 Verified Fleets in ${nearest.city}`,
+              description: `GPS verified your location in ${res.name}. Showing partner fleets ready for immediate pickup in ${nearest.city}!`
+            });
+          } else {
+            setLocationNotice({
+              type: 'nearby',
+              title: `🚗 Nearest Fleet: ${nearest.city} (~${nearest.distanceKm} km)`,
+              description: `You are near ${res.name}. Auto-selected the nearest gateway hub in ${nearest.city} with station & doorstep delivery!`
+            });
+          }
+        } else {
+          setLocationNotice({
+            type: 'info',
+            title: `📍 Location Detected: ${res.name}`,
+            description: `Fleets sorted by distance from your current location!`
+          });
+        }
+      } else {
+        alert(res.error || 'Could not detect GPS location. You can select your starting city from the pills below.');
+      }
+    } catch (err) {
+      console.warn('GPS detection error:', err);
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
 
   // Sync AI action search params (city, vehicle type, max budget)
   useEffect(() => {
@@ -70,7 +167,7 @@ const Rentals = () => {
 
   const filteredRentals = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return rentals.filter(rental => {
+    let result = rentals.filter(rental => {
       const name = (rental.name || '').toLowerCase();
       const city = (rental.city || '').toLowerCase();
       const bizName = (rental.businessName || '').toLowerCase();
@@ -84,7 +181,27 @@ const Rentals = () => {
 
       return matchSearch && matchCity && matchCategory && matchBudget && matchRating;
     });
-  }, [rentals, searchQuery, selectedCity, selectedCategory, maxBudget, minRating]);
+
+    // If user coordinates exist, sort by distance
+    if (userLocation?.coordinates && Array.isArray(userLocation.coordinates)) {
+      const [uLat, uLng] = userLocation.coordinates;
+      result = [...result].sort((a, b) => {
+        const getDist = (item) => {
+          if (item.location?.coordinates?.length === 2) {
+            return calculateDistanceKm(uLat, uLng, item.location.coordinates[1], item.location.coordinates[0]) ?? 9999;
+          }
+          if (item.city) {
+            const coords = UTTARAKHAND_CITY_COORDINATES[item.city.trim().toLowerCase()];
+            if (coords) return calculateDistanceKm(uLat, uLng, coords[0], coords[1]) ?? 9999;
+          }
+          return 9999;
+        };
+        return getDist(a) - getDist(b);
+      });
+    }
+
+    return result;
+  }, [rentals, searchQuery, selectedCity, selectedCategory, maxBudget, minRating, userLocation]);
 
   const totalPages = Math.ceil(filteredRentals.length / ITEMS_PER_PAGE);
 
@@ -107,6 +224,111 @@ const Rentals = () => {
         
         {/* Rent Your Ride Section */}
         <section className="pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+          
+          {/* ── SMART GPS & CITY HUBS QUICK SELECTOR ── */}
+          <div className="mb-6 bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <h3 className="text-sm sm:text-base font-black text-stone-900 tracking-tight">
+                    Smart Mountain Fleets & Proximity Hubs
+                  </h3>
+                </div>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Select your destination or let GPS instantly match your nearest gateway fleet (e.g. Rudrapur, Haldwani, Dehradun).
+                </p>
+              </div>
+
+              {/* GPS Auto-Detect Button */}
+              <button
+                type="button"
+                onClick={handleDetectLocation}
+                disabled={isDetectingLocation}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0 disabled:opacity-75"
+              >
+                {isDetectingLocation ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Detecting GPS Location...</span>
+                  </>
+                ) : userLocation ? (
+                  <>
+                    <LocateFixed size={14} className="text-emerald-400" />
+                    <span>📍 GPS: {userLocation.city || userLocation.detectedName?.split(',')[0]} (Refresh)</span>
+                  </>
+                ) : (
+                  <>
+                    <LocateFixed size={14} className="text-emerald-400" />
+                    <span>Detect My Location (GPS)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Quick City Hub Pills */}
+            <div className="pt-4 flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-stone-400 uppercase tracking-wider mr-1">
+                Quick Hubs:
+              </span>
+              {cities.map((city) => {
+                const count = city === 'All' ? rentals.length : (cityCounts[city] || 0);
+                const isSelected = selectedCity === city;
+                const isUserCity = userLocation?.city?.toLowerCase() === city.toLowerCase();
+
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCity(city);
+                      setSearchQuery('');
+                    }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      isSelected
+                        ? 'bg-[#0f3d2e] text-white border-[#0f3d2e] shadow-xs'
+                        : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
+                    }`}
+                  >
+                    {isUserCity && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                    <span>{city}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      isSelected ? 'bg-emerald-800 text-emerald-100' : 'bg-stone-200/70 text-stone-600'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Proximity / Nearest Match Banner */}
+          {locationNotice && (
+            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start justify-between gap-3 animate-in fade-in duration-300">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5">
+                  <Compass size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-emerald-950">
+                    {locationNotice.title}
+                  </h4>
+                  <p className="text-xs text-emerald-800/90 mt-0.5 leading-relaxed">
+                    {locationNotice.description}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocationNotice(null)}
+                className="text-emerald-700 hover:text-emerald-950 p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
           {/* Filters */}
           <div className="bg-beige/30 p-6 md:p-8 rounded-[2rem] border border-border-light mb-12 shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -173,8 +395,9 @@ const Rentals = () => {
                     setSelectedCategory('All');
                     setMaxBudget('');
                     setMinRating('0');
+                    setLocationNotice(null);
                   }}
-                  className="text-sm font-bold text-earth-brown hover:text-text-dark transition-colors"
+                  className="text-sm font-bold text-earth-brown hover:text-text-dark transition-colors cursor-pointer"
                 >
                   Reset Filters
                 </button>
@@ -193,7 +416,11 @@ const Rentals = () => {
               </div>
             ) : paginatedRentals.length > 0 ? (
               paginatedRentals.map(rental => (
-                <RentalCard key={rental.id || rental._id} rental={rental} />
+                <RentalCard 
+                  key={rental.id || rental._id} 
+                  rental={rental} 
+                  userCoords={userLocation?.coordinates}
+                />
               ))
             ) : (
               <div className="col-span-full text-center py-12">

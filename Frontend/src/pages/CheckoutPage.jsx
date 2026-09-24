@@ -47,7 +47,7 @@ export default function CheckoutPage() {
   const [fullName, setFullName] = useState('Deepanshu Sharma');
   const [phoneNumber, setPhoneNumber] = useState('+91 98765 43210');
   const [email, setEmail] = useState('traveler@uttarakhand.in');
-  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'upi' | 'card' | 'netbanking'
   const [upiApp, setUpiApp] = useState('gpay'); // 'gpay' | 'phonepe' | 'paytm' | 'qr'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState(null);
@@ -160,6 +160,7 @@ export default function CheckoutPage() {
     const bookingId = `DU-ESCROW-${Date.now().toString().slice(-6)}`;
 
     const finalizeBooking = (paymentDetails = {}) => {
+      const isCash = paymentMethod === 'cash';
       const bookingRecord = {
         bookingId,
         id: bookingId,
@@ -175,11 +176,11 @@ export default function CheckoutPage() {
         totalAmount,
         subtotal,
         taxes,
-        escrowStatus: 'HELD_IN_ESCROW',
+        escrowStatus: isCash ? 'CASH_HANDSHAKE_PENDING' : 'HELD_IN_ESCROW',
         status: 'CONFIRMED',
         checkInOtp: generatedOtp,
-        paidAt: new Date().toISOString(),
-        paymentMethod: paymentMethod.toUpperCase(),
+        paidAt: isCash ? null : new Date().toISOString(),
+        paymentMethod: isCash ? 'CASH_ON_ARRIVAL' : paymentMethod.toUpperCase(),
         partnerVerified: true,
         verificationProof: 'GPS Geofenced • Video KYC Match',
         ...paymentDetails
@@ -201,6 +202,18 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     };
 
+    // If Cash on Arrival is chosen, skip online payment gateway directly
+    if (paymentMethod === 'cash') {
+      setTimeout(() => {
+        finalizeBooking({
+          paymentMethod: 'CASH_ON_ARRIVAL',
+          paymentStatus: 'PAY_ON_CHECKIN',
+          notes: 'Traveler will pay cash directly to partner after physical inspection and 4-digit OTP exchange.'
+        });
+      }, 500);
+      return;
+    }
+
     // If Razorpay SDK is available, launch official payment modal
     if (window.Razorpay) {
       try {
@@ -220,9 +233,9 @@ export default function CheckoutPage() {
             });
           },
           prefill: {
-            name: travelerName || "Traveler",
-            email: travelerEmail || "traveler@discovery.com",
-            contact: travelerPhone || "+919876543210"
+            name: fullName || "Traveler",
+            email: email || "traveler@discovery.com",
+            contact: phoneNumber || "+919876543210"
           },
           theme: {
             color: "#0f3d2e"
@@ -458,6 +471,40 @@ export default function CheckoutPage() {
               </h3>
 
               <div className="space-y-3">
+                {/* Cash on Arrival Option (Recommended for On-Trip & Hackathon Demo) */}
+                <label className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${
+                  paymentMethod === 'cash' ? 'border-[#0f3d2e] bg-emerald-50/40 ring-1 ring-[#0f3d2e]' : 'border-stone-200 hover:border-stone-300'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="radio" 
+                        name="payment" 
+                        checked={paymentMethod === 'cash'}
+                        onChange={() => setPaymentMethod('cash')}
+                        className="text-[#0f3d2e] focus:ring-[#0f3d2e]"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                          <span>💵 Pay on Arrival (Cash Handshake with 4-Digit OTP)</span>
+                          <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">Demo / Cash Ready</span>
+                        </div>
+                        <div className="text-[11px] text-stone-500 mt-0.5">
+                          Inspect keys & condition first • Hand cash only when satisfied & give 4-digit OTP
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded">Zero Advance</span>
+                  </div>
+
+                  {paymentMethod === 'cash' && (
+                    <div className="mt-3 pt-2.5 border-t border-emerald-100/80 text-[11px] text-emerald-900 flex items-center gap-2">
+                      <ShieldCheck size={14} className="text-emerald-700 shrink-0" />
+                      <span>No card or online payment required today. Your 4-digit booking voucher is issued instantly!</span>
+                    </div>
+                  )}
+                </label>
+
                 {/* UPI Option */}
                 <label className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${
                   paymentMethod === 'upi' ? 'border-[#0f3d2e] bg-emerald-50/40 ring-1 ring-[#0f3d2e]' : 'border-stone-200 hover:border-stone-300'
@@ -668,19 +715,27 @@ export default function CheckoutPage() {
                 {isSubmitting ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Locking Funds in Escrow...</span>
+                    <span>{paymentMethod === 'cash' ? 'Generating 4-Digit Check-in Voucher...' : 'Locking Funds in Escrow...'}</span>
                   </>
                 ) : (
                   <>
                     <Lock size={16} className="text-emerald-300" />
-                    <span>Pay & Secure Booking (₹{totalAmount?.toLocaleString('en-IN')})</span>
+                    <span>
+                      {paymentMethod === 'cash' 
+                        ? `Confirm Booking (Pay ₹${totalAmount?.toLocaleString('en-IN')} in Cash on Arrival)`
+                        : `Pay & Secure Booking (₹${totalAmount?.toLocaleString('en-IN')})`}
+                    </span>
                   </>
                 )}
               </button>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-stone-500 text-center">
                 <ShieldCheck size={13} className="text-emerald-600" />
-                <span>Zero advance transfer to partner • 100% Refundable prior to OTP</span>
+                <span>
+                  {paymentMethod === 'cash'
+                    ? 'Pay cash only after test drive / key check • Verified local partner'
+                    : 'Zero advance transfer to partner • 100% Refundable prior to OTP'}
+                </span>
               </div>
             </div>
 
@@ -693,7 +748,9 @@ export default function CheckoutPage() {
       {/* ── Mobile Sticky Bottom Checkout Bar (<640px) ── */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200 p-3 px-4 flex items-center justify-between shadow-2xl safe-area-bottom">
         <div>
-          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Total Amount</span>
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
+            {paymentMethod === 'cash' ? 'Pay On Arrival' : 'Total Amount'}
+          </span>
           <span className="text-lg font-black text-[#0f3d2e]">₹{totalAmount?.toLocaleString('en-IN')}</span>
         </div>
         <button
@@ -703,11 +760,11 @@ export default function CheckoutPage() {
           className="bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold py-2.5 px-5 rounded-xl shadow-md text-xs uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
         >
           <Lock size={14} className="text-emerald-300" />
-          <span>{isSubmitting ? 'Locking...' : 'Pay & Secure'}</span>
+          <span>{isSubmitting ? 'Confirming...' : paymentMethod === 'cash' ? 'Confirm (Cash)' : 'Pay & Secure'}</span>
         </button>
       </div>
 
-      {/* ── ESCROW CONFIRMATION SUCCESS MODAL ── */}
+      {/* ── ESCROW / CASH CONFIRMATION SUCCESS MODAL ── */}
       {confirmedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-stone-100 text-center relative overflow-hidden animate-in zoom-in-95 duration-200">
@@ -717,14 +774,16 @@ export default function CheckoutPage() {
             </div>
 
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              Escrow Active & Funds Protected
+              {confirmedBooking.paymentMethod === 'CASH_ON_ARRIVAL' ? '💵 Cash Handshake Reserved' : '🛡️ Escrow Active & Protected'}
             </span>
 
             <h3 className="text-2xl font-black text-stone-900 mt-2.5 mb-1">
               Booking Confirmed!
             </h3>
             <p className="text-xs text-stone-600 mb-6">
-              Your funds are held safely in Escrow. Share the secret OTP below with your partner only upon satisfaction.
+              {confirmedBooking.paymentMethod === 'CASH_ON_ARRIVAL'
+                ? `You will pay ₹${confirmedBooking.totalAmount?.toLocaleString('en-IN')} directly in cash to the host after inspecting the ride/room keys. Share the 4-digit OTP below upon check-in.`
+                : 'Your funds are held safely in Escrow. Share the secret OTP below with your partner only upon satisfaction.'}
             </p>
 
             {/* Secret 4-Digit OTP Box */}
