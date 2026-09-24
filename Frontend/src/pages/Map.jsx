@@ -1307,7 +1307,7 @@ export default function MapPage() {
                     </Tooltip>
 
                     {/* Rich Interactive Popup */}
-                    <Popup minWidth={240} maxWidth={280}>
+                    <Popup minWidth={260} maxWidth={300}>
                       <div className="p-1 font-sans">
                         <div className="relative h-28 w-full rounded-xl overflow-hidden bg-stone-100 mb-2">
                           <img
@@ -1345,13 +1345,43 @@ export default function MapPage() {
                           <span className="font-bold text-[#0f3d2e]">⛰️ {loc.altitude}</span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 pt-2 border-t border-stone-200">
+                        {/* Quick Mountain Connectivity Pill */}
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 mb-2">
+                          <Compass size={11} className="text-[#0f3d2e] shrink-0" />
+                          <span className="truncate">Himalayan Route Connected</span>
+                        </div>
+
+                        {/* Primary Route Actions (Route To Here & Start From Here) */}
+                        <div className="grid grid-cols-2 gap-1.5 mb-1.5 pt-1.5 border-t border-stone-200">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRouteForPlace(loc, 'to')}
+                            className="bg-[#0f3d2e] hover:bg-[#185340] text-white text-xs font-black py-2 px-2 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-[0.98]"
+                            title={`Calculate Himalayan Route to ${loc.name}`}
+                          >
+                            <Navigation size={12} className="text-emerald-300" />
+                            <span>Route To Here</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRouteForPlace(loc, 'from')}
+                            className="bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] border border-emerald-300 text-xs font-black py-2 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-[0.98]"
+                            title={`Start journey from ${loc.name}`}
+                          >
+                            <MapPin size={12} />
+                            <span>Start From Here</span>
+                          </button>
+                        </div>
+
+                        {/* Secondary Actions (Guide & Trip Planner) */}
+                        <div className="flex items-center gap-1.5">
                           {loc.isExternal ? (
                             <a
                               href={loc.link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex-1 bg-[#0f3d2e] hover:bg-[#15533f] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors inline-flex items-center justify-center gap-1"
+                              className="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold py-1.5 px-2.5 rounded-xl text-center border border-stone-200 transition-colors inline-flex items-center justify-center gap-1"
                             >
                               <span>Google Maps</span>
                               <ExternalLink size={11} />
@@ -1359,29 +1389,19 @@ export default function MapPage() {
                           ) : (
                             <Link
                               to={loc.link}
-                              className="flex-1 bg-[#0f3d2e] hover:bg-[#15533f] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors"
+                              className="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold py-1.5 px-2.5 rounded-xl text-center border border-stone-200 transition-colors"
                             >
-                              {loc.type === 'stay' ? 'Book Direct →' : 'Explore →'}
+                              {loc.type === 'stay' ? 'Book Direct →' : 'Explore Guide →'}
                             </Link>
                           )}
-                          {/* 🧭 Direct Himalayan Route Navigator from this Popup */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenRouteForPlace(loc, 'to')}
-                            className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-[#0f3d2e] text-[#0f3d2e] hover:text-white border border-emerald-200 transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
-                            title={`Find Himalayan Route to ${loc.name}`}
-                          >
-                            <Navigation size={12} />
-                            <span>Route</span>
-                          </button>
 
                           <button
                             type="button"
                             onClick={() => handleToggleTrip(loc)}
-                            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                               isInTrip
                                 ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                                : 'bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300'
+                                : 'bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200'
                             }`}
                           >
                             {isInTrip ? <Check size={12} /> : <Plus size={12} />}
@@ -1597,9 +1617,22 @@ export default function MapPage() {
                       </p>
                     </div>
 
-                    {/* Right Indicator / Action */}
-                    <div className="text-[#0f3d2e] pr-1 group-hover:translate-x-0.5 transition-transform">
-                      <ArrowRight size={16} />
+                    {/* Right Indicator / Quick Route Action */}
+                    <div className="flex items-center gap-1.5 pr-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenRouteForPlace(loc, 'to');
+                        }}
+                        className="w-7 h-7 rounded-xl bg-emerald-50 hover:bg-[#0f3d2e] text-[#0f3d2e] hover:text-white flex items-center justify-center transition shadow-2xs cursor-pointer"
+                        title={`Find Himalayan Route to ${loc.name}`}
+                      >
+                        <Navigation size={12} />
+                      </button>
+                      <div className="text-stone-400 group-hover:text-[#0f3d2e] group-hover:translate-x-0.5 transition-all">
+                        <ArrowRight size={15} />
+                      </div>
                     </div>
                   </article>
                 );

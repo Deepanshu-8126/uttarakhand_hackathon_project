@@ -84,6 +84,12 @@ export const ALL_STATIONS = [
   { id: 'pithoragarh', name: 'Pithoragarh District Hub', subtitle: 'Saur Valley & Mini Kashmir', category: 'Border District', corridorId: 'adikailash', coords: [29.5820, 80.2180], altitudeM: 1814, altitude: '1,814m', amenities: ['fuel', 'atm', 'medical', 'stay'] },
   { id: 'dharchula', name: 'Dharchula ILP Checkpost', subtitle: 'Kali River Border & Permit Point', category: 'ILP Checkpoint', corridorId: 'adikailash', coords: [29.8570, 80.5280], altitudeM: 915, altitude: '915m', amenities: ['fuel', 'atm', 'medical', 'stay'] },
   { id: 'gunji', name: 'Gunji Adi Kailash Jnc', subtitle: 'Om Parvat & Kailash Route Fork', category: 'High Border', corridorId: 'adikailash', coords: [30.2700, 80.9900], altitudeM: 3050, altitude: '3,050m', amenities: ['medical', 'stay'] },
+
+  // Famous Trek & Alpine Destinations
+  { id: 'dayarabugyal', name: 'Dayara Bugyal Trek', subtitle: 'Alpine Meadow & Barnala (Uttarkashi)', category: 'Alpine Meadow', corridorId: 'glacier', coords: [30.8400, 78.5300], altitudeM: 3048, altitude: '3,048m', amenities: ['stay'] },
+  { id: 'valleyofflowers', name: 'Valley of Flowers', subtitle: 'UNESCO Floral Valley & Hemkund', category: 'Floral Valley', corridorId: 'badrinath', coords: [30.7280, 79.6053], altitudeM: 3658, altitude: '3,658m', amenities: ['stay'] },
+  { id: 'hemkund', name: 'Hemkund Sahib', subtitle: 'High Glacial Lake Gurudwara', category: 'Sacred Shrine', corridorId: 'badrinath', coords: [30.7000, 79.5800], altitudeM: 4329, altitude: '4,329m', amenities: ['stay'] },
+  { id: 'lansdowne', name: 'Lansdowne Cantonment', subtitle: 'Garhwal Pine Hill Station', category: 'Hill Station', corridorId: 'badrinath', coords: [29.8377, 78.6873], altitudeM: 1706, altitude: '1,706m', amenities: ['fuel', 'atm', 'stay'] },
 ];
 
 // ─── 5 Himalayan Corridors & Highways ────────────────────────
@@ -237,34 +243,39 @@ const MODE_ICONS = {
   MOUNTAIN: Mountain
 };
 
-// ─── Searchable Station Select Dropdown ─────────────────────────
+// ─── Direct Searchable Station Input with Autocomplete ─────────
 function SearchableStationSelect({ label, value, onChange, placeholder, icon: IconComponent }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const selectedStation = ALL_STATIONS.find((s) => s.id === value) || ALL_STATIONS[0];
+  const [query, setQuery] = useState(selectedStation.name);
+  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef(null);
 
-  const selectedStation = ALL_STATIONS.find((s) => s.id === value) || ALL_STATIONS[0];
+  // Sync with value prop updates
+  useEffect(() => {
+    setQuery(selectedStation.name);
+  }, [selectedStation.id, selectedStation.name]);
 
   const filteredStations = useMemo(() => {
-    if (!search.trim()) return ALL_STATIONS;
-    const q = search.toLowerCase().trim();
+    if (!query.trim()) return ALL_STATIONS;
+    const q = query.toLowerCase().trim();
     return ALL_STATIONS.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
         s.subtitle.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q)
     );
-  }, [search]);
+  }, [query]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
+        setIsFocused(false);
+        setQuery(selectedStation.name);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [selectedStation.name]);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -272,56 +283,61 @@ function SearchableStationSelect({ label, value, onChange, placeholder, icon: Ic
         {label}
       </label>
 
-      {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-white rounded-xl border border-stone-200 px-3 py-2.5 text-left hover:border-[#0f3d2e]/50 focus:ring-2 focus:ring-[#0f3d2e]/20 transition-all shadow-2xs group"
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-6 h-6 rounded-lg bg-emerald-50 text-[#0f3d2e] flex items-center justify-center shrink-0 border border-emerald-100">
-            <IconComponent size={13} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-stone-900 truncate">{selectedStation.name}</p>
-            <p className="text-[10px] text-stone-400 truncate">{selectedStation.subtitle} • {selectedStation.altitude}</p>
-          </div>
-        </div>
-        <ChevronDown size={14} className={`text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+      {/* Direct Search Input Container */}
+      <div className="relative flex items-center bg-white rounded-xl border border-stone-200 hover:border-[#0f3d2e]/50 focus-within:border-[#0f3d2e] focus-within:ring-2 focus-within:ring-[#0f3d2e]/20 transition-all shadow-2xs">
+        <span className="pl-3 text-[#0f3d2e] shrink-0">
+          <IconComponent size={14} />
+        </span>
+        <input
+          type="text"
+          value={query}
+          onFocus={() => {
+            setIsFocused(true);
+          }}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsFocused(true);
+          }}
+          placeholder={placeholder || 'Type station, town or shrine name...'}
+          className="w-full pl-2.5 pr-8 py-2.5 text-xs font-bold text-stone-900 bg-transparent focus:outline-none placeholder:text-stone-400 placeholder:font-normal"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('');
+              setIsFocused(true);
+            }}
+            className="absolute right-2.5 p-0.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition"
+            title="Clear search"
+          >
+            <X size={13} />
+          </button>
+        )}
+      </div>
 
-      {/* Dropdown Popover */}
-      {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in duration-150">
-          {/* Search Box with Icon */}
-          <div className="p-2 border-b border-stone-100 bg-stone-50/70">
-            <div className="relative flex items-center">
-              <Search size={13} className="absolute left-2.5 text-[#0f3d2e] pointer-events-none" />
-              <input
-                type="text"
-                autoFocus
-                placeholder={placeholder || 'Search stations, railheads, shrines...'}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs font-medium bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 text-stone-900 placeholder:text-stone-400"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  className="absolute right-2 text-stone-400 hover:text-stone-600"
-                >
-                  <X size={12} />
-                </button>
-              )}
-            </div>
+      {/* Selected Station Subtitle Pill */}
+      <div className="mt-1 flex items-center justify-between text-[10px] text-stone-400 px-1">
+        <span className="truncate">
+          📍 {selectedStation.subtitle} • {selectedStation.altitude}
+        </span>
+        <span className="font-bold text-[#0f3d2e] uppercase text-[9px] shrink-0 ml-1">
+          {selectedStation.category}
+        </span>
+      </div>
+
+      {/* Autocomplete Dropdown List */}
+      {isFocused && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="px-3 py-1.5 bg-stone-50 border-b border-stone-100 flex items-center justify-between text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+            <span>Mountain Stations &amp; Hubs</span>
+            <span>{filteredStations.length} results</span>
           </div>
 
-          {/* Station List */}
-          <div className="max-h-60 overflow-y-auto p-1 divide-y divide-stone-50">
+          <div className="max-h-56 overflow-y-auto p-1 divide-y divide-stone-50">
             {filteredStations.length === 0 ? (
-              <div className="p-3 text-center text-xs text-stone-400">
-                No mountain stations found matching &ldquo;{search}&rdquo;
+              <div className="p-3.5 text-center text-xs text-stone-400">
+                No mountain stations found matching &ldquo;{query}&rdquo;
               </div>
             ) : (
               filteredStations.map((station) => {
@@ -332,10 +348,10 @@ function SearchableStationSelect({ label, value, onChange, placeholder, icon: Ic
                     type="button"
                     onClick={() => {
                       onChange(station.id);
-                      setIsOpen(false);
-                      setSearch('');
+                      setQuery(station.name);
+                      setIsFocused(false);
                     }}
-                    className={`w-full text-left px-2.5 py-2 rounded-xl flex items-center justify-between transition-colors ${
+                    className={`w-full text-left px-2.5 py-2 rounded-xl flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-50 text-[#0f3d2e] font-bold'
                         : 'hover:bg-stone-50 text-stone-700'
@@ -346,7 +362,9 @@ function SearchableStationSelect({ label, value, onChange, placeholder, icon: Ic
                         <span className="text-xs font-bold truncate">{station.name}</span>
                         {isSelected && <CheckCircle2 size={12} className="text-[#0f3d2e] shrink-0" />}
                       </div>
-                      <p className="text-[10px] text-stone-400 truncate">{station.subtitle} • {station.altitude}</p>
+                      <p className="text-[10px] text-stone-400 truncate">
+                        {station.subtitle} • {station.altitude}
+                      </p>
                     </div>
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 shrink-0">
                       {station.category}
@@ -435,6 +453,7 @@ export default function TransitRouteDrawer({
       setCustomDestinationNotice({
         name: pl.name,
         district: pl.district,
+        direction: routeTarget.direction || 'to',
         hubName: ALL_STATIONS.find((s) => s.id === matchedId)?.name || 'Mountain Gateway',
       });
       setSelectedTab('route');
@@ -720,10 +739,11 @@ Generated via Discovery Uttarakhand GIS.`;
                     </div>
                     <div className="min-w-0">
                       <p className="font-extrabold truncate text-white leading-tight">
-                        Destination: {customDestinationNotice.name}
+                        {customDestinationNotice.direction === 'from' ? 'Starting Point' : 'Destination'}: {customDestinationNotice.name}
                       </p>
                       <p className="text-[10px] text-emerald-200/90 truncate">
-                        Linked via {customDestinationNotice.hubName} ({customDestinationNotice.district})
+                        {customDestinationNotice.direction === 'from' ? 'Starting journey via' : 'Linked via'}{' '}
+                        {customDestinationNotice.hubName} ({customDestinationNotice.district})
                       </p>
                     </div>
                   </div>
