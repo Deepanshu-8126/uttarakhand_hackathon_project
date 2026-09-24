@@ -901,18 +901,15 @@ export default function MapPage() {
               </span>
             </button>
 
-            {/* YoMetro Style Himalayan Transit & Route Drawer Trigger */}
+            {/* Himalayan Route Finder Trigger */}
             <button
               type="button"
               onClick={() => setTransitDrawerOpen(true)}
-              className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-[#0f3d2e] to-emerald-700 hover:from-[#185340] hover:to-emerald-600 text-white shadow-xs transition cursor-pointer border border-emerald-500/30 group"
-              title="Open YoMetro-style Himalayan Transit & Route Finder"
+              className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-[#0f3d2e] hover:bg-[#185340] text-white shadow-xs transition cursor-pointer border border-[#0f3d2e]/30 group"
+              title="Open Himalayan Route & Corridor Finder"
             >
-              <Navigation size={13} className="text-emerald-300 animate-pulse group-hover:rotate-45 transition-transform" />
-              <span>Transit Routes</span>
-              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-400 text-[#0f3d2e]">
-                YoMetro
-              </span>
+              <Navigation size={13} className="text-emerald-300 group-hover:rotate-12 transition-transform" />
+              <span>Himalayan Routes</span>
             </button>
 
           </div>
