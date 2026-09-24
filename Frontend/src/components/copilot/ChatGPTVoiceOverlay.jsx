@@ -213,7 +213,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#091e16]/95 backdrop-blur-xl flex flex-col justify-between p-6 sm:p-10 text-white animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] bg-[#061911] flex flex-col justify-between p-5 sm:p-10 text-white animate-in fade-in duration-200 overflow-hidden">
       
       {/* ── Top Header Controls ── */}
       <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
