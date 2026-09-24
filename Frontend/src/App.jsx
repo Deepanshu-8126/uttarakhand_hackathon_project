@@ -16,6 +16,7 @@ import CopilotPage from './pages/CopilotPage';
 import LoginPage from './pages/LoginPage';
 import ProductAuditPage from './pages/ProductAuditPage';
 import InnovationShowcasePage from './pages/InnovationShowcasePage';
+import TransitPage from './pages/TransitPage';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { FavoritesProvider } from './context/FavoritesContext';
@@ -64,6 +65,8 @@ function App() {
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideProfilePage />} />
               <Route path="/map" element={<MapPage />} />
+              <Route path="/transit" element={<TransitPage />} />
+              <Route path="/routes" element={<TransitPage />} />
               <Route path="/trip-planner" element={<TripPlanner />} />
               <Route path="/copilot" element={<CopilotPage />} />
               <Route path="/innovations" element={<InnovationShowcasePage />} />
