@@ -217,7 +217,7 @@ export default function CommunityGridWidget() {
                     <div className="flex items-start justify-between gap-1.5">
                       <span className="font-bold text-white text-[11px] flex items-center gap-1">
                         <MapPin size={11} className="text-cyan-400 shrink-0" />
-                        {item.location}
+                        {typeof item.location === 'string' ? item.location : (item.location?.name || item.location?.address || 'Uttarakhand')}
                       </span>
                       {item.consensusVerified && (
                         <span className="shrink-0 px-1.5 py-0.2 text-[8px] font-black tracking-wider text-emerald-300 bg-emerald-500/20 rounded-full border border-emerald-500/30 flex items-center gap-0.5">

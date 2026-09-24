@@ -46,9 +46,13 @@ export default function DayCard({
     ? day.journeySegments
     : [day.transportSegment].filter(Boolean);
 
+  const defaultStartString = typeof defaultStartLocation === 'string' ? defaultStartLocation : (defaultStartLocation?.name || 'Origin');
+  const defaultDestString = typeof defaultDestination === 'string' ? defaultDestination : (defaultDestination?.name || 'Destination');
+  const dayLocationString = typeof day.location === 'string' ? day.location : (day.location?.name || defaultDestString);
+
   const routeStops = Array.isArray(day.routeStops) && day.routeStops.length > 0
     ? day.routeStops
-    : [defaultStartLocation || 'Origin', defaultDestination || 'Destination'];
+    : [defaultStartString, defaultDestString];
 
   const timelineItems = Array.isArray(day.timeline) && day.timeline.length > 0
     ? day.timeline
@@ -69,7 +73,7 @@ export default function DayCard({
     name: day.trekDetails.name || 'Guided Mountain Trek',
     difficulty: day.trekDetails.difficulty || 'Moderate',
     duration: day.trekDetails.duration || '6–8 hrs',
-    location: day.location || defaultDestination,
+    location: dayLocationString,
     status: `✓ Added to Day ${day.dayNumber}`
   } : null);
 
@@ -310,7 +314,7 @@ export default function DayCard({
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Duration: <strong>{currentActivity.duration || '6–8 hrs'}</strong> • Difficulty: <strong>{currentActivity.difficulty || 'Moderate'}</strong> • Location: <strong>{currentActivity.location || defaultDestination}</strong>
+                    Duration: <strong>{currentActivity.duration || '6–8 hrs'}</strong> • Difficulty: <strong>{currentActivity.difficulty || 'Moderate'}</strong> • Location: <strong>{typeof currentActivity.location === 'string' ? currentActivity.location : (currentActivity.location?.name || defaultDestString)}</strong>
                   </p>
                 </div>
               </div>
@@ -350,7 +354,7 @@ export default function DayCard({
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 mt-0.5">
-                      📍 {currentStay.location || defaultDestination} • Check-in: <strong>{currentStay.checkIn || '05:00 PM'}</strong> • ₹{currentStay.pricePerNight || currentStay.pricing?.amount || 3200}/night
+                      📍 {typeof currentStay.location === 'string' ? currentStay.location : (currentStay.location?.name || currentStay.location?.address || defaultDestString)} • Check-in: <strong>{currentStay.checkIn || '05:00 PM'}</strong> • ₹{currentStay.pricePerNight || currentStay.pricing?.amount || 3200}/night
                     </p>
                     {currentStay.note && (
                       <span className="text-[11px] text-forest-green font-medium italic block mt-0.5">

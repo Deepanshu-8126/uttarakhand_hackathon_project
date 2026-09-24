@@ -805,7 +805,7 @@ export default function ProductAuditPage() {
                         }`}
                       >
                         <div className="flex items-start justify-between gap-1">
-                          <span className="font-bold text-white">{hazard.location}</span>
+                          <span className="font-bold text-white">{typeof hazard.location === 'string' ? hazard.location : (hazard.location?.name || 'Uttarakhand')}</span>
                           <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
                             hazard.severity === 'critical' ? 'bg-rose-900/60 text-rose-300' : 'bg-amber-900/60 text-amber-300'
                           }`}>

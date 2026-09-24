@@ -915,8 +915,8 @@ export default function MyTripPage() {
                 idx={idx}
                 isActive={idx === activeDayIndex}
                 onSelect={setActiveDayIndex}
-                defaultStartLocation={startLoc.name}
-                defaultDestination={dest.name}
+                defaultStartLocation={startLoc?.name || (typeof startLoc === 'string' ? startLoc : 'Delhi')}
+                defaultDestination={dest?.name || (typeof dest === 'string' ? dest : 'Uttarakhand')}
                 fallbackTransport={session.transport}
                 onBookStay={handleBookStay}
               />

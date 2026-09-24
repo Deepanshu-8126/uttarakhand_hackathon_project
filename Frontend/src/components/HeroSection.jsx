@@ -493,7 +493,7 @@ export default function HeroSection() {
             className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-xs font-medium text-white/95 mb-3.5 shadow-xs transition-colors group/pill"
           >
             <MapPin size={13} className="text-emerald-300" />
-            <span>{currentMedia.location}</span>
+            <span>{typeof currentMedia.location === 'string' ? currentMedia.location : (currentMedia.location?.name || currentMedia.district || 'Uttarakhand')}</span>
             <span className="text-white/40">•</span>
             <span className="text-emerald-200 font-semibold">{currentMedia.altitude}</span>
             <ArrowRight size={11} className="text-emerald-300 opacity-0 group-hover/pill:opacity-100 group-hover/pill:translate-x-0.5 transition-all" />

@@ -672,7 +672,7 @@ const ProfilePage = () => {
                         ? `${item.district}${item.region ? ` • ${item.region}` : ''}`
                         : item.city
                         ? `${item.city}${item.district ? ` • ${item.district}` : ''}`
-                        : item.location || 'Uttarakhand';
+                        : (typeof item.location === 'string' ? item.location : (item.location?.address || item.location?.name || 'Uttarakhand'));
 
                       const isAddedToTrip = addedTripIds.has(itemId);
 
@@ -1122,7 +1122,7 @@ const ProfilePage = () => {
                 </label>
                 <input
                   type="text"
-                  value={profileForm.location}
+                  value={typeof profileForm.location === 'string' ? profileForm.location : (profileForm.location?.address || profileForm.location?.name || '')}
                   onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl border border-border-light focus:border-forest-green focus:outline-none text-sm text-text-dark font-medium bg-[#faf9f6]"
                   placeholder="e.g. Dehradun, Uttarakhand"

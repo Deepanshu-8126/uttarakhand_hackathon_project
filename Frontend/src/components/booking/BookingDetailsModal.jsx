@@ -39,11 +39,15 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onPaymen
     booking.guide?.name || 
     'Himalayan Reservation';
 
-  const location = booking.listingSnapshot?.location || 
+  const rawLocation = booking.listingSnapshot?.location || 
     booking.partnerListing?.city || 
     booking.stay?.location || 
     booking.district || 
     'Uttarakhand';
+
+  const location = typeof rawLocation === 'string'
+    ? rawLocation
+    : (rawLocation?.address || rawLocation?.name || rawLocation?.city || 'Uttarakhand');
 
   const checkIn = booking.reservation?.checkIn || booking.startDate;
   const checkOut = booking.reservation?.checkOut || booking.endDate;
