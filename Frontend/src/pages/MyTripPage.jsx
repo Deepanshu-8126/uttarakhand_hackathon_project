@@ -262,16 +262,25 @@ export default function MyTripPage() {
   }, [dayPlans, session]);
 
   // Auto-upgrade legacy dayPlans if they have artificial gateway detours (e.g. Haldwani Gateway / Corbett stay)
+  const gatewayUpgradedRef = useRef(false);
   useEffect(() => {
+    if (gatewayUpgradedRef.current) return;
+    if (session?.__gatewayUpgraded) return;
+
     if (session && dest && Array.isArray(session.dayPlans) && session.dayPlans.length > 0) {
       const firstDay = session.dayPlans[0];
       const whereStr = typeof firstDay?.where === 'string' ? firstDay.where : (firstDay?.where?.name || '');
       const stayLocStr = typeof firstDay?.stay?.location === 'string' ? firstDay.stay.location : (firstDay?.stay?.location?.name || firstDay?.stay?.location?.address || '');
       const stayNameStr = typeof firstDay?.stay?.name === 'string' ? firstDay.stay.name : '';
+      const destNameStr = (typeof dest === 'string' ? dest : (dest?.name || '')).toLowerCase();
+      const isCorbettDest = destNameStr.includes('corbett') || destNameStr.includes('ramnagar');
+
       const hasLegacyGateway = whereStr.includes('Gateway') || 
                               stayLocStr.includes('Gateway') ||
-                              stayNameStr.includes('Corbett');
+                              (!isCorbettDest && stayNameStr.includes('Corbett'));
+
       if (hasLegacyGateway) {
+        gatewayUpgradedRef.current = true;
         const upgradedPlans = generatePersonalizedTripPlan({
           startingLocation: session.startingLocation || { name: 'Delhi' },
           destination: dest,
@@ -290,7 +299,7 @@ export default function MyTripPage() {
           allSpiritual: [],
           allStays
         });
-        const updated = { ...session, dayPlans: upgradedPlans };
+        const updated = { ...session, dayPlans: upgradedPlans, __gatewayUpgraded: true };
         setSession(updated);
         setActiveTripSession(updated);
         try {
@@ -298,7 +307,7 @@ export default function MyTripPage() {
         } catch (e) {}
       }
     }
-  }, [session, dest, allActivities, allStays]);
+  }, [session?.tripId, dest]);
 
   // Handle bidirectional sync: when a marker is clicked on the map, scroll to the day card
   const handleSelectDayFromMap = (idx) => {
