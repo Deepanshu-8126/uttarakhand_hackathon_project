@@ -59,6 +59,10 @@ import { getStays } from '../api/stayApi';
 import { getRentals } from '../api/rentalApi';
 import { placesApi } from '../api/placesApi';
 import { useMapStore } from '../store/mapStore';
+import TransitRouteDrawer, {
+  HimalayanCorridorsLayer,
+  HIMALAYAN_CORRIDORS,
+} from '../components/map/TransitRouteDrawer';
 import {
   TILE_PRESETS,
   MAP_CENTER,
@@ -426,6 +430,20 @@ export default function MapPage() {
     safetyGrid: false,
   });
   const [safetyPanelOpen, setSafetyPanelOpen] = useState(false);
+
+  // Himalayan Transit & Route Drawer State (YoMetro Style)
+  const [transitDrawerOpen, setTransitDrawerOpen] = useState(false);
+  const [activeCorridorId, setActiveCorridorId] = useState(null);
+
+  const handleFlyToCorridor = useCallback((corridorId) => {
+    if (!corridorId) return;
+    const corridor = HIMALAYAN_CORRIDORS[corridorId];
+    if (corridor && corridor.stations.length > 0) {
+      const midIdx = Math.floor(corridor.stations.length / 2);
+      const centerCoords = corridor.stations[midIdx]?.coords || corridor.polyline[0];
+      setFlyCoords(centerCoords);
+    }
+  }, []);
 
   const { addTripDestination, tripDestinations, removeTripDestination } = useMapStore();
   const tripIds = useMemo(
@@ -883,6 +901,20 @@ export default function MapPage() {
               </span>
             </button>
 
+            {/* YoMetro Style Himalayan Transit & Route Drawer Trigger */}
+            <button
+              type="button"
+              onClick={() => setTransitDrawerOpen(true)}
+              className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-[#0f3d2e] to-emerald-700 hover:from-[#185340] hover:to-emerald-600 text-white shadow-xs transition cursor-pointer border border-emerald-500/30 group"
+              title="Open YoMetro-style Himalayan Transit & Route Finder"
+            >
+              <Navigation size={13} className="text-emerald-300 animate-pulse group-hover:rotate-45 transition-transform" />
+              <span>Transit Routes</span>
+              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-400 text-[#0f3d2e]">
+                YoMetro
+              </span>
+            </button>
+
           </div>
 
           {/* Right Count Indicator, Partner Hub CTA & Sidebar Toggle */}
@@ -1072,6 +1104,9 @@ export default function MapPage() {
             />
 
             <MapResizerAndFlyTo coords={flyCoords} selectedTile={activeTile} />
+
+            {/* ── 0. Himalayan Transit Corridors & Subway Stations Layer (YoMetro Style) ── */}
+            <HimalayanCorridorsLayer activeCorridorId={activeCorridorId} />
 
             {/* Bottom-Left Navigation Tools inside Leaflet Context */}
             <div className="absolute bottom-20 left-4 z-[400]">
@@ -1486,6 +1521,15 @@ export default function MapPage() {
         </aside>
 
       </main>
+
+      {/* ── 4. Himalayan Transit & Route Finder Slide-Over Drawer (YoMetro Style) ── */}
+      <TransitRouteDrawer
+        isOpen={transitDrawerOpen}
+        onClose={() => setTransitDrawerOpen(false)}
+        activeCorridorId={activeCorridorId}
+        onSelectCorridor={setActiveCorridorId}
+        onFlyToCorridor={handleFlyToCorridor}
+      />
 
     </div>
   );
