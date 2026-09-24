@@ -217,7 +217,7 @@ export default function CheckoutPage() {
     // If Razorpay SDK is available, launch official payment modal
     if (window.Razorpay) {
       try {
-        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag';
+        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Tfve5JcWu17bY6';
         const options = {
           key: razorpayKey,
           amount: Math.round(totalAmount * 100), // in paise

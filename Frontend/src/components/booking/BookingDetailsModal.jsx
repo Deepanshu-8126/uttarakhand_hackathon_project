@@ -62,7 +62,7 @@ export default function BookingDetailsModal({ isOpen, onClose, booking, onPaymen
 
       // 2. Configure Razorpay Options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder', // fallback for UI without env
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Tfve5JcWu17bY6',
         amount: amount, 
         currency: currency,
         name: 'Discovery Uttarakhand',
