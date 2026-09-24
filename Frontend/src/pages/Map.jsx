@@ -46,6 +46,10 @@ import {
   ArrowUpDown,
   Zap,
   CheckCircle2,
+  ShieldCheck,
+  Home,
+  Briefcase,
+  ExternalLink,
 } from 'lucide-react';
 import { getDestinations } from '../api/destinationApi';
 import { getSpiritualPlaces } from '../api/spiritualApi';
@@ -75,10 +79,10 @@ L.Icon.Default.mergeOptions({
 // ─── Category Visual Styling ─────────────────────────────────
 const CATEGORY_STYLES = {
   destination: {
-    color: '#1b4332',
+    color: '#0f3d2e',
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
-    text: 'text-emerald-800',
+    text: 'text-[#0f3d2e]',
     badgeText: 'DESTINATION',
     iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>`,
   },
@@ -99,11 +103,11 @@ const CATEGORY_STYLES = {
     iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,
   },
   stay: {
-    color: '#059669',
+    color: '#0f3d2e',
     bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-    text: 'text-emerald-800',
-    badgeText: 'STAY',
+    border: 'border-emerald-300',
+    text: 'text-[#0f3d2e]',
+    badgeText: '🏡 PARTNER STAY',
     iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3h6v4H9z"/></svg>`,
   },
 };
@@ -627,9 +631,9 @@ export default function MapPage() {
           <div className="flex items-center flex-1 min-w-0 gap-2.5 overflow-x-auto no-scrollbar py-0.5">
             
             {/* Search Bar with Popular Destinations Popup */}
-            <div className="relative min-w-[260px] sm:min-w-[300px] lg:min-w-[340px] shrink-0 z-30" ref={searchContainerRef}>
+            <div className="relative min-w-[240px] sm:min-w-[280px] lg:min-w-[320px] shrink-0 z-30" ref={searchContainerRef}>
               <div className="relative flex items-center">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#1b4332]">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#0f3d2e]">
                   <Search size={15} />
                 </span>
                 <input
@@ -639,19 +643,19 @@ export default function MapPage() {
                   value={searchQuery}
                   onFocus={() => setSearchFocused(true)}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-16 py-2 text-xs font-medium bg-slate-50 border border-slate-200/90 rounded-xl shadow-xs focus:outline-none focus:ring-2 focus:ring-[#1b4332]/40 focus:border-[#1b4332] focus:bg-white text-slate-800 placeholder:text-slate-400 transition-all"
+                  className="w-full pl-10 pr-16 py-2 text-xs font-medium bg-stone-50/80 border border-stone-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 focus:border-[#0f3d2e] focus:bg-white text-stone-900 placeholder:text-stone-400 transition-all"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 gap-1">
                   {searchQuery ? (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="p-1 text-slate-400 hover:text-slate-600 rounded-full"
+                      className="p-1 text-stone-400 hover:text-stone-600 rounded-full"
                     >
                       <X size={13} />
                     </button>
                   ) : (
-                    <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 rounded shadow-xs">
+                    <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-stone-500 bg-white border border-stone-200 rounded shadow-2xs">
                       ⌘K
                     </kbd>
                   )}
@@ -660,12 +664,12 @@ export default function MapPage() {
 
               {/* Popular Destinations Dropdown */}
               {searchFocused && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="px-3 py-1.5 bg-slate-50/80 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-md border border-stone-200 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-stone-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-3.5 py-2 bg-stone-50/80 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-400">
                     <span>Popular Destinations</span>
-                    <span className="text-[9px] font-normal lowercase text-slate-400">click to view</span>
+                    <span className="text-[9px] font-normal lowercase text-stone-400">click to view</span>
                   </div>
-                  <div className="p-1">
+                  <div className="p-1.5">
                     {popularSuggestions.map((pop) => (
                       <button
                         key={pop.id}
@@ -675,18 +679,18 @@ export default function MapPage() {
                           setSearchFocused(false);
                           setSearchQuery('');
                         }}
-                        className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-100 flex items-center justify-between group/item transition-colors"
+                        className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-stone-50 flex items-center justify-between group/item transition-colors"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-6 h-6 rounded-md bg-emerald-50 border border-emerald-200 text-[#1b4332] flex items-center justify-center shrink-0">
+                          <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200 text-[#0f3d2e] flex items-center justify-center shrink-0">
                             <Mountain size={12} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-slate-900 truncate">{pop.name}</p>
-                            <p className="text-[10px] text-slate-500 truncate">{pop.district} • {pop.altitude}</p>
+                            <p className="text-xs font-semibold text-stone-900 truncate">{pop.name}</p>
+                            <p className="text-[10px] text-stone-500 truncate">{pop.district} • {pop.altitude}</p>
                           </div>
                         </div>
-                        <span className="text-[10px] font-semibold text-[#1b4332] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                        <span className="text-[10px] font-bold text-[#0f3d2e] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                           {pop.categoryLabel}
                         </span>
                       </button>
@@ -700,16 +704,16 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('All')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'All'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
+                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
               }`}
             >
               <Compass size={13} />
               <span>All</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium ml-0.5 ${
-                selectedCategory === 'All' ? 'bg-[#143527] text-white' : 'text-slate-400'
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ml-0.5 ${
+                selectedCategory === 'All' ? 'bg-[#09261c] text-emerald-200' : 'bg-stone-200 text-stone-600'
               }`}>
                 {categoryCounts.All}
               </span>
@@ -719,15 +723,15 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('destination')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'destination'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs'
+                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
               }`}
             >
-              <Mountain size={13} className={selectedCategory === 'destination' ? 'text-white' : 'text-slate-500'} />
+              <Mountain size={13} className={selectedCategory === 'destination' ? 'text-emerald-300' : 'text-stone-500'} />
               <span>Destinations</span>
-              <span className={`text-[11px] font-normal ${selectedCategory === 'destination' ? 'text-emerald-200' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'destination' ? 'text-emerald-200' : 'text-stone-400'}`}>
                 {categoryCounts.destination}
               </span>
             </button>
@@ -736,15 +740,15 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('spiritual')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'spiritual'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
               }`}
             >
-              <Sparkles size={13} className={selectedCategory === 'spiritual' ? 'text-amber-300' : 'text-amber-500'} />
+              <Sparkles size={13} className={selectedCategory === 'spiritual' ? 'text-amber-200' : 'text-amber-500'} />
               <span>Spiritual</span>
-              <span className={`text-[11px] font-normal ${selectedCategory === 'spiritual' ? 'text-emerald-200' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'spiritual' ? 'text-amber-200' : 'text-stone-400'}`}>
                 {categoryCounts.spiritual}
               </span>
             </button>
@@ -753,47 +757,62 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('activity')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'activity'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
               }`}
             >
-              <ActivityIcon size={13} className={selectedCategory === 'activity' ? 'text-blue-300' : 'text-blue-500'} />
+              <ActivityIcon size={13} className={selectedCategory === 'activity' ? 'text-blue-200' : 'text-blue-500'} />
               <span>Adventures</span>
-              <span className={`text-[11px] font-normal ${selectedCategory === 'activity' ? 'text-emerald-200' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'activity' ? 'text-blue-200' : 'text-stone-400'}`}>
                 {categoryCounts.activity}
               </span>
             </button>
 
-            {/* Category Filter Chip: Stays */}
+            {/* Category Filter Chip: Partner Stays & Homestays */}
             <button
               type="button"
               onClick={() => setSelectedCategory('stay')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'stay'
-                  ? 'bg-[#1b4332] text-white shadow-xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs ring-2 ring-emerald-400/50'
+                  : 'bg-emerald-50/70 hover:bg-emerald-100/80 text-[#0f3d2e] border border-emerald-200'
               }`}
             >
-              <Hotel size={13} className={selectedCategory === 'stay' ? 'text-emerald-300' : 'text-emerald-600'} />
-              <span>Stays</span>
-              <span className={`text-[11px] font-normal ${selectedCategory === 'stay' ? 'text-emerald-200' : 'text-slate-400'}`}>
+              <Hotel size={13} className={selectedCategory === 'stay' ? 'text-emerald-300' : 'text-[#0f3d2e]'} />
+              <span>Partner Stays</span>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'stay' ? 'text-emerald-200' : 'text-[#0f3d2e]'}`}>
                 {categoryCounts.stay}
+              </span>
+              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full font-black bg-emerald-200/60 text-[#0f3d2e]">
+                0% Host
               </span>
             </button>
 
           </div>
 
-          {/* Right Count Indicator & Sidebar Toggle */}
-          <div className="flex items-center gap-3 text-xs font-medium text-slate-500 shrink-0">
-            <span className="hidden lg:inline-block">
+          {/* Right Count Indicator, Partner Hub CTA & Sidebar Toggle */}
+          <div className="flex items-center gap-2.5 text-xs font-medium text-stone-500 shrink-0">
+            {/* Direct Partner Hub portal link */}
+            <Link
+              to="/login?role=partner"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-[#0f3d2e] hover:text-white text-stone-700 font-bold border border-stone-200/80 transition-all text-xs"
+              title="Open 0% Commission Partner Hub Portal"
+            >
+              <ShieldCheck size={13} className="text-emerald-600 group-hover:text-white" />
+              <span>Partner Hub</span>
+              <ExternalLink size={11} className="opacity-60" />
+            </Link>
+
+            <span className="hidden xl:inline-block text-stone-400 font-medium">
               {filteredLocations.length} of {locations.length} places
             </span>
+            
             <button
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold"
+              className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold transition"
             >
               {sidebarOpen ? 'Hide List' : 'Show List'}
             </button>
@@ -1081,7 +1100,7 @@ export default function MapPage() {
                     {/* Rich Interactive Popup */}
                     <Popup minWidth={240} maxWidth={280}>
                       <div className="p-1 font-sans">
-                        <div className="relative h-28 w-full rounded-xl overflow-hidden bg-slate-100 mb-2">
+                        <div className="relative h-28 w-full rounded-xl overflow-hidden bg-stone-100 mb-2">
                           <img
                             src={loc.image}
                             alt={loc.name}
@@ -1091,34 +1110,46 @@ export default function MapPage() {
                             }}
                             className="w-full h-full object-cover"
                           />
+                          {loc.type === 'stay' && (
+                            <span className="absolute top-2 left-2 bg-[#0f3d2e]/90 backdrop-blur-xs text-emerald-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-400/30">
+                              🏡 0% Direct Host
+                            </span>
+                          )}
                         </div>
 
-                        <span className="inline-block text-[9px] font-extrabold uppercase tracking-wider text-[#1b4332] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 mb-1">
-                          {loc.categoryLabel}
-                        </span>
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="inline-block text-[9px] font-black uppercase tracking-wider text-[#0f3d2e] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            {loc.type === 'stay' ? '🏡 Verified Partner Stay' : loc.categoryLabel}
+                          </span>
+                          {loc._raw?.pricePerNight && (
+                            <span className="text-[11px] font-extrabold text-[#0f3d2e]">
+                              ₹{loc._raw.pricePerNight.toLocaleString()}/nt
+                            </span>
+                          )}
+                        </div>
 
-                        <h4 className="font-extrabold text-slate-900 text-sm leading-tight m-0 mb-0.5">
+                        <h4 className="font-black text-stone-900 text-sm leading-tight m-0 mb-0.5">
                           {loc.name}
                         </h4>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+                        <div className="flex items-center justify-between text-[11px] text-stone-500 mb-2">
                           <span>📍 {loc.district}</span>
-                          <span className="font-bold text-[#1b4332]">⛰️ {loc.altitude}</span>
+                          <span className="font-bold text-[#0f3d2e]">⛰️ {loc.altitude}</span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-200">
+                        <div className="flex items-center gap-1.5 pt-2 border-t border-stone-200">
                           <Link
                             to={loc.link}
-                            className="flex-1 bg-[#1b4332] hover:bg-[#143527] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors"
+                            className="flex-1 bg-[#0f3d2e] hover:bg-[#15533f] text-white text-xs font-bold py-1.5 px-2.5 rounded-xl text-center shadow-xs transition-colors"
                           >
-                            Explore →
+                            {loc.type === 'stay' ? 'Book Direct →' : 'Explore →'}
                           </Link>
                           <button
                             type="button"
                             onClick={() => handleToggleTrip(loc)}
-                            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${
+                            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                               isInTrip
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
+                                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                : 'bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300'
                             }`}
                           >
                             {isInTrip ? <Check size={12} /> : <Plus size={12} />}
@@ -1134,8 +1165,8 @@ export default function MapPage() {
           </MapContainer>
 
           {/* ── Floating Bottom Toolbar (Corridor Radar, Plan Trip, AI Copilot) ── */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto" data-purpose="floating-quick-actions">
-            <nav className="flex items-center gap-1 bg-[#152329]/95 backdrop-blur-xl px-2 py-1.5 rounded-full shadow-2xl border border-slate-700/60 text-xs font-semibold text-white">
+          <div className="absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto" data-purpose="floating-quick-actions">
+            <nav className="flex items-center gap-1 bg-[#0d281e]/95 backdrop-blur-xl px-2 py-1.5 rounded-full shadow-2xl border border-emerald-900/60 text-xs font-semibold text-white">
               {/* Action 1: Corridor Radar */}
               <button
                 type="button"
@@ -1148,10 +1179,10 @@ export default function MapPage() {
                     safetyGrid: !s.safetyGrid,
                   }));
                 }}
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all border shadow-xs cursor-pointer ${
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full transition-all border shadow-xs cursor-pointer ${
                   safetyLayers.landslideRisk || safetyLayers.altitudeWarning
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-400/40'
-                    : 'bg-slate-800/80 hover:bg-slate-700/90 text-amber-400 border-amber-400/20'
+                    ? 'bg-amber-500/25 text-amber-300 border-amber-400/50'
+                    : 'bg-emerald-950/60 hover:bg-emerald-900/80 text-amber-300 border-amber-400/20'
                 }`}
               >
                 <span className="relative flex h-2 w-2">
@@ -1165,18 +1196,18 @@ export default function MapPage() {
               {/* Action 2: Plan Your Trip */}
               <Link
                 to="/trip-planner"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full hover:bg-slate-800 text-slate-200 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/10 text-stone-200 hover:text-white transition-colors"
               >
                 <Navigation size={14} className="text-emerald-400" />
-                <span className="tracking-wide">Plan Your Trip</span>
+                <span className="tracking-wide">Plan Trip</span>
               </Link>
 
               {/* Action 3: AI Copilot */}
               <Link
                 to="/copilot"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/10 text-emerald-300 hover:text-emerald-200 transition-colors"
               >
-                <Zap size={14} className="fill-current" />
+                <Zap size={14} className="fill-current text-emerald-400" />
                 <span className="tracking-wide">AI Copilot</span>
               </Link>
             </nav>
@@ -1188,23 +1219,23 @@ export default function MapPage() {
         <aside
           className={`${
             sidebarOpen ? 'flex' : 'hidden'
-          } w-full md:w-[360px] lg:w-[410px] bg-[#f8fafc] border-l border-slate-200 flex flex-col h-full z-20 shadow-lg md:shadow-none shrink-0`}
+          } w-full md:w-[360px] lg:w-[410px] bg-stone-50 border-l border-stone-200 flex flex-col h-full z-20 shadow-lg md:shadow-none shrink-0`}
           data-purpose="locations-sidebar"
         >
           {/* Sidebar Header */}
-          <div className="px-4 py-3.5 border-b border-slate-200 bg-white flex flex-col gap-2.5 shrink-0">
+          <div className="px-4 py-3.5 border-b border-stone-200 bg-white flex flex-col gap-2.5 shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-black tracking-wider text-slate-900 uppercase">
+                  <h2 className="text-base font-black tracking-wider text-stone-900 uppercase">
                     LOCATIONS
                   </h2>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-[#1b4332] text-white">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-[#0f3d2e] text-white">
                     {filteredLocations.length}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                  {filteredLocations.length} places available
+                <p className="text-xs text-stone-500 mt-0.5 font-medium">
+                  {filteredLocations.length} verified places available
                 </p>
               </div>
 
@@ -1213,7 +1244,7 @@ export default function MapPage() {
                 <button
                   type="button"
                   onClick={() => setSortBy(sortBy === 'name' ? 'altitude' : 'name')}
-                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition"
+                  className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-600 transition cursor-pointer"
                   title={`Sorted by ${sortBy === 'name' ? 'Name (A-Z)' : 'Altitude (High-Low)'}`}
                 >
                   <ArrowUpDown size={15} />
@@ -1223,7 +1254,7 @@ export default function MapPage() {
 
             {/* Quick sidebar filter input */}
             <div className="relative flex items-center">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-stone-400">
                 <Search size={13} />
               </span>
               <input
@@ -1231,13 +1262,13 @@ export default function MapPage() {
                 value={sidebarSearch}
                 onChange={(e) => setSidebarSearch(e.target.value)}
                 placeholder="Filter sidebar locations..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1.5 focus:ring-[#1b4332] transition"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-stone-50 border border-stone-200 rounded-lg text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1.5 focus:ring-[#0f3d2e] transition"
               />
               {sidebarSearch && (
                 <button
                   type="button"
                   onClick={() => setSidebarSearch('')}
-                  className="absolute right-2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 text-stone-400 hover:text-stone-600 cursor-pointer"
                 >
                   <X size={12} />
                 </button>
@@ -1245,16 +1276,43 @@ export default function MapPage() {
             </div>
           </div>
 
+          {/* Partner Hub Quick Access Banner */}
+          <div className="px-3 pt-2.5 shrink-0">
+            <div className="p-2.5 bg-gradient-to-r from-emerald-50 to-stone-100 rounded-2xl border border-emerald-200/80 flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-[#0f3d2e] text-emerald-200 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={15} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-black text-stone-900 leading-tight truncate">
+                    0% Commission Partner Hub
+                  </p>
+                  <p className="text-[10px] text-stone-600 truncate">
+                    Direct local homestays & mountain guides
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/login?role=partner"
+                className="shrink-0 px-2 py-1 rounded-lg bg-[#0f3d2e] text-white hover:bg-[#144c3a] text-[10px] font-bold tracking-tight shadow-xs transition-colors"
+              >
+                Join / Login ↗
+              </Link>
+            </div>
+          </div>
+
           {/* Scrollable Location Cards List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5" data-purpose="scrollable-cards">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2.5 pb-32 md:pb-6" data-purpose="scrollable-cards">
             {loading ? (
-              <div className="text-center py-12 text-slate-400 text-xs font-medium">
+              <div className="text-center py-12 text-stone-400 text-xs font-medium">
                 Loading locations…
               </div>
             ) : filteredLocations.length > 0 ? (
               filteredLocations.map((loc) => {
                 const isActive = activeLocation?.id === loc.id;
                 const style = CATEGORY_STYLES[loc.type] || CATEGORY_STYLES.destination;
+                const isStay = loc.type === 'stay';
+                const price = loc._raw?.pricePerNight || (typeof loc._raw?.price === 'number' ? loc._raw.price : null);
 
                 return (
                   <article
@@ -1262,12 +1320,12 @@ export default function MapPage() {
                     onClick={() => handleSelectLocation(loc)}
                     className={`p-2.5 bg-white rounded-2xl transition-all flex items-center gap-3.5 group cursor-pointer ${
                       isActive
-                        ? 'border-2 border-[#1b4332] shadow-sm'
-                        : 'border border-slate-200/90 hover:border-[#1b4332]/40 shadow-2xs hover:shadow-md'
+                        ? 'border-2 border-[#0f3d2e] shadow-sm ring-2 ring-[#0f3d2e]/10'
+                        : 'border border-stone-200/90 hover:border-[#0f3d2e]/40 shadow-2xs hover:shadow-md'
                     }`}
                   >
                     {/* Thumbnail Image */}
-                    <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-slate-100">
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-stone-100">
                       <img
                         src={loc.image}
                         alt={loc.name}
@@ -1277,33 +1335,45 @@ export default function MapPage() {
                         }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {isStay && (
+                        <div className="absolute bottom-0 inset-x-0 bg-[#0f3d2e]/90 text-[8px] font-black text-emerald-200 text-center py-0.5 uppercase tracking-tighter">
+                          Verified Host
+                        </div>
+                      )}
                     </div>
 
                     {/* Card Content */}
                     <div className="flex-1 min-w-0">
-                      <span className={`inline-block text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full border ${style.bg} ${style.border} ${style.text}`}>
-                        {style.badgeText}
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-900 truncate mt-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`inline-block text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border ${style.bg} ${style.border} ${style.text}`}>
+                          {style.badgeText}
+                        </span>
+                        {price && (
+                          <span className="text-[10px] font-black text-[#0f3d2e]">
+                            ₹{price.toLocaleString()}/nt
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-bold text-stone-900 truncate mt-1 group-hover:text-[#0f3d2e] transition-colors">
                         {loc.name}
                       </h3>
-                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                        <MapPin size={12} className="text-slate-400 shrink-0" />
+                      <p className="text-xs text-stone-500 flex items-center gap-1 mt-0.5">
+                        <MapPin size={12} className="text-stone-400 shrink-0" />
                         <span className="truncate">{loc.district}</span>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-[11px] font-medium text-slate-400">{loc.altitude}</span>
+                        <span className="text-stone-300">•</span>
+                        <span className="text-[11px] font-medium text-stone-400">{loc.altitude}</span>
                       </p>
                     </div>
 
                     {/* Right Indicator / Action */}
-                    <div className="text-[#1b4332] pr-1 group-hover:translate-x-0.5 transition-transform">
+                    <div className="text-[#0f3d2e] pr-1 group-hover:translate-x-0.5 transition-transform">
                       <ArrowRight size={16} />
                     </div>
                   </article>
                 );
               })
             ) : (
-              <div className="text-center py-12 text-slate-400 text-xs">
+              <div className="text-center py-12 text-stone-400 text-xs">
                 No locations match your filter.
               </div>
             )}
