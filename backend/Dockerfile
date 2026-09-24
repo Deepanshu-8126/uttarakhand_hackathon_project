@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies including devDependencies for build
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source code (respecting .dockerignore)
 COPY . .
@@ -35,7 +35,7 @@ RUN addgroup -S nodejs -g 1001 && \
 
 # Copy dependency manifests and install production dependencies only
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
 # Copy application files from builder
 COPY --from=builder --chown=nodeapp:nodejs /app /app
