@@ -61,6 +61,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successNotice, setSuccessNotice] = useState('');
 
   const isPartner = accountMode === 'partner';
   const searchParams = new URLSearchParams(location.search);
@@ -71,6 +72,7 @@ export default function LoginPage() {
   const handleGoogleAuth = async () => {
     setSubmitting(true);
     setErrorMessage('');
+    setSuccessNotice('');
     try {
       const res = await login({
         email: isPartner ? 'partner.business@gmail.com' : 'traveler.google@gmail.com',
@@ -91,6 +93,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setSuccessNotice('');
 
     if (!identifier.trim() || !password.trim()) {
       setErrorMessage('Please enter both your email/phone and password.');
@@ -131,8 +134,26 @@ export default function LoginPage() {
       }
 
       if (res?.success) {
-        const dest = res.user?.role === 'partner' || isPartner ? '/partner' : redirectPath;
-        navigate(dest);
+        const userRole = res.user?.role;
+        
+        // Intelligent role auto-routing:
+        if (userRole === 'partner') {
+          if (accountMode === 'traveler') {
+            setSuccessNotice('🏢 Partner Account Verified: Redirecting to your Partner Hub Dashboard...');
+            setTimeout(() => navigate('/partner'), 450);
+            return;
+          }
+          navigate('/partner');
+        } else if (userRole === 'admin') {
+          navigate('/admin');
+        } else {
+          if (accountMode === 'partner') {
+            setSuccessNotice('👤 Traveler Account Verified: Redirecting to your Traveler Dashboard...');
+            setTimeout(() => navigate(redirectPath || '/profile'), 450);
+            return;
+          }
+          navigate(redirectPath || '/profile');
+        }
       } else {
         setErrorMessage(res?.message || 'Login failed. Please check your credentials.');
       }
@@ -207,6 +228,60 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {/* ⚡ Quick Hackathon Demo Credentials Filler */}
+          <div className="mt-3 p-2.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+            <div className="flex items-center justify-between mb-1.5 px-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
+                <span>⚡ Hackathon 1-Click Demo Accounts</span>
+              </span>
+              <span className="text-[9px] text-amber-750 font-bold bg-amber-100/90 px-1.5 py-0.5 rounded-md text-amber-800">
+                Auto-Role Sync
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountMode('traveler');
+                  setIdentifier('traveler@discovery.com');
+                  setPassword('traveler123');
+                  setErrorMessage('');
+                  setSuccessNotice('Filled Traveler Demo: traveler@discovery.com');
+                }}
+                className={`py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 cursor-pointer ${
+                  accountMode === 'traveler' && identifier === 'traveler@discovery.com'
+                    ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
+                    : 'bg-white text-slate-700 hover:bg-amber-100/50 border-amber-200'
+                }`}
+              >
+                <Compass size={13} className={accountMode === 'traveler' && identifier === 'traveler@discovery.com' ? 'text-emerald-200' : 'text-emerald-700'} />
+                <span>Traveler Demo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountMode('partner');
+                  setIdentifier('partner@discovery.com');
+                  setPassword('partner123');
+                  setErrorMessage('');
+                  setSuccessNotice('Filled Partner Hub Demo: partner@discovery.com');
+                }}
+                className={`py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 cursor-pointer ${
+                  accountMode === 'partner' && identifier === 'partner@discovery.com'
+                    ? 'bg-[#0f3d2e] text-white border-[#0f3d2e] shadow-xs'
+                    : 'bg-white text-slate-700 hover:bg-amber-100/50 border-amber-200'
+                }`}
+              >
+                <Briefcase size={13} className={accountMode === 'partner' && identifier === 'partner@discovery.com' ? 'text-emerald-300' : 'text-[#0f3d2e]'} />
+                <span>Partner Demo</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-amber-800/80 mt-1.5 px-1 leading-tight">
+              💡 Even if you enter a Partner email while on Traveler tab, our system auto-detects and opens the Partner Hub panel!
+            </p>
+          </div>
+
           {/* Partner Sub-Category Chips (Only when Partner Hub is selected) */}
           {isPartner && (
             <div className="mt-3.5 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 animate-in fade-in duration-150">
@@ -242,6 +317,14 @@ export default function LoginPage() {
                 <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
                 <span>Verified Direct Onboarding · 0% Platform Commission</span>
               </p>
+            </div>
+          )}
+
+          {/* Success / Auto-Routing Notification */}
+          {successNotice && (
+            <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-fadeIn shadow-xs">
+              <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+              <span>{successNotice}</span>
             </div>
           )}
 
