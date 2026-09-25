@@ -15,10 +15,11 @@ Inspired by `langchain-ai/agent-chat-ui` & `langchain-ai/voice-demo`.
 ## Phases & Tasks
 
 ### Phase 1: Audit & Discovery (STEP 1 & STEP 2)
-- [ ] 1.1 Identify all old chatbot files across `Frontend/src/components/copilot/`, `backend/controllers/`, `backend/routes/`, and `ai/`
-- [ ] 1.2 List all imports across the frontend and backend referencing the old chatbot
-- [ ] 1.3 Map data flow, models (`Chat.js`, `SavedTrip.js`), and socket/API endpoints
-- [ ] 1.4 Document all findings in `findings.md`
+- [x] 1.1 Identify all old chatbot files across `Frontend/src/components/copilot/`, `backend/controllers/`, `backend/routes/`, and `ai/`
+- [x] 1.2 List all imports across the frontend and backend referencing the old chatbot
+- [x] 1.3 Map data flow, models (`Chat.js`, `SavedTrip.js`), and socket/API endpoints
+- [x] 1.4 Document all findings in `findings.md`
+
 
 ### Phase 2: Design & Backend AI Architecture (STEP 4 & STEP 5)
 - [ ] 2.1 Scaffold target backend structure: `backend/ai/`

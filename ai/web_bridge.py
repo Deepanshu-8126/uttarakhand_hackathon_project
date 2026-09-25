@@ -61,23 +61,17 @@ app.add_middleware(
 )
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-LIVE_VOICE_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-latest")
+LIVE_VOICE_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
+LIVE_VOICE_FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest"
 LIVE_VOICE_NAME = os.getenv("GEMINI_VOICE_NAME", "Aoede")
-TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+FALLBACK_TEXT_MODELS = [
+    os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+]
 
-_SYSTEM_PROMPT = """You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover Uttarakhand.
-You possess authoritative knowledge of:
-- Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri) and Hemkund Sahib
-- High-altitude treks (Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass)
-- Altitude Sickness (AMS) protocols, acclimatization halts, and safety guidelines
-- Road conditions, mountain weather, and verified local homestays
-- Garhwali and Kumaoni traditions, culture, and cuisine
-
-Instructions:
-1. Speak warmly and concisely in 1 to 2 short spoken sentences (under 30 words) for instant conversation.
-2. Answer in Hindi, English, or friendly Hinglish depending on how the user speaks to you.
-3. Keep spoken replies natural, authentic, and direct — NEVER read out markdown, bullet points, asterisks, or formatting.
-"""
+_SYSTEM_PROMPT = """You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover. You have comprehensive, accurate knowledge of Uttarakhand: Char Dham shrines, Garhwal and Kumaon valleys, high-altitude treks, altitude sickness (AMS) protocols, weather conditions, and local Pahari culture. Speak naturally in Hindi, English, or friendly Hinglish based on how the user speaks to you. Use authentic ground facts for destinations, mountain safety for altitude, and live weather for mountain towns. Keep answers conversational, warm, concise, and direct (1 to 3 spoken sentences). Do not recite raw markdown, bullet points, asterisks, or emojis in spoken output."""
 
 _CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand.
 
@@ -416,17 +410,31 @@ Verified Devbhoomi Database Context:
 
 Respond as the Devbhoomi Voice Companion in 1-3 spoken, clear, natural sentences."""
 
-        response = await asyncio.to_thread(
-            client.models.generate_content,
-            model=TEXT_MODEL_NAME,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM_PROMPT,
-                temperature=0.7,
-                max_output_tokens=250,
-            ),
-        )
-        clean_text = response.text.replace("*", "").replace("#", "").strip()
+        clean_text = ""
+        for m in FALLBACK_TEXT_MODELS:
+            try:
+                response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=_SYSTEM_PROMPT,
+                        temperature=0.7,
+                        max_output_tokens=250,
+                    ),
+                )
+                clean_text = response.text.replace("*", "").replace("#", "").strip()
+                if clean_text:
+                    break
+            except Exception as e:
+                logger.warning(f"[voice/ask] Model {m} error: {e}")
+
+        if not clean_text:
+            if enriched_facts:
+                clean_text = f"Devbhoomi guide: {enriched_facts[0]}"
+            else:
+                clean_text = "Namaste! Main aapka Devbhoomi companion hoon. Kripya apna prashna dobara poochein."
+
         audio_b64 = await synthesize_neural_voice(clean_text, req.lang)
 
     return {
@@ -567,19 +575,32 @@ async def stream_gemini_live_to_ws(
     except Exception as e:
         logger.warning(f"[stream_ws] Gemini Live stream timed out or failed: {e}. Executing rapid fallback...")
 
-    # Rapid Fallback (0.4s response) if Gemini Live WebSocket was delayed
+    # Rapid Fallback if Gemini Live WebSocket was delayed
     try:
-        gen_res = await asyncio.to_thread(
-            client.models.generate_content,
-            model=TEXT_MODEL_NAME,
-            contents=f"User asked via voice: '{prompt}'. Reply as Devbhoomi Guide warmly in 1-2 spoken sentences.",
-            config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM_PROMPT,
-                temperature=0.7,
-                max_output_tokens=150,
-            ),
-        )
-        fb_text = gen_res.text.replace("*", "").replace("#", "").strip()
+        facts_prompt = ("\nVerified Facts from Devbhoomi DB:\n" + "\n".join(enriched_facts)) if enriched_facts else ""
+        contents_text = f"User asked via voice: '{prompt}'.\nLanguage preference: {lang}\n{facts_prompt}\n\nRespond as Devbhoomi Guide warmly, informatively, and concisely in 1 to 3 spoken sentences without any markdown formatting or bullet points."
+        fb_text = ""
+        for m in FALLBACK_TEXT_MODELS:
+            try:
+                gen_res = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=m,
+                    contents=contents_text,
+                    config=types.GenerateContentConfig(
+                        system_instruction=_SYSTEM_PROMPT,
+                        temperature=0.7,
+                        max_output_tokens=220,
+                    ),
+                )
+                fb_text = gen_res.text.replace("*", "").replace("#", "").strip()
+                if fb_text:
+                    break
+            except Exception as e:
+                logger.warning(f"[stream_ws] Fallback model {m} error: {e}")
+
+        if not fb_text:
+            fb_text = "Namaste! Main aapka Devbhoomi voice companion hoon. Kripya apna prashna dobara poochein."
+
         fb_audio = await synthesize_neural_voice(fb_text, lang)
 
         await websocket.send_json({
