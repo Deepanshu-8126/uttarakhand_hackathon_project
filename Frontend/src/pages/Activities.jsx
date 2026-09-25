@@ -125,7 +125,7 @@ export default function Activities() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fdfbf7] text-slate-900 font-sans antialiased selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-cream text-slate-900 font-sans antialiased selection:bg-emerald-500 selection:text-white">
       <Navbar />
 
       <main className="flex-grow flex flex-col pb-28 md:pb-36">
@@ -248,7 +248,7 @@ export default function Activities() {
             <button
               type="button"
               onClick={() => setCurrentPage(1)}
-              className="w-full md:w-auto bg-[#0f2a22] hover:bg-[#184236] text-white font-bold px-7 py-3 rounded-xl text-xs sm:text-sm transition-all shadow-md cursor-pointer shrink-0"
+              className="w-full md:w-auto bg-forest-green-dark hover:bg-forest-green-hover text-white font-bold px-7 py-3 rounded-xl text-xs sm:text-sm transition-all shadow-md cursor-pointer shrink-0"
             >
               Apply Search
             </button>
@@ -278,7 +278,7 @@ export default function Activities() {
               <p className="text-xs text-slate-500">{error}</p>
               <button
                 onClick={refetch}
-                className="px-5 py-2.5 rounded-xl bg-[#0f2a22] text-white text-xs font-bold shadow-sm inline-flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-forest-green-dark text-white text-xs font-bold shadow-sm inline-flex items-center gap-2"
               >
                 <RefreshCw size={14} /> Try Again
               </button>
@@ -328,7 +328,7 @@ export default function Activities() {
 
                       {/* Top Badges */}
                       <div className="absolute top-4 left-4 flex items-center gap-2">
-                        <span className="bg-white/90 backdrop-blur-md text-[#0f2a22] font-black text-[11px] px-3 py-1 rounded-full border border-emerald-600/20 shadow-xs">
+                        <span className="bg-white/90 backdrop-blur-md text-forest-green-dark font-black text-[11px] px-3 py-1 rounded-full border border-emerald-600/20 shadow-xs">
                           {categoryTag}
                         </span>
                         <span className="bg-emerald-600/90 text-white backdrop-blur-md font-black text-[11px] px-3 py-1 rounded-full shadow-xs">
@@ -388,7 +388,7 @@ export default function Activities() {
                               price: price,
                               image: displayImage
                             })}
-                            className="p-2 rounded-xl border border-emerald-700/30 text-[#0f2a22] hover:bg-emerald-50 transition-colors cursor-pointer"
+                            className="p-2 rounded-xl border border-emerald-700/30 text-forest-green-dark hover:bg-emerald-50 transition-colors cursor-pointer"
                             title="Add to Trip Day"
                           >
                             <Plus size={15} />
@@ -396,7 +396,7 @@ export default function Activities() {
 
                           <Link
                             to={`/activities/${act.slug || actId}`}
-                            className="bg-emerald-50 hover:bg-[#0f2a22] text-[#0f2a22] hover:text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs group/btn"
+                            className="bg-emerald-50 hover:bg-forest-green-dark text-forest-green-dark hover:text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs group/btn"
                           >
                             <span>Details</span>
                             <ArrowRight size={13} className="group-hover/btn:translate-x-0.5 transition-transform" />
@@ -428,7 +428,7 @@ export default function Activities() {
                   onClick={() => setCurrentPage(idx + 1)}
                   className={`w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                     currentPage === idx + 1
-                      ? 'bg-[#0f2a22] text-white'
+                      ? 'bg-forest-green-dark text-white'
                       : 'bg-white border border-stone-200 text-slate-700 hover:bg-stone-50'
                   }`}
                 >
