@@ -263,7 +263,7 @@ export default function CheckoutPage() {
             contact: phoneNumber || "+919876543210"
           },
           theme: {
-            color: "#0f3d2e"
+            color: getComputedStyle(document.documentElement).getPropertyValue('--color-forest-green').trim()
           },
           modal: {
             ondismiss: function () {
@@ -291,7 +291,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfbf7] flex flex-col font-sans text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen bg-cream flex flex-col font-sans text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       <Navbar />
 
       <main className="flex-grow max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-28">
@@ -300,7 +300,7 @@ export default function CheckoutPage() {
         <div className="mb-6 flex items-center gap-2 text-xs font-semibold text-stone-500">
           <button 
             onClick={() => navigate(-1)} 
-            className="flex items-center gap-1.5 hover:text-[#0f3d2e] transition-colors py-1"
+            className="flex items-center gap-1.5 hover:text-forest-green transition-colors py-1"
           >
             <ArrowLeft size={14} />
             <span>Back to Explorer</span>
@@ -311,7 +311,7 @@ export default function CheckoutPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#0f3d2e] text-xs font-bold uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-forest-green text-xs font-bold uppercase tracking-wider mb-2">
             <ShieldCheck size={14} className="text-emerald-700" />
             <span>Bank-Grade Escrow Guarantee</span>
           </div>
@@ -339,7 +339,7 @@ export default function CheckoutPage() {
             </div>
             <Link
               to={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}
-              className="px-4 py-2 rounded-xl bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
+              className="px-4 py-2 rounded-xl bg-forest-green hover:bg-forest-green-hover text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
             >
               Sign In to Reserve →
             </Link>
@@ -348,13 +348,13 @@ export default function CheckoutPage() {
 
         {/* Mobile Horizontal Escrow Handshake Indicator (<1024px) */}
         <div className="lg:hidden mb-6 bg-white rounded-2xl p-4 border border-stone-200 shadow-2xs">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[#0f3d2e] mb-2.5 flex items-center gap-1.5">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-forest-green mb-2.5 flex items-center gap-1.5">
             <ShieldCheck size={14} />
             <span>3-Step Escrow Handshake Flow</span>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center text-[10.5px]">
             <div className="bg-emerald-50 p-2 rounded-xl border border-emerald-200">
-              <span className="w-5 h-5 rounded-full bg-[#0f3d2e] text-white flex items-center justify-center font-bold text-[10px] mx-auto mb-1">1</span>
+              <span className="w-5 h-5 rounded-full bg-forest-green text-white flex items-center justify-center font-bold text-[10px] mx-auto mb-1">1</span>
               <strong className="text-stone-900 block font-bold leading-tight">Pay into Escrow</strong>
             </div>
             <div className="bg-amber-50 p-2 rounded-xl border border-amber-200">
@@ -393,7 +393,7 @@ export default function CheckoutPage() {
 
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-[#0f3d2e] border border-emerald-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-forest-green border border-emerald-200">
                       3-Layer Verified
                     </span>
                     <span className="text-xs text-stone-500 font-medium">
@@ -423,7 +423,7 @@ export default function CheckoutPage() {
 
               {/* Dates & Duration Selector */}
               <div className="mt-6 pt-5 border-t border-stone-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-[#fdfbf7] p-3 rounded-xl border border-stone-200">
+                <div className="bg-cream p-3 rounded-xl border border-stone-200">
                   <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block mb-1">
                     {itemType === 'rental' ? 'Pick-up Date' : 'Check-in'}
                   </label>
@@ -435,7 +435,7 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                <div className="bg-[#fdfbf7] p-3 rounded-xl border border-stone-200">
+                <div className="bg-cream p-3 rounded-xl border border-stone-200">
                   <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block mb-1">
                     {itemType === 'rental' ? 'Return Date' : 'Check-out'}
                   </label>
@@ -447,7 +447,7 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                <div className="bg-[#fdfbf7] p-3 rounded-xl border border-stone-200">
+                <div className="bg-cream p-3 rounded-xl border border-stone-200">
                   <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block mb-1">
                     {itemType === 'rental' ? 'Riders / Pax' : 'Guests'}
                   </label>
@@ -481,7 +481,7 @@ export default function CheckoutPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter full name"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 focus:border-[#0f3d2e]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-forest-green/30 focus:border-forest-green"
                   />
                 </div>
 
@@ -492,7 +492,7 @@ export default function CheckoutPage() {
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="+91 98765 43210"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 focus:border-[#0f3d2e]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-forest-green/30 focus:border-forest-green"
                   />
                 </div>
 
@@ -503,7 +503,7 @@ export default function CheckoutPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="traveler@domain.com"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 focus:border-[#0f3d2e]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-forest-green/30 focus:border-forest-green"
                   />
                 </div>
               </div>
@@ -521,7 +521,7 @@ export default function CheckoutPage() {
               <div className="space-y-3">
                 {/* Cash on Arrival Option (Recommended for On-Trip & Hackathon Demo) */}
                 <label className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === 'cash' ? 'border-[#0f3d2e] bg-emerald-50/40 ring-1 ring-[#0f3d2e]' : 'border-stone-200 hover:border-stone-300'
+                  paymentMethod === 'cash' ? 'border-forest-green bg-emerald-50/40 ring-1 ring-forest-green' : 'border-stone-200 hover:border-stone-300'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -530,7 +530,7 @@ export default function CheckoutPage() {
                         name="payment" 
                         checked={paymentMethod === 'cash'}
                         onChange={() => setPaymentMethod('cash')}
-                        className="text-[#0f3d2e] focus:ring-[#0f3d2e]"
+                        className="text-forest-green focus:ring-forest-green"
                       />
                       <div>
                         <div className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
@@ -555,7 +555,7 @@ export default function CheckoutPage() {
 
                 {/* UPI Option */}
                 <label className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === 'upi' ? 'border-[#0f3d2e] bg-emerald-50/40 ring-1 ring-[#0f3d2e]' : 'border-stone-200 hover:border-stone-300'
+                  paymentMethod === 'upi' ? 'border-forest-green bg-emerald-50/40 ring-1 ring-forest-green' : 'border-stone-200 hover:border-stone-300'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -564,7 +564,7 @@ export default function CheckoutPage() {
                         name="payment" 
                         checked={paymentMethod === 'upi'}
                         onChange={() => setPaymentMethod('upi')}
-                        className="text-[#0f3d2e] focus:ring-[#0f3d2e]"
+                        className="text-forest-green focus:ring-forest-green"
                       />
                       <div>
                         <div className="text-xs font-bold text-stone-900">UPI Instant Payment (Google Pay / PhonePe / QR)</div>
@@ -583,7 +583,7 @@ export default function CheckoutPage() {
                           onClick={() => setUpiApp(app)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-all ${
                             upiApp === app 
-                              ? 'bg-[#0f3d2e] text-white border-[#0f3d2e] shadow-xs' 
+                              ? 'bg-forest-green text-white border-forest-green shadow-xs' 
                               : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
                           }`}
                         >
@@ -596,7 +596,7 @@ export default function CheckoutPage() {
 
                 {/* Cards Option */}
                 <label className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === 'card' ? 'border-[#0f3d2e] bg-emerald-50/40 ring-1 ring-[#0f3d2e]' : 'border-stone-200 hover:border-stone-300'
+                  paymentMethod === 'card' ? 'border-forest-green bg-emerald-50/40 ring-1 ring-forest-green' : 'border-stone-200 hover:border-stone-300'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -605,7 +605,7 @@ export default function CheckoutPage() {
                         name="payment" 
                         checked={paymentMethod === 'card'}
                         onChange={() => setPaymentMethod('card')}
-                        className="text-[#0f3d2e] focus:ring-[#0f3d2e]"
+                        className="text-forest-green focus:ring-forest-green"
                       />
                       <div>
                         <div className="text-xs font-bold text-stone-900">Credit / Debit Card</div>
@@ -618,7 +618,7 @@ export default function CheckoutPage() {
 
                 {/* Net Banking */}
                 <label className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === 'netbanking' ? 'border-[#0f3d2e] bg-emerald-50/40 ring-1 ring-[#0f3d2e]' : 'border-stone-200 hover:border-stone-300'
+                  paymentMethod === 'netbanking' ? 'border-forest-green bg-emerald-50/40 ring-1 ring-forest-green' : 'border-stone-200 hover:border-stone-300'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -627,7 +627,7 @@ export default function CheckoutPage() {
                         name="payment" 
                         checked={paymentMethod === 'netbanking'}
                         onChange={() => setPaymentMethod('netbanking')}
-                        className="text-[#0f3d2e] focus:ring-[#0f3d2e]"
+                        className="text-forest-green focus:ring-forest-green"
                       />
                       <div>
                         <div className="text-xs font-bold text-stone-900">Net Banking</div>
@@ -646,7 +646,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 space-y-6">
             
             {/* ── THE WINNING FEATURE: Visual Escrow + OTP Handshake Graphic ── */}
-            <div className="bg-[#0f3d2e] text-white rounded-2xl p-6 shadow-lg relative overflow-hidden border border-emerald-800">
+            <div className="bg-forest-green text-white rounded-2xl p-6 shadow-lg relative overflow-hidden border border-emerald-800">
               {/* Subtle background glow */}
               <div className="absolute -right-8 -top-8 w-40 h-40 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -747,7 +747,7 @@ export default function CheckoutPage() {
 
                 <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-base font-bold text-stone-900">
                   <span>Total Payable</span>
-                  <span className="text-xl font-black text-[#0f3d2e]">
+                  <span className="text-xl font-black text-forest-green">
                     ₹{totalAmount?.toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -758,7 +758,7 @@ export default function CheckoutPage() {
                 type="button"
                 onClick={handlePayAndSecure}
                 disabled={isSubmitting}
-                className="w-full mt-6 bg-[#0f3d2e] hover:bg-[#144c3a] active:scale-[0.99] text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-75 cursor-pointer"
+                className="w-full mt-6 bg-forest-green hover:bg-forest-green-hover active:scale-[0.99] text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-75 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -804,13 +804,13 @@ export default function CheckoutPage() {
           <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
             {paymentMethod === 'cash' ? 'Pay On Arrival' : 'Total Amount'}
           </span>
-          <span className="text-lg font-black text-[#0f3d2e]">₹{totalAmount?.toLocaleString('en-IN')}</span>
+          <span className="text-lg font-black text-forest-green">₹{totalAmount?.toLocaleString('en-IN')}</span>
         </div>
         <button
           type="button"
           onClick={handlePayAndSecure}
           disabled={isSubmitting}
-          className="bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold py-2.5 px-5 rounded-xl shadow-md text-xs uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
+          className="bg-forest-green hover:bg-forest-green-hover text-white font-bold py-2.5 px-5 rounded-xl shadow-md text-xs uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
         >
           <Lock size={14} className="text-emerald-300" />
           <span>{isSubmitting ? 'Confirming...' : paymentMethod === 'cash' ? 'Confirm (Cash)' : 'Pay & Secure'}</span>
@@ -822,7 +822,7 @@ export default function CheckoutPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-stone-100 text-center relative overflow-hidden animate-in zoom-in-95 duration-200">
             
-            <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-[#0f3d2e] flex items-center justify-center mx-auto mb-4 border border-emerald-200 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-forest-green flex items-center justify-center mx-auto mb-4 border border-emerald-200 shadow-xs">
               <CheckCircle2 size={36} className="text-emerald-700" />
             </div>
 
@@ -840,11 +840,11 @@ export default function CheckoutPage() {
             </p>
 
             {/* Secret 4-Digit OTP Box */}
-            <div className="bg-[#fdfbf7] p-5 rounded-2xl border-2 border-dashed border-[#0f3d2e]/30 mb-6">
+            <div className="bg-cream p-5 rounded-2xl border-2 border-dashed border-forest-green/30 mb-6">
               <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block mb-1">
                 Your 4-Digit Handshake OTP
               </span>
-              <div className="text-4xl font-mono font-black text-[#0f3d2e] tracking-widest my-1">
+              <div className="text-4xl font-mono font-black text-forest-green tracking-widest my-1">
                 {confirmedBooking.checkInOtp}
               </div>
               <p className="text-[11px] text-stone-500 mt-1">
@@ -856,7 +856,7 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => navigate('/my-trip')}
-                className="w-full bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-forest-green hover:bg-forest-green-hover text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Go to On-Trip Dashboard</span>
                 <ChevronRight size={14} />
