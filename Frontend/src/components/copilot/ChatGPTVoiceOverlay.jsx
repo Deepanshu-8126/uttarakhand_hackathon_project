@@ -1,29 +1,37 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, X, Sparkles, Languages, Radio, RefreshCw, Loader2 } from 'lucide-react';
-import useChatStore from '../../store/chatStore';
-import { useMapStore } from '../../store/mapStore';
-import { sendAgentMessage } from '../../api/agentApi';
+import { Mic, Volume2, VolumeX, X, Sparkles, Languages, Radio, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) {
+export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
   const { lang, setLang } = useLanguage();
-  const { sendMessage, sending, agentStatus } = useChatStore();
-  const activeChat = useChatStore((state) => state.activeChat);
 
   const [voiceStatus, setVoiceStatus] = useState('idle'); // 'idle' | 'listening' | 'processing' | 'speaking'
   const [transcript, setTranscript] = useState('');
   const [lastAgentReply, setLastAgentReply] = useState('');
-  const [micErrorMessage, setMicErrorMessage] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [voiceDemoOnline, setVoiceDemoOnline] = useState(false);
-  const [typedInput, setTypedInput] = useState('');
-  const [micFailed, setMicFailed] = useState(false);
-  const recognitionRef = useRef(null);
-  const silenceTimerRef = useRef(null);
+
   const voiceStatusRef = useRef('idle');
   const wsRef = useRef(null);
+  const audioPlayerRef = useRef(null);
+  const hasPlayedGreetingRef = useRef(false);
 
-  // Extract the base Bridge URL. Convert http to ws and https to wss.
+  // Real-time PCM audio playback refs
+  const playbackContextRef = useRef(null);
+  const nextPlayTimeRef = useRef(0);
+  const isPlayingChunksRef = useRef(false);
+  const chunkSourcesRef = useRef([]);
+
+  // Audio recording & silence detection refs
+  const mediaStreamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const vadIntervalRef = useRef(null);
+  const hasSpokenRef = useRef(false);
+
+  // Base Bridge URL
   const HTTP_BRIDGE_URL = import.meta.env.VITE_VOICE_BRIDGE_URL || 'http://127.0.0.1:8765';
   const WS_BRIDGE_URL = HTTP_BRIDGE_URL.replace(/^http/, 'ws');
 
@@ -32,8 +40,56 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     setVoiceStatus(status);
   };
 
-  const audioPlayerRef = useRef(null);
+  const GREETINGS = {
+    hi: "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
+    en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
+  };
 
+  // Play real-time 24kHz raw PCM chunks from Gemini Live with zero latency
+  const playPcmChunk = useCallback((base64Chunk) => {
+    if (isMuted || !base64Chunk) return;
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!playbackContextRef.current || playbackContextRef.current.state === 'closed') {
+        playbackContextRef.current = new AudioCtx({ sampleRate: 24000 });
+      }
+      const ctx = playbackContextRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const binary = atob(base64Chunk);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const int16 = new Int16Array(bytes.buffer);
+
+      const float32 = new Float32Array(int16.length);
+      for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
+
+      const buffer = ctx.createBuffer(1, float32.length, 24000);
+      buffer.getChannelData(0).set(float32);
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+      if (nextPlayTimeRef.current < now) {
+        nextPlayTimeRef.current = now + 0.03; // tiny 30ms jitter buffer
+      }
+      source.start(nextPlayTimeRef.current);
+      nextPlayTimeRef.current += buffer.duration;
+      chunkSourcesRef.current.push(source);
+
+      isPlayingChunksRef.current = true;
+      updateVoiceStatus('speaking');
+    } catch (e) {
+      console.warn('[VoiceOverlay] Error playing PCM chunk:', e);
+    }
+  }, [isMuted]);
+
+  // Play pre-recorded WAV greeting audio
   const playVoiceAudio = useCallback((audioBase64, onFinish) => {
     if (audioPlayerRef.current) {
       try {
@@ -50,19 +106,20 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     updateVoiceStatus('speaking');
 
     try {
-      const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+      const mime = audioBase64.startsWith('UklGR') ? 'audio/wav' : 'audio/mp3';
+      const audio = new Audio(`data:${mime};base64,${audioBase64}`);
       audioPlayerRef.current = audio;
       audio.onended = () => {
         audioPlayerRef.current = null;
         if (onFinish) onFinish();
       };
       audio.onerror = (e) => {
-        console.warn("[VoiceAudio] Error playing base64 audio", e);
+        console.warn("[VoiceAudio] Error playing audio:", e);
         audioPlayerRef.current = null;
         if (onFinish) onFinish();
       };
       audio.play().catch((playErr) => {
-        console.warn("[VoiceAudio] Autoplay blocked", playErr);
+        console.warn("[VoiceAudio] Autoplay blocked:", playErr);
         if (onFinish) onFinish();
       });
     } catch (e) {
@@ -71,73 +128,100 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     }
   }, [isMuted]);
 
-  const GREETINGS = {
-    hi: "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
-    en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
-  };
+  // Clean up audio hardware streams
+  const cleanupAudioNodes = useCallback(() => {
+    if (vadIntervalRef.current) {
+      clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = null;
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+    if (recordingContextRef.current && recordingContextRef.current.state !== 'closed') {
+      try { recordingContextRef.current.close(); } catch (e) {}
+      recordingContextRef.current = null;
+    }
+    analyserRef.current = null;
+  }, []);
 
-  const initVoiceConnection = useCallback(() => {
-    setLastAgentReply("Initializing Neural Voice...");
-    connectBridgeWS();
-  }, [lang, isMuted]);
-
-  const stopVoiceLoop = () => {
+  const stopVoiceLoop = useCallback(() => {
     updateVoiceStatus('idle');
+    isPlayingChunksRef.current = false;
+    nextPlayTimeRef.current = 0;
+
+    // Stop chunk sources
+    chunkSourcesRef.current.forEach((src) => {
+      try { src.stop(); } catch (e) {}
+    });
+    chunkSourcesRef.current = [];
+
     if (audioPlayerRef.current) {
       try { audioPlayerRef.current.pause(); } catch (e) {}
       audioPlayerRef.current = null;
     }
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch (e) {}
-      recognitionRef.current = null;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
     }
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  };
+    cleanupAudioNodes();
+  }, [cleanupAudioNodes]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      stopVoiceLoop();
-    } else {
-      setMicErrorMessage('');
-      initVoiceConnection();
-    }
-    return () => {
-      stopVoiceLoop();
-    };
-  }, [isOpen, lang]);
-
-  // Connect to bridge WebSocket for real-time voice query processing
+  // Connect to WebSocket bridge for ultra-fast bidirectional audio streaming
   const connectBridgeWS = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
-    updateVoiceStatus('processing');
     try {
       const ws = new WebSocket(`${WS_BRIDGE_URL}/ws/voice`);
       wsRef.current = ws;
+
       ws.onopen = () => {
         setVoiceDemoOnline(true);
-        console.log(`[VoiceWS] Connected to Devbhoomi AI voice bridge at ${WS_BRIDGE_URL}`);
+        console.log(`[VoiceWS] Connected to Gemini Live stream at ${WS_BRIDGE_URL}`);
       };
+
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'response' && msg.text) {
-            const cleanSpoken = msg.text.replace(/[*#_~`]/g, '').replace(/\b(http|https):\/\/\S+/gi, '').replace(/\s+/g, ' ').trim();
-            setLastAgentReply(cleanSpoken);
-            setTranscript('');
-            playVoiceAudio(msg.audio_base64, () => {
-              updateVoiceStatus('listening');
-              startListening();
-            });
-          } else if (msg.type === 'status') {
-            if (msg.status === 'processing') updateVoiceStatus('processing');
-          } else if (msg.type === 'ready') {
+
+          // 1. Instant Real-time PCM audio chunk arrived! Play immediately!
+          if (msg.type === 'audio_chunk' && msg.chunk) {
+            playPcmChunk(msg.chunk);
+          }
+          // 2. User transcript arrived (transcribed in 0.3s)
+          else if (msg.type === 'user_transcript' && msg.text) {
+            setTranscript(msg.text);
+          }
+          // 3. Spoken text delta streaming
+          else if (msg.type === 'transcript_delta' && msg.delta) {
+            setLastAgentReply((prev) => (prev ? prev + msg.delta : msg.delta));
+          }
+          // 4. Turn complete from Gemini Live
+          else if (msg.type === 'turn_complete') {
+            if (msg.text) setLastAgentReply(msg.text);
+
+            // Wait until scheduled audio finishes playing before resuming listening
+            const now = playbackContextRef.current?.currentTime || 0;
+            const remainingSec = Math.max(0, nextPlayTimeRef.current - now);
+            const remainingMs = Math.round(remainingSec * 1000);
+
+            setTimeout(() => {
+              isPlayingChunksRef.current = false;
+              if (voiceStatusRef.current === 'speaking') {
+                updateVoiceStatus('listening');
+                startListening();
+              }
+            }, remainingMs + 350);
+          }
+          // 5. Processing status
+          else if (msg.type === 'status') {
+            if (msg.status === 'processing' && !isPlayingChunksRef.current) {
+              updateVoiceStatus('processing');
+            }
+          }
+          // 6. Welcome ready handshake
+          else if (msg.type === 'ready') {
             setVoiceDemoOnline(true);
-            if (msg.audio_base64) {
+            if (msg.audio_base64 && !hasPlayedGreetingRef.current) {
+              hasPlayedGreetingRef.current = true;
               setLastAgentReply(msg.greeting || GREETINGS[lang] || GREETINGS.en);
               playVoiceAudio(msg.audio_base64, () => {
                 updateVoiceStatus('listening');
@@ -145,124 +229,242 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
               });
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn("[VoiceWS] Message handling error:", e);
+        }
       };
+
       ws.onerror = () => {
         setVoiceDemoOnline(false);
-        // Cannot connect - wait in idle
-        updateVoiceStatus('idle');
       };
-      ws.onclose = () => { wsRef.current = null; };
+      ws.onclose = () => {
+        wsRef.current = null;
+        // Auto-reconnect after brief pause to keep live socket warm
+        if (isOpen) {
+          setTimeout(() => {
+            if (isOpen && (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN)) {
+              connectBridgeWS();
+            }
+          }, 800);
+        }
+      };
     } catch (e) {
-      console.warn('[VoiceWS] Could not connect to bridge:', e.message);
-      updateVoiceStatus('idle');
+      console.warn('[VoiceWS] Connection error:', e.message);
     }
-  }, [lang, isMuted, playVoiceAudio]);
+  }, [lang, playPcmChunk, playVoiceAudio, WS_BRIDGE_URL, isOpen]);
 
-  // Send query through WS bridge (preferred) or HTTP fallback
-  const sendToBridge = useCallback((queryText) => {
+  // Ensure active WebSocket connection exists before sending
+  const ensureWsConnected = useCallback(async () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'query', query: queryText, lang }));
-      updateVoiceStatus('processing');
-    } else {
-      handleVoiceQuerySubmit(queryText);
+      return wsRef.current;
     }
-  }, [lang]);
+    connectBridgeWS();
+    for (let i = 0; i < 25; i++) {
+      await new Promise((r) => setTimeout(r, 60));
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        return wsRef.current;
+      }
+    }
+    return wsRef.current && wsRef.current.readyState === WebSocket.OPEN ? wsRef.current : null;
+  }, [connectBridgeWS]);
 
+  // Send raw recorded mic audio directly to Gemini Live over WebSocket
+  const sendAudioBlobToBridge = async (blob) => {
+    updateVoiceStatus('processing');
+    setLastAgentReply(lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…');
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Audio = reader.result.split(',')[1];
+        if (!base64Audio) {
+          updateVoiceStatus('listening');
+          startListening();
+          return;
+        }
+
+        // Fast-path: Guarantee WebSocket stream for sub-second PCM streaming!
+        const activeWs = await ensureWsConnected();
+        if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+          nextPlayTimeRef.current = 0;
+          activeWs.send(JSON.stringify({
+            type: 'audio',
+            audio_base64: base64Audio,
+            mime_type: blob.type || 'audio/webm',
+            lang: lang,
+          }));
+          return;
+        }
+
+        // Fallback to HTTP only if WebSocket completely fails
+        try {
+          const res = await fetch(`${HTTP_BRIDGE_URL}/api/voice/audio_query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              audio_base64: base64Audio,
+              mime_type: blob.type || 'audio/webm',
+              lang: lang,
+            }),
+            signal: AbortSignal.timeout(30000),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user_transcript) setTranscript(data.user_transcript);
+            if (data.response) {
+              setLastAgentReply(data.response);
+              playVoiceAudio(data.audio_base64, () => {
+                updateVoiceStatus('listening');
+                startListening();
+              });
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn("[VoiceOverlay] audio_query error:", err);
+        }
+
+        updateVoiceStatus('listening');
+        startListening();
+      };
+      reader.readAsDataURL(blob);
+    } catch (e) {
+      console.error("[VoiceOverlay] Blob read error:", e);
+      updateVoiceStatus('listening');
+      startListening();
+    }
+  };
+
+
+  // Stop recording and send audio immediately
+  const stopRecordingAndSend = () => {
+    if (vadIntervalRef.current) {
+      clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      updateVoiceStatus('processing');
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {}
+    }
+    cleanupAudioNodes();
+  };
+
+  // Start hardware microphone recording with fast 1.0s silence detector
   const startListening = async () => {
     if (audioPlayerRef.current) {
       try { audioPlayerRef.current.pause(); } catch (e) {}
+      audioPlayerRef.current = null;
     }
-    setMicErrorMessage('');
+    setTranscript('');
+    hasSpokenRef.current = false;
+    audioChunksRef.current = [];
 
-    // Ensure WS bridge is connected
     connectBridgeWS();
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setMicFailed(true);
-      updateVoiceStatus('idle');
-      return;
-    }
-
-    // Verify mic permission
-    if (navigator.mediaDevices?.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(t => t.stop());
-      } catch (micErr) {
-        setMicErrorMessage('Microphone access denied. Use the text box below to type your question.');
-        setMicFailed(true);
-        updateVoiceStatus('idle');
-        return;
-      }
-    }
-
     try {
-      if (recognitionRef.current) { try { recognitionRef.current.abort(); } catch (e) {} }
-
-      const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
-
-      recognition.onstart = () => { updateVoiceStatus('listening'); setTranscript(''); };
-
-      recognition.onresult = (event) => {
-        let finalText = '', interimText = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
-          else interimText += event.results[i][0].transcript;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         }
-        const currentText = finalText || interimText;
-        if (currentText) {
-          setTranscript(currentText);
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = setTimeout(() => {
-            if (currentText.trim().length > 2) sendToBridge(currentText.trim());
-          }, 1800);
+      });
+      mediaStreamRef.current = stream;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      recordingContextRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.5;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      }
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
         }
       };
 
-      recognition.onerror = (e) => {
-        console.warn('[VoiceAgent] STT error:', e.error);
-        if (e.error === 'network' || e.error === 'not-allowed') {
-          // STT unavailable → switch to type-to-ask mode
-          setMicFailed(true);
-          setMicErrorMessage(e.error === 'network'
-            ? '🎙️ Mic STT offline. Use text below or tap a topic chip.'
-            : 'Microphone blocked. Type your question below.');
-          updateVoiceStatus('idle');
-        } else if (e.error === 'no-speech') {
-          if (voiceStatusRef.current === 'listening') { try { recognition.start(); } catch (err) {} }
+      recorder.onstop = () => {
+        const chunks = audioChunksRef.current;
+        if (chunks.length === 0) return;
+        const recordedBlob = new Blob(chunks, { type: mimeType || 'audio/webm' });
+        audioChunksRef.current = [];
+
+        if (recordedBlob.size > 1200) {
+          sendAudioBlobToBridge(recordedBlob);
         } else {
-          updateVoiceStatus('idle');
+          if (voiceStatusRef.current === 'listening') {
+            startListening();
+          }
         }
       };
 
-      recognition.onend = () => {
-        if (voiceStatusRef.current === 'listening') { try { recognition.start(); } catch (e) {} }
-      };
+      recorder.start();
+      updateVoiceStatus('listening');
 
-      recognition.start();
+      // Snappy 120ms VAD timer (1.0 second silence trigger for instant answers!)
+      const dataArr = new Uint8Array(analyser.frequencyBinCount);
+      let silenceSince = null;
+
+      if (vadIntervalRef.current) clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = setInterval(() => {
+        if (voiceStatusRef.current !== 'listening' || !analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArr);
+        let sum = 0;
+        for (let i = 0; i < dataArr.length; i++) sum += dataArr[i];
+        const avg = sum / dataArr.length;
+
+        // When user speaks
+        if (avg > 8) {
+          hasSpokenRef.current = true;
+          silenceSince = null;
+        } else if (hasSpokenRef.current) {
+          if (!silenceSince) silenceSince = Date.now();
+          // After 750ms of silence post-speech, submit immediately!
+          if (Date.now() - silenceSince > 750) {
+            stopRecordingAndSend();
+          }
+        }
+      }, 120);
+
     } catch (err) {
-      setMicFailed(true);
-      setMicErrorMessage('Failed to start microphone. Type your question below.');
+      console.warn('[VoiceOverlay] Mic stream failed:', err);
       updateVoiceStatus('idle');
     }
   };
 
+  // Submit text query (from topic chips) over fast WebSocket
   const handleVoiceQuerySubmit = async (queryText) => {
     if (!queryText) return;
-
-    // Stop listening while AI processes
     updateVoiceStatus('processing');
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    cleanupAudioNodes();
 
+    const activeWs = await ensureWsConnected();
+    if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+      nextPlayTimeRef.current = 0;
+      setLastAgentReply(lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…');
+      activeWs.send(JSON.stringify({
+        type: 'query',
+        query: queryText,
+        lang: lang,
+      }));
+      return;
+    }
+
+    // Fallback to HTTP
     let cleanReply = '';
     let neuralAudioB64 = '';
 
@@ -271,7 +473,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryText, lang }),
-        signal: AbortSignal.timeout(6000)
+        signal: AbortSignal.timeout(30000)
       });
       if (bridgeRes.ok) {
         const data = await bridgeRes.json();
@@ -282,18 +484,16 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         }
       }
     } catch (bridgeErr) {
-      console.error("[VoiceAgent] Bridge fetch failed:", bridgeErr);
+      console.error("[VoiceOverlay] Bridge fetch failed:", bridgeErr);
     }
 
     if (!cleanReply) {
-      const fallbackMsgs = {
-        hi: "माफ़ करें, मैं अभी सर्वर से कनेक्ट नहीं कर पा रहा हूँ।",
-        en: "Sorry, I am unable to reach the neural voice server right now."
-      };
-      cleanReply = fallbackMsgs[lang] || fallbackMsgs.en;
+      cleanReply = lang === 'hi'
+        ? "माफ़ करें, मैं अभी कनेक्ट नहीं कर पा रहा हूँ।"
+        : "Sorry, I am unable to reach the neural voice server right now.";
     }
 
-    const cleanSpoken = cleanReply.replace(/[*#_~`]/g, '').replace(/\b(http|https):\/\/\S+/gi, '').replace(/\s+/g, ' ').trim();
+    const cleanSpoken = cleanReply.replace(/[*#_~`]/g, '').trim();
     setLastAgentReply(cleanSpoken);
 
     playVoiceAudio(neuralAudioB64, () => {
@@ -302,23 +502,75 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     });
   };
 
+  const initVoiceConnection = useCallback(async () => {
+    hasPlayedGreetingRef.current = false;
+    setLastAgentReply(lang === 'hi' ? "देवभूमि लाइव वॉइस से कनेक्ट हो रहे हैं…" : "Connecting to Devbhoomi Live Voice…");
+    connectBridgeWS();
+
+    // Fast-path: immediately fetch pre-cached Gemini Live greeting
+    try {
+      const res = await fetch(`${HTTP_BRIDGE_URL}/api/voice/greeting?lang=${lang}`, {
+        signal: AbortSignal.timeout(4000)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.audio_base64 && !hasPlayedGreetingRef.current) {
+          hasPlayedGreetingRef.current = true;
+          setVoiceDemoOnline(true);
+          setLastAgentReply(data.greeting || GREETINGS[lang] || GREETINGS.en);
+          playVoiceAudio(data.audio_base64, () => {
+            updateVoiceStatus('listening');
+            startListening();
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[VoiceOverlay] Greeting fetch error:", e);
+    }
+  }, [lang, playVoiceAudio, HTTP_BRIDGE_URL, connectBridgeWS]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      stopVoiceLoop();
+    } else {
+      initVoiceConnection();
+    }
+    return () => {
+      stopVoiceLoop();
+    };
+  }, [isOpen, lang]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#061911] flex flex-col justify-between p-5 sm:p-10 text-white animate-in fade-in duration-200 overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-[#040e09] flex flex-col justify-between p-4 sm:p-8 text-white animate-in fade-in duration-200 overflow-hidden select-none">
+
+      {/* Ambient Radial Aura Background Glow */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-all duration-700"
+        style={{
+          background: voiceStatus === 'speaking'
+            ? 'radial-gradient(circle at 50% 45%, rgba(6, 182, 212, 0.16) 0%, rgba(4, 14, 9, 0) 70%)'
+            : voiceStatus === 'listening'
+            ? 'radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.18) 0%, rgba(4, 14, 9, 0) 70%)'
+            : 'radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.08) 0%, rgba(4, 14, 9, 0) 70%)',
+        }}
+      />
 
       {/* ── Top Header Controls ── */}
-      <div className="flex items-center justify-between max-w-4xl mx-auto w-full shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-sm shadow-emerald-950">
-            <Sparkles size={18} />
+      <div className="relative z-10 flex items-center justify-between max-w-4xl mx-auto w-full shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            <Sparkles size={19} />
           </div>
           <div>
-            <span className="font-black text-sm sm:text-base tracking-tight block text-white">Devbhoomi AI Voice Companion</span>
+            <span className="font-extrabold text-sm sm:text-base tracking-tight block text-white drop-shadow-sm">
+              Devbhoomi AI Voice Companion
+            </span>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
-              <span className="text-[10px] text-emerald-300/90 font-semibold uppercase tracking-wider">
-                {voiceDemoOnline ? 'Interactive Live Voice Guide' : 'Bridge Offline'}
+              <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse' : 'bg-emerald-600'}`} />
+              <span className="text-[10px] text-emerald-300/80 font-bold uppercase tracking-wider">
+                {voiceDemoOnline ? 'GEMINI LIVE STREAM (AOEDE)' : 'CONNECTING LIVE ENGINE…'}
               </span>
             </div>
           </div>
@@ -331,10 +583,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             onClick={() => {
               setLang(lang === 'en' ? 'hi' : 'en');
             }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer backdrop-blur-md"
           >
-            <Languages size={13} className="text-emerald-300" />
-            <span>{lang === 'en' ? '🇮🇳 हिन्दी (Hindi)' : '🇬🇧 English'}</span>
+            <Languages size={13} className="text-emerald-400" />
+            <span>{lang === 'en' ? '🇮🇳 हिन्दी' : '🇬🇧 English'}</span>
           </button>
 
           {/* Mute Toggle */}
@@ -342,11 +594,11 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             type="button"
             onClick={() => {
               if (!isMuted && audioPlayerRef.current) {
-                try { audioPlayerRef.current.pause(); } catch(e) {}
+                try { audioPlayerRef.current.pause(); } catch (e) {}
               }
               setIsMuted(!isMuted);
             }}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
             title={isMuted ? "Unmute Voice Output" : "Mute Voice Output"}
           >
             {isMuted ? <VolumeX size={16} className="text-rose-400" /> : <Volume2 size={16} className="text-emerald-400" />}
@@ -359,7 +611,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
               stopVoiceLoop();
               onClose();
             }}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
             title="Exit Voice Mode"
           >
             <X size={18} />
@@ -367,84 +619,84 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         </div>
       </div>
 
-      {/* ── Central Animated Wave Visualizer / Orb ── */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full text-center my-4 min-h-0">
+      {/* ── Central Animated Wave Visualizer / Hero Orb ── */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full text-center my-auto min-h-0">
 
-        {/* Glowing Orb Animation */}
-        <div className="relative mb-6 flex items-center justify-center shrink-0">
+        {/* Multi-layered Hero Glowing Orb */}
+        <div className="relative my-6 flex items-center justify-center shrink-0">
 
-          {/* Pulse Ripple Rings */}
+          {/* Outer Ripple Rings */}
           {voiceStatus === 'listening' && (
             <>
-              <div className="absolute w-44 h-44 rounded-full bg-emerald-500/25 animate-ping opacity-75 pointer-events-none" />
-              <div className="absolute w-56 h-56 rounded-full bg-emerald-400/15 animate-pulse pointer-events-none" />
+              <div className="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-emerald-500/15 animate-ping opacity-60 pointer-events-none" />
+              <div className="absolute w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-emerald-400/[0.08] animate-pulse pointer-events-none" />
             </>
           )}
 
           {voiceStatus === 'speaking' && (
             <>
-              <div className="absolute w-48 h-48 rounded-full bg-teal-400/30 animate-ping opacity-85 pointer-events-none" />
-              <div className="absolute w-60 h-60 rounded-full bg-cyan-400/20 animate-pulse pointer-events-none" />
+              <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full bg-cyan-400/20 animate-ping opacity-70 pointer-events-none" />
+              <div className="absolute w-68 h-68 sm:w-76 sm:h-76 rounded-full bg-teal-400/[0.1] animate-pulse pointer-events-none" />
             </>
           )}
 
+          {/* Rotating celestial border for processing */}
           {voiceStatus === 'processing' && (
-            <div className="absolute w-40 h-40 rounded-full border-3 border-dashed border-emerald-400/50 animate-spin pointer-events-none" />
+            <div className="absolute w-36 h-36 sm:w-40 sm:h-40 rounded-full border-2 border-dashed border-emerald-400/50 animate-spin pointer-events-none" />
           )}
 
-          {/* Central Main Orb Button */}
+          {/* The Hero Core Orb Button */}
           <button
             type="button"
             onClick={() => {
               if (voiceStatus === 'speaking') {
-                if (audioPlayerRef.current) { try { audioPlayerRef.current.pause(); } catch(e){} }
+                stopVoiceLoop();
                 updateVoiceStatus('listening');
                 startListening();
               } else if (voiceStatus === 'listening') {
-                stopVoiceLoop();
+                // Instantly stop and send the recorded voice!
+                stopRecordingAndSend();
               } else {
                 startListening();
               }
             }}
-            className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 cursor-pointer ${
+            className={`w-32 h-32 sm:w-36 sm:h-36 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer relative z-20 ${
               voiceStatus === 'listening'
-                ? 'bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white scale-105 shadow-emerald-500/50 ring-4 ring-emerald-400/30'
+                ? 'bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white voice-orb-breathe ring-4 ring-emerald-400/30'
                 : voiceStatus === 'speaking'
-                ? 'bg-gradient-to-tr from-teal-600 to-cyan-400 text-white scale-105 shadow-cyan-500/50 ring-4 ring-cyan-400/30'
+                ? 'bg-gradient-to-tr from-cyan-600 via-teal-500 to-emerald-400 text-white voice-orb-speaking ring-4 ring-cyan-400/30'
                 : voiceStatus === 'processing'
-                ? 'bg-gradient-to-tr from-stone-800 to-emerald-950 text-emerald-300'
-                : 'bg-white/15 hover:bg-white/25 text-white'
+                ? 'bg-gradient-to-tr from-stone-900 via-emerald-950 to-stone-900 text-emerald-300 ring-2 ring-emerald-500/20'
+                : 'bg-gradient-to-tr from-emerald-900/90 via-teal-900/80 to-emerald-800/90 hover:from-emerald-800 hover:to-teal-800 text-emerald-100 border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)]'
             }`}
           >
             {voiceStatus === 'processing' ? (
-              <Loader2 size={38} className="animate-spin" />
+              <Loader2 size={42} className="animate-spin text-emerald-300" />
             ) : voiceStatus === 'speaking' ? (
-              <Volume2 size={38} className="animate-bounce" />
-            ) : voiceStatus === 'listening' ? (
-              <Mic size={38} className="animate-pulse" />
+              <Volume2 size={42} className="animate-pulse text-cyan-100 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
             ) : (
-              <MicOff size={38} className="opacity-70" />
+              <Mic size={42} className={voiceStatus === 'listening' ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" : "text-emerald-200/90"} />
             )}
           </button>
         </div>
 
-        {/* Dynamic Sound Wave Bars */}
-        <div className="flex items-center justify-center gap-1.5 h-8 my-2">
-          {[35, 70, 50, 90, 65, 85, 45, 95, 60, 40].map((h, i) => (
+        {/* Harmonic Dynamic Sound Wave Bars */}
+        <div className="flex items-center justify-center gap-1.5 h-9 my-3">
+          {[30, 65, 45, 85, 60, 95, 75, 90, 50, 80, 40, 70, 35, 60].map((h, i) => (
             <span
               key={i}
               style={{
                 height: voiceStatus === 'speaking' || voiceStatus === 'listening' ? `${h}%` : '20%',
-                animationDelay: `${i * 0.12}s`
+                animationDelay: `${i * 0.08}s`
               }}
               className={`w-1 rounded-full transition-all duration-300 ${
                 voiceStatus === 'speaking'
-                  ? 'bg-gradient-to-t from-teal-500 to-cyan-300 animate-pulse'
+                  ? 'bg-gradient-to-t from-cyan-500 to-teal-200 animate-pulse'
                   : voiceStatus === 'listening'
-                  ? 'bg-gradient-to-t from-emerald-600 to-emerald-300 animate-pulse'
+                  ? 'bg-gradient-to-t from-emerald-600 via-emerald-400 to-teal-200 animate-pulse'
                   : voiceStatus === 'processing'
-                  ? 'bg-amber-400/80 animate-ping'
-                  : 'bg-stone-700'
+                  ? 'bg-amber-400/60 animate-pulse'
+                  : 'bg-emerald-950/60'
               }`}
             />
           ))}
@@ -452,50 +704,45 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
         {/* Status Indicator Pill */}
         <div className="my-2 shrink-0">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-widest text-emerald-300 backdrop-blur-md">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs font-bold uppercase tracking-widest text-emerald-300 backdrop-blur-md shadow-sm">
             <Radio size={13} className={voiceStatus === 'listening' || voiceStatus === 'speaking' ? 'animate-pulse text-emerald-400' : 'text-stone-400'} />
             <span>
               {voiceStatus === 'listening'
-                ? (lang === 'hi' ? 'आपकी आवाज़ सुन रहे हैं…' : 'Listening to you…')
+                ? (lang === 'hi' ? 'बोलिए, मैं सुन रहा हूँ…' : 'Listening... Speak now')
                 : voiceStatus === 'processing'
-                ? (lang === 'hi' ? 'न्यूरल वॉइस तैयार की जा रही है…' : 'Generating neural voice…')
+                ? (lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…')
                 : voiceStatus === 'speaking'
-                ? (lang === 'hi' ? 'AI गाइड बोल रहा है (Tap to interrupt)' : 'AI Copilot Speaking (Tap to stop)')
-                : (lang === 'hi' ? 'बोलने के लिए माइक दबाएं' : 'Tap Mic to Start')}
+                ? (lang === 'hi' ? 'AI गाइड बोल रहा है (Tap to interrupt)' : 'AI Speaking (Tap to interrupt)')
+                : (lang === 'hi' ? 'बोलने के लिए ऑर्ब दबाएं' : 'Tap Orb to Speak')}
             </span>
           </span>
         </div>
 
-        {/* Microphone Error Alert */}
-        {micErrorMessage && (
-          <div className="mb-3 px-4 py-2 rounded-2xl bg-rose-500/25 border border-rose-400/40 text-rose-200 text-xs font-medium max-w-md mx-auto animate-in fade-in">
-            ⚠️ {micErrorMessage}
+        {/* Live Conversational Subtitles Card */}
+        <div className="w-full max-w-lg mt-3 px-4">
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl p-4 min-h-[64px] max-h-36 overflow-y-auto flex items-center justify-center text-center shadow-inner">
+            {transcript ? (
+              <p className="text-sm sm:text-base font-semibold text-emerald-200 leading-relaxed animate-in fade-in">
+                “{transcript}”
+              </p>
+            ) : lastAgentReply ? (
+              <p className="text-xs sm:text-sm text-emerald-50/95 leading-relaxed font-normal">
+                {lastAgentReply}
+              </p>
+            ) : (
+              <p className="text-xs text-stone-400/90 font-medium">
+                {lang === 'hi'
+                  ? '“केदारनाथ जाने का सबसे अच्छा समय क्या है?” या “मुनस्यारी के लिए 3 दिन का प्लान बताओ”'
+                  : '“What is the best route to Kedarnath?” or “Suggest a 4-day trek in Munsyari”'}
+              </p>
+            )}
           </div>
-        )}
-
-        {/* Live Spoken Transcript or Last AI Reply */}
-        <div className="min-h-[50px] max-h-32 overflow-y-auto w-full px-4 text-center">
-          {transcript ? (
-            <p className="text-base sm:text-lg font-bold text-emerald-200 leading-relaxed drop-shadow-sm animate-in fade-in">
-              “{transcript}”
-            </p>
-          ) : lastAgentReply ? (
-            <p className="text-xs sm:text-sm text-emerald-100/90 line-clamp-3 leading-relaxed font-medium">
-              {lastAgentReply}
-            </p>
-          ) : (
-            <p className="text-xs sm:text-sm text-stone-400 font-medium">
-              {lang === 'hi'
-                ? '“केदारनाथ जाने का सबसे अच्छा समय क्या है?” या “मुनस्यारी के लिए 3 दिन का प्लान बताओ”'
-                : '“What is the best route to Kedarnath?” or “Suggest a 4-day trek in Munsyari”'}
-            </p>
-          )}
         </div>
 
       </div>
 
       {/* ── Bottom Controls & Prompts ── */}
-      <div className="max-w-xl mx-auto w-full text-center shrink-0">
+      <div className="relative z-10 max-w-2xl mx-auto w-full text-center shrink-0 mt-2">
         <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
           {[
             lang === 'hi' ? 'केदारनाथ ट्रेक एल्टीट्यूड व सुरक्षा' : 'Kedarnath trek altitude & safety',
@@ -510,15 +757,15 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
                 setTranscript(sample);
                 handleVoiceQuerySubmit(sample);
               }}
-              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-bold text-emerald-200 hover:text-white transition-all cursor-pointer shadow-2sm"
+              className="px-3.5 py-1.5 rounded-full bg-white/[0.05] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-400/30 text-[11px] font-medium text-emerald-200/90 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-sm"
             >
               {sample}
             </button>
           ))}
         </div>
 
-        <p className="text-[11px] text-stone-400 font-medium">
-          Powered by langchain-ai/voice-demo &copy; Google Gemini Live &amp; Devbhoomi Knowledge Engine
+        <p className="text-[11px] text-stone-500 font-medium tracking-wide">
+          Powered by langchain-ai/voice-demo &copy; Google Gemini Live &amp; Devbhoomi Engine
         </p>
       </div>
 
