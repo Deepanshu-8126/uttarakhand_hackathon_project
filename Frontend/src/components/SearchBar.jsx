@@ -3,6 +3,91 @@ import { Search, X, MapPin, Sparkles, Navigation } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { placesApi } from '../api/placesApi';
 
+// ── Hindi / Transliteration & Category Normalizer ──
+function normalizeSearchQuery(input) {
+  if (!input) return '';
+  let q = input.toLowerCase().trim();
+  const HINDI_MAP = {
+    'केदारनाथ': 'kedarnath',
+    'बद्रीनाथ': 'badrinath',
+    'औली': 'auli',
+    'ऋषिकेश': 'rishikesh',
+    'नैनीताल': 'nainital',
+    'मसूरी': 'mussoorie',
+    'किच्छा': 'kichha',
+    'चोपता': 'chopta',
+    'होटल': 'hotel',
+    'सस्ता होटल': 'budget hotel',
+    'ढाबा': 'dhaba restaurant',
+    'बाइक': 'bike rental',
+    'एटीएम': 'atm',
+    'पेट्रोल': 'petrol pump'
+  };
+
+  for (const [hindi, english] of Object.entries(HINDI_MAP)) {
+    if (q.includes(hindi)) {
+      q = q.replace(hindi, english);
+    }
+  }
+  return q;
+}
+
+// ── Trending Himalayan Hubs for Empty Search ──
+const TRENDING_HUBS = [
+  {
+    _id: 'trend_kedarnath',
+    name: 'Kedarnath Dham',
+    district: 'Rudraprayag',
+    region: 'Garhwal Himalayas',
+    slug: 'kedarnath',
+    isTrending: true,
+    coverImage: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=600&q=80',
+    tag: '🔥 #1 Pilgrimage'
+  },
+  {
+    _id: 'trend_auli',
+    name: 'Auli Ski Resort',
+    district: 'Chamoli',
+    region: 'High Altitude Bugyal',
+    slug: 'auli',
+    isTrending: true,
+    coverImage: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=600&q=80',
+    tag: '🎿 Snow & Ski'
+  },
+  {
+    _id: 'trend_rishikesh',
+    name: 'Rishikesh Yoga Capital',
+    district: 'Dehradun',
+    region: 'Ganges Valley',
+    slug: 'rishikesh',
+    isTrending: true,
+    coverImage: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=600&q=80',
+    tag: '🌊 Rafting & Yoga'
+  },
+  {
+    _id: 'trend_vof',
+    name: 'Valley of Flowers',
+    district: 'Chamoli',
+    region: 'UNESCO World Heritage',
+    slug: 'valley-of-flowers',
+    isTrending: true,
+    coverImage: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+    tag: '🌸 Alpine Flora'
+  },
+  {
+    _id: 'trend_kichha',
+    name: 'Kichha Regional Hub',
+    district: 'Udham Singh Nagar',
+    region: 'Terai Gateway',
+    slug: 'kichha',
+    isTrending: true,
+    isLiveRadar: true,
+    mapUrl: '/map?q=Kichha',
+    coverImage: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80',
+    tag: '📍 Satellite Radar'
+  }
+];
+
 /**
  * Focused Destination Search Bar for Explore Page:
  * Integrates MongoDB catalog + Live Geoapify Satellite Radar for hidden locations.
@@ -21,14 +106,16 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
   // ── Debounced suggestion matching (Local DB + Geoapify Live Radar) ─────────
   const computeSuggestions = useCallback(
     async (query) => {
+      // 1. If empty query, show trending hubs on focus
       if (!query || query.trim().length < 1) {
-        setSuggestions([]);
-        setShowDropdown(false);
+        setSuggestions(TRENDING_HUBS);
         return;
       }
-      const q = query.toLowerCase().trim();
+
+      const raw = query.trim();
+      const q = normalizeSearchQuery(raw);
       
-      // 1. Local catalog matches
+      // 2. Local catalog matches
       const localMatches = destinations
         .filter(
           (d) =>
@@ -41,21 +128,21 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
 
       let combined = [...localMatches];
 
-      // 2. Dynamic Live Radar (Geoapify) for hidden locations (e.g. Hemkund, Chopta, Binsar)
-      if (q.length >= 3) {
+      // 3. Dynamic Live Radar (Geoapify) for hidden locations & POIs
+      if (q.length >= 2) {
         try {
           setIsSearchingApi(true);
-          const apiRes = await placesApi.searchPlaces(query);
+          const apiRes = await placesApi.searchPlaces(q);
           if (apiRes?.data && Array.isArray(apiRes.data)) {
             const apiPlaces = apiRes.data
               .filter(p => !combined.some(c => c.name?.toLowerCase() === p.name?.toLowerCase()))
-              .slice(0, 3)
+              .slice(0, 4)
               .map(p => ({
                 id: p.place_id,
                 _id: p.place_id,
                 name: p.name,
                 district: p.vicinity || 'Uttarakhand',
-                region: 'Himalayan Landmark',
+                region: 'Himalayan Landmark / Radar',
                 isLiveRadar: true,
                 rating: p.rating || 4.8,
                 location: p.location,
@@ -71,8 +158,18 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
         }
       }
 
+      // 4. Intelligent AI Fallback if zero results (e.g. gibberish 'asdfghjkl')
+      if (combined.length === 0) {
+        const fallbackResults = TRENDING_HUBS.slice(0, 3).map(item => ({
+          ...item,
+          isAiFallback: true,
+          originalQuery: raw
+        }));
+        combined = fallbackResults;
+      }
+
       setSuggestions(combined);
-      setShowDropdown(combined.length > 0);
+      setShowDropdown(true);
       setActiveIndex(-1);
     },
     [destinations]
@@ -80,7 +177,11 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => computeSuggestions(value), 220);
+    debounceRef.current = setTimeout(() => {
+      if (value && value.trim().length > 0) {
+        computeSuggestions(value);
+      }
+    }, 220);
     return () => clearTimeout(debounceRef.current);
   }, [value, computeSuggestions]);
 
@@ -158,6 +259,14 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
             }}
             placeholder="Search destinations, shrines, bugyals..."
             aria-label="Search destinations"
+            onFocus={() => {
+              if (!value || value.trim().length === 0) {
+                setSuggestions(TRENDING_HUBS);
+                setShowDropdown(true);
+              } else {
+                computeSuggestions(value);
+              }
+            }}
             className="w-full outline-none text-sm font-semibold text-slate-800 placeholder:text-slate-400 bg-transparent truncate pr-2"
           />
         </div>
@@ -199,7 +308,22 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
           className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-3xl shadow-2xl border border-border-light z-50 overflow-hidden"
         >
           {suggestions.length > 0 ? (
-            <ul className="py-2 max-h-80 overflow-y-auto">
+            <div>
+              {/* Optional Header for AI fallback or Trending */}
+              {suggestions[0]?.isAiFallback && (
+                <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs font-medium flex items-center gap-2">
+                  <Sparkles size={14} className="text-amber-600 shrink-0" />
+                  <span>No exact match for "{suggestions[0].originalQuery}". Showing top Himalayan suggestions:</span>
+                </div>
+              )}
+              {suggestions[0]?.isTrending && (!value || value.trim().length === 0) && (
+                <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-100 text-emerald-950 text-xs font-black uppercase tracking-wider flex items-center justify-between">
+                  <span>🔥 Trending Himalayan Destinations</span>
+                  <span className="text-[10px] text-emerald-700 font-mono">Popular</span>
+                </div>
+              )}
+
+              <ul className="py-2 max-h-80 overflow-y-auto">
               {suggestions.map((dest, idx) => {
                 const loc = locationLabel(dest);
                 const imageUrl = dest.coverImage?.url || dest.coverImage;
@@ -288,6 +412,7 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
                 );
               })}
             </ul>
+            </div>
           ) : (
             <div className="px-5 py-5 text-center">
               <p className="text-text-dark font-semibold text-sm mb-1">
