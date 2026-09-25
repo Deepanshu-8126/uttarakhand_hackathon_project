@@ -210,7 +210,7 @@ Timestamp: ${new Date().toISOString()}`;
 
       {/* ── TOP MISSION CONTROL HEADER ───────────────────────────────────── */}
       <header className="bg-[#111722] border-b border-slate-800/80 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+        <div className="w-full max-w-[1800px] mx-auto px-4 lg:px-8 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <Link
               to="/rescue-ops"
@@ -252,7 +252,7 @@ Timestamp: ${new Date().toISOString()}`;
       </header>
 
       {/* ── MAIN 3-COLUMN COMMAND DASHBOARD ──────────────────────────────── */}
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <main className="flex-1 w-full max-w-[1800px] mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* ══════════════════════════════════════════════════════════════════
             COLUMN 1: TREKKER PROFILE & VITALS (25% -> 3 Cols on LG)
@@ -486,7 +486,7 @@ Timestamp: ${new Date().toISOString()}`;
                 {/* CartoDB Dark Matter High-Tech Tile Layer */}
                 <TileLayer
                   attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
                 />
 
                 {/* Glowing Dotted Blue Trail Polyline */}

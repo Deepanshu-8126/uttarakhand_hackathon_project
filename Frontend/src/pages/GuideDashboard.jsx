@@ -331,16 +331,6 @@ export default function GuideDashboard() {
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-28">
 
-        {/* ── Judge 2-Tab Testing Info Box ── */}
-        <div className="rounded-2xl border border-emerald-700/50 bg-emerald-950/60 p-3.5 text-xs text-emerald-200">
-          <p className="font-black uppercase tracking-wider text-emerald-300 text-[10px] mb-1">
-            🧪 Hackathon 2-Tab Testing Guide
-          </p>
-          <p className="text-[11px] leading-relaxed text-emerald-100/90">
-            You are logged in as <strong>Guide Ramesh Rawat</strong>. Keep this tab open while you click <strong>[BROADCAST SOS TO GRID]</strong> in Tab 1 (Trekker Aryan Negi). The red distress beacon and rescue dispatch button will appear below instantly!
-          </p>
-        </div>
-
         {/* ── RED SOS ALERT CARD for Nearby Trekker in Trouble ── */}
         {gridSos && (
           <div className="rounded-2xl border-2 border-red-500 bg-red-950/90 p-5 text-white shadow-2xl shadow-red-950/60 animate-in fade-in">

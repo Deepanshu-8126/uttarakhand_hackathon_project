@@ -68,19 +68,18 @@ ${tripContextText}
     }));
 
     // Build prompt and get response
-    const systemPrompt = await this.buildSystemPrompt(chat.tripId);
-    
-    // Use the existing provider abstraction
-    const provider = AiPlannerService.getProvider(); // respects process.env.AI_PROVIDER
-    
     try {
-      const response = await provider.chat(systemPrompt, recentMessages, []);
+      const { executeHybridRag } = await import('./hybridRagService.js');
+      const ragResult = await executeHybridRag({ query: content });
       
+      const assistantMessage = ragResult?.answer || 'I am ready to help with your Uttarakhand travel questions.';
+      const provenance = ragResult?.isVerified ? 'GROUNDED' : 'AI_SUGGESTED';
+
       // Save assistant message
       chat.messages.push({
         role: 'assistant',
-        content: response.text || 'I am sorry, I could not generate a response.',
-        provenance: 'GROUNDED' // Extend this based on context usage in future
+        content: assistantMessage,
+        provenance
       });
 
       await chat.save();

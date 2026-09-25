@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import DestinationMap from '../components/DestinationMap';
 import GooglePlacesRadarWidget from '../components/GooglePlacesRadarWidget';
 import FloatingTripBasket from '../components/planner/FloatingTripBasket';
+import DestinationWeatherCard from '../components/widgets/DestinationWeatherCard';
 import { getDestinationBySlug, getDestinationRelated } from '../api/destinationApi';
 import { normalizeDiscoveryCandidate } from '../utils/discoveryAdapter';
 import { useAuth } from '../context/AuthContext';
@@ -873,9 +874,16 @@ export default function DestinationDetails() {
 
           </div>
 
-          {/* ── Right Column: AI Travel Copilot & Safety Cards ─────── */}
+          {/* ── Right Column: Live Destination Weather & AI Copilot ─────── */}
           <div className="lg:col-span-1 space-y-6">
             
+            {/* Live Real-time Destination Weather Card */}
+            <DestinationWeatherCard 
+              destinationName={destination.name}
+              lat={destination.latitude || destination.coordinates?.lat || destination.location?.coordinates?.[1] || 30.0667}
+              lon={destination.longitude || destination.coordinates?.lng || destination.location?.coordinates?.[0] || 79.0193}
+            />
+
             {/* 1. AI Travel Copilot Widget */}
             <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs relative overflow-hidden">
               <div className="flex items-center justify-between mb-4">

@@ -261,8 +261,8 @@ export default function RescueOpsPage() {
       )}
 
       {/* ─── HEADER SECTION ──────────────────────────────────────────────────── */}
-      <div className="border-b border-[#2A3343] bg-[#0A0E14]/95 backdrop-blur-md sticky top-16 sm:top-20 z-30 px-4 sm:px-6 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="border-b border-[#2A3343] bg-[#0A0E14]/95 backdrop-blur-md sticky top-16 sm:top-20 z-30 px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full max-w-[1800px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2.5 w-2.5">
@@ -276,11 +276,11 @@ export default function RescueOpsPage() {
               }`}>
                 {activeSosCount > 0 ? 'LIVE COMMAND · DISTRESS BEACON' : 'LIVE COMMAND · ALL SECURE'}
               </span>
-              <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
+              <h1 className="text-base sm:text-xl font-black tracking-tight text-white">
                 RESCUE OPS — Uttarakhand Community Rescue Grid
               </h1>
             </div>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+            <p className="text-xs text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
               <span>13 Districts Monitoring</span>
               <span className="text-slate-600">•</span>
               <span className="text-slate-400">Decentralized Mountain Safety & Buddy Network</span>
@@ -292,42 +292,23 @@ export default function RescueOpsPage() {
           <div className="flex items-center gap-2">
             <Link
               to="/trekker"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#3B82F6]/50 bg-[#3B82F6]/10 text-blue-300 hover:text-white hover:bg-[#3B82F6]/20 transition-colors flex items-center gap-1.5"
+              className="text-xs font-semibold px-3.5 py-2 rounded-xl border border-[#3B82F6]/50 bg-[#3B82F6]/10 text-blue-300 hover:text-white hover:bg-[#3B82F6]/20 transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Users size={13} className="text-[#3B82F6]" />
+              <Users size={14} className="text-[#3B82F6]" />
               <span>Trekker Simulator</span>
             </Link>
             <Link
               to="/guide"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#2A3343] bg-[#151A26] text-slate-300 hover:text-white hover:border-slate-500 transition-colors flex items-center gap-1.5"
+              className="text-xs font-semibold px-3.5 py-2 rounded-xl border border-[#2A3343] bg-[#151A26] text-slate-300 hover:text-white hover:border-slate-500 transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Radio size={13} className="text-emerald-400" />
+              <Radio size={14} className="text-emerald-400" />
               <span>Guide Cockpit</span>
             </Link>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-
-        {/* ─── Judge 2-Tab Testing Instructions Box ──────────────────────────── */}
-        <div className="mb-6 rounded-2xl border border-[#3B82F6]/40 bg-[#3B82F6]/10 p-4 relative overflow-hidden">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-[#3B82F6]/20 border border-[#3B82F6]/40 flex items-center justify-center shrink-0 mt-0.5 text-[#3B82F6] font-black text-sm">
-              🧪
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xs font-black uppercase tracking-wider text-blue-300">
-                Hackathon Live Demo Testing Flow (2 Browser Tabs)
-              </h2>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                <strong>Tab 1 (Trekker):</strong> Open <Link to="/trekker" className="text-cyan-400 underline font-bold">/trekker</Link> (Aryan Negi). Click <strong>[Start My Trek]</strong> & then <strong>[🚨 BROADCAST SOS TO GRID]</strong>.
-                <br />
-                <strong>Tab 2 (Admin Command):</strong> Look at this screen right now — <strong>TRK-82341</strong> instantly lights up in red, coordinates sync in real-time, and clicking the card opens the full Live Radar Panel 2!
-              </p>
-            </div>
-          </div>
-        </div>
+      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* ─── STATS ROW (4 Cards) ────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">

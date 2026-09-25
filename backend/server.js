@@ -135,6 +135,7 @@ app.use('/api/verification', verificationRoutes);
 app.use('/api/live', liveDataRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/truth', truthRoutes);
 app.use('/api/safety', safetyRoutes);

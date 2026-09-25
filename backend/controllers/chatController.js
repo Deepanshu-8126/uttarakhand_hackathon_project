@@ -65,6 +65,38 @@ export const deleteChat = async (req, res) => {
   }
 };
 
+export const handleDirectChat = async (req, res) => {
+  try {
+    const { message, query, content, userLocation } = req.body;
+    const userQuery = message || query || content;
+
+    if (!userQuery) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message or query is required'
+      });
+    }
+
+    const { executeHybridRag } = await import('../services/hybridRagService.js');
+    const result = await executeHybridRag({
+      query: userQuery,
+      userLocation
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: result.answer,
+      data: result
+    });
+  } catch (error) {
+    console.error('[DirectChat Error]', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to process chat query'
+    });
+  }
+};
+
 export const sendMessage = async (req, res) => {
   try {
     const { content, tripId } = req.body;
@@ -82,3 +114,4 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ success: false, message: error.message || 'Failed to send message' });
   }
 };
+

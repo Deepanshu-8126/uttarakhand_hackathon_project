@@ -216,8 +216,8 @@ export default function TrekkerLivePage() {
       <Navbar />
 
       {/* ─── Breadcrumb & Top Bar ────────────────────────────────────────────── */}
-      <div className="border-b border-[#2A3343] bg-[#0A0E14]/95 backdrop-blur-md sticky top-16 sm:top-20 z-30 px-4 sm:px-6 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <div className="border-b border-[#2A3343] bg-[#0A0E14]/95 backdrop-blur-md sticky top-16 sm:top-20 z-30 px-4 sm:px-6 lg:px-8 py-3">
+        <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#00FF88] animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-950/60 text-[#00FF88] border border-[#00FF88]/30">
@@ -238,26 +238,7 @@ export default function TrekkerLivePage() {
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-
-        {/* ─── Hackathon Demo Instruction Box for Judge ──────────────────────── */}
-        <div className="mb-6 rounded-2xl border border-[#3B82F6]/40 bg-[#3B82F6]/10 p-4 relative overflow-hidden">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-[#3B82F6]/20 border border-[#3B82F6]/40 flex items-center justify-center shrink-0 mt-0.5 text-[#3B82F6] font-black text-sm">
-              🧪
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xs font-black uppercase tracking-wider text-blue-300">
-                2-Tab Hackathon Live Demo Instructions (No Govt API needed)
-              </h2>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                <strong>Step 1:</strong> Keep this tab open as <strong>Trekker (Aryan Negi)</strong>. Click <strong>[Start My Trek]</strong> to simulate GPS pings, then click <strong>[🚨 BROADCAST SOS TO GRID]</strong>.
-                <br />
-                <strong>Step 2:</strong> In a <strong>2nd Tab</strong>, open <strong>/guide</strong> (Guide Ramesh Rawat) or <strong>/rescue-ops</strong> (Admin) — both will instantly light up in red and receive your real-time coordinates via local grid storage!
-              </p>
-            </div>
-          </div>
-        </div>
+      <main className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* ─── Success Broadcast Toast / Overlay ─────────────────────────────── */}
         {broadcastAnimation && (

@@ -30,6 +30,7 @@ import { useMapStore } from '../store/mapStore';
 import { useLanguage } from '../context/LanguageContext';
 import GlobalLocationModal from './GlobalLocationModal';
 import { getStoredUserLocation } from '../utils/geoHelpers';
+import TopNavWeatherBadge from './widgets/TopNavWeatherBadge';
 
 export default function Navbar() {
   const location = useLocation();
@@ -174,9 +175,12 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* ── 3. Right: Location Pill + Language Switcher + Profile / Sign In + Hamburger ─ */}
+          {/* ── 3. Right: Weather Badge + Location Pill + Language Switcher + Profile / Sign In + Hamburger ─ */}
           <div className="flex items-center gap-1.5 sm:gap-2.5">
             
+            {/* Live Weather Badge (Always Visible on Top Bar) */}
+            <TopNavWeatherBadge />
+
             {/* Global Location Selector Pill (Clickable Anywhere) */}
             <button
               type="button"
