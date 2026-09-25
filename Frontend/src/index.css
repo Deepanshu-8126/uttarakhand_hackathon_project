@@ -80,15 +80,23 @@
   }
 
   .btn-primary {
-    @apply bg-forest-green text-white px-6 py-3 rounded-full font-bold transition-all hover:bg-dark-green shadow-xs flex items-center justify-center active:scale-[0.98] min-h-[44px];
+    @apply bg-forest-green text-white px-6 py-2.5 rounded-xl font-bold transition-all hover:bg-dark-green shadow-xs flex items-center justify-center active:scale-[0.98] min-h-[44px];
+  }
+
+  .btn-secondary {
+    @apply bg-emerald-50 text-forest-green border border-emerald-200/90 px-5 py-2.5 rounded-xl font-bold transition-all hover:bg-emerald-100 shadow-2xs flex items-center justify-center active:scale-[0.98] min-h-[44px];
   }
 
   .btn-outline {
-    @apply border-2 border-forest-green text-forest-green px-6 py-3 rounded-full font-bold transition-all hover:bg-forest-green hover:text-white shadow-xs flex items-center justify-center active:scale-[0.98] min-h-[44px];
+    @apply border-2 border-forest-green text-forest-green px-6 py-2.5 rounded-xl font-bold transition-all hover:bg-forest-green hover:text-white shadow-xs flex items-center justify-center active:scale-[0.98] min-h-[44px];
+  }
+
+  .btn-ghost {
+    @apply text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors hover:bg-slate-100 flex items-center justify-center min-h-[40px];
   }
 
   .pill {
-    @apply bg-beige text-text-dark px-5 py-2 rounded-full font-semibold hover:bg-[#e6ddcd] transition-colors cursor-pointer text-xs min-h-[36px] flex items-center justify-center;
+    @apply bg-beige text-text-dark px-4 py-1.5 rounded-full font-semibold hover:bg-[#e6ddcd] transition-colors cursor-pointer text-xs min-h-[36px] flex items-center justify-center;
   }
 
   .pill.active {

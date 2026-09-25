@@ -276,7 +276,7 @@ const ExploreSection = () => {
 
       {/* Section header */}
       <div className="text-center mb-8">
-        <p className="text-forest-green text-xs font-bold uppercase tracking-widest mb-2.5">
+        <p className="text-forest-green text-xs font-bold tracking-wide mb-2.5">
           Discover Uttarakhand
         </p>
         <h2 className="text-4xl md:text-5xl font-bold text-text-dark mb-3 tracking-tight">

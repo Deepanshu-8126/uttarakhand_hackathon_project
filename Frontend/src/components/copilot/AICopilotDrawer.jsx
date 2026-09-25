@@ -543,7 +543,7 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
         <div className="copilot-status">
           <span className={`copilot-status__dot ${loading ? 'active' : ''}`} />
           <span className="copilot-status__text">
-            {loading ? activeStatus : "● Agent Ready · Live Data Connected"}
+            {loading ? activeStatus : "Agent Ready · Live Data Connected"}
           </span>
         </div>
 

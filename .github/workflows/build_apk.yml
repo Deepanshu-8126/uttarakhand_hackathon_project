@@ -1,0 +1,89 @@
+name: Build Discovery Uttarakhand Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'mobile_app/**'
+      - '.github/workflows/build_apk.yml'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type (release or debug)'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Flutter Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile_app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.0'
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Print Flutter & Dart Version
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Get Flutter Packages
+        run: flutter pub get
+
+      - name: Build Android APK (Release)
+        run: |
+          flutter build apk --release --no-tree-shake-icons
+
+      - name: Locate and Rename APK
+        run: |
+          mkdir -p ../dist-apk
+          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+            cp build/app/outputs/flutter-apk/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.apk
+          elif [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
+            cp build/app/outputs/apk/release/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.apk
+          else
+            find build -name "*.apk" -exec cp {} ../dist-apk/Discover-Uttarakhand-v1.0.apk \;
+          fi
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Discover-Uttarakhand-Android-APK
+          path: dist-apk/Discover-Uttarakhand-v1.0.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Generate Release Notes & Summary
+        run: |
+          echo "### 🚀 Discovery Uttarakhand Android APK Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Version**: 1.0.0+1" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: Android (APK)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: universal (armeabi-v7a, arm64-v8a, x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⬇️ **Download the APK file** from the **Artifacts** section at the top of this run to install directly on your Android phone without needing Flutter or Android Studio!" >> $GITHUB_STEP_SUMMARY

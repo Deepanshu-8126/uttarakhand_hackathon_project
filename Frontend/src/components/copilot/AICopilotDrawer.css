@@ -80,10 +80,11 @@
 }
 
 .copilot-header__sub {
-  font-size: 0.72rem;
-  color: #64748b;
+  font-size: 0.8125rem;
+  color: #475569;
   margin: 2px 0 0 0;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 .copilot-header__right {
@@ -113,12 +114,12 @@
 
 /* Status Bar */
 .copilot-status {
-  padding: 6px 18px;
+  padding: 8px 18px;
   background: #f8faf7;
   border-bottom: 1px solid #f0f4ee;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #475569;
+  color: #334155;
   display: flex;
   align-items: center;
   gap: 8px;

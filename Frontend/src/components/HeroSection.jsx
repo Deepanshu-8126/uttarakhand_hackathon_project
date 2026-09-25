@@ -529,7 +529,7 @@ export default function HeroSection() {
           {/* Direct Explore Destination Action Pill */}
           <Link
             to={`/destinations/${currentMedia.slug}`}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider backdrop-blur-md shadow-md transition-all active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-slate-950 font-semibold text-xs normal-case tracking-normal backdrop-blur-md shadow-md transition-all active:scale-95"
           >
             <span>Explore {currentMedia.name}</span>
             <ArrowRight size={13} />
