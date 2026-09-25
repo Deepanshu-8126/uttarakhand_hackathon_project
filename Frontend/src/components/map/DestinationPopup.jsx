@@ -1,6 +1,7 @@
 import React from 'react';
 import { useMapStore } from '../../store/mapStore';
 import { MdStar, MdTerrain, MdLuggage, MdCheck } from 'react-icons/md';
+import { getHimalayanFallbackImage } from '../../utils/imageHelpers';
 
 export default function DestinationPopup({ destination }) {
   const { tripDestinations, addTripDestination, removeTripDestination } = useMapStore();
@@ -10,7 +11,7 @@ export default function DestinationPopup({ destination }) {
   const imageUrl = destination.image || 
                    destination.coverImage?.url || 
                    (typeof destination.coverImage === 'string' ? destination.coverImage : null) || 
-                   '/assets/fallback.svg';
+                   getHimalayanFallbackImage(destination);
 
   const tags = Array.isArray(destination.experiences) && destination.experiences.length > 0
     ? destination.experiences
@@ -27,7 +28,10 @@ export default function DestinationPopup({ destination }) {
         <img
           src={imageUrl}
           alt={destination.name}
-          onError={(e) => { e.target.src = '/assets/fallback.svg'; }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = getHimalayanFallbackImage(destination);
+          }}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/20" />

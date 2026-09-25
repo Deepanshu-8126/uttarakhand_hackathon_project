@@ -38,6 +38,8 @@ import {
   Activity as ActivityIcon
 } from 'lucide-react';
 
+import { getHimalayanFallbackImage } from '../utils/imageHelpers';
+
 const normalizeImgUrl = (url) => {
   if (!url || typeof url !== 'string') return url;
   let fixed = url;
@@ -53,7 +55,8 @@ const normalizeImgUrl = (url) => {
 // Fallback image helper
 const getImageSrc = (record) => {
   if (!record) return 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=1200&auto=format&fit=crop';
-  if (record.coverImage?.url) return normalizeImgUrl(record.coverImage.url);
+  const fallback = getHimalayanFallbackImage(record);
+  if (record.coverImage?.url && !record.coverImage.url.includes('Bhatta_fall') && !record.coverImage.url.includes('Lake_Mist')) return normalizeImgUrl(record.coverImage.url);
   if (typeof record.coverImage === 'string' && record.coverImage.length > 0) return normalizeImgUrl(record.coverImage);
   if (record.image?.url) return normalizeImgUrl(record.image.url);
   if (typeof record.image === 'string' && record.image.length > 0) return normalizeImgUrl(record.image);
@@ -67,7 +70,7 @@ const getImageSrc = (record) => {
     if (first?.url) return normalizeImgUrl(first.url);
     if (typeof first === 'string' && first.length > 0) return normalizeImgUrl(first);
   }
-  return 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=1200&auto=format&fit=crop';
+  return fallback;
 };
 
 // High quality curated backup images for the 5-photo grid
@@ -380,6 +383,10 @@ export default function DestinationDetails() {
           <img
             src={getImageSrc(destination)}
             alt={destination.name}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = getHimalayanFallbackImage(destination);
+            }}
             className="w-full h-full object-cover object-center opacity-40 blur-xs scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40" />
@@ -536,6 +543,10 @@ export default function DestinationDetails() {
             <img
               src={galleryPhotos[0]}
               alt={`${destination.name} main view`}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = getHimalayanFallbackImage(destination);
+              }}
               className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -555,6 +566,10 @@ export default function DestinationDetails() {
                 <img
                   src={photoSrc}
                   alt={`${destination.name} gallery ${idx + 2}`}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = CURATED_HIMALAYAN_GALLERY[(idx + 1) % CURATED_HIMALAYAN_GALLERY.length];
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/25 transition-colors" />

@@ -425,6 +425,10 @@ export default function Stays() {
                         <img
                           src={displayImage}
                           alt={stay.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800';
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useMapStore } from '../../store/mapStore';
 import { getNearbyDestinations } from '../../services/destinationService';
 import { MdNearMe, MdStar } from 'react-icons/md';
+import { getHimalayanFallbackImage } from '../../utils/imageHelpers';
 
 export default function ExploreMoreWidget() {
   const { selectedDestination, setSelectedDestination } = useMapStore();
@@ -27,9 +28,13 @@ export default function ExploreMoreWidget() {
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-800/80 cursor-pointer transition-all border border-transparent hover:border-slate-700"
           >
             <img
-              src={dest.image}
+              src={dest.image || getHimalayanFallbackImage(dest)}
               alt={dest.name}
-              className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = getHimalayanFallbackImage(dest);
+              }}
+              className="w-9 h-9 rounded-lg object-cover flex-shrink-0 bg-slate-800"
             />
             <div className="flex-1 min-w-0">
               <h5 className="text-xs font-semibold text-white truncate m-0">{dest.name}</h5>

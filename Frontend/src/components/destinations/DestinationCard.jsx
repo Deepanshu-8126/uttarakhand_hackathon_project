@@ -2,6 +2,8 @@ import React from 'react';
 import { useMapStore } from '../../store/mapStore';
 import { MdStar, MdTerrain, MdLuggage, MdCheck } from 'react-icons/md';
 
+import { getHimalayanFallbackImage } from '../../utils/imageHelpers';
+
 export default function DestinationCard({ destination }) {
   const { 
     selectedDestination, 
@@ -13,6 +15,7 @@ export default function DestinationCard({ destination }) {
 
   const isSelected = selectedDestination?.id === destination.id;
   const isAdded = tripDestinations.some((d) => d.id === destination.id);
+  const displayImage = destination.image || getHimalayanFallbackImage(destination);
 
   return (
     <div
@@ -24,10 +27,14 @@ export default function DestinationCard({ destination }) {
       } backdrop-blur-xl group`}
     >
       {/* Hero Image */}
-      <div className="relative h-32 w-full overflow-hidden">
+      <div className="relative h-32 w-full overflow-hidden bg-slate-800">
         <img
-          src={destination.image}
+          src={displayImage}
           alt={destination.name}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = getHimalayanFallbackImage(destination);
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />

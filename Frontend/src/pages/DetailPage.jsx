@@ -13,7 +13,7 @@ import { getRentals, getVehicleImage } from '../api/rentalApi';
 import { getStays } from '../api/stayApi';
 import { getSpiritualPlaces } from '../api/spiritualApi';
 import { getCulturePlaces } from '../api/cultureApi';
-import { getActivities } from '../api/activityApi';
+import { getHimalayanFallbackImage } from '../utils/imageHelpers';
 
 const categoryNames = {
   rentals: 'Rentals',
@@ -36,9 +36,8 @@ const normalizeImgUrl = (url) => {
 };
 
 const getImageSrc = (record, cat = '') => {
-  if (!record) return '/assets/fallback.svg';
-  const isKmvn = record.name?.includes('KMVN') || record.category?.includes('Government') || cat === 'stays';
-  if (record.coverImage?.url) return normalizeImgUrl(record.coverImage.url);
+  if (!record) return getHimalayanFallbackImage(null);
+  if (record.coverImage?.url && !record.coverImage.url.includes('Bhatta_fall') && !record.coverImage.url.includes('Lake_Mist')) return normalizeImgUrl(record.coverImage.url);
   if (typeof record.coverImage === 'string' && record.coverImage.length > 0) return normalizeImgUrl(record.coverImage);
   if (record.image?.url) return normalizeImgUrl(record.image.url);
   if (typeof record.image === 'string' && record.image.length > 0) return normalizeImgUrl(record.image);
@@ -52,7 +51,7 @@ const getImageSrc = (record, cat = '') => {
     if (first?.url) return normalizeImgUrl(first.url);
     if (typeof first === 'string' && first.length > 0) return normalizeImgUrl(first);
   }
-  return isKmvn ? '/assets/kmvn-stay.svg' : '/assets/fallback.svg';
+  return getHimalayanFallbackImage(record);
 };
 
 const DetailPage = () => {
@@ -173,12 +172,11 @@ const DetailPage = () => {
   };
 
   const handleImageError = (e) => {
+    e.target.onerror = null;
     if (category === 'rentals') {
       e.target.src = getVehicleImage(item?.name, item?.category || item?.type);
-    } else if (category === 'stays' || item?.name?.includes('KMVN') || item?.category?.includes('Government')) {
-      e.target.src = '/assets/kmvn-stay.svg';
     } else {
-      e.target.src = '/assets/fallback.svg';
+      e.target.src = getHimalayanFallbackImage(item);
     }
   };
 
@@ -449,7 +447,7 @@ const DetailPage = () => {
                   {related.thingsToDo.slice(0, 3).map((act) => (
                     <Link key={act._id || act.slug} to={`/activities/${act.slug}`} className="bg-white rounded-3xl overflow-hidden card-shadow border border-border-light group flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all">
                       <div className="h-44 bg-beige relative overflow-hidden">
-                        <img src={getImageSrc(act)} alt={act.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.src = '/assets/fallback.svg'; }} />
+                        <img src={getImageSrc(act)} alt={act.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.onerror = null; e.target.src = getHimalayanFallbackImage(act); }} />
                         {act.category && <span className="absolute top-3 left-3 bg-white/90 text-text-dark text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">{act.category}</span>}
                       </div>
                       <div className="p-5 flex flex-col flex-grow justify-between">
@@ -475,7 +473,7 @@ const DetailPage = () => {
                   {related.nearbyDestinations.slice(0, 3).map((d) => (
                     <Link key={d._id || d.slug} to={`/destinations/${d.slug}`} className="bg-white rounded-3xl overflow-hidden card-shadow border border-border-light group flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all">
                       <div className="h-40 bg-beige relative overflow-hidden">
-                        <img src={getImageSrc(d)} alt={d.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.src = '/assets/fallback.svg'; }} />
+                        <img src={getImageSrc(d)} alt={d.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.onerror = null; e.target.src = getHimalayanFallbackImage(d); }} />
                       </div>
                       <div className="p-4 flex flex-col flex-grow justify-between">
                         <div>
@@ -500,7 +498,7 @@ const DetailPage = () => {
                   {related.stays.slice(0, 3).map((st) => (
                     <Link key={st._id || st.slug} to={`/stays/${st.slug}`} className="bg-white rounded-3xl overflow-hidden card-shadow border border-border-light group flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all">
                       <div className="h-44 bg-beige relative overflow-hidden">
-                        <img src={getImageSrc(st)} alt={st.name} className="w-full h-full object-cover" onError={(e) => { e.target.src = '/assets/fallback.svg'; }} />
+                        <img src={getImageSrc(st)} alt={st.name} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = getHimalayanFallbackImage(st); }} />
                       </div>
                       <div className="p-5 flex flex-col flex-grow justify-between">
                         <div>
