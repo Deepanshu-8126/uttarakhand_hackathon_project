@@ -6,6 +6,7 @@ import { useMapStore } from '../../store/mapStore';
 import StructuredTravelCards from './StructuredTravelCards';
 import TripContextStrip from './TripContextStrip';
 import ChatGPTVoiceOverlay from './ChatGPTVoiceOverlay';
+import AgenticToolCallTimeline from './AgenticToolCallTimeline';
 import { executeAgentAction } from '../../utils/agentActionExecutor';
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../../utils/speechSynthesis';
 
@@ -294,67 +295,14 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
 
                     {structuredCards && <StructuredTravelCards cards={structuredCards} />}
 
-                    {/* Grounded Agentic Reasoning & Citations (Collapsible) */}
+                    {/* LangGraph-style Agentic Tool Execution Timeline & Grounding (from langchain-ai/agent-chat-ui) */}
                     {!isUser && (toolsUsed.length > 0 || citations.length > 0) && (
-                      <div className="copilot-reasoning-wrap mt-2.5">
-                        <button
-                          type="button"
-                          className="copilot-reasoning-toggle w-full flex items-center justify-between p-2 rounded-lg bg-emerald-50/70 border border-emerald-200/80 hover:bg-emerald-100/70 transition-colors text-xs text-left"
-                          onClick={() => toggleTrace(idx)}
-                        >
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-emerald-700 font-bold">⚡</span>
-                            <span className="font-semibold text-xs text-emerald-900 truncate">
-                              Verified with {toolCount} Agent Tools &amp; {citationCount} Grounded Sources
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-muted-text font-bold flex-shrink-0 ml-2">
-                            {openTraceIndex === idx ? "Hide details ▲" : "View grounding ▼"}
-                          </span>
-                        </button>
-
-                        {openTraceIndex === idx && (
-                          <div className="copilot-reasoning-panel mt-1.5 p-2.5 bg-slate-900 text-slate-200 rounded-lg text-xs space-y-2 font-mono shadow-inner">
-                            {toolsUsed.length > 0 && (
-                              <div>
-                                <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider mb-1">
-                                  Deterministic Tools Executed ({toolCount})
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {toolsUsed.map((tool, tIdx) => (
-                                    <span key={tIdx} className="px-1.5 py-0.5 rounded bg-slate-800 text-emerald-300 border border-slate-700 text-[11px]">
-                                      ⚡ {tool}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {citations.length > 0 && (
-                              <div>
-                                <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider mb-1">
-                                  Verified Grounded Sources ({citationCount})
-                                </div>
-                                <div className="space-y-0.5 text-[11px] text-slate-300">
-                                  {citations.map((c, cIdx) => {
-                                    const sourceText = typeof c === 'string' ? c : (c.source || c.title || JSON.stringify(c));
-                                    return (
-                                      <div key={cIdx} className="truncate">
-                                        • {sourceText}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="pt-1 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
-                              <span>Confidence: {meta.confidence || 'grounded'}</span>
-                              <span>Provider: {meta.provider || 'omniroute'}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      <AgenticToolCallTimeline
+                        tools={toolsUsed}
+                        citations={citations}
+                        confidence={meta.confidence || 'grounded'}
+                        provider={meta.provider || 'omniroute'}
+                      />
                     )}
 
                     {/* Contextual Recommendation Action Chips */}

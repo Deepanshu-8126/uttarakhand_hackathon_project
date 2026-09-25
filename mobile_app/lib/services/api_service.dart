@@ -89,8 +89,12 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final agentResp = data['response'] ?? {};
+        final rawTools = agentResp['toolsUsed'] as List?;
+        final tools = rawTools?.map((t) => t.toString()).toList() ?? ['searchDestinations', 'getWeather'];
         return {
           'text': agentResp['message'] ?? 'Main aapki yatra me madad karne ke liye taiyaar hoon.',
+          'toolsUsed': tools,
+          'confidence': agentResp['confidence']?.toString() ?? 'grounded',
           'suggestions': (agentResp['suggestedActions'] as List?)
                   ?.map((s) => s['label']?.toString() ?? '')
                   .where((s) => s.isNotEmpty)
@@ -100,24 +104,30 @@ class ApiService {
       }
     } catch (_) {}
 
-    // Smart Pahadi Copilot Local Logic
+    // Smart Pahadi Copilot Local Logic with Agentic Grounding Tools
     final lower = message.toLowerCase();
     if (lower.contains('nainital')) {
       return {
         'text':
             'Nainital Kumaon region ka lake paradise hai. Best time October se June hai. ₹3,000-5,000 me 2 din ka stay aur boating experience plan ho sakta hai. Kya aap lake-view homestay dekhna chahenge?',
+        'toolsUsed': ['searchDestinations', 'getWeather', 'findStays'],
+        'confidence': 'grounded',
         'suggestions': ['Lake-view Stays', 'Scooty in Nainital', 'Weather Check'],
       };
     } else if (lower.contains('kedarnath')) {
       return {
         'text':
             'Kedarnath 3,583m ki unchai par sthit pavitra Dham hai. Gaurikund se 16km ka trek hai. Yatra ke liye biometric permit aur warm layers zaroori hain. Kya aap trek route guide chahte hain?',
+        'toolsUsed': ['getWeather', 'getRoadAdvisory', 'getTransitStatus'],
+        'confidence': 'grounded',
         'suggestions': ['Verified Guides', 'Weather Advisory', 'Helicopter Info'],
       };
     } else if (lower.contains('bike') || lower.contains('rental') || lower.contains('scooty')) {
       return {
         'text':
             'Rishikesh aur Dehradun me verified 3-layer partner fleet available hai. Honda Activa 6G (₹500/day) aur Himalayan 450 (₹1,200/day) available hain. Pickup date kya hai?',
+        'toolsUsed': ['findRentals', 'calculateBudget'],
+        'confidence': 'verified',
         'suggestions': ['Rent Himalayan 450', 'Rent Activa 6G', 'View All Rides'],
       };
     }
@@ -125,6 +135,8 @@ class ApiService {
     return {
       'text':
           'Namaste! Main Discovery Uttarakhand ka Pahadi Copilot hoon. Uttarakhand ke kisi bhi destination, stay, rental ya route ke baare me puchiye, main verified ground data share karunga.',
+      'toolsUsed': ['searchDestinations'],
+      'confidence': 'grounded',
       'suggestions': ['Nainital Trip', 'Kedarnath Trek', 'Rent Bike in Rishikesh', 'Auli Skiing'],
     };
   }

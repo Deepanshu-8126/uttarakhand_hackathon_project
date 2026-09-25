@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import StructuredTravelCards from "./StructuredTravelCards";
+import AgenticToolCallTimeline from "./AgenticToolCallTimeline";
 import { Sparkles, Check, ArrowRight, Shield, Volume2, VolumeX } from "lucide-react";
 import { executeAgentAction } from "../../utils/agentActionExecutor";
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from "../../utils/speechSynthesis";
@@ -175,59 +176,14 @@ export default function CopilotMessage({ msg, onConfirm, onCancel, onSelectActio
         {/* Structured Travel Cards (Weather, Stays, Route, Budget) */}
         {msg.structuredCards && <StructuredTravelCards cards={msg.structuredCards} />}
 
-        {/* Agentic Reasoning & Grounded Tools Drawer (Collapsible) */}
+        {/* LangGraph-style Agentic Reasoning & Grounded Tools (from langchain-ai/agent-chat-ui) */}
         {!isUser && ((msg.toolsUsed && msg.toolsUsed.length > 0) || (msg.citations && msg.citations.length > 0)) && (
-          <div className="copilot-reasoning-wrap">
-            <button
-              type="button"
-              className="copilot-reasoning-toggle"
-              onClick={() => setShowTrace(!showTrace)}
-            >
-              <div className="flex items-center gap-1.5">
-                <span className="copilot-reasoning-icon">⚡</span>
-                <span className="font-semibold text-xs text-forest-green">
-                  Verified with {msg.toolsUsed?.length || 0} Agent Tools & {msg.citations?.length || 0} Grounded Sources
-                </span>
-              </div>
-              <span className="text-xs text-muted-text font-bold">
-                {showTrace ? "Hide details ▲" : "View grounding ▼"}
-              </span>
-            </button>
-
-            {showTrace && (
-              <div className="copilot-reasoning-panel animate-fadeIn">
-                {/* Tools executed */}
-                {msg.toolsUsed && msg.toolsUsed.length > 0 && (
-                  <div className="mb-2">
-                    <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">
-                      Deterministic Tools Run
-                    </div>
-                    <ToolActivity tools={msg.toolsUsed} />
-                  </div>
-                )}
-
-                {/* Verified Citations */}
-                {msg.citations && msg.citations.length > 0 && (
-                  <div>
-                    <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">
-                      Verified Data Citations
-                    </div>
-                    <div className="copilot-citations">
-                      {msg.citations.map((c, i) => {
-                        const src = typeof c === "string" ? c : c.source || c.title || JSON.stringify(c);
-                        return (
-                          <div key={i} className="copilot-citation">
-                            <span className="copilot-citation__src">{src}</span>
-                            {c.freshness && <ProvenanceBadge freshness={c.freshness} />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <AgenticToolCallTimeline
+            tools={msg.toolsUsed}
+            citations={msg.citations}
+            confidence={msg.confidence || 'grounded'}
+            provider={msg.provider || 'omniroute'}
+          />
         )}
 
         {/* Confirmation Required Box */}

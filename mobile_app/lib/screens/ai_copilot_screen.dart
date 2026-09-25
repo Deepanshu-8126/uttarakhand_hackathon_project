@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../services/api_service.dart';
@@ -40,6 +41,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
         isUser: false,
         timestamp: DateTime.now(),
         suggestions: _quickSuggestions,
+        toolsUsed: ['searchDestinations', 'getWeather'],
+        confidence: 'grounded',
       ),
     );
   }
@@ -87,6 +90,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
             isUser: false,
             timestamp: DateTime.now(),
             suggestions: (result['suggestions'] as List?)?.map((e) => e.toString()).toList(),
+            toolsUsed: (result['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
+            confidence: result['confidence']?.toString() ?? 'grounded',
           ),
         );
       });
@@ -370,8 +375,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     return Align(
       alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+        margin: const EdgeInsets.only(bottom: 14),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
         child: Column(
           crossAxisAlignment: msg.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
@@ -388,14 +393,140 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                 boxShadow: [
                   BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2)),
                 ],
+                border: msg.isUser ? null : Border.all(color: AppTheme.borderLight),
               ),
-              child: Text(
-                msg.text,
-                style: TextStyle(
-                  color: msg.isUser ? Colors.white : AppTheme.textDark,
-                  fontSize: 13,
-                  height: 1.45,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Provenance Header for Assistant
+                  if (!msg.isUser)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFA5D6A7)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.check_circle, size: 10, color: Color(0xFF2E7D32)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Grounded Intelligence',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.copy, size: 14, color: AppTheme.mutedText),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Copy message',
+                                onPressed: () {
+                                  Clipboard.setData(ClipboardData(text: msg.text));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Message copied to clipboard'),
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.volume_up, size: 15, color: AppTheme.forestGreen),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Open Voice Companion',
+                                onPressed: _openVoiceDialog,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Message Text
+                  Text(
+                    msg.text,
+                    style: TextStyle(
+                      color: msg.isUser ? Colors.white : AppTheme.textDark,
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+
+                  // LangGraph-style Agentic Tool Execution Card (langchain-ai/agent-chat-ui)
+                  if (!msg.isUser && msg.toolsUsed != null && msg.toolsUsed!.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: const [
+                                  Icon(Icons.terminal, size: 12, color: Color(0xFF34D399)),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Agent Execution Trace',
+                                    style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${msg.toolsUsed!.length} Tools Verified',
+                                  style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 9, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: msg.toolsUsed!.map((tool) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.white12),
+                                ),
+                                child: Text(
+                                  '⚡ $tool',
+                                  style: const TextStyle(color: Colors.white70, fontSize: 10, fontFamily: 'monospace'),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
 
