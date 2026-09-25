@@ -53,6 +53,7 @@ function App() {
                 </ErrorBoundary>
                 <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/explore" element={<Home />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/rentals" element={<Rentals />} />
               <Route path="/stays" element={<Stays />} />

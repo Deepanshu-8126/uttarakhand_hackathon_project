@@ -87,18 +87,36 @@ export default function Navbar() {
     : '/my-trip';
 
   const navLinks = [
-    { label: t('nav_explore'), path: '/#explore', icon: Compass },
-    { label: t('nav_planner'), path: '/trip-planner', icon: Navigation },
+    { label: t('nav_explore'), path: '/explore', icon: Compass, isExplore: true },
     { label: t('nav_stays'), path: '/stays', icon: Bed },
     { label: t('nav_rentals'), path: '/rentals', icon: Car },
+    { label: t('nav_map'), path: '/map', icon: Map },
     { label: 'AI Copilot', path: '/copilot', icon: Sparkles, badge: 'AI' },
     { label: 'Web3 & Tech', path: '/innovations', icon: ShieldCheck, badge: 'Web3' },
-    { label: t('nav_map'), path: '/map', icon: Map },
   ];
+
+  const handleNavClick = (link, e) => {
+    if (link.isExplore) {
+      if (e) e.preventDefault();
+      setMobileMenuOpen(false);
+      if (location.pathname === '/' || location.pathname === '/explore') {
+        const el = document.getElementById('explore');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          navigate('/explore');
+        }
+      } else {
+        navigate('/explore');
+      }
+      return;
+    }
+    setMobileMenuOpen(false);
+  };
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs transition-all duration-300">
+      <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-stone-200/70 shadow-xs transition-all duration-300">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           
           {/* ── 1. Left: Brand Logo ───────────────────────────────────────── */}
@@ -120,36 +138,31 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* ── 2. Center: Desktop Navigation Links (>1024px) ─────────────── */}
-          <nav className="hidden lg:flex items-center gap-5 xl:gap-6 font-medium text-sm text-slate-700">
+          {/* ── 2. Center: Desktop Navigation Links (>1024px Fluffy Pill Bar) ─ */}
+          <nav className="hidden lg:flex items-center gap-1 p-1.5 rounded-full bg-stone-100/80 border border-stone-200/70 shadow-2xs backdrop-blur-md">
             {navLinks.map((link) => {
+              const Icon = link.icon;
               const isCurrent = link.path === '/' 
                 ? location.pathname === '/' 
-                : !link.path.startsWith('/#') && location.pathname.startsWith(link.path);
-
-              if (link.path.startsWith('/#')) {
-                return (
-                  <a
-                    key={link.label}
-                    href={link.path.replace('/', '')}
-                    className="hover:text-[#0f3d2e] transition-colors font-semibold tracking-tight"
-                  >
-                    {link.label}
-                  </a>
-                );
-              }
+                : link.isExplore
+                  ? location.pathname === '/explore' || location.hash === '#explore'
+                  : location.pathname.startsWith(link.path);
 
               return (
                 <Link
                   key={link.label}
                   to={link.path}
-                  className={`inline-flex items-center gap-1.5 transition-colors font-semibold tracking-tight ${
-                    isCurrent ? 'text-[#0f3d2e] font-bold border-b-2 border-[#0f3d2e] pb-1' : 'hover:text-[#0f3d2e]'
+                  onClick={(e) => handleNavClick(link, e)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all duration-200 ${
+                    isCurrent 
+                      ? 'bg-white text-[#0f3d2e] shadow-xs border border-emerald-900/10' 
+                      : 'text-stone-600 hover:text-[#0f3d2e] hover:bg-white/70'
                   }`}
                 >
+                  <Icon size={13} className={isCurrent ? 'text-emerald-700' : 'text-stone-400'} />
                   <span>{link.label}</span>
                   {link.badge && (
-                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-100 text-[#0f3d2e] border border-emerald-300/80 shadow-2xs">
+                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0f3d2e] border border-emerald-300/80 shadow-2xs">
                       {link.badge}
                     </span>
                   )}
@@ -204,9 +217,9 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0f3d2e] hover:bg-[#144c3a] text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200/90 text-stone-800 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
                 >
-                  <User size={13} className="text-emerald-300" />
+                  <User size={13} className="text-[#0f3d2e]" />
                   <span>{t('nav_signin')}</span>
                 </button>
               )}
@@ -319,9 +332,9 @@ export default function Navbar() {
             <div className="hidden lg:block">
               <Link
                 to="/trip-planner"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#0f3d2e] text-xs font-bold uppercase tracking-wider transition-all shadow-2xs active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0f3d2e] hover:bg-[#185340] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md active:scale-95 cursor-pointer"
               >
-                <Sparkles size={13} className="text-emerald-700" />
+                <Sparkles size={13} className="text-emerald-300" />
                 <span>{t('nav_plantrip')}</span>
               </Link>
             </div>
@@ -405,8 +418,8 @@ export default function Navbar() {
                     <Link
                       key={link.label}
                       to={link.path}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-stone-200/80 hover:border-[#0f3d2e] text-stone-800 font-bold text-xs shadow-2xs transition-all"
+                      onClick={(e) => handleNavClick(link, e)}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-stone-200/80 hover:border-[#0f3d2e] text-stone-800 font-bold text-xs shadow-2xs transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={16} className="text-[#0f3d2e]" />
