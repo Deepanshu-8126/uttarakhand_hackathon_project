@@ -79,6 +79,32 @@ class VoiceQueryRequest(BaseModel):
     context: dict | None = None
 
 
+class ChatRequest(BaseModel):
+    message: str
+    history: list[dict] | None = None
+    lang: str = "en"
+    pageContext: dict | None = None
+
+
+_CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand and langchain-ai/voice-demo.
+
+You have deep, verified knowledge of:
+- Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri), Hemkund Sahib
+- High-altitude treks: Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Kuari Pass
+- Altitude Sickness (AMS) protocols, acclimatization, and safety
+- Live weather, road conditions, and seasonal advisories
+- Verified local homestays, camps, and eco-resorts
+- Local transport, permits, and budgeting
+
+Instructions:
+- Be warm, precise, and genuinely helpful.
+- Use markdown formatting (bold, bullets, headers) for structured responses.
+- Support Hindi, English, and Hinglish naturally.
+- Always prioritize traveler safety for high-altitude destinations.
+- When relevant, suggest bookings, weather checks, or route planning.
+"""
+
+
 @app.get("/health")
 async def health_check():
     return {
@@ -87,6 +113,83 @@ async def health_check():
         "agent": "devbhoomi_voice_companion",
         "model": MODEL_NAME,
         "has_api_key": bool(GOOGLE_API_KEY),
+    }
+
+
+@app.post("/api/chat")
+async def chat_agent(req: ChatRequest):
+    """Text chat endpoint for the main AI Copilot Drawer (web & mobile)."""
+    msg = req.message.strip()
+    if not msg:
+        return {"success": True, "response": {"message": "Please ask me anything about Uttarakhand!", "toolsUsed": [], "type": "answer"}}
+
+    tools_used = []
+    enriched_facts = []
+    q_lower = msg.lower()
+
+    # Grounding tools — same as voice
+    place_info = search_destination_info(msg)
+    if place_info.get("found"):
+        tools_used.append("search_destination_info")
+        enriched_facts.append(f"Place Details: {json.dumps(place_info)}")
+
+    if any(k in q_lower for k in ["trek", "altitude", "height", "safe", "ams", "oxygen", "sickness", "climb", "kedarnath", "tungnath", "hemkund", "roopkund"]):
+        safety_info = get_altitude_safety_advice(msg)
+        tools_used.append("get_altitude_safety_advice")
+        enriched_facts.append(f"Safety/Altitude Guide: {json.dumps(safety_info)}")
+
+    if any(k in q_lower for k in ["stay", "hotel", "homestay", "resort", "room", "camp", "accommodation"]):
+        stays_info = get_homestays(msg)
+        tools_used.append("get_homestays")
+        enriched_facts.append(f"Stays: {json.dumps(stays_info)}")
+
+    if any(k in q_lower for k in ["weather", "temperature", "rain", "snow", "mausam", "climate"]):
+        try:
+            w = await fetch_weather(msg)
+            tools_used.append("fetch_weather")
+            enriched_facts.append(f"Live Weather: {json.dumps(w)}")
+        except Exception:
+            pass
+
+    # Build history context
+    history_ctx = ""
+    if req.history:
+        recent = req.history[-6:]  # last 3 turns
+        history_ctx = "\n".join(
+            f"{'User' if h.get('role') == 'user' else 'Assistant'}: {h.get('content', '')}"
+            for h in recent
+        )
+
+    prompt = f"""Conversation so far:
+{history_ctx if history_ctx else "(new conversation)"}
+
+User: {msg}
+
+Verified Devbhoomi Database Context:
+{chr(10).join(enriched_facts) if enriched_facts else "No specific database match; use your expert Uttarakhand knowledge."}
+
+Respond as Devbhoomi Companion — helpful, detailed, markdown-formatted."""
+
+    client = _get_genai_client()
+    response = await asyncio.to_thread(
+        client.models.generate_content,
+        model=MODEL_NAME,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=_CHAT_SYSTEM_PROMPT,
+            temperature=0.7,
+            max_output_tokens=800,
+        ),
+    )
+
+    return {
+        "success": True,
+        "response": {
+            "message": response.text.strip(),
+            "toolsUsed": tools_used,
+            "type": "answer",
+            "engine": "langchain-ai/voice-demo",
+        }
     }
 
 

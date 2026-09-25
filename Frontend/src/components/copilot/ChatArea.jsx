@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Info, Loader2, ChevronLeft, Sparkles, Copy, Check, Mic, MicOff, Volume2, VolumeX, Radio } from 'lucide-react';
+import { MessageSquare, Info, Loader2, ChevronLeft, Sparkles, Copy, Check, Mic, MicOff, Volume2, VolumeX, Headphones, ArrowUp } from 'lucide-react';
 import useChatStore from '../../store/chatStore';
 import { useMapStore } from '../../store/mapStore';
 import StructuredTravelCards from './StructuredTravelCards';
@@ -184,18 +184,6 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Live ChatGPT Voice Mode Button */}
-          <button
-            type="button"
-            onClick={() => setVoiceOverlayOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-bold shadow-xs cursor-pointer transition-transform active:scale-95"
-            title="Open Fullscreen ChatGPT Live Voice Mode"
-          >
-            <Radio size={13} className="animate-pulse text-emerald-300" />
-            <span className="hidden sm:inline">Live Voice Mode</span>
-            <span className="sm:hidden">Voice</span>
-          </button>
-
           <button className="mobile-toggle flex items-center gap-1.5" onClick={onToggleContext}>
             <Info size={14} /> <span>Trip</span>
           </button>
@@ -355,27 +343,55 @@ export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, o
       </div>
 
       <div className="chat-input-area">
-        <form onSubmit={onSubmitForm} className="chat-input-form flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setVoiceOverlayOpen(true)}
-            title="Open Fullscreen ChatGPT Live Voice Mode"
-            className="p-2.5 rounded-xl border bg-gradient-to-r from-emerald-700 to-teal-700 text-white border-emerald-600 hover:from-emerald-800 hover:to-teal-800 transition-all flex items-center justify-center shrink-0 cursor-pointer shadow-xs active:scale-95"
-          >
-            <Radio size={16} className="animate-pulse text-emerald-300" />
-          </button>
+        <form onSubmit={onSubmitForm} className="chat-input-form flex items-center gap-2 bg-stone-50 border border-stone-200/90 rounded-2xl p-1.5 focus-within:border-emerald-800 focus-within:bg-white transition-all shadow-xs">
           <textarea 
             value={input}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
-            placeholder={isListening ? "Sun raha hoon... boliye..." : "Ask in Hinglish or English (e.g. 'Haldwani mein 500 ki scooty')..."}
+            placeholder={isListening ? "Listening... bolte rahiye..." : "Ask in Hinglish or English (e.g. 'Nainital weather', 'Haldwani scooty')..."}
             disabled={sending}
             rows={1}
-            className="flex-1"
+            className="flex-1 bg-transparent border-none outline-none px-3 py-1.5 text-xs text-stone-800 placeholder-stone-400 resize-none max-h-28"
           />
-          <button type="submit" disabled={!input.trim() || sending} className="send-btn">
-            ➤
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Dictation Mic / Mute Button */}
+            <button
+              type="button"
+              onClick={startVoiceInput}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                isListening
+                  ? 'bg-rose-500 text-white animate-pulse ring-2 ring-rose-300'
+                  : 'text-stone-500 hover:text-stone-900 hover:bg-stone-200/60'
+              }`}
+              title={isListening ? "Mute / Stop Listening" : "Voice Dictation"}
+              aria-label={isListening ? "Mute" : "Voice Dictation"}
+            >
+              {isListening ? <MicOff size={15} /> : <Mic size={15} />}
+            </button>
+
+            {/* ChatGPT Live Voice Mode Button (Headphones) */}
+            <button
+              type="button"
+              onClick={() => setVoiceOverlayOpen(true)}
+              title="Start ChatGPT Live Voice Mode"
+              className="w-8 h-8 rounded-full bg-stone-900 hover:bg-stone-850 text-white flex items-center justify-center transition-transform active:scale-90 cursor-pointer shadow-xs"
+            >
+              <Headphones size={15} className="text-emerald-400" />
+            </button>
+
+            {/* Send Button */}
+            <button 
+              type="submit" 
+              disabled={!input.trim() || sending} 
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                input.trim() && !sending
+                  ? 'bg-emerald-800 hover:bg-emerald-900 text-white cursor-pointer shadow-xs'
+                  : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+              }`}
+            >
+              <ArrowUp size={15} />
+            </button>
+          </div>
         </form>
       </div>
 

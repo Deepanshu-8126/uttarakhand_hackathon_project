@@ -1,12 +1,39 @@
 /**
  * Discovery Uttarakhand - Phase 7 Agent API Client
- * Frontend client for POST /api/agent/chat
+ * Frontend client — tries langchain-ai/voice-demo bridge first, falls back to Render backend.
  */
 
 const LIVE_BACKEND_URL = "https://uttarakhand-hackathon-project.onrender.com/api";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? LIVE_BACKEND_URL : "http://localhost:5000/api");
+const BRIDGE_URL = "http://localhost:8765";
+
+/**
+ * Try the local voice-demo bridge first for any chat message.
+ * Returns parsed response object or null if bridge is offline/fails.
+ */
+async function tryBridgeChat({ message, history, pageContext }) {
+  try {
+    const res = await fetch(`${BRIDGE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history: history || [], pageContext }),
+      signal: AbortSignal.timeout(7000)
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data?.success && data?.response?.message) return data;
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
 
 export async function sendAgentMessage({ message, tripId, sessionId, chatId, history, pageContext }) {
+  // 1. Try local voice-demo bridge first
+  const bridgeData = await tryBridgeChat({ message, history, pageContext });
+  if (bridgeData) return bridgeData;
+
+  // 2. Fallback to Render backend
   try {
     const token = localStorage.getItem("token");
     const headers = { "Content-Type": "application/json" };
@@ -49,6 +76,17 @@ export async function sendAgentMessage({ message, tripId, sessionId, chatId, his
 export async function streamAgentMessage({ message, tripId, sessionId, chatId, history, pageContext, onUpdate, onEvent, signal }) {
   const emit = onUpdate || onEvent || (() => {});
 
+  // 1. Try local voice-demo bridge first — emit as synthetic stream events
+  const bridgeData = await tryBridgeChat({ message, history, pageContext });
+  if (bridgeData) {
+    const resp = bridgeData.response;
+    emit({ type: 'status', message: 'Devbhoomi AI · Ready' });
+    emit({ type: 'chunk', text: resp.message });
+    emit({ type: 'done', response: { message: resp.message, toolsUsed: resp.toolsUsed || [], type: 'answer', suggestedActions: [] } });
+    return;
+  }
+
+  // 2. Fallback — stream from Render backend
   try {
     const token = localStorage.getItem("token");
     const headers = { 
