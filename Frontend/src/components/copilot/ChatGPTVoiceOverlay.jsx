@@ -29,19 +29,30 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     setVoiceStatus(status);
   };
 
-  // Check langchain-ai/voice-demo local bridge connection on open
+  const [activePort, setActivePort] = useState(8765);
+
+  // Check langchain-ai/voice-demo local bridge connection on open (port 8765 or port 8000)
   useEffect(() => {
     if (isOpen) {
-      fetch('http://localhost:8765/health')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.status === 'online') {
-            setVoiceDemoOnline(true);
-          }
-        })
-        .catch(() => {
-          setVoiceDemoOnline(false);
-        });
+      let isMounted = true;
+      const detectBridge = async () => {
+        for (const port of [8765, 8000]) {
+          try {
+            const res = await fetch(`http://localhost:${port}/health`, { signal: AbortSignal.timeout(1200) });
+            if (res.ok) {
+              const data = await res.json();
+              if (isMounted) {
+                setActivePort(port);
+                setVoiceDemoOnline(true);
+                return;
+              }
+            }
+          } catch (e) {}
+        }
+        if (isMounted) setVoiceDemoOnline(false);
+      };
+      detectBridge();
+      return () => { isMounted = false; };
     }
   }, [isOpen]);
 
@@ -172,11 +183,11 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const connectBridgeWS = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
     try {
-      const ws = new WebSocket('ws://localhost:8765/ws/voice');
+      const ws = new WebSocket(`ws://localhost:${activePort}/ws/voice`);
       wsRef.current = ws;
       ws.onopen = () => {
         setVoiceDemoOnline(true);
-        console.log('[VoiceWS] Connected to langchain-ai/voice-demo bridge');
+        console.log(`[VoiceWS] Connected to langchain-ai/voice-demo bridge on port ${activePort}`);
       };
       ws.onmessage = (event) => {
         try {
@@ -325,24 +336,29 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     let cleanReply = '';
     let neuralAudioB64 = '';
 
-    // Direct to local langchain-ai/voice-demo bridge
-    try {
-      const bridgeRes = await fetch('http://localhost:8765/api/voice/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: queryText, lang }),
-        signal: AbortSignal.timeout(1200)
-      });
-      if (bridgeRes.ok) {
-        const data = await bridgeRes.json();
-        if (data && data.response) {
-          cleanReply = data.response;
-          neuralAudioB64 = data.audio_base64 || '';
-          setVoiceDemoOnline(true);
+    // Direct to local langchain-ai/voice-demo bridge (activePort first, then alternate)
+    const probePorts = [activePort, activePort === 8765 ? 8000 : 8765];
+    for (const port of probePorts) {
+      if (cleanReply) break;
+      try {
+        const bridgeRes = await fetch(`http://localhost:${port}/api/voice/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: queryText, lang }),
+          signal: AbortSignal.timeout(3000)
+        });
+        if (bridgeRes.ok) {
+          const data = await bridgeRes.json();
+          if (data && data.response) {
+            cleanReply = data.response;
+            neuralAudioB64 = data.audio_base64 || '';
+            setVoiceDemoOnline(true);
+            break;
+          }
         }
+      } catch (bridgeErr) {
+        // Try alternate port or fallback
       }
-    } catch (bridgeErr) {
-      console.log("[VoiceAgent] Voice-demo bridge error:", bridgeErr?.message);
     }
 
     if (!cleanReply) {

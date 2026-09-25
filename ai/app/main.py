@@ -5,11 +5,12 @@ FastAPI + LangGraph + RAG Service
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router
+from .api.voice import router as voice_router
 from .config import settings
 
 app = FastAPI(
     title="Discovery Uttarakhand AI Runtime",
-    description="Production-grade LangGraph Agentic AI Travel Copilot for Uttarakhand",
+    description="Production-grade LangGraph Agentic AI Travel Copilot & Live Voice for Uttarakhand",
     version="3.0.0"
 )
 
@@ -23,6 +24,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(voice_router)
 
 @app.get("/")
 def root():

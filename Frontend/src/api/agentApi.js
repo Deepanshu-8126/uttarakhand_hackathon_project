@@ -54,20 +54,23 @@ function generateLocalGroundedResponse(message = '') {
  * Send message with 3-Tier fallback logic.
  */
 export async function sendAgentMessage({ message, history, pageContext, chatId, tripId }) {
-  // Tier 1: Try Python voice-demo bridge (Port 8765)
-  try {
-    const bridgeRes = await fetch(`${BRIDGE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, history: history || [], pageContext }),
-      signal: AbortSignal.timeout(1500)
-    });
-    if (bridgeRes.ok) {
-      const data = await bridgeRes.json();
-      if (data && data.response) return data;
+  // Tier 1: Try Python AI bridge (Port 8765 web_bridge or Port 8000 unified app)
+  for (const port of [8765, 8000]) {
+    try {
+      const url = `http://localhost:${port}/api/chat`;
+      const bridgeRes = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history: history || [], pageContext, tripContext: pageContext }),
+        signal: AbortSignal.timeout(2500)
+      });
+      if (bridgeRes.ok) {
+        const data = await bridgeRes.json();
+        if (data && data.response) return data;
+      }
+    } catch (err) {
+      // Port unavailable, try next
     }
-  } catch (err) {
-    // Python bridge unavailable or timed out
   }
 
   // Tier 2: Primary Express Backend API (/api/agent/chat)
