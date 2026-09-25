@@ -18,7 +18,9 @@ import {
   RefreshCw,
   Mic,
   MicOff,
-  Radio
+  Radio,
+  Headphones,
+  ArrowUp
 } from "lucide-react";
 import "./AICopilotDrawer.css";
 
@@ -496,17 +498,6 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
               <History size={17} />
             </button>
 
-            {/* Live Interactive Voice Agent Button */}
-            <button
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 text-xs font-black transition-all cursor-pointer shadow-2xs"
-              onClick={() => setVoiceOverlayOpen(true)}
-              title="Open Fullscreen Interactive AI Voice Agent"
-              aria-label="Live Voice Mode"
-            >
-              <Radio size={12} className="animate-pulse text-emerald-600" />
-              <span className="text-[11px] uppercase tracking-wide">Voice Agent</span>
-            </button>
-
             {/* New Chat */}
             <button
               className="copilot-header__btn"
@@ -646,33 +637,52 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
               aria-label="Ask about your trip"
             />
 
-            {/* Voice Input Button */}
-            <button
-              type="button"
-              className={`copilot-voice-btn p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-                isListening
-                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse ring-2 ring-rose-300'
-                  : 'bg-stone-100 hover:bg-emerald-50 text-slate-600 hover:text-[#0f3d2e] border-stone-200/80'
-              }`}
-              onClick={handleToggleVoice}
-              title={isListening ? "Stop Voice Input" : "Voice Input (Speak in Hindi or English)"}
-              aria-label="Voice input"
-            >
-              {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+              {/* Dictation Mic / Mute Button */}
+              <button
+                type="button"
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                  isListening
+                    ? 'bg-rose-500 text-white animate-pulse ring-2 ring-rose-300'
+                    : 'text-stone-500 hover:text-stone-900 hover:bg-stone-200/60'
+                }`}
+                onClick={handleToggleVoice}
+                title={isListening ? "Mute / Stop Listening" : "Voice Dictation (Speak query)"}
+                aria-label={isListening ? "Mute voice" : "Voice dictation"}
+              >
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
 
-            <button
-              className="copilot-send-btn"
-              onClick={() => sendMessage()}
-              disabled={loading || !input.trim()}
-              aria-label="Send message"
-            >
-              {loading ? (
-                <Loader2 size={15} className="animate-spin" />
-              ) : (
-                <Send size={15} />
-              )}
-            </button>
+              {/* ChatGPT Live Voice Mode Button (Headphones) */}
+              <button
+                type="button"
+                onClick={() => setVoiceOverlayOpen(true)}
+                className="w-8 h-8 rounded-full bg-stone-900 hover:bg-stone-800 text-white flex items-center justify-center transition-transform active:scale-90 cursor-pointer shadow-xs"
+                title="Start ChatGPT Live Voice Mode"
+                aria-label="Live Voice Mode"
+              >
+                <Headphones size={15} className="text-emerald-400" />
+              </button>
+
+              {/* Send Button */}
+              <button
+                type="button"
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  input.trim() && !loading
+                    ? 'bg-emerald-800 hover:bg-emerald-900 text-white cursor-pointer shadow-xs'
+                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                }`}
+                onClick={() => sendMessage()}
+                disabled={loading || !input.trim()}
+                aria-label="Send message"
+              >
+                {loading ? (
+                  <Loader2 size={14} className="animate-spin text-stone-600" />
+                ) : (
+                  <ArrowUp size={16} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
