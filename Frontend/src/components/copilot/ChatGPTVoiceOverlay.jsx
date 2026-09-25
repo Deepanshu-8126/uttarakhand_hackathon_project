@@ -258,27 +258,34 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       }
     }
 
-    setLastAgentReply(cleanReply || (lang === 'hi' ? 'उत्तर तैयार है।' : 'I have analyzed your request.'));
+    // Clean any accidental markdown symbols (like **, *, #, _) from the spoken voice output
+    const cleanSpoken = (cleanReply || (lang === 'hi' ? 'उत्तर तैयार है।' : 'I have analyzed your request.'))
+      .replace(/[*#_~`]/g, '')
+      .replace(/\b(http|https):\/\/\S+/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-      if (!isMuted && cleanReply) {
-        updateVoiceStatus('speaking');
-        speakText(cleanReply, {
-          lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
-          rate: 1.05,
-          onStart: () => updateVoiceStatus('speaking'),
-          onEnd: () => {
-            updateVoiceStatus('listening');
-            startListening();
-          },
-          onError: () => {
-            updateVoiceStatus('listening');
-            startListening();
-          }
-        });
-      } else {
-        updateVoiceStatus('listening');
-        startListening();
-      }
+    setLastAgentReply(cleanSpoken);
+
+    if (!isMuted && cleanSpoken) {
+      updateVoiceStatus('speaking');
+      speakText(cleanSpoken, {
+        lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
+        rate: 1.05,
+        onStart: () => updateVoiceStatus('speaking'),
+        onEnd: () => {
+          updateVoiceStatus('listening');
+          startListening();
+        },
+        onError: () => {
+          updateVoiceStatus('listening');
+          startListening();
+        }
+      });
+    } else {
+      updateVoiceStatus('listening');
+      startListening();
+    }
   };
 
   if (!isOpen) return null;

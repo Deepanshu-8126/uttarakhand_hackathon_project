@@ -98,7 +98,7 @@ function applyDecisionPolicy(toolName, args, session, userMessage) {
 }
 
 // ─── Build system prompt ──────────────────────────────────────
-function buildSystemPrompt(tripContext, session) {
+function buildSystemPrompt(tripContext, session, pageContext) {
   const hasPending = !!session?.pendingConfirmation;
   const entities = session?.contextEntities || {};
 
@@ -121,6 +121,25 @@ CURRENT TRIP CONTEXT:
 - Transport: ${tripContext.transport || "Not set"}
 - Has Itinerary: ${tripContext.hasGeneratedItinerary ? "Yes" : "No"}
 ` : "No saved trip loaded.";
+
+  // If request is from the Voice Overlay, use the concise spoken persona (matching langchain-ai/voice-demo)
+  if (pageContext?.pageType === "VOICE_AGENT" || pageContext?.currentPage === "COPILOT_VOICE") {
+    return `You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover and langchain-ai/voice-demo.
+You possess authoritative knowledge of:
+- Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri) and Hemkund Sahib
+- High-altitude treks (Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass)
+- Altitude Sickness (AMS) protocols, acclimatization halts, and safety guidelines
+- Road conditions, mountain weather, and verified local homestays
+- Garhwali and Kumaoni traditions, culture, and cuisine
+
+CRITICAL SPOKEN VOICE INSTRUCTIONS:
+1. You are speaking directly to the user through real-time voice synthesis. Keep your reply extremely conversational, warm, concise, and direct: exactly 1 to 3 spoken sentences.
+2. Answer in Hindi, English, or natural friendly Hinglish depending on how the user speaks to you.
+3. ABSOLUTELY NEVER use asterisks (*), markdown formatting, bold text (**), bullet points, numbered lists, emojis, or raw URLs. Everything you output must be pure, clean, natural spoken speech.
+4. Give direct, factual answers. If asked about Kedarnath, give altitude (3584m), halting points (Guptkashi/Sonprayag), and weather. If asked about homestays, give real local Pahari stays.
+${tripSection}
+${activeContextSection}`;
+  }
 
   return `You are DevBhoomi AI - Official Uttarakhand Travel Expert.
 You have two sources:
@@ -968,7 +987,7 @@ async function _runAgentInternal({ message, tripContext, session, user, requestI
     const provider = getProvider();
     trace.provider = provider.name;
 
-    const systemPrompt = buildSystemPrompt(tripContext, session);
+    const systemPrompt = buildSystemPrompt(tripContext, session, pageContext);
     const messages = buildMessages(message, session, systemPrompt);
 
     // 5. Agent loop — max 4 tool iterations with duplicate & call frequency guards
