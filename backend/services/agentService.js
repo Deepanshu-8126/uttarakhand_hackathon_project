@@ -122,9 +122,9 @@ CURRENT TRIP CONTEXT:
 - Has Itinerary: ${tripContext.hasGeneratedItinerary ? "Yes" : "No"}
 ` : "No saved trip loaded.";
 
-  // If request is from the Voice Overlay, use the concise spoken persona (matching langchain-ai/voice-demo)
+  // If request is from the Voice Overlay, use the concise spoken persona
   if (pageContext?.pageType === "VOICE_AGENT" || pageContext?.currentPage === "COPILOT_VOICE") {
-    return `You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover and langchain-ai/voice-demo.
+    return `You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover Uttarakhand.
 You possess authoritative knowledge of:
 - Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri) and Hemkund Sahib
 - High-altitude treks (Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass)

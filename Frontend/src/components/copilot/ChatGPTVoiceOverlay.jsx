@@ -31,7 +31,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
   const [activePort, setActivePort] = useState(8765);
 
-  // Check langchain-ai/voice-demo local bridge connection on open (port 8765 or port 8000)
+  // Check Devbhoomi AI voice bridge connection on open (port 8765 or port 8000)
   useEffect(() => {
     if (isOpen) {
       let isMounted = true;
@@ -187,7 +187,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       wsRef.current = ws;
       ws.onopen = () => {
         setVoiceDemoOnline(true);
-        console.log(`[VoiceWS] Connected to langchain-ai/voice-demo bridge on port ${activePort}`);
+        console.log(`[VoiceWS] Connected to Devbhoomi AI voice bridge on port ${activePort}`);
       };
       ws.onmessage = (event) => {
         try {
@@ -336,7 +336,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     let cleanReply = '';
     let neuralAudioB64 = '';
 
-    // Direct to local langchain-ai/voice-demo bridge (activePort first, then alternate)
+    // Direct to local Devbhoomi AI voice bridge (activePort first, then alternate)
     const probePorts = [activePort, activePort === 8765 ? 8000 : 8765];
     for (const port of probePorts) {
       if (cleanReply) break;
@@ -408,7 +408,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-500'}`} />
               <span className="text-[10px] text-emerald-300/90 font-semibold uppercase tracking-wider">
-                {voiceDemoOnline ? 'langchain-ai/voice-demo · Live' : 'Interactive Live Voice Guide'}
+                {voiceDemoOnline ? 'Devbhoomi AI · Live' : 'Interactive Live Voice Guide'}
               </span>
             </div>
           </div>
@@ -607,7 +607,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         </div>
 
         <p className="text-[11px] text-stone-400 font-medium">
-          Powered by langchain-ai/voice-demo · Google Gemini Live &amp; Devbhoomi Knowledge Engine
+          Powered by Google Gemini Live &amp; Devbhoomi Knowledge Engine
         </p>
       </div>
 

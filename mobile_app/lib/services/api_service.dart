@@ -69,8 +69,8 @@ class ApiService {
     return _getLocalGuides();
   }
 
-  // ── Voice-Demo Bridge (langchain-ai/voice-demo) ─────────────────────────
-  /// Sends a voice query to the local voice-demo bridge first.
+  // ── Devbhoomi AI Voice Bridge ─────────────────────────
+  /// Sends a voice query to the local Devbhoomi AI voice bridge first.
   /// Falls back to main backend agent if the bridge is offline.
   static Future<Map<String, dynamic>> sendVoiceMessage(
       String query, {String lang = 'en'}) async {

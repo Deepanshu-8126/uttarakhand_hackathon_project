@@ -448,7 +448,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
 
                   const Spacer(),
                   const Text(
-                    'Powered by langchain-ai/voice-demo · Google Gemini Live',
+                    'Powered by Google Gemini Live & Devbhoomi AI',
                     style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 12),

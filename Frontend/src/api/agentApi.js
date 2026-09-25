@@ -1,6 +1,6 @@
 /**
  * Discovery Uttarakhand - Resilient Multi-Tier AI Agent API Client
- * Tier 1: Local langchain-ai/voice-demo bridge (Port 8765)
+ * Tier 1: Local Devbhoomi AI Voice Bridge (Port 8765)
  * Tier 2: Primary Express Production API (/api/agent/chat)
  * Tier 3: Local Grounded Pahadi Intelligence Synthesizer (Offline Resilient)
  */

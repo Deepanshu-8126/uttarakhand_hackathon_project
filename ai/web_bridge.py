@@ -1,4 +1,4 @@
-"""Web & Mobile WebSocket Bridge for langchain-ai/voice-demo.
+"""Web & Mobile WebSocket Bridge for Devbhoomi AI Voice Companion.
 
 Exposes a real-time WebSocket and HTTP API on port 8765 so that the Discover
 Frontend website and Flutter Mobile App can talk directly to the Devbhoomi
@@ -52,10 +52,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
-_SYSTEM_PROMPT = """You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover and langchain-ai/voice-demo.
+_SYSTEM_PROMPT = """You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover Uttarakhand.
 You possess authoritative knowledge of:
 - Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri) and Hemkund Sahib
 - High-altitude treks (Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass)
@@ -106,7 +106,7 @@ class ChatRequest(BaseModel):
     pageContext: dict | None = None
 
 
-_CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand and langchain-ai/voice-demo.
+_CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand.
 
 You have deep, verified knowledge of:
 - Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri), Hemkund Sahib
@@ -129,7 +129,7 @@ Instructions:
 async def health_check():
     return {
         "status": "online",
-        "service": "langchain-ai/voice-demo",
+        "service": "devbhoomi_voice_companion",
         "agent": "devbhoomi_voice_companion",
         "model": MODEL_NAME,
         "has_api_key": bool(GOOGLE_API_KEY),
@@ -210,7 +210,7 @@ Respond as Devbhoomi Companion — helpful, detailed, markdown-formatted."""
             "type": "answer",
             "confidence": "grounded",
             "suggestedActions": ["Explore Homestays", "Check Mountain Safety", "Live Weather"],
-            "engine": "langchain-ai/voice-demo",
+            "engine": "devbhoomi_ai",
         }
     }
 
@@ -281,7 +281,7 @@ Respond as the Devbhoomi Voice Companion in 1-3 spoken, clear, natural sentences
     return {
         "response": clean_text,
         "tools_used": tools_used,
-        "engine": "langchain-ai/voice-demo",
+        "engine": "devbhoomi_ai",
         "audio_base64": audio_b64,
     }
 
@@ -299,7 +299,7 @@ async def websocket_voice_endpoint(websocket: WebSocket):
     # Send welcome handshake
     await websocket.send_json({
         "type": "ready",
-        "engine": "langchain-ai/voice-demo",
+        "engine": "devbhoomi_ai",
         "greeting": greeting_text,
         "audio_base64": greeting_audio,
     })
