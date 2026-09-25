@@ -331,7 +331,76 @@ export default function GuideDashboard() {
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-28">
 
-        {/* Active beacon live status */}
+        {/* ── Judge 2-Tab Testing Info Box ── */}
+        <div className="rounded-2xl border border-emerald-700/50 bg-emerald-950/60 p-3.5 text-xs text-emerald-200">
+          <p className="font-black uppercase tracking-wider text-emerald-300 text-[10px] mb-1">
+            🧪 Hackathon 2-Tab Testing Guide
+          </p>
+          <p className="text-[11px] leading-relaxed text-emerald-100/90">
+            You are logged in as <strong>Guide Ramesh Rawat</strong>. Keep this tab open while you click <strong>[BROADCAST SOS TO GRID]</strong> in Tab 1 (Trekker Aryan Negi). The red distress beacon and rescue dispatch button will appear below instantly!
+          </p>
+        </div>
+
+        {/* ── RED SOS ALERT CARD for Nearby Trekker in Trouble ── */}
+        {gridSos && (
+          <div className="rounded-2xl border-2 border-red-500 bg-red-950/90 p-5 text-white shadow-2xl shadow-red-950/60 animate-in fade-in">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-3 h-3 rounded-full bg-red-500 animate-ping shrink-0" />
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-red-300 bg-red-900/60 px-2 py-0.5 rounded border border-red-700/60">
+                    🚨 NEARBY TREKKER IN TROUBLE
+                  </span>
+                  <h3 className="text-base font-black text-white mt-1">
+                    {gridSos.name || 'Aryan Negi'} ({gridSos.trekker || 'TRK-82341'})
+                  </h3>
+                </div>
+              </div>
+              <span className="text-xs font-mono font-bold text-red-300 bg-red-900/60 px-2 py-1 rounded border border-red-700/50">
+                1.2 km away
+              </span>
+            </div>
+
+            <div className="p-3 rounded-xl bg-red-900/40 border border-red-700/60 text-xs text-red-100 mb-3 space-y-1">
+              <p className="font-semibold text-white">
+                "{gridSos.message || 'Injured on trail near Mandakini river. Need assistance!'}"
+              </p>
+              <div className="flex items-center gap-3 pt-1 text-[11px] text-red-300 flex-wrap">
+                <span>Sent: <strong>{gridSos.time || 'Just now'}</strong></span>
+                <span>•</span>
+                <span>Battery: <strong>{gridSos.battery || 27}% Low</strong></span>
+                <span>•</span>
+                <span>GPS: <strong>{gridSos.lat || 30.73}°N, {gridSos.lng || 79.07}°E</strong></span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {!myRescueDispatched ? (
+                <button
+                  type="button"
+                  onClick={handleAcceptRescue}
+                  className="py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-950/40 cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  <Zap size={14} />
+                  <span>I AM GOING TO RESCUE</span>
+                </button>
+              ) : (
+                <div className="py-2.5 px-3 rounded-xl bg-emerald-900/80 border border-emerald-500/60 text-emerald-200 font-bold text-xs flex items-center justify-center gap-2">
+                  <CheckCheck size={14} className="text-emerald-400" />
+                  <span>Rescue Dispatched (ETA 18m)</span>
+                </div>
+              )}
+
+              <Link
+                to={`/live/${gridSos.trekker || 'TRK-82341'}`}
+                className="py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Navigation size={13} className="text-sky-400" />
+                <span>VIEW ON LIVE RADAR</span>
+              </Link>
+            </div>
+          </div>
+        )}
         {trekActive && activeTripId && (
           <div className="rounded-2xl border border-emerald-500/50 bg-emerald-950/80 p-4">
             <div className="flex items-center gap-2 mb-3">
