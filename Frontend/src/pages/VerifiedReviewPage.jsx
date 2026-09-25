@@ -339,21 +339,21 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
           </div>
 
           {/* Tab Switcher: Write Review vs Public Feed */}
-          <div className="flex items-center bg-[#151A26] p-1.5 rounded-2xl border border-[#1F293D] shrink-0">
+          <div className="flex items-center bg-[#151A26] p-1 rounded-2xl border border-[#1F293D] w-full sm:w-auto shrink-0">
             <button
               onClick={() => setActiveTab('write')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === 'write'
                   ? 'bg-gradient-to-r from-emerald-600 to-[#0f3d2e] text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Sparkles size={14} className={activeTab === 'write' ? 'text-[#00FF88]' : ''} />
-              <span>Write Verified Review</span>
+              <span>Write Review</span>
             </button>
             <button
               onClick={() => setActiveTab('feed')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === 'feed'
                   ? 'bg-gradient-to-r from-emerald-600 to-[#0f3d2e] text-white shadow-md'
                   : 'text-slate-400 hover:text-white'

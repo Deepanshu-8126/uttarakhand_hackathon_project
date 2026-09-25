@@ -184,7 +184,7 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
             const grid = document.getElementById('explore-grid');
             if (grid) grid.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="h-[42px] px-7 rounded-full bg-[#0F2B1F] hover:bg-[#153e2d] text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-[#0F2B1F]/20 hover:shadow-lg transition-all cursor-pointer shrink-0 active:scale-95"
+          className="h-[42px] px-5 sm:px-7 rounded-full bg-[#0F2B1F] hover:bg-[#153e2d] text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-[#0F2B1F]/20 hover:shadow-lg transition-all cursor-pointer shrink-0 active:scale-95"
         >
           <Sparkles size={14} className="text-emerald-300" />
           <span>Find</span>
