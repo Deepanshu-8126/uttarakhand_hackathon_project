@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Color Palette matching Discovery Uttarakhand
@@ -27,13 +26,13 @@ class AppTheme {
         surface: cream,
         brightness: Brightness.light,
       ),
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w900, color: textDark),
-        displayMedium: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: textDark),
-        titleLarge: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: textDark),
-        titleMedium: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: textDark),
-        bodyLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: textDark),
-        bodyMedium: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w400, color: mutedText),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: textDark),
+        displayMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textDark),
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: textDark),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textDark),
+        bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textDark),
+        bodyMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: mutedText),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: cream,
@@ -54,7 +53,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-          textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.5),
         ),
       ),
     );

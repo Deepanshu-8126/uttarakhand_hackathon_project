@@ -288,6 +288,8 @@ class _HomeScreenState extends State<HomeScreen> {
               CachedNetworkImage(
                 imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
                 fit: BoxFit.cover,
+                placeholder: (context, url) => Container(color: AppTheme.darkGreen),
+                errorWidget: (context, url, error) => Container(color: AppTheme.darkGreen, child: const Icon(Icons.terrain, color: Colors.white24, size: 64)),
               ),
               Container(
                 decoration: BoxDecoration(
@@ -399,6 +401,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 120,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: AppTheme.beige),
+                      errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.landscape, color: AppTheme.forestGreen)),
                     ),
                   ),
                   Padding(
@@ -456,7 +460,14 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(imageUrl: r.imageUrl, height: 85, width: double.infinity, fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                    imageUrl: r.imageUrl,
+                    height: 85,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: AppTheme.beige),
+                    errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.two_wheeler, color: AppTheme.forestGreen)),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
@@ -504,7 +515,14 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(imageUrl: s.imageUrl, height: 85, width: double.infinity, fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                    imageUrl: s.imageUrl,
+                    height: 85,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: AppTheme.beige),
+                    errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.cottage, color: AppTheme.earthBrown)),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(s.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
@@ -552,7 +570,14 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: CachedNetworkImage(imageUrl: g.imageUrl, height: 75, width: 75, fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                    imageUrl: g.imageUrl,
+                    height: 75,
+                    width: 75,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: AppTheme.beige),
+                    errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.person, color: AppTheme.forestGreen)),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

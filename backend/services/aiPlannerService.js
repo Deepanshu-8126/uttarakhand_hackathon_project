@@ -5,13 +5,14 @@
  */
 
 import { OmniRouteProvider } from './ai/providers/OmniRouteProvider.js';
+import { GroqProvider } from './ai/providers/GroqProvider.js';
 import { GeminiProvider } from './ai/providers/GeminiProvider.js';
 import { OpenAIProvider } from './ai/providers/OpenAIProvider.js';
 import { DeterministicFallbackProvider } from './ai/providers/DeterministicFallbackProvider.js';
 
 export class AiPlannerService {
   /**
-   * Resolves the configured AI provider with OmniRoute -> Gemini -> OpenAI -> Deterministic priority.
+   * Resolves the configured AI provider with Groq -> OmniRoute -> Gemini -> OpenAI -> Deterministic priority.
    * @param {string} [requestedProvider]
    * @returns {BaseAiProvider}
    */
@@ -19,6 +20,9 @@ export class AiPlannerService {
     const providerName = (requestedProvider || process.env.AI_PROVIDER || '').toLowerCase();
 
     // 1. Explicit override if requested
+    if (providerName === 'groq' && process.env.GROQ_ENABLED !== 'false' && process.env.GROQ_API_KEY) {
+      return new GroqProvider();
+    }
     if (providerName === 'omniroute' && process.env.OMNIROUTE_ENABLED !== 'false' && process.env.OMNIROUTE_API_KEY) {
       return new OmniRouteProvider();
     }
@@ -32,7 +36,10 @@ export class AiPlannerService {
       return new DeterministicFallbackProvider();
     }
 
-    // 2. Default hierarchy: OmniRoute -> Gemini -> OpenAI -> Deterministic
+    // 2. Default hierarchy: Groq -> OmniRoute -> Gemini -> OpenAI -> Deterministic
+    if (process.env.GROQ_ENABLED !== 'false' && process.env.GROQ_API_KEY) {
+      return new GroqProvider();
+    }
     if (process.env.OMNIROUTE_ENABLED !== 'false' && process.env.OMNIROUTE_API_KEY) {
       return new OmniRouteProvider();
     }

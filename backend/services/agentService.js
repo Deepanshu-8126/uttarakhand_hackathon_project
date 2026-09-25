@@ -221,6 +221,9 @@ function getProvider() {
   const name = (process.env.AI_PROVIDER || "").toLowerCase();
 
   // 1. Explicit override if specified in env
+  if (name === "groq" && process.env.GROQ_ENABLED !== 'false' && process.env.GROQ_API_KEY) {
+    return new GroqProvider();
+  }
   if (name === "omniroute" && process.env.OMNIROUTE_ENABLED !== 'false' && process.env.OMNIROUTE_API_KEY) {
     return new OmniRouteProvider();
   }
@@ -234,12 +237,15 @@ function getProvider() {
     return new DeterministicFallbackProvider();
   }
 
-  // 2. Default priority: OmniRoute -> Gemini -> OpenAI -> Deterministic
-  if (process.env.OMNIROUTE_ENABLED !== 'false' && process.env.OMNIROUTE_API_KEY) {
-    return new OmniRouteProvider();
+  // 2. Default priority: Groq -> Gemini -> OmniRoute -> OpenAI -> Deterministic
+  if (process.env.GROQ_ENABLED !== 'false' && process.env.GROQ_API_KEY) {
+    return new GroqProvider();
   }
   if (process.env.GEMINI_API_KEY) {
     return new GeminiProvider();
+  }
+  if (process.env.OMNIROUTE_ENABLED !== 'false' && process.env.OMNIROUTE_API_KEY) {
+    return new OmniRouteProvider();
   }
   if (process.env.OPENAI_API_KEY) {
     return new OpenAIProvider();
@@ -510,10 +516,13 @@ async function _processAgenticTravelFlow({ message, tripContext, session, user, 
   }
 
   // 6. Trip Planning Flow & Multi-Turn State Machine
-  const isPlanningIntent = /trip|plan|jana hai|jaana hai|want to go|ghoomna|travel|bana do|chalo|start|where i can go/i.test(clean) ||
-                           entities.destination || entities.origin || entities.startDate || entities.budget || entities.duration;
+  // Only trigger slot-filling when user explicitly asks to BUILD/GENERATE an itinerary/trip form,
+  // NOT when asking informational questions, history, timings, or general conversational inquiries.
+  const isInformationalQuery = /(?:tell me about|information|timing|timings|history|kya hai|kaisa hai|baare me|kya dekh|mandir|temple|lake|waterfall|peak|trek guide|best time|story|facts|altitude)/i.test(clean);
+  const isExplicitPlanningIntent = /(?:itinerary banao|trip plan karo|plan my trip|pura plan banao|booking plan|itinerary create)/i.test(clean) ||
+                                   (clean.split(/\s+/).length <= 4 && /(?:plan|itinerary)\b/i.test(clean) && !isInformationalQuery);
 
-  if (isPlanningIntent) {
+  if (isExplicitPlanningIntent && !isInformationalQuery) {
     const dest = entities.destination || activeDest;
     const orig = entities.origin;
     const sDate = entities.startDate;
@@ -835,16 +844,20 @@ Aapka **${dest}** trip plan organize ho gaya hai:
 }
 
 // ─── Main agent run ───────────────────────────────────────────
-export async function runAgent({ message, tripContext, session, user, requestId, pageContext, onEvent }) {
+export async function runAgent({ message, userMessage, tripContext, session, user, requestId, pageContext, onEvent }) {
+  const normalizedMessage = String(message || userMessage || "").trim();
+  const safeSession = session || { sessionId: `anon_${Date.now()}`, history: [] };
+  const safeRequestId = requestId || `req_${Date.now()}`;
+
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error("Agent execution timed out")), AGENT_TIMEOUT_MS)
   );
 
   return Promise.race([
-    _runAgentInternal({ message, tripContext, session, user, requestId, pageContext, onEvent }),
+    _runAgentInternal({ message: normalizedMessage, tripContext, session: safeSession, user, requestId: safeRequestId, pageContext, onEvent }),
     timeoutPromise
   ]).catch(err => {
-    console.error(`[AgentService] Timeout/Fatal [${requestId}]:`, err.message);
+    console.error(`[AgentService] Timeout/Fatal [${safeRequestId}]:`, err.message);
     return {
       type: "error",
       message: "The AI agent took too long to process your request. Please try asking a more focused question.",
@@ -852,19 +865,19 @@ export async function runAgent({ message, tripContext, session, user, requestId,
       citations: [],
       suggestedActions: _defaultSuggestions(),
       confidence: "unavailable",
-      meta: { provider: "timeout_guard", toolCallCount: 0, sessionId: session?.sessionId, requestId }
+      meta: { provider: "timeout_guard", toolCallCount: 0, sessionId: safeSession?.sessionId, requestId: safeRequestId }
     };
   });
 }
 
 async function _runAgentInternal({ message, tripContext, session, user, requestId, pageContext, onEvent }) {
   if (onEvent) onEvent({ type: 'status', message: 'Thinking...' });
-  console.log(`[AGENT] requestId=${requestId} message="${message.slice(0,50)}..."`);
+  console.log(`[AGENT] requestId=${requestId} message="${(message || '').slice(0,50)}..."`);
   console.log(`[AGENT] provider selected: ${(process.env.AI_PROVIDER || 'deterministic').toLowerCase()}`);
   const trace = {
     requestId,
-    sessionId: session.sessionId,
-    userMessageLength: message.length,
+    sessionId: session?.sessionId || 'unknown',
+    userMessageLength: (message || '').length,
     provider: null,
     tools: [],
     toolCallCount: 0,
@@ -1006,9 +1019,9 @@ async function _runAgentInternal({ message, tripContext, session, user, requestI
         trace.fallbackUsed = true;
         let fallbackHandled = false;
 
-        if (provider.name === "omniroute" && process.env.GEMINI_API_KEY) {
+        if ((provider.name === "groq" || provider.name === "omniroute") && process.env.GEMINI_API_KEY) {
           try {
-            console.log("[AGENT] Falling back from OmniRoute to GeminiProvider...");
+            console.log(`[AGENT] Falling back from ${provider.name} to GeminiProvider...`);
             const geminiFallback = new GeminiProvider();
             trace.provider = "gemini";
             llmResponse = await geminiFallback.chat(systemPrompt, conversationMessages, TOOL_SCHEMAS);

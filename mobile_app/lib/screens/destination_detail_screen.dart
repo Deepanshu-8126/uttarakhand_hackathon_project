@@ -51,6 +51,8 @@ class DestinationDetailScreen extends StatelessWidget {
                   CachedNetworkImage(
                     imageUrl: destination.imageUrl,
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: AppTheme.darkGreen),
+                    errorWidget: (context, url, error) => Container(color: AppTheme.darkGreen, child: const Icon(Icons.landscape, color: Colors.white30, size: 64)),
                   ),
                   Container(
                     decoration: BoxDecoration(

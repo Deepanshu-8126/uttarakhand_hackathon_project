@@ -28,11 +28,11 @@ class Settings(BaseSettings):
     # Direct Groq
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     
     # Direct Gemini
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     
     # Direct OpenAI
     OPENAI_API_KEY: str = ""

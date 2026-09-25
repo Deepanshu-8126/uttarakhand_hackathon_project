@@ -7,7 +7,7 @@
 import { BaseAiProvider } from './BaseAiProvider.js';
 
 export class GeminiProvider extends BaseAiProvider {
-  constructor(apiKey = process.env.GEMINI_API_KEY, modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash') {
+  constructor(apiKey = process.env.GEMINI_API_KEY, modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash') {
     super('gemini');
     this.apiKey = apiKey;
     this.modelName = modelName;
@@ -226,12 +226,12 @@ Produce structured JSON matching this schema:
     }
 
     if (toolCalls.length > 0) {
-      return { text: null, toolCall: toolCalls[0], toolCalls };
+      return { text: null, toolCall: toolCalls[0], toolCalls, provider: 'gemini', model: this.modelName };
     }
 
     // Text response
     const text = parts.map(p => p.text || "").join("").trim();
-    return { text: text || "I'm ready to help with your trip planning.", toolCall: null, toolCalls: [] };
+    return { text: text || "I'm ready to help with your trip planning.", toolCall: null, toolCalls: [], provider: 'gemini', model: this.modelName };
   }
 
   async *chatStream(systemPrompt, messages, toolSchemas = []) {

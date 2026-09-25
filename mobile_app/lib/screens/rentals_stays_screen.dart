@@ -90,6 +90,8 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: AppTheme.beige),
+                  errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.two_wheeler, color: AppTheme.forestGreen, size: 48)),
                 ),
               ),
               Padding(
@@ -160,6 +162,8 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: AppTheme.beige),
+                  errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.cottage, color: AppTheme.earthBrown, size: 48)),
                 ),
               ),
               Padding(
