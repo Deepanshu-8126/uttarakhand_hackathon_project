@@ -79,7 +79,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     });
     _scrollToBottom();
 
-    final result = await ApiService.sendCopilotMessage(text, isVoice: isVoice);
+    // Voice queries go through the voice-demo bridge
+    final result = isVoice
+        ? await ApiService.sendVoiceMessage(text, lang: 'en')
+        : await ApiService.sendCopilotMessage(text, isVoice: isVoice);
 
     if (mounted) {
       setState(() {
@@ -211,6 +214,12 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
   }
 
   void _openVoiceDialog() {
+    // Voice agent state: idle | listening | processing | speaking
+    String voiceState = 'idle';
+    String liveTranscript = '';
+    String lastReply = '';
+    bool bridgeLive = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -218,24 +227,73 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            // ── async actions ───────────────────────────────────────────
+            Future<void> submit(String query) async {
+              setModalState(() {
+                voiceState = 'processing';
+                liveTranscript = query;
+                lastReply = '';
+              });
+              final result = await ApiService.sendVoiceMessage(query);
+              final reply = result['text'] as String? ?? 'Main aapki baat sun raha hoon.';
+              setModalState(() {
+                voiceState = 'speaking';
+                lastReply = reply;
+                bridgeLive = result['source'] == 'voice-demo-bridge';
+              });
+              // After showing reply, add to main chat
+              if (mounted) {
+                setState(() {
+                  _messages.add(ChatMessage(text: query, isUser: true, timestamp: DateTime.now()));
+                  _messages.add(ChatMessage(
+                    text: reply,
+                    isUser: false,
+                    timestamp: DateTime.now(),
+                    toolsUsed: (result['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
+                    confidence: result['confidence']?.toString() ?? 'grounded',
+                  ));
+                });
+                _scrollToBottom();
+              }
+              await Future.delayed(const Duration(seconds: 2));
+              setModalState(() => voiceState = 'idle');
+            }
+
+            // ── UI ───────────────────────────────────────────────────────
+            final statusLabel = {
+              'idle': 'Tap a topic or mic to speak',
+              'listening': 'Listening to you…',
+              'processing': 'Devbhoomi AI is thinking…',
+              'speaking': 'AI replied — check chat below',
+            }[voiceState]!;
+
+            final orbColor = {
+              'idle': const Color(0xFF059669),
+              'listening': const Color(0xFF10B981),
+              'processing': const Color(0xFFF59E0B),
+              'speaking': const Color(0xFF06B6D4),
+            }[voiceState]!;
+
             return Container(
-              height: MediaQuery.of(context).size.height * 0.70,
+              height: MediaQuery.of(context).size.height * 0.75,
               decoration: const BoxDecoration(
-                color: Color(0xFF0F2B1F),
+                color: Color(0xFF0A1F16),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 children: [
+                  // Handle
                   Container(
-                    width: 44,
-                    height: 5,
+                    width: 44, height: 5,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
+
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -252,14 +310,26 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                           const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 'Devbhoomi AI Voice Companion',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                               ),
-                              Text(
-                                'langchain-ai/voice-demo · Google Gemini Live',
-                                style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 11),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 7, height: 7,
+                                    margin: const EdgeInsets.only(right: 5),
+                                    decoration: BoxDecoration(
+                                      color: bridgeLive ? const Color(0xFF34D399) : const Color(0xFF6EE7B7),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  Text(
+                                    bridgeLive ? 'voice-demo bridge · Live' : 'Gemini Agent · Active',
+                                    style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 10),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -271,91 +341,111 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  // Animated Pulsing Glowing Audio Orb
+                  const SizedBox(height: 24),
+
+                  // Animated Orb
                   AnimatedBuilder(
                     animation: _voicePulseController,
                     builder: (context, child) {
-                      final scale = 1.0 + (_voicePulseController.value * 0.22);
+                      final scale = voiceState == 'idle' ? 1.0 : 1.0 + (_voicePulseController.value * 0.18);
                       return Stack(
                         alignment: Alignment.center,
                         children: [
                           Container(
-                            width: 150 * scale,
-                            height: 150 * scale,
+                            width: 140 * scale, height: 140 * scale,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFF10B981).withOpacity(0.18 - (_voicePulseController.value * 0.08)),
+                              color: orbColor.withOpacity(0.15 - (_voicePulseController.value * 0.07)),
                             ),
                           ),
                           Container(
-                            width: 110,
-                            height: 110,
-                            decoration: const BoxDecoration(
+                            width: 100, height: 100,
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [Color(0xFF34D399), Color(0xFF059669), Color(0xFF064E3B)],
-                              ),
-                              boxShadow: [
-                                BoxShadow(color: Color(0xFF10B981), blurRadius: 28, spreadRadius: 4),
-                              ],
+                              gradient: RadialGradient(colors: [orbColor.withOpacity(0.9), orbColor.withOpacity(0.5), const Color(0xFF064E3B)]),
+                              boxShadow: [BoxShadow(color: orbColor.withOpacity(0.4), blurRadius: 28, spreadRadius: 4)],
                             ),
-                            child: const Icon(Icons.mic, color: Colors.white, size: 48),
+                            child: Icon(
+                              voiceState == 'processing' ? Icons.hourglass_top
+                                  : voiceState == 'speaking' ? Icons.volume_up
+                                  : Icons.mic,
+                              color: Colors.white,
+                              size: 40,
+                            ),
                           ),
                         ],
                       );
                     },
                   ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Listening & Thinking in Real-Time...',
-                    style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tap any topic below to speak directly with the AI:',
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
+                  const SizedBox(height: 20),
+
+                  // Status label
+                  Text(
+                    statusLabel,
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+
+                  // Live transcript or reply
+                  if (liveTranscript.isNotEmpty || lastReply.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Text(
+                        lastReply.isNotEmpty ? lastReply : '“$liveTranscript”',
+                        style: TextStyle(
+                          color: lastReply.isNotEmpty ? const Color(0xFF6EE7B7) : Colors.white70,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Sample topics
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 8, runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
                       'Kedarnath trek altitude & safety',
                       'Weather in Badrinath',
                       'Valley of Flowers best season',
-                      'Find best homestays in Chopta',
+                      'Best homestays in Chopta',
                     ].map((topic) {
-                      return InkWell(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          _handleSendMessage(topic, true);
-                        },
-                        borderRadius: BorderRadius.circular(999),
+                      return GestureDetector(
+                        onTap: voiceState == 'idle' || voiceState == 'speaking'
+                            ? () => submit(topic)
+                            : null,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
+                            color: Colors.white.withOpacity(0.10),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                            border: Border.all(color: Colors.white.withOpacity(0.18)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.volume_up_outlined, color: Color(0xFF6EE7B7), size: 14),
+                              const Icon(Icons.volume_up_outlined, color: Color(0xFF6EE7B7), size: 13),
                               const SizedBox(width: 6),
-                              Text(
-                                topic,
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
-                              ),
+                              Text(topic, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                             ],
                           ),
                         ),
                       );
                     }).toList(),
                   ),
+
                   const Spacer(),
                   const Text(
                     'Powered by langchain-ai/voice-demo · Google Gemini Live',

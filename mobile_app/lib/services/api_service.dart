@@ -69,6 +69,39 @@ class ApiService {
     return _getLocalGuides();
   }
 
+  // ── Voice-Demo Bridge (langchain-ai/voice-demo) ─────────────────────────
+  /// Sends a voice query to the local voice-demo bridge first.
+  /// Falls back to main backend agent if the bridge is offline.
+  static Future<Map<String, dynamic>> sendVoiceMessage(
+      String query, {String lang = 'en'}) async {
+    // Try local bridge — Android emulator: 10.0.2.2, physical device / iOS sim: 127.0.0.1
+    final bridgeHosts = ['http://10.0.2.2:8765', 'http://127.0.0.1:8765'];
+    for (final host in bridgeHosts) {
+      try {
+        final res = await http
+            .post(
+              Uri.parse('$host/api/voice/ask'),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({'query': query, 'lang': lang}),
+            )
+            .timeout(const Duration(seconds: 6));
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body) as Map<String, dynamic>;
+          if (data['response'] != null) {
+            return {
+              'text': data['response'].toString(),
+              'toolsUsed': (data['toolsUsed'] as List?)?.map((e) => e.toString()).toList() ?? ['VoiceDemoBridge'],
+              'confidence': 'grounded',
+              'source': 'voice-demo-bridge',
+            };
+          }
+        }
+      } catch (_) {}
+    }
+    // Fallback to main backend
+    return sendCopilotMessage(query, isVoice: true);
+  }
+
   // ── AI Copilot Chat ────────────────────────────────────────────────────────
   static Future<Map<String, dynamic>> sendCopilotMessage(
       String message, {String? destination, bool isVoice = false}) async {
