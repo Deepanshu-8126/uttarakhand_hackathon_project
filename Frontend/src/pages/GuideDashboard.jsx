@@ -81,10 +81,11 @@ const DEMO_TREKS = [
   },
 ];
 
-function triggerFreeSOS({ lat, lng, tripId, guidePhone, familyPhone, trekName }) {
+function triggerFreeSOS({ lat, lng, tripId, guidePhone, familyPhone, trekName, battery }) {
+  const batStr = battery !== null ? ` | Battery: ${battery}%` : '';
   const msg =
     `[EMERGENCY SOS] Discovery Uttarakhand\n` +
-    `Trek: ${trekName}\nTrip ID: ${tripId}\n` +
+    `Trek: ${trekName}\nTrip ID: ${tripId}${batStr}\n` +
     `Location: https://maps.google.com/?q=${lat},${lng}\n` +
     `Live Trail: https://discoveryuk.in/live/${tripId}\n` +
     `IMMEDIATE HELP REQUIRED. SDRF: 1070`;
@@ -112,8 +113,39 @@ export default function GuideDashboard() {
   const [copied, setCopied] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [startTime, setStartTime] = useState(null);
+  const [sosCountdown, setSosCountdown] = useState(null);
   const watchIdRef = useRef(null);
   const timerRef = useRef(null);
+  const sosTimerRef = useRef(null);
+
+  // SOS Countdown logic with False Alarm cancellation
+  useEffect(() => {
+    if (sosCountdown === null) return;
+    if (sosCountdown <= 0) {
+      setSosCountdown(null);
+      if (currentPos && selectedTrek) {
+        triggerFreeSOS({
+          lat: currentPos.lat,
+          lng: currentPos.lng,
+          tripId: activeTripId,
+          guidePhone: selectedTrek.guidePhone,
+          familyPhone: selectedTrek.familyPhone,
+          trekName: selectedTrek.name,
+          battery
+        });
+      }
+      return;
+    }
+    sosTimerRef.current = setTimeout(() => {
+      setSosCountdown(prev => (prev !== null ? prev - 1 : null));
+    }, 1000);
+    return () => clearTimeout(sosTimerRef.current);
+  }, [sosCountdown, currentPos, selectedTrek, activeTripId, battery]);
+
+  const cancelSos = () => {
+    if (sosTimerRef.current) clearTimeout(sosTimerRef.current);
+    setSosCountdown(null);
+  };
 
   // Restore session on mount
   useEffect(() => {
@@ -407,22 +439,31 @@ export default function GuideDashboard() {
               </Link>
             </div>
 
-            <button
-              type="button"
-              onClick={() => currentPos && triggerFreeSOS({
-                lat: currentPos.lat,
-                lng: currentPos.lng,
-                tripId: activeTripId,
-                guidePhone: selectedTrek.guidePhone,
-                familyPhone: selectedTrek.familyPhone,
-                trekName: selectedTrek.name,
-              })}
-              disabled={!currentPos}
-              className="w-full py-3.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 border border-rose-500/60 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all cursor-pointer active:scale-[0.98] shadow-[0_0_20px_rgba(225,29,72,0.25)]"
-            >
-              <AlertTriangle size={16} />
-              🚨 SOS — Send Emergency SMS (Free)
-            </button>
+            {sosCountdown !== null ? (
+              <div className="w-full p-4 rounded-xl bg-rose-950/95 border border-rose-500 flex items-center justify-between animate-pulse shadow-[0_0_25px_rgba(225,29,72,0.4)]">
+                <div className="flex items-center gap-2 text-rose-200 text-xs font-black">
+                  <AlertTriangle size={18} className="text-rose-400 animate-spin" />
+                  <span>DISPATCHING SOS IN {sosCountdown}s...</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelSos}
+                  className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-rose-100 text-rose-900 font-black text-xs uppercase tracking-wider transition cursor-pointer shadow-xs"
+                >
+                  Cancel (False Alarm)
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSosCountdown(5)}
+                disabled={!currentPos}
+                className="w-full py-3.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 border border-rose-500/60 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all cursor-pointer active:scale-[0.98] shadow-[0_0_20px_rgba(225,29,72,0.25)]"
+              >
+                <AlertTriangle size={16} />
+                🚨 SOS — Send Emergency SMS (Free)
+              </button>
+            )}
             {!currentPos && (
               <p className="text-center text-[10px] text-slate-500">Waiting for GPS fix before SOS is enabled…</p>
             )}
