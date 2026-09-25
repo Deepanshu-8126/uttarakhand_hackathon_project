@@ -94,11 +94,34 @@ const POPULAR_DESTINATIONS = [
 export default function TripPlanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const destinationParam = searchParams.get('destination');
+  const queryParam = searchParams.get('query') || searchParams.get('destination') || '';
   const rentalNameParam = searchParams.get('rental_name') || searchParams.get('rentalName');
   const rentalLocationParam = searchParams.get('location') || searchParams.get('city');
   const rentalPriceParam = searchParams.get('price');
   const rentalTypeParam = searchParams.get('type') || 'Bike';
+
+  // Smart initial state parsing from AI prompt query
+  const initialVibes = useMemo(() => {
+    const q = queryParam.toLowerCase();
+    if (q.includes('snow') || q.includes('trek')) return ['Adventure', 'Trekking'];
+    if (q.includes('char dham') || q.includes('dham') || q.includes('yatra') || q.includes('shiva') || q.includes('temple')) return ['Spiritual'];
+    if (q.includes('village') || q.includes('food') || q.includes('culture') || q.includes('homestay')) return ['Culture', 'Peaceful'];
+    return ['Adventure', 'Peaceful'];
+  }, [queryParam]);
+
+  const initialDays = useMemo(() => {
+    const match = queryParam.match(/(\d+)\s*(din|day|days)/i);
+    return match ? Math.min(Math.max(parseInt(match[1], 10), 1), 14) : 5;
+  }, [queryParam]);
+
+  const initialBudget = useMemo(() => {
+    const q = queryParam.toLowerCase();
+    if (q.includes('5k') || q.includes('5000')) return 5000;
+    if (q.includes('10k') || q.includes('10000')) return 10000;
+    if (q.includes('15k') || q.includes('15000')) return 15000;
+    if (q.includes('20k') || q.includes('20000')) return 20000;
+    return 15000;
+  }, [queryParam]);
 
   const {
     allDestinations,
@@ -119,17 +142,17 @@ export default function TripPlanner() {
   const [currentStep, setCurrentStep] = useState(1);
 
   // Step 1: Vibe
-  const [selectedVibes, setSelectedVibes] = useState(['Adventure', 'Peaceful']);
+  const [selectedVibes, setSelectedVibes] = useState(initialVibes);
 
   // Step 2: Constraints (Days, Budget, Origin, Destination)
-  const [numDays, setNumDays] = useState(5);
-  const [budgetPerPerson, setBudgetPerPerson] = useState(15000);
+  const [numDays, setNumDays] = useState(initialDays);
+  const [budgetPerPerson, setBudgetPerPerson] = useState(initialBudget);
   const [startingLocation, setStartingLocation] = useState({
     name: rentalLocationParam ? `${rentalLocationParam}, Uttarakhand` : 'Dehradun, Uttarakhand',
     coordinates: [30.3165, 78.0322],
   });
   const [selectedDestination, setSelectedDestination] = useState(null);
-  const [destSearchQuery, setDestSearchQuery] = useState('');
+  const [destSearchQuery, setDestSearchQuery] = useState(queryParam ? queryParam.replace(/(\d+)\s*(din|days?)/gi, '').replace(/budget\s*<*\s*\d+k*/gi, '').trim() : '');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   // Step 3: Travelers & Transport
@@ -398,6 +421,27 @@ export default function TripPlanner() {
                     </h3>
                     <p className="text-xs text-emerald-700 font-medium">
                       Route, mileage &amp; fuel costs will be calculated around this ride {rentalPriceParam ? `(₹${rentalPriceParam}/day)` : ''}.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {queryParam && (
+              <div className="mb-4 p-3 sm:p-3.5 rounded-2xl bg-[#0F2B1F] text-white border border-emerald-700/60 shadow-md flex items-center justify-between gap-3 text-left animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-400/30">
+                    <Sparkles size={16} className="text-emerald-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+                        AI Concierge Prompt
+                      </span>
+                      <span className="text-[11px] text-emerald-300/80 font-medium hidden sm:inline">Preferences Synced</span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold text-white mt-0.5">
+                      &ldquo;{queryParam}&rdquo;
                     </p>
                   </div>
                 </div>

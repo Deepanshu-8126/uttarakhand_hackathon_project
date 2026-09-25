@@ -268,23 +268,20 @@ export default function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videoErrors, setVideoErrors] = useState({});
 
-  // Search State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [season, setSeason] = useState('May – Oct (Peak Season)');
-  const [travelers, setTravelers] = useState('2 Travelers');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // AI Trip Concierge State
+  const [aiPrompt, setAiPrompt] = useState('');
   const [isListeningVoice, setIsListeningVoice] = useState(false);
 
   const videoRefs = useRef([]);
   const voiceRecognitionRef = useRef(null);
 
-  // Toggle Voice Search
+  // Toggle Voice Search for AI Concierge
   const toggleVoiceSearch = (e) => {
     e.preventDefault();
     e.stopPropagation();
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Voice search is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
       return;
     }
 
@@ -298,7 +295,7 @@ export default function HeroSection() {
 
     try {
       const rec = new SpeechRecognition();
-      rec.lang = 'en-IN';
+      rec.lang = 'hi-IN'; // Works for Hinglish & English
       rec.interimResults = true;
       rec.continuous = false;
 
@@ -310,12 +307,11 @@ export default function HeroSection() {
         const transcript = Array.from(event.results)
           .map(r => r[0].transcript)
           .join('');
-        setSearchQuery(transcript);
-        setIsDropdownOpen(true);
+        setAiPrompt(transcript);
       };
 
       rec.onerror = (event) => {
-        console.warn("[VoiceSearch] Error:", event.error);
+        console.warn("[VoiceAI] Error:", event.error);
         setIsListeningVoice(false);
       };
 
@@ -326,7 +322,7 @@ export default function HeroSection() {
       voiceRecognitionRef.current = rec;
       rec.start();
     } catch (err) {
-      console.error("[VoiceSearch] Failed to start:", err);
+      console.error("[VoiceAI] Failed to start:", err);
       setIsListeningVoice(false);
     }
   };
@@ -419,26 +415,18 @@ export default function HeroSection() {
     setVideoErrors((prev) => ({ ...prev, [index]: true }));
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      const cleanQuery = searchQuery.trim().toLowerCase().replace(/,\s*uttarakhand/i, '').replace(/,/g, '').trim();
-      const match = POPULAR_DESTINATIONS.find(
-        (d) => d.name.toLowerCase().includes(cleanQuery) || cleanQuery.includes(d.name.toLowerCase()) || d.slug === cleanQuery
-      );
-      if (match) {
-        navigate(`/destinations/${match.slug}`);
-      } else {
-        const params = new URLSearchParams({
-          destination: cleanQuery,
-          dates: season,
-          travelers: travelers
-        });
-        navigate(`/trip-planner?${params.toString()}`);
-      }
+  const handleAiSubmit = (e) => {
+    if (e) e.preventDefault();
+    const cleanPrompt = aiPrompt.trim();
+    if (cleanPrompt) {
+      navigate(`/planner?query=${encodeURIComponent(cleanPrompt)}`);
     } else {
-      navigate('/#explore');
+      navigate('/planner');
     }
+  };
+
+  const handleChipClick = (chipQuery) => {
+    setAiPrompt(chipQuery);
   };
 
   const currentMedia = slides[currentIndex] || slides[0];
@@ -559,124 +547,151 @@ export default function HeroSection() {
 
       </div>
 
-      {/* ── 2. Standalone Search Bar (Cleanly Placed Below Hero Animation Card) ── */}
+      {/* ── 2. AI TRIP CONCIERGE CARD (Replacing Search Widget) ── */}
       <div className="relative z-20 w-[calc(100%-1.5rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-4 sm:mt-6">
         <form 
-          onSubmit={handleSearchSubmit}
-          className="bg-white rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md border border-stone-200/90 p-2.5 sm:p-3.5 grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3 text-slate-800 transition-shadow"
+          onSubmit={handleAiSubmit}
+          className="bg-white rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl border border-stone-200/90 p-4 sm:p-6 transition-all"
         >
-          {/* Input 1: Destination Search (5 cols) */}
-          <div className="sm:col-span-5 relative flex items-center px-3.5 py-2.5 rounded-xl hover:bg-stone-50 transition-colors">
-            <MapPin size={18} className="text-[#0f3d2e] shrink-0 mr-3" />
-            <div className="w-full min-w-0 pr-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-1">
-                Destination
-              </label>
-              <input
-                type="text"
-                placeholder={isListeningVoice ? "Listening... speak place name..." : "Where do you want to explore?"}
-                value={searchQuery}
-                onFocus={() => setIsDropdownOpen(true)}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-800 placeholder:text-slate-400 outline-none"
-              />
+          {/* Top Label */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200/70 text-[11px] font-black tracking-wider uppercase">
+              <Sparkles size={13} className="text-emerald-600 animate-pulse" />
+              <span>AI TRIP CONCIERGE ✨</span>
             </div>
+            <span className="text-[11px] text-stone-500 font-medium hidden sm:inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Real-time Itinerary Engine · Zero Search Filters
+            </span>
+          </div>
 
-            {/* Voice Search Button */}
+          {/* Large Input Field with Mic */}
+          <div className="relative flex items-center bg-stone-50/90 hover:bg-stone-50 focus-within:bg-white border-2 border-stone-200 focus-within:border-emerald-600 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 transition-all shadow-inner mb-3.5">
+            <input
+              type="text"
+              placeholder={isListeningVoice ? "Listening... bolte rahiye..." : "Kaisa trip chahiye? likho ya bolo... e.g. '2 din ka peaceful village stay with local food'"}
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              className="w-full bg-transparent text-sm sm:text-base font-semibold text-slate-900 placeholder:text-stone-400 outline-none px-3 py-1.5"
+            />
+            {/* Mic Icon for Voice */}
             <button
               type="button"
               onClick={toggleVoiceSearch}
-              className={`p-1.5 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+              className={`p-2.5 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${
                 isListeningVoice
-                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse ring-2 ring-rose-300'
-                  : 'bg-stone-100 hover:bg-emerald-50 text-slate-500 hover:text-[#0f3d2e] border-stone-200/80'
+                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse ring-4 ring-rose-200'
+                  : 'bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-800 border-stone-200 shadow-xs'
               }`}
-              title={isListeningVoice ? "Listening... click to stop" : "Voice Search (Speak place name)"}
+              title={isListeningVoice ? "Listening... click to stop" : "Voice Input (Speak your trip idea)"}
               aria-label="Voice search"
             >
-              {isListeningVoice ? <MicOff size={15} /> : <Mic size={15} />}
+              {isListeningVoice ? <MicOff size={18} /> : <Mic size={18} />}
             </button>
+          </div>
 
-            {/* Suggestions Dropdown */}
-            {isDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 z-50 animate-in fade-in slide-in-from-top-1">
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-400">
-                  Trending Mountain Destinations
-                </div>
-                {POPULAR_DESTINATIONS.map((pop) => (
+          {/* Bottom Row: 3 Quick Chips + Big Action Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            {/* 3 Quick Chips */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 sm:inline hidden mr-0.5">
+                Suggestions:
+              </span>
+              {[
+                { label: 'Snow Trek', icon: '❄️', query: '3 din ka snow trek near Chopta Tungnath' },
+                { label: 'Char Dham', icon: '🛕', query: 'Char Dham sacred pilgrimage yatra itinerary' },
+                { label: 'Budget <5k', icon: '💰', query: 'Budget trip under 5000 peaceful village stay' }
+              ].map((chip) => {
+                const isSelected = aiPrompt === chip.query || (aiPrompt && chip.query.includes(aiPrompt));
+                return (
                   <button
-                    key={pop.slug}
+                    key={chip.label}
                     type="button"
-                    onClick={() => {
-                      setSearchQuery(pop.name);
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-stone-50 flex items-center justify-between text-xs transition-colors"
+                    onClick={() => handleChipClick(chip.query)}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                        : 'bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-900 border-stone-200 hover:border-emerald-300'
+                    }`}
                   >
-                    <div>
-                      <div className="font-bold text-slate-900">{pop.name}</div>
-                      <div className="text-[11px] text-slate-400">{pop.district}</div>
-                    </div>
-                    <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      {pop.tag}
-                    </span>
+                    <span>{chip.icon}</span>
+                    <span>{chip.label}</span>
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Input 2: Dates / Season (3 cols) */}
-          <div className="sm:col-span-3 flex items-center px-3 py-2 rounded-xl hover:bg-stone-50 transition-colors border-t sm:border-t-0 sm:border-l border-stone-200">
-            <Calendar size={18} className="text-[#0f3d2e] shrink-0 mr-2.5" />
-            <div className="w-full">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-1">
-                When
-              </label>
-              <select
-                value={season}
-                onChange={(e) => setSeason(e.target.value)}
-                className="w-full bg-transparent text-xs font-semibold text-slate-800 outline-none cursor-pointer appearance-none"
-              >
-                <option value="May – Oct (Peak Season)">May – Oct (Peak Yatra)</option>
-                <option value="Autumn (Sep – Nov)">Autumn (Clear Skies)</option>
-                <option value="Winter Snow (Dec – Feb)">Winter (Snow &amp; Ski)</option>
-                <option value="Spring (Mar – Apr)">Spring (Rhododendrons)</option>
-              </select>
+                );
+              })}
             </div>
-          </div>
 
-          {/* Input 3: Travelers (2 cols) */}
-          <div className="sm:col-span-2 flex items-center px-3 py-2 rounded-xl hover:bg-stone-50 transition-colors border-t sm:border-t-0 sm:border-l border-stone-200">
-            <Users size={18} className="text-[#0f3d2e] shrink-0 mr-2.5" />
-            <div className="w-full">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-1">
-                Travelers
-              </label>
-              <select
-                value={travelers}
-                onChange={(e) => setTravelers(e.target.value)}
-                className="w-full bg-transparent text-xs font-semibold text-slate-800 outline-none cursor-pointer appearance-none"
-              >
-                <option value="1 Explorer">1 Explorer</option>
-                <option value="2 Travelers">2 Travelers</option>
-                <option value="Family (3-4)">Family (3-4)</option>
-                <option value="Group (5+)">Group (5+)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Search Button (2 cols) */}
-          <div className="sm:col-span-2 flex items-center">
+            {/* Big Gradient Button */}
             <button
               type="submit"
-              className="w-full h-full min-h-[46px] bg-[#0f3d2e] hover:bg-[#09261c] text-white rounded-xl sm:rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-98"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-emerald-600 via-[#0f3d2e] to-[#09261c] hover:from-emerald-500 hover:to-[#0f3d2e] shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all cursor-pointer active:scale-98 shrink-0"
             >
-              <Search size={15} />
-              <span>Search</span>
+              <Sparkles size={16} className="text-emerald-300" />
+              <span>✨ Generate My Trip with AI →</span>
             </button>
           </div>
         </form>
+      </div>
+
+      {/* ── 3. Live Safety Strip (Real Safety & Trust Network USP) ── */}
+      <div className="relative z-20 w-[calc(100%-1.5rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-3 sm:mt-4">
+        <div className="bg-[#0F2B1F] border border-emerald-800/40 rounded-2xl px-4 py-3 sm:py-3.5 shadow-lg flex items-center justify-between overflow-x-auto no-scrollbar gap-4 text-xs font-semibold text-emerald-100">
+          {/* Item 1: Live Trekkers */}
+          <Link
+            to="/rescue-ops"
+            className="flex items-center gap-2.5 shrink-0 hover:text-white transition-colors group"
+            title="View Live SDRF Trekker Ops"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+            </span>
+            <span className="font-bold text-white">🟢 28 Live Trekkers</span>
+            <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
+              Active Trails
+            </span>
+          </Link>
+
+          <span className="text-emerald-700/60 shrink-0 font-bold">•</span>
+
+          {/* Item 2: SOS Ready */}
+          <Link
+            to="/rescue-ops"
+            className="flex items-center gap-2.5 shrink-0 hover:text-white transition-colors group"
+            title="SDRF Uttarakhand Emergency Operations"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_#f43f5e]"></span>
+            </span>
+            <span className="font-bold text-rose-200 group-hover:text-white transition-colors">🔴 SOS Ready</span>
+            <span className="text-[10px] font-medium text-rose-200/80 bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-800/40 hidden md:inline">
+              SDRF Standby
+            </span>
+          </Link>
+
+          <span className="text-emerald-700/60 shrink-0 font-bold">•</span>
+
+          {/* Item 3: Offline Maps */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm">🛰️</span>
+            <span className="font-bold text-white">Offline Maps</span>
+            <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
+              Zero Signal Cache
+            </span>
+          </div>
+
+          <span className="text-emerald-700/60 shrink-0 font-bold">•</span>
+
+          {/* Item 4: Escrow Safe */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm">🔒</span>
+            <span className="font-bold text-white">Escrow Safe</span>
+            <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
+              Smart Payouts
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* ── 3. Below Hero: Curated Categories Strip ── */}

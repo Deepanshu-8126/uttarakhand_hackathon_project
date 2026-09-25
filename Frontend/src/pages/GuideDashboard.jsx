@@ -114,9 +114,52 @@ export default function GuideDashboard() {
   const [elapsed, setElapsed] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [sosCountdown, setSosCountdown] = useState(null);
+  const [gridSos, setGridSos] = useState(null);
+  const [myRescueDispatched, setMyRescueDispatched] = useState(false);
   const watchIdRef = useRef(null);
   const timerRef = useRef(null);
   const sosTimerRef = useRef(null);
+
+  // Sync Community Grid SOS from localStorage (cross-tab reactive)
+  useEffect(() => {
+    const checkGrid = () => {
+      try {
+        const storedSos = localStorage.getItem('sosActive');
+        if (storedSos) {
+          setGridSos(JSON.parse(storedSos));
+        } else {
+          setGridSos(null);
+        }
+
+        const storedRescue = localStorage.getItem('rescueDispatched');
+        if (storedRescue) {
+          setMyRescueDispatched(true);
+        } else {
+          setMyRescueDispatched(false);
+        }
+      } catch (_) {}
+    };
+
+    checkGrid();
+    window.addEventListener('storage', checkGrid);
+    const interval = setInterval(checkGrid, 1000);
+    return () => {
+      window.removeEventListener('storage', checkGrid);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleAcceptRescue = () => {
+    const dispatchData = {
+      guide: 'Ramesh Rawat',
+      eta: '18 mins',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' IST',
+      trekkerId: gridSos?.trekker || 'TRK-82341'
+    };
+    localStorage.setItem('rescueDispatched', JSON.stringify(dispatchData));
+    setMyRescueDispatched(true);
+    window.dispatchEvent(new Event('storage'));
+  };
 
   // SOS Countdown logic with False Alarm cancellation
   useEffect(() => {

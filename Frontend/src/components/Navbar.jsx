@@ -22,7 +22,8 @@ import {
   Languages,
   MapPin,
   AlertTriangle,
-  Radio
+  Radio,
+  Award
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
@@ -332,6 +333,15 @@ export default function Navbar() {
                         </Link>
 
                         <Link
+                          to="/reviews"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-emerald-50 transition-colors text-emerald-800 font-bold"
+                        >
+                          <Award size={14} className="text-emerald-700" />
+                          <span>🎖️ Verified Reviews (Web3)</span>
+                        </Link>
+
+                        <Link
                           to="/profile"
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
@@ -480,6 +490,14 @@ export default function Navbar() {
                 >
                   <AlertTriangle size={16} className="text-rose-500" />
                   <span>🚨 Rescue Ops</span>
+                </Link>
+                <Link
+                  to="/reviews"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-[#00FF88] font-bold text-xs shadow-2xs transition-all"
+                >
+                  <Award size={16} className="text-[#00FF88]" />
+                  <span>🎖️ Verified Reviews (Web3)</span>
                 </Link>
               </div>
 

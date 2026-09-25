@@ -29,6 +29,7 @@ import PartnerDashboardPage from './pages/partner/PartnerDashboardPage';
 import GuideDashboard from './pages/GuideDashboard';
 import LiveTrackingPage from './pages/LiveTrackingPage';
 import RescueOpsPage from './pages/RescueOpsPage';
+import VerifiedReviewPage from './pages/VerifiedReviewPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import CheckoutPage from './pages/CheckoutPage';
 import BottomNavBar from './components/navigation/BottomNavBar';
@@ -72,6 +73,10 @@ function App() {
               <Route path="/live/:tripId" element={<LiveTrackingPage />} />
               <Route path="/rescue-ops" element={<RescueOpsPage />} />
               <Route path="/trip-planner" element={<TripPlanner />} />
+              <Route path="/planner" element={<TripPlanner />} />
+              <Route path="/review/:tripId" element={<VerifiedReviewPage />} />
+              <Route path="/review" element={<VerifiedReviewPage />} />
+              <Route path="/reviews" element={<VerifiedReviewPage defaultView="feed" />} />
               <Route path="/copilot" element={<CopilotPage />} />
               <Route path="/innovations" element={<InnovationShowcasePage />} />
               <Route path="/features" element={<InnovationShowcasePage />} />

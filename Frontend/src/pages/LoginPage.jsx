@@ -164,6 +164,42 @@ export default function LoginPage() {
     }
   };
 
+  const handleQuickMockLogin = (role) => {
+    localStorage.setItem('role', role);
+    if (role === 'trekker') {
+      const mockUser = {
+        id: 'usr_trekker_1',
+        name: 'Aryan Negi',
+        email: 'trekker@test.com',
+        role: 'trekker',
+        trekId: 'TRK-82341'
+      };
+      localStorage.setItem('mockUser', JSON.stringify(mockUser));
+      localStorage.setItem('token', 'mock_trekker_token_82341');
+      navigate('/trekker');
+    } else if (role === 'guide') {
+      const mockUser = {
+        id: 'usr_guide_1',
+        name: 'Ramesh Rawat',
+        email: 'guide@test.com',
+        role: 'guide'
+      };
+      localStorage.setItem('mockUser', JSON.stringify(mockUser));
+      localStorage.setItem('token', 'mock_guide_token_1234');
+      navigate('/guide');
+    } else if (role === 'admin') {
+      const mockUser = {
+        id: 'usr_admin_1',
+        name: 'Rescue Ops Commander',
+        email: 'admin@test.com',
+        role: 'admin'
+      };
+      localStorage.setItem('mockUser', JSON.stringify(mockUser));
+      localStorage.setItem('token', 'mock_admin_token_9999');
+      navigate('/rescue-ops');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#fdfbf7] text-slate-800 font-sans selection:bg-emerald-500 selection:text-white">
       
@@ -191,6 +227,79 @@ export default function LoginPage() {
                 ? 'Manage your verified listings, guest bookings and fleet.' 
                 : 'Sign in to plan journeys, book verified stays, and access permits.'}
             </p>
+          </div>
+
+          {/* ── 3 Big Quick-Click Role Cards for Hackathon Live Demo ── */}
+          <div className="mt-5 space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">
+              <span>🎭 1-Click Role Login (Judge Demo)</span>
+              <span className="text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-mono font-bold">2-Tab Ready</span>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2">
+              {/* Card 1: Trekker */}
+              <button
+                type="button"
+                onClick={() => handleQuickMockLogin('trekker')}
+                className="w-full p-3 rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/70 hover:bg-emerald-100 hover:border-emerald-600 transition-all text-left flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🧑🎒</span>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 group-hover:text-emerald-800">
+                      Trekker Login <span className="font-mono text-[10px] text-emerald-700 font-semibold">(trekker@test.com)</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500">Aryan Negi · Start Trek & Broadcast SOS</p>
+                  </div>
+                </div>
+                <ArrowRight size={14} className="text-emerald-700 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* Card 2: Guide */}
+              <button
+                type="button"
+                onClick={() => handleQuickMockLogin('guide')}
+                className="w-full p-3 rounded-2xl border-2 border-amber-500/40 bg-amber-50/70 hover:bg-amber-100 hover:border-amber-600 transition-all text-left flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🧑🏫</span>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 group-hover:text-amber-900">
+                      Guide Login <span className="font-mono text-[10px] text-amber-700 font-semibold">(guide@test.com)</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500">Ramesh Rawat · Receive SOS & Dispatch Rescue</p>
+                  </div>
+                </div>
+                <ArrowRight size={14} className="text-amber-700 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* Card 3: Admin */}
+              <button
+                type="button"
+                onClick={() => handleQuickMockLogin('admin')}
+                className="w-full p-3 rounded-2xl border-2 border-blue-500/40 bg-blue-50/70 hover:bg-blue-100 hover:border-blue-600 transition-all text-left flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🛡️</span>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 group-hover:text-blue-900">
+                      Admin Login <span className="font-mono text-[10px] text-blue-700 font-semibold">(admin@test.com)</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500">Rescue Ops · Command Center & Satellite Radar</p>
+                  </div>
+                </div>
+                <ArrowRight size={14} className="text-blue-700 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-stone-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-stone-400 font-semibold text-[10px]">Or standard account</span>
+            </div>
           </div>
 
           {/* ── Segmented Slide Switcher: Traveler vs Partner Hub ── */}
