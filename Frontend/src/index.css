@@ -2,10 +2,16 @@
 
 @theme {
   --color-forest-green: #0f3d2e;
+  --color-forest-green-hover: #144c3a;
+  --color-forest-green-dark: #0f2a22;
+  --color-forest-green-darker: #1a4331;
   --color-dark-green: #09261c;
+  --color-dark-green-alt: #1b4332;
   --color-cream: #fdfbf7;
+  --color-cream-alt: #fcfaf6;
   --color-warm-white: #ffffff;
   --color-beige: #f3efe6;
+  --color-beige-alt: #faf9f6;
   --color-earth-orange: #d97706;
   --color-earth-brown: #c08457;
   --color-text-dark: #0f172a;
