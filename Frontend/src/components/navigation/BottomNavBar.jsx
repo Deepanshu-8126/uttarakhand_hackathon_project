@@ -39,7 +39,7 @@ export default function BottomNavBar() {
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('du_toggle_copilot'))}
-          className="group flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full shadow-[0_8px_20px_rgba(15,61,46,0.35)] border-2 border-white transition-all transform active:scale-95 cursor-pointer bg-gradient-to-r from-[#0f3d2e] to-[#1b4332] text-white hover:brightness-110"
+          className="group flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full shadow-[0_8px_20px_rgba(15,61,46,0.35)] border-2 border-white transition-all transform active:scale-95 cursor-pointer bg-gradient-to-r from-forest-green to-dark-green-alt text-white hover:brightness-110"
           aria-label="Pahadi AI Copilot"
         >
           <Sparkles size={13} className="text-amber-300 animate-pulse" />
@@ -54,10 +54,10 @@ export default function BottomNavBar() {
         <Link
           to="/"
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] rounded-xl transition-all ${
-            isExploreActive ? 'text-[#0f3d2e] font-bold' : 'text-stone-500 hover:text-stone-800'
+            isExploreActive ? 'text-forest-green font-bold' : 'text-stone-500 hover:text-stone-800'
           }`}
         >
-          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isExploreActive ? 'bg-emerald-50 text-[#0f3d2e]' : ''}`}>
+          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isExploreActive ? 'bg-emerald-50 text-forest-green' : ''}`}>
             <Compass size={18} strokeWidth={isExploreActive ? 2.5 : 2} />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">Explore</span>
@@ -67,10 +67,10 @@ export default function BottomNavBar() {
         <Link
           to="/rentals"
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] rounded-xl transition-all mr-6 ${
-            isRentalsActive ? 'text-[#0f3d2e] font-bold' : 'text-stone-500 hover:text-stone-800'
+            isRentalsActive ? 'text-forest-green font-bold' : 'text-stone-500 hover:text-stone-800'
           }`}
         >
-          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isRentalsActive ? 'bg-emerald-50 text-[#0f3d2e]' : ''}`}>
+          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isRentalsActive ? 'bg-emerald-50 text-forest-green' : ''}`}>
             <Car size={18} strokeWidth={isRentalsActive ? 2.5 : 2} />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">Rentals</span>
@@ -80,10 +80,10 @@ export default function BottomNavBar() {
         <Link
           to="/stays"
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] rounded-xl transition-all ml-6 ${
-            isStaysActive ? 'text-[#0f3d2e] font-bold' : 'text-stone-500 hover:text-stone-800'
+            isStaysActive ? 'text-forest-green font-bold' : 'text-stone-500 hover:text-stone-800'
           }`}
         >
-          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isStaysActive ? 'bg-emerald-50 text-[#0f3d2e]' : ''}`}>
+          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isStaysActive ? 'bg-emerald-50 text-forest-green' : ''}`}>
             <Bed size={18} strokeWidth={isStaysActive ? 2.5 : 2} />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">Stays</span>
@@ -93,10 +93,10 @@ export default function BottomNavBar() {
         <Link
           to="/my-trip"
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] rounded-xl transition-all ${
-            isMyTripsActive ? 'text-[#0f3d2e] font-bold' : 'text-stone-500 hover:text-stone-800'
+            isMyTripsActive ? 'text-forest-green font-bold' : 'text-stone-500 hover:text-stone-800'
           }`}
         >
-          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isMyTripsActive ? 'bg-emerald-50 text-[#0f3d2e]' : ''}`}>
+          <div className={`w-7 h-7 flex items-center justify-center rounded-lg ${isMyTripsActive ? 'bg-emerald-50 text-forest-green' : ''}`}>
             <User size={18} strokeWidth={isMyTripsActive ? 2.5 : 2} />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">My Trips</span>
