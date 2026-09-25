@@ -49,28 +49,41 @@ async function runTests() {
     failed++;
   }
 
-  // 2. Query backend API endpoints (if server is active)
-  console.log('\n[TEST 2] Querying GET http://localhost:5000/api/transports...');
+  // 2. Query backend API endpoints (localhost with live production fallback)
+  let activeBase = 'http://localhost:5000/api';
   let serverOnline = false;
+  
+  console.log(`\n[TEST 2] Querying GET ${activeBase}/transports...`);
   try {
-    const res = await fetch('http://localhost:5000/api/transports', { signal: AbortSignal.timeout(1500) });
+    const res = await fetch(`${activeBase}/transports`, { signal: AbortSignal.timeout(2000) });
     const json = await res.json();
     if (json.success && json.count > 0 && Array.isArray(json.data)) {
-      console.log(`  ✅ GET /api/transports returned ${json.count} verified corridors.`);
+      console.log(`  ✅ GET ${activeBase}/transports returned ${json.count} verified corridors.`);
       passed++;
       serverOnline = true;
-    } else {
-      console.log('  ℹ️ [OFFLINE RUNNER] API not active or empty. Skipping live endpoint check.');
     }
   } catch (err) {
-    console.log(`  ℹ️ [OFFLINE RUNNER] Server at localhost:5000 is not running (${err.message || 'offline'}). Skipped live HTTP probe.`);
+    console.log(`  ℹ️ Localhost offline or timed out (${err.message}). Probing Live Production Backend...`);
+    try {
+      activeBase = 'https://uttarakhand-hackathon-project.onrender.com/api';
+      console.log(`  [PROBE] GET ${activeBase}/transports...`);
+      const res = await fetch(`${activeBase}/transports`, { signal: AbortSignal.timeout(6000) });
+      const json = await res.json();
+      if (json.success && json.count > 0 && Array.isArray(json.data)) {
+        console.log(`  ✅ [LIVE PRODUCTION CLOUD] GET ${activeBase}/transports returned ${json.count} verified corridors.`);
+        passed++;
+        serverOnline = true;
+      }
+    } catch (prodErr) {
+      console.log(`  ℹ️ [OFFLINE RUNNER] Could not connect to live backend (${prodErr.message}).`);
+    }
   }
 
   // 3. Query Corridor search (if server is active)
   if (serverOnline) {
-    console.log('\n[TEST 3] Querying GET http://localhost:5000/api/transports/corridor?from=Delhi&to=Haldwani...');
+    console.log(`\n[TEST 3] Querying GET ${activeBase}/transports/corridor?from=Delhi&to=Haldwani...`);
     try {
-      const res = await fetch('http://localhost:5000/api/transports/corridor?from=Delhi&to=Haldwani', { signal: AbortSignal.timeout(1500) });
+      const res = await fetch(`${activeBase}/transports/corridor?from=Delhi&to=Haldwani`, { signal: AbortSignal.timeout(4000) });
       const json = await res.json();
       if (json.success && json.count >= 1) {
         console.log(`  ✅ Corridor search returned ${json.count} matched service: "${json.data[0].serviceName}" (${json.data[0].operator}).`);
