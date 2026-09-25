@@ -65,13 +65,22 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: const BoxDecoration(
-                color: AppTheme.forestGreen,
-                shape: BoxShape.circle,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 30,
+                height: 30,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.forestGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.terrain_rounded, color: Colors.white, size: 16),
+                ),
               ),
-              child: const Icon(Icons.terrain_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
             Column(
