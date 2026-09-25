@@ -1,0 +1,83 @@
+[project]
+name = "voice-demo"
+version = "0.1.0"
+description = "Voice-agent backends (raw OpenAI Realtime, raw Gemini Live, Google ADK Live, LiveKit and Pipecat cascades, and framework speech-to-speech variants), each instrumented for LangSmith the way its framework intends."
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv>=1.0",
+    "sounddevice>=0.4",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "langsmith==0.12.6",
+    "httpx>=0.27",
+    "pydantic>=2",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+]
+
+[project.optional-dependencies]
+openai = [
+    "openai>=1.50",
+]
+openai-agents = [
+    # Same Realtime model as the `openai` extra, driven through the Agents SDK.
+    "openai-agents[realtime]>=0.2",
+    "openai>=1.50",
+]
+gemini = [
+    # Gemini Live over google-genai's official raw WebSocket session.
+    "google-genai>=1.75",
+]
+adk = [
+    "google-adk>=2.3.0",
+    "google-genai>=1.75",
+    "langsmith[google-adk]==0.12.6",
+]
+livekit = [
+    # Covers all LiveKit backends (cascade, LangGraph, and the two S2S variants).
+    # The LangSmith LiveKit integration (span processor + its deps, e.g. cachetools).
+    "langsmith[livekit]==0.12.6",
+    # The agent is LiveKit-native (no LangChain brain): the cascade backend uses
+    # assemblyai = STT and cartesia = TTS, openai = the LLM stage (and the
+    # OpenAI Realtime model for the S2S variant); silero/turn-detector = VAD +
+    # end-of-turn detection. Pin the LiveKit 1.8 telemetry release.
+    "livekit-agents[assemblyai,cartesia,openai,silero,turn-detector]==1.8.0",
+    # Gemini Live (google.beta.realtime) for the livekit-with-gemini-live backend.
+    "livekit-plugins-google==1.8.0",
+    # The livekit-with-langgraph backend's "brain" is an in-process LangChain
+    # agent (create_agent) over LangGraph, plugged in via an Agent.llm_node
+    # override. The plain livekit backends need none of these.
+    "langgraph>=0.2",
+    "langchain>=1.3.9",
+    "langchain-openai>=0.2",
+    "langchain-core>=0.3",
+]
+pipecat = [
+    # Covers all four Pipecat backends: stock OpenAI LLM, the LangGraph variant,
+    # OpenAI Realtime (S2S), and Gemini Live (S2S).
+    # The LangSmith Pipecat integration (span processor + its deps, e.g. cachetools).
+    "langsmith[pipecat]==0.12.6",
+    # deepgram: STT + Aura TTS for the plain cascade backend · openai: the LLM
+    # stage + OpenAI Realtime services · google: Gemini Live (pulls in
+    # google-genai) · local: LocalAudioTransport (mic/speaker) · tracing: the
+    # OTel/setup helpers. Silero VAD ships in pipecat core.
+    # >=1.4: the plain pipecat backend uses FunctionSchema(handler=...), added in 1.4.
+    "pipecat-ai[deepgram,google,local,openai,tracing]>=1.4",
+    # The pipecat-with-langgraph backend's "brain" is an in-process LangChain
+    # agent (create_agent) over LangGraph. The plain pipecat backend needs none
+    # of these.
+    "langgraph>=0.2",
+    "langchain>=1.3.9",
+    "langchain-openai>=0.2",
+    "langchain-core>=0.3",
+]
+
+[project.scripts]
+voice-demo = "voice_demo.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/voice_demo"]

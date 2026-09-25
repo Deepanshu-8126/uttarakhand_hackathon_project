@@ -16,6 +16,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const [lastAgentReply, setLastAgentReply] = useState('');
   const [micErrorMessage, setMicErrorMessage] = useState('');
   const [isMuted, setIsMuted] = useState(false);
+  const [voiceDemoOnline, setVoiceDemoOnline] = useState(false);
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
   const voiceStatusRef = useRef('idle');
@@ -25,9 +26,25 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     setVoiceStatus(status);
   };
 
+  // Check langchain-ai/voice-demo local bridge connection on open
+  useEffect(() => {
+    if (isOpen) {
+      fetch('http://localhost:8765/health')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.status === 'online') {
+            setVoiceDemoOnline(true);
+          }
+        })
+        .catch(() => {
+          setVoiceDemoOnline(false);
+        });
+    }
+  }, [isOpen]);
+
   const GREETINGS = {
-    hi: "नमस्ते! मैं आपका हिमालयन AI वॉइस गाइड हूँ। आप मुझसे केदारनाथ का रास्ता, बद्रीनाथ का मौसम या होमस्टे बुकिंग के बारे में पूछ सकते हैं।",
-    en: "Namaste! I am your Himalayan AI Voice Copilot. Ask me anything about routes, mountain weather, or verified homestay bookings across Uttarakhand."
+    hi: "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
+    en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
   };
 
   const playGreetingAndListen = useCallback(() => {
@@ -204,18 +221,44 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       language: lang
     };
 
+    let cleanReply = '';
+
+    // 1. Try local langchain-ai/voice-demo bridge first
     try {
-      const res = await sendAgentMessage({
-        message: queryText,
-        chatId: activeChat?._id || null,
-        tripId: activeChat?.tripId || tripIdContext,
-        pageContext
+      const bridgeRes = await fetch('http://localhost:8765/api/voice/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText, lang }),
+        signal: AbortSignal.timeout(6000)
       });
+      if (bridgeRes.ok) {
+        const data = await bridgeRes.json();
+        if (data && data.response) {
+          cleanReply = data.response;
+          setVoiceDemoOnline(true);
+        }
+      }
+    } catch (bridgeErr) {
+      console.log("[VoiceAgent] Voice-demo bridge offline, fallback to agentApi:", bridgeErr?.message);
+    }
 
-      const replyContent = res?.response?.message || res?.message || (typeof res === 'string' ? res : '');
-      const cleanReply = typeof replyContent === 'string' ? replyContent : (replyContent?.text || replyContent?.response || '');
+    if (!cleanReply) {
+      try {
+        const res = await sendAgentMessage({
+          message: queryText,
+          chatId: activeChat?._id || null,
+          tripId: activeChat?.tripId || tripIdContext,
+          pageContext
+        });
 
-      setLastAgentReply(cleanReply || (lang === 'hi' ? 'उत्तर तैयार है।' : 'I have analyzed your request.'));
+        const replyContent = res?.response?.message || res?.message || (typeof res === 'string' ? res : '');
+        cleanReply = typeof replyContent === 'string' ? replyContent : (replyContent?.text || replyContent?.response || '');
+      } catch (err) {
+        console.error("[VoiceAgent] Query failed:", err);
+      }
+    }
+
+    setLastAgentReply(cleanReply || (lang === 'hi' ? 'उत्तर तैयार है।' : 'I have analyzed your request.'));
 
       if (!isMuted && cleanReply) {
         updateVoiceStatus('speaking');
@@ -236,11 +279,6 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         updateVoiceStatus('listening');
         startListening();
       }
-    } catch (err) {
-      console.error("[VoiceAgent] Query failed:", err);
-      setLastAgentReply(lang === 'hi' ? 'माफ़ करें, उत्तर प्राप्त करने में समस्या हुई।' : 'Sorry, failed to process query.');
-      updateVoiceStatus('idle');
-    }
   };
 
   if (!isOpen) return null;
@@ -255,8 +293,13 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             <Sparkles size={18} />
           </div>
           <div>
-            <span className="font-black text-sm sm:text-base tracking-tight block text-white">Himalayan AI Voice Agent</span>
-            <span className="text-[10px] text-emerald-300/80 font-semibold uppercase tracking-wider">Interactive Live Voice Guide</span>
+            <span className="font-black text-sm sm:text-base tracking-tight block text-white">Devbhoomi AI Voice Companion</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-500'}`} />
+              <span className="text-[10px] text-emerald-300/90 font-semibold uppercase tracking-wider">
+                {voiceDemoOnline ? 'langchain-ai/voice-demo · Live' : 'Interactive Live Voice Guide'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -433,9 +476,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       <div className="max-w-xl mx-auto w-full text-center shrink-0">
         <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
           {[
+            lang === 'hi' ? 'केदारनाथ ट्रेक एल्टीट्यूड व सुरक्षा' : 'Kedarnath trek altitude & safety',
             lang === 'hi' ? 'बद्रीनाथ का मौसम कैसा है?' : 'Weather in Badrinath',
-            lang === 'hi' ? 'वैली ऑफ फ्लावर्स ट्रेक प्लान' : 'Plan Valley of Flowers trek',
-            lang === 'hi' ? 'औली में बेस्ट होमस्टे' : 'Find best stays in Auli'
+            lang === 'hi' ? 'वैली ऑफ फ्लावर्स ट्रेक गाइड' : 'Plan Valley of Flowers trek',
+            lang === 'hi' ? 'चोपता में बेस्ट होमस्टे' : 'Find best stays in Chopta'
           ].map((sample, idx) => (
             <button
               key={idx}
@@ -452,7 +496,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         </div>
 
         <p className="text-[11px] text-stone-400 font-medium">
-          Himalayan Multi-Agent Reasoning Engine · Speech Recognition &amp; Conversational TTS
+          Powered by langchain-ai/voice-demo · Google Gemini Live &amp; Devbhoomi Knowledge Engine
         </p>
       </div>
 

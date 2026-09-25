@@ -249,11 +249,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
                               Text(
-                                'ChatGPT Voice Copilot',
+                                'Devbhoomi AI Voice Companion',
                                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               Text(
-                                'Real-time Conversational Voice Guide',
+                                'langchain-ai/voice-demo · Google Gemini Live',
                                 style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 11),
                               ),
                             ],
@@ -318,10 +318,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      'Tell me about Kedarnath history',
-                      'Tapkeshwar temple timings & facts',
-                      'Best time to visit Nainital',
-                      'Rishikesh bike rental rates',
+                      'Kedarnath trek altitude & safety',
+                      'Weather in Badrinath',
+                      'Valley of Flowers best season',
+                      'Find best homestays in Chopta',
                     ].map((topic) {
                       return InkWell(
                         onTap: () {
@@ -352,6 +352,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     }).toList(),
                   ),
                   const Spacer(),
+                  const Text(
+                    'Powered by langchain-ai/voice-demo · Google Gemini Live',
+                    style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
+                  ),
+                  const SizedBox(height: 12),
                 ],
               ),
             );
