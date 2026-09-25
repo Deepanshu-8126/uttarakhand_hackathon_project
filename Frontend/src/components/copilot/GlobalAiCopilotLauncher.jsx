@@ -100,6 +100,18 @@ export default function GlobalAiCopilotLauncher() {
   const isCheckoutPage = location.pathname.startsWith('/checkout');
   const shouldHide = isProfilePage || isCopilotPage || isPartnerPage || isAdminPage || isLoginPage || isCheckoutPage;
 
+  // Listen for global toggle / open events (e.g., from mobile bottom navigation)
+  useEffect(() => {
+    const handleToggle = () => setIsOpen((prev) => !prev);
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('du_toggle_copilot', handleToggle);
+    window.addEventListener('du_open_copilot', handleOpen);
+    return () => {
+      window.removeEventListener('du_toggle_copilot', handleToggle);
+      window.removeEventListener('du_open_copilot', handleOpen);
+    };
+  }, []);
+
   // Auto-close drawer on navigation to hidden routes
   useEffect(() => {
     if (shouldHide && isOpen) {

@@ -47,12 +47,12 @@ export default function TopNavWeatherBadge() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-stone-200/90 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-[11px] font-bold text-slate-800 transition cursor-pointer shadow-2xs group shrink-0"
+        className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-stone-200/90 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-[10px] sm:text-[11px] font-bold text-slate-800 transition cursor-pointer shadow-2xs group shrink-0"
         title="Live Weather for your location"
       >
-        <span className="w-5 h-5 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0">
+        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0">
           {loading ? (
-            <RefreshCw size={11} className="text-[#0F2B1F] animate-spin" />
+            <RefreshCw size={10} className="text-[#0F2B1F] animate-spin" />
           ) : (
             getWeatherIcon(weather?.wmoCode)
           )}
@@ -61,7 +61,7 @@ export default function TopNavWeatherBadge() {
         <span className="hidden md:inline text-stone-500 font-semibold max-w-[70px] truncate">
           {displayCity}
         </span>
-        <ChevronDown size={11} className={`text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={11} className={`text-stone-400 transition-transform hidden sm:inline-block ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* ── 2. Weather Details Popup Card (Global Design System Card) ── */}

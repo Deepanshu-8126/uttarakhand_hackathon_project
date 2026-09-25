@@ -34,20 +34,16 @@ export default function BottomNavBar() {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-stone-200/80 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] safe-area-bottom">
       
-      {/* ── Central Elevated Action Button (Plan Trip) ── */}
-      <div className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-auto">
+      {/* ── Central Elevated Action Button (Pahadi AI Copilot) ── */}
+      <div className="absolute -top-4 left-1/2 -translate-x-1/2 pointer-events-auto">
         <button
           type="button"
-          onClick={() => navigate('/trip-planner')}
-          className={`group flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full shadow-lg border-2 border-white transition-all transform active:scale-95 cursor-pointer ${
-            isPlannerActive 
-              ? 'bg-forest-green text-white shadow-forest-green/40 ring-2 ring-forest-green/20' 
-              : 'bg-[#0f3d2e] hover:bg-[#144c3a] text-white shadow-[#0f3d2e]/30'
-          }`}
-          aria-label="AI Trip Planner"
+          onClick={() => window.dispatchEvent(new CustomEvent('du_toggle_copilot'))}
+          className="group flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full shadow-[0_8px_20px_rgba(15,61,46,0.35)] border-2 border-white transition-all transform active:scale-95 cursor-pointer bg-gradient-to-r from-[#0f3d2e] to-[#1b4332] text-white hover:brightness-110"
+          aria-label="Pahadi AI Copilot"
         >
-          <Sparkles size={14} className="text-amber-300 animate-pulse" />
-          <span className="text-[11px] font-black uppercase tracking-wider">Plan</span>
+          <Sparkles size={13} className="text-amber-300 animate-pulse" />
+          <span className="text-[10.5px] font-black uppercase tracking-wider">AI Copilot</span>
         </button>
       </div>
 

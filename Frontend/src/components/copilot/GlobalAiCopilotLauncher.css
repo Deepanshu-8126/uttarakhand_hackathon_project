@@ -101,27 +101,9 @@
   transform: translateY(0);
 }
 
-/* Mobile Responsiveness & Safe Area */
+/* Mobile Responsiveness & Safe Area: On mobile, AI Copilot is cleanly docked in the Bottom Navigation Bar */
 @media (max-width: 768px) {
   .global-copilot-wrapper {
-    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-    right: 16px;
-  }
-
-  .global-copilot-btn {
-    padding: 10px 14px;
-  }
-
-  .global-copilot-btn__label {
-    display: none;
-  }
-
-  .global-copilot-btn__badge {
-    display: none;
-  }
-
-  .global-copilot-btn__icon-wrap {
-    width: 24px;
-    height: 24px;
+    display: none !important;
   }
 }

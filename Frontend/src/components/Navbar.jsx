@@ -121,21 +121,21 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-stone-200/70 shadow-xs transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-15 sm:h-20 flex items-center justify-between">
           
           {/* ── 1. Left: Brand Logo ───────────────────────────────────────── */}
-          <div className="flex items-center space-x-2.5 sm:space-x-3 mr-2 sm:mr-6">
-            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group">
+          <div className="flex items-center space-x-1.5 sm:space-x-3 mr-1 sm:mr-6 shrink-0">
+            <Link to="/" className="flex items-center space-x-1.5 sm:space-x-3 group">
               <img
                 src="/logo.png"
                 alt="Discovery Uttarakhand"
-                className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-2xl shadow-sm group-hover:scale-105 transition-transform shrink-0 border border-emerald-900/10 bg-white"
+                className="w-8 h-8 sm:w-12 sm:h-12 object-contain rounded-xl sm:rounded-2xl shadow-sm group-hover:scale-105 transition-transform shrink-0 border border-emerald-900/10 bg-white"
               />
               <div>
-                <span className="text-sm sm:text-lg font-black tracking-tight block text-[#0f3d2e] leading-none">
+                <span className="text-xs sm:text-lg font-black tracking-tight block text-[#0f3d2e] leading-none">
                   Discovery
                 </span>
-                <span className="text-[8px] sm:text-[10px] font-bold tracking-widest uppercase text-emerald-700">
+                <span className="text-[7px] sm:text-[10px] font-bold tracking-widest uppercase text-emerald-700 hidden xs:block">
                   {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}
                 </span>
               </div>
@@ -176,7 +176,7 @@ export default function Navbar() {
           </nav>
 
           {/* ── 3. Right: Weather Badge + Location Pill + Language Switcher + Profile / Sign In + Hamburger ─ */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             
             {/* Live Weather Badge (Always Visible on Top Bar) */}
             <TopNavWeatherBadge />
@@ -185,12 +185,12 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-stone-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-[11px] font-bold text-slate-800 transition cursor-pointer shadow-2xs group shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-stone-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-[10px] sm:text-[11px] font-bold text-slate-800 transition cursor-pointer shadow-2xs group shrink-0"
               title="Change origin or detect current GPS location"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <MapPin size={12} className="text-emerald-800 shrink-0" />
-              <span className="truncate max-w-[65px] sm:max-w-[100px] text-stone-700 group-hover:text-emerald-900">
+              <MapPin size={11} className="text-emerald-800 shrink-0" />
+              <span className="truncate max-w-[48px] sm:max-w-[100px] text-stone-700 group-hover:text-emerald-900">
                 {userLocation?.city || 'Location'}
               </span>
             </button>
@@ -209,24 +209,24 @@ export default function Navbar() {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-stone-200 bg-stone-50/90 hover:bg-emerald-50 hover:border-emerald-300 text-[11px] font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+              className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border border-stone-200 bg-stone-50/90 hover:bg-emerald-50 hover:border-emerald-300 text-[10px] sm:text-[11px] font-bold text-slate-700 transition cursor-pointer shadow-2xs shrink-0"
               title={lang === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}
             >
-              <Languages size={13} className="text-emerald-700" />
+              <Languages size={12} className="text-emerald-700" />
               <span>{lang === 'en' ? 'हिन्दी' : 'EN'}</span>
             </button>
 
             {/* User Profile / Sign In Button (ALWAYS VISIBLE on Mobile & Desktop) */}
-            <div className="relative" ref={userRef}>
+            <div className="relative shrink-0" ref={userRef}>
               {isAuthenticated ? (
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center space-x-1.5 p-1 rounded-full border border-stone-200 bg-white hover:bg-stone-50 transition-colors cursor-pointer shadow-2xs"
+                  className="flex items-center space-x-1.5 p-0.5 sm:p-1 rounded-full border border-stone-200 bg-white hover:bg-stone-50 transition-colors cursor-pointer shadow-2xs"
                   aria-label="User Menu"
                 >
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0f3d2e] text-white flex items-center justify-center font-bold text-xs">
-                    {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={14} />}
+                    {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={13} />}
                   </div>
                   <ChevronDown size={13} className="text-slate-400 pr-1 hidden sm:block" />
                 </button>
@@ -234,9 +234,9 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200/90 text-stone-800 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                  className="flex items-center gap-1 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200/90 text-stone-800 text-[10px] sm:text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
                 >
-                  <User size={13} className="text-[#0f3d2e]" />
+                  <User size={12} className="text-[#0f3d2e]" />
                   <span>{t('nav_signin')}</span>
                 </button>
               )}
