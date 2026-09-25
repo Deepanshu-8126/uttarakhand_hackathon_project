@@ -151,7 +151,7 @@ class _MapScreenState extends State<MapScreen> {
                   color: Colors.white.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10)],
-                  border: Border.Border.all(color: const Color(0xFFFDE68A)),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
                 ),
                 child: Row(
                   children: [

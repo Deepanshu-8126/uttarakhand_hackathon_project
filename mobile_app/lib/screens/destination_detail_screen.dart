@@ -159,7 +159,7 @@ class DestinationDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.Border.all(color: AppTheme.borderLight),
+                          border: Border.all(color: AppTheme.borderLight),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Row(
@@ -229,7 +229,7 @@ class DestinationDetailScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.Border.all(color: AppTheme.borderLight),
+          border: Border.all(color: AppTheme.borderLight),
         ),
         child: Column(
           children: [

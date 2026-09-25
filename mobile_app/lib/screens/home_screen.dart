@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.Border.all(color: AppTheme.borderLight),
+                          border: Border.all(color: AppTheme.borderLight),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.04),
@@ -194,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.Border.all(color: const Color(0xFFFCD34D)),
+                          border: Border.all(color: const Color(0xFFFCD34D)),
                         ),
                         child: Row(
                           children: [

@@ -7,6 +7,7 @@ import {
   Flame, HeartHandshake, Compass
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import SOSPanel from '../components/safety/SOSPanel';
 
 export default function TrekkerLivePage() {
   const navigate = useNavigate();
@@ -462,6 +463,27 @@ export default function TrekkerLivePage() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* ─── 30+ MULTI-TRIGGER SOS MATRIX (FOR JUDGE DEMO) ─── */}
+            <div className="pt-2">
+              <SOSPanel
+                trekkerId={trekkerId}
+                trekkerName={trekkerName}
+                trekName={trekName}
+                lat={lat}
+                lng={lng}
+                battery={battery}
+                altitude={altitude}
+                onSosTriggered={(payload) => {
+                  setSosActive(true);
+                  setSosSentTime(payload.time);
+                }}
+                onSosCancelled={() => {
+                  setSosActive(false);
+                  setGuideRescueStatus(null);
+                }}
+              />
             </div>
 
           </div>

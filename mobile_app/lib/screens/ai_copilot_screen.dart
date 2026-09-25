@@ -150,7 +150,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.cream,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.Border.all(color: AppTheme.borderLight),
+                        border: Border.all(color: AppTheme.borderLight),
                       ),
                       child: TextField(
                         controller: _controller,

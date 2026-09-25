@@ -68,7 +68,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.Border.all(color: AppTheme.borderLight),
+                border: Border.all(color: AppTheme.borderLight),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -164,7 +164,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.Border.all(color: AppTheme.borderLight),
+                border: Border.all(color: AppTheme.borderLight),
               ),
               child: Column(
                 children: [
