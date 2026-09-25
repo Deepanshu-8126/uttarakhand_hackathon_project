@@ -20,5 +20,6 @@
       "name": "ANTHROPIC_AUTH_TOKEN",
       "value": "sk_omniroute"
     }
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "disabled"
 }
