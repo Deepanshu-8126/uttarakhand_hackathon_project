@@ -16,6 +16,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,
 });
 
 api.interceptors.request.use((config) => {
@@ -28,4 +29,27 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+// Automatic seamless failover to Live Production Backend if local server is unreachable
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED';
+    const isLocalhost = originalRequest && (
+      (originalRequest.baseURL && originalRequest.baseURL.includes('localhost')) ||
+      (originalRequest.url && originalRequest.url.startsWith('http://localhost'))
+    );
+
+    if (isNetworkError && isLocalhost && !originalRequest._retry) {
+      console.warn('[API Failover] Local backend offline, falling back to Live Cloud Backend:', LIVE_BACKEND_URL);
+      originalRequest._retry = true;
+      originalRequest.baseURL = LIVE_BACKEND_URL;
+      api.defaults.baseURL = LIVE_BACKEND_URL;
+      return api(originalRequest);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
+

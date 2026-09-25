@@ -26,7 +26,7 @@ const Rentals = () => {
   const typeParam = searchParams.get('type') || searchParams.get('vehicle') || searchParams.get('category');
   const budgetParam = searchParams.get('budget') || searchParams.get('max_price') || searchParams.get('price');
 
-  const { rentals, loading, error } = useRentals();
+  const { rentals, loading, error, refetch } = useRentals();
   const [searchQuery, setSearchQuery] = useState(cityParam || '');
   const [selectedCity, setSelectedCity] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -416,8 +416,18 @@ const Rentals = () => {
                 <p className="text-muted-text text-lg font-bold">Loading rentals...</p>
               </div>
             ) : error ? (
-              <div className="col-span-full text-center py-12">
-                <p className="text-red-500 text-lg font-bold">{error}</p>
+              <div className="col-span-full text-center py-16 px-4">
+                <div className="max-w-md mx-auto bg-stone-50 border border-stone-200/90 rounded-2xl p-6 shadow-xs text-center">
+                  <p className="text-stone-800 font-bold mb-2">{error}</p>
+                  <p className="text-stone-500 text-xs mb-4">Please check your network or tap below to reconnect.</p>
+                  <button
+                    onClick={() => refetch()}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                  >
+                    <span>🔄</span>
+                    <span>Retry Loading Fleet</span>
+                  </button>
+                </div>
               </div>
             ) : paginatedRentals.length > 0 ? (
               paginatedRentals.map(rental => (
