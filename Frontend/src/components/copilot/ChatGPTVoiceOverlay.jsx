@@ -217,22 +217,18 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
               updateVoiceStatus('processing');
             }
           }
-          // 6. Welcome ready handshake
+          // 6. Welcome ready handshake — do NOT speak immediately; listen for user first!
           else if (msg.type === 'ready') {
             setVoiceDemoOnline(true);
-            if (msg.audio_base64 && !hasPlayedGreetingRef.current) {
-              hasPlayedGreetingRef.current = true;
-              setLastAgentReply(msg.greeting || GREETINGS[lang] || GREETINGS.en);
-              playVoiceAudio(msg.audio_base64, () => {
-                updateVoiceStatus('listening');
-                startListening();
-              });
-            }
+            updateVoiceStatus('listening');
+            startListening();
+            setLastAgentReply(lang === 'hi' ? 'बोलिए, मैं सुन रहा हूँ…' : 'Listening... Speak now');
           }
         } catch (e) {
           console.warn("[VoiceWS] Message handling error:", e);
         }
       };
+
 
       ws.onerror = () => {
         setVoiceDemoOnline(false);
@@ -503,31 +499,12 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
   };
 
   const initVoiceConnection = useCallback(async () => {
-    hasPlayedGreetingRef.current = false;
-    setLastAgentReply(lang === 'hi' ? "देवभूमि लाइव वॉइस से कनेक्ट हो रहे हैं…" : "Connecting to Devbhoomi Live Voice…");
+    setLastAgentReply(lang === 'hi' ? 'बोलिए, मैं सुन रहा हूँ…' : 'Listening... Speak now');
     connectBridgeWS();
+    updateVoiceStatus('listening');
+    startListening();
+  }, [lang, connectBridgeWS]);
 
-    // Fast-path: immediately fetch pre-cached Gemini Live greeting
-    try {
-      const res = await fetch(`${HTTP_BRIDGE_URL}/api/voice/greeting?lang=${lang}`, {
-        signal: AbortSignal.timeout(4000)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.audio_base64 && !hasPlayedGreetingRef.current) {
-          hasPlayedGreetingRef.current = true;
-          setVoiceDemoOnline(true);
-          setLastAgentReply(data.greeting || GREETINGS[lang] || GREETINGS.en);
-          playVoiceAudio(data.audio_base64, () => {
-            updateVoiceStatus('listening');
-            startListening();
-          });
-        }
-      }
-    } catch (e) {
-      console.warn("[VoiceOverlay] Greeting fetch error:", e);
-    }
-  }, [lang, playVoiceAudio, HTTP_BRIDGE_URL, connectBridgeWS]);
 
   useEffect(() => {
     if (!isOpen) {

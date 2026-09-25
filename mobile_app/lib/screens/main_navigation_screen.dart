@@ -5,6 +5,7 @@ import 'rentals_stays_screen.dart';
 import 'map_screen.dart';
 import 'trip_planner_screen.dart';
 import 'ai_copilot_screen.dart';
+import 'web_experience_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -30,6 +31,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const MapScreen(),
       const TripPlannerScreen(),
       const AiCopilotScreen(),
+      const WebExperienceScreen(),
     ];
 
     return Scaffold(
@@ -50,34 +52,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             backgroundColor: Colors.white,
             selectedItemColor: const Color(0xFF0F3D2E),
             unselectedItemColor: const Color(0xFF64748B),
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: -0.2),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: -0.2),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10),
             elevation: 0,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.explore_outlined, size: 22),
-                activeIcon: Icon(Icons.explore, size: 22),
+                icon: Icon(Icons.explore_outlined, size: 20),
+                activeIcon: Icon(Icons.explore, size: 20),
                 label: 'Explore',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.two_wheeler_outlined, size: 22),
-                activeIcon: Icon(Icons.two_wheeler, size: 22),
+                icon: Icon(Icons.two_wheeler_outlined, size: 20),
+                activeIcon: Icon(Icons.two_wheeler, size: 20),
                 label: 'Rentals',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.map_outlined, size: 22),
-                activeIcon: Icon(Icons.map, size: 22),
+                icon: Icon(Icons.map_outlined, size: 20),
+                activeIcon: Icon(Icons.map, size: 20),
                 label: 'GIS Map',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.luggage_outlined, size: 22),
-                activeIcon: Icon(Icons.luggage, size: 22),
+                icon: Icon(Icons.luggage_outlined, size: 20),
+                activeIcon: Icon(Icons.luggage, size: 20),
                 label: 'Plan Trip',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.auto_awesome_outlined, size: 22),
-                activeIcon: Icon(Icons.auto_awesome, size: 22),
+                icon: Icon(Icons.auto_awesome_outlined, size: 20),
+                activeIcon: Icon(Icons.auto_awesome, size: 20),
                 label: 'AI Copilot',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.language_outlined, size: 20),
+                activeIcon: Icon(Icons.language, size: 20),
+                label: 'Web Live',
               ),
             ],
           ),

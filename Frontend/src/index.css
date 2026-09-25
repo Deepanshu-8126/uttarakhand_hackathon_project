@@ -30,6 +30,13 @@
     width: 100%;
   }
 
+  /* Prevent layout shifts from mobile URL bar */
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
@@ -106,6 +113,23 @@
     .app-container {
       padding-left: 2rem;
       padding-right: 2rem;
+    }
+  }
+
+  /* Page bottom safe-pad: clears the 64px mobile BottomNavBar */
+  @media (max-width: 767px) {
+    .page-content {
+      padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  /* Utility: use on any page's outermost container */
+  .mobile-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  }
+  @media (max-width: 767px) {
+    .mobile-safe-bottom {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     }
   }
 

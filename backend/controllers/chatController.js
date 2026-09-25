@@ -1,10 +1,10 @@
 import Chat from '../models/Chat.js';
-import { ChatService } from '../services/chatService.js';
+import { AgentRouter } from '../ai/workflows/agentRouter.js';
 
 export const getChats = async (req, res) => {
   try {
-    const chats = await Chat.find({ userId: req.user._id })
-      .select('-messages') // Don't load full messages for the sidebar
+    const chats = await Chat.find({ userId: req.user?._id || req.user?.id })
+      .select('-messages')
       .sort({ updatedAt: -1 })
       .limit(50);
     
@@ -16,7 +16,7 @@ export const getChats = async (req, res) => {
 
 export const getChatById = async (req, res) => {
   try {
-    const chat = await Chat.findOne({ _id: req.params.id, userId: req.user._id });
+    const chat = await Chat.findOne({ _id: req.params.id, userId: req.user?._id || req.user?.id });
     if (!chat) {
       return res.status(404).json({ success: false, message: 'Chat not found' });
     }
@@ -30,7 +30,7 @@ export const createChat = async (req, res) => {
   try {
     const { tripId, title } = req.body;
     const chat = await Chat.create({
-      userId: req.user._id,
+      userId: req.user?._id || req.user?.id,
       tripId: tripId || null,
       title: title || 'New Conversation'
     });
@@ -44,7 +44,7 @@ export const updateChat = async (req, res) => {
   try {
     const { title } = req.body;
     const chat = await Chat.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: req.params.id, userId: req.user?._id || req.user?.id },
       { title },
       { new: true, runValidators: true }
     );
@@ -57,7 +57,7 @@ export const updateChat = async (req, res) => {
 
 export const deleteChat = async (req, res) => {
   try {
-    const chat = await Chat.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    const chat = await Chat.findOneAndDelete({ _id: req.params.id, userId: req.user?._id || req.user?.id });
     if (!chat) return res.status(404).json({ success: false, message: 'Chat not found' });
     res.status(200).json({ success: true, data: {} });
   } catch (error) {
@@ -65,9 +65,45 @@ export const deleteChat = async (req, res) => {
   }
 };
 
+/**
+ * Real-time SSE streaming chat endpoint
+ * Compatible with langchain-ai/agent-chat-ui event stream specifications
+ */
+export const streamChat = async (req, res) => {
+  const { message, query, content, sessionId } = req.body || req.query;
+  const userQuery = message || query || content;
+
+  if (!userQuery) {
+    return res.status(400).json({ success: false, message: 'Message is required' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  try {
+    await AgentRouter.processChatStream({
+      message: userQuery,
+      sessionId: sessionId || req.headers['x-session-id'] || 'default_session',
+      userId: req.user?._id || null,
+      res
+    });
+  } catch (err) {
+    console.error('[StreamChat Error]', err);
+    if (!res.writableEnded) {
+      res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
+      res.end();
+    }
+  }
+};
+
+/**
+ * Standard JSON Direct Chat
+ */
 export const handleDirectChat = async (req, res) => {
   try {
-    const { message, query, content, userLocation } = req.body;
+    const { message, query, content, sessionId } = req.body;
     const userQuery = message || query || content;
 
     if (!userQuery) {
@@ -77,16 +113,20 @@ export const handleDirectChat = async (req, res) => {
       });
     }
 
-    const { executeHybridRag } = await import('../services/hybridRagService.js');
-    const result = await executeHybridRag({
-      query: userQuery,
-      userLocation
+    const result = await AgentRouter.processChatStream({
+      message: userQuery,
+      sessionId: sessionId || req.headers['x-session-id'] || 'default_session',
+      userId: req.user?._id || null,
+      res: null
     });
 
     return res.status(200).json({
       success: true,
-      message: result.answer,
-      data: result
+      message: result.message,
+      data: result,
+      agent: result.agent,
+      suggestions: result.suggestions,
+      toolsUsed: result.toolsUsed
     });
   } catch (error) {
     console.error('[DirectChat Error]', error);
@@ -98,20 +138,7 @@ export const handleDirectChat = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-  try {
-    const { content, tripId } = req.body;
-    const chatId = req.params.id === 'new' ? null : req.params.id;
-    
-    if (!content) {
-      return res.status(400).json({ success: false, message: 'Message content is required' });
-    }
-
-    const updatedChat = await ChatService.sendMessage(chatId, req.user._id, content, tripId);
-    
-    res.status(200).json({ success: true, data: updatedChat });
-  } catch (error) {
-    console.error('Send message error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to send message' });
-  }
+  return handleDirectChat(req, res);
 };
+
 
