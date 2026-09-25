@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const CHAT_STORAGE_KEY = 'devbhoomi_agent_chat_v3';
 
 export function useChatState({ initialQuery = '', onTripContextChange = null } = {}) {

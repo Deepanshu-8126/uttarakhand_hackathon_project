@@ -31,9 +31,11 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
   const vadIntervalRef = useRef(null);
   const hasSpokenRef = useRef(false);
 
-  // Base Bridge URL
+  // Base Bridge URL — local Python bridge (localhost) or env override
   const HTTP_BRIDGE_URL = import.meta.env.VITE_VOICE_BRIDGE_URL || 'http://127.0.0.1:8765';
   const WS_BRIDGE_URL = HTTP_BRIDGE_URL.replace(/^http/, 'ws');
+  // Production Render backend — always reachable from mobile/web
+  const RENDER_API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://uttarakhand-hackathon-project.onrender.com/api';
 
   const updateVoiceStatus = (status) => {
     voiceStatusRef.current = status;
@@ -44,6 +46,23 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     hi: "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
     en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
   };
+
+  // Browser Web Speech TTS — production fallback when Gemini Live audio unavailable
+  const speakWithBrowser = useCallback((text, onDone) => {
+    if (!text || isMuted) { onDone?.(); return; }
+    try {
+      window.speechSynthesis?.cancel();
+      const utt = new SpeechSynthesisUtterance(text.replace(/[*#_~`]/g, '').slice(0, 500));
+      utt.lang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
+      utt.rate = 0.95;
+      utt.pitch = 1.05;
+      utt.volume = 1;
+      utt.onend = () => { updateVoiceStatus('listening'); onDone?.(); };
+      utt.onerror = () => { updateVoiceStatus('listening'); onDone?.(); };
+      updateVoiceStatus('speaking');
+      window.speechSynthesis.speak(utt);
+    } catch (e) { updateVoiceStatus('listening'); onDone?.(); }
+  }, [isMuted, lang]);
 
   // Play real-time 24kHz raw PCM chunks from Gemini Live with zero latency
   const playPcmChunk = useCallback((base64Chunk) => {
@@ -264,7 +283,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     return wsRef.current && wsRef.current.readyState === WebSocket.OPEN ? wsRef.current : null;
   }, [connectBridgeWS]);
 
-  // Send raw recorded mic audio directly to Gemini Live over WebSocket
+  // Send raw recorded mic audio — WS → local bridge HTTP → Render API + browser TTS
   const sendAudioBlobToBridge = async (blob) => {
     updateVoiceStatus('processing');
     setLastAgentReply(lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…');
@@ -273,52 +292,61 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Audio = reader.result.split(',')[1];
-        if (!base64Audio) {
-          updateVoiceStatus('listening');
-          startListening();
-          return;
-        }
+        if (!base64Audio) { updateVoiceStatus('listening'); startListening(); return; }
 
-        // Fast-path: Guarantee WebSocket stream for sub-second PCM streaming!
+        // Tier 1: WebSocket → Gemini Live (local only, ultra-fast)
         const activeWs = await ensureWsConnected();
         if (activeWs && activeWs.readyState === WebSocket.OPEN) {
           nextPlayTimeRef.current = 0;
           activeWs.send(JSON.stringify({
-            type: 'audio',
-            audio_base64: base64Audio,
-            mime_type: blob.type || 'audio/webm',
-            lang: lang,
+            type: 'audio', audio_base64: base64Audio,
+            mime_type: blob.type || 'audio/webm', lang,
           }));
           return;
         }
 
-        // Fallback to HTTP only if WebSocket completely fails
+        // Tier 2: Local bridge HTTP audio transcription (4s hard timeout)
         try {
           const res = await fetch(`${HTTP_BRIDGE_URL}/api/voice/audio_query`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              audio_base64: base64Audio,
-              mime_type: blob.type || 'audio/webm',
-              lang: lang,
-            }),
-            signal: AbortSignal.timeout(30000),
+            body: JSON.stringify({ audio_base64: base64Audio, mime_type: blob.type || 'audio/webm', lang }),
+            signal: AbortSignal.timeout(4000),
           });
-
           if (res.ok) {
             const data = await res.json();
             if (data.user_transcript) setTranscript(data.user_transcript);
             if (data.response) {
-              setLastAgentReply(data.response);
-              playVoiceAudio(data.audio_base64, () => {
-                updateVoiceStatus('listening');
-                startListening();
-              });
+              const reply = data.response.replace(/[*#_~`]/g, '').trim();
+              setLastAgentReply(reply);
+              playVoiceAudio(data.audio_base64 || '', () => startListening());
+              return;
+            }
+          }
+        } catch (_) { /* bridge offline — escalate */ }
+
+        // Tier 3: Render backend /api/chat (always reachable on mobile/Vercel)
+        const fallbackText = transcript || (lang === 'hi'
+          ? 'उत्तराखंड यात्रा के बारे में बताओ'
+          : 'Tell me about places to visit in Uttarakhand');
+        try {
+          const renderRes = await fetch(`${RENDER_API}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: fallbackText }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (renderRes.ok) {
+            const data = await renderRes.json();
+            const reply = (data.message || data.data?.message || '').replace(/[*#_~`]/g, '').trim();
+            if (reply) {
+              setLastAgentReply(reply);
+              speakWithBrowser(reply, () => startListening());
               return;
             }
           }
         } catch (err) {
-          console.warn("[VoiceOverlay] audio_query error:", err);
+          console.error('[VoiceOverlay] Render fallback failed:', err);
         }
 
         updateVoiceStatus('listening');
@@ -326,7 +354,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       };
       reader.readAsDataURL(blob);
     } catch (e) {
-      console.error("[VoiceOverlay] Blob read error:", e);
+      console.error('[VoiceOverlay] Blob read error:', e);
       updateVoiceStatus('listening');
       startListening();
     }
@@ -442,60 +470,67 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     }
   };
 
-  // Submit text query (from topic chips) over fast WebSocket
+  // Submit text query (from topic chips) — WS → local bridge → Render API
   const handleVoiceQuerySubmit = async (queryText) => {
     if (!queryText) return;
     updateVoiceStatus('processing');
     cleanupAudioNodes();
+    setLastAgentReply(lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…');
 
+    // Tier 1: WebSocket (local bridge — ultra-fast)
     const activeWs = await ensureWsConnected();
     if (activeWs && activeWs.readyState === WebSocket.OPEN) {
       nextPlayTimeRef.current = 0;
-      setLastAgentReply(lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…');
-      activeWs.send(JSON.stringify({
-        type: 'query',
-        query: queryText,
-        lang: lang,
-      }));
+      activeWs.send(JSON.stringify({ type: 'query', query: queryText, lang }));
       return;
     }
 
-    // Fallback to HTTP
-    let cleanReply = '';
-    let neuralAudioB64 = '';
-
+    // Tier 2: Local bridge HTTP (same machine)
     try {
       const bridgeRes = await fetch(`${HTTP_BRIDGE_URL}/api/voice/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryText, lang }),
-        signal: AbortSignal.timeout(30000)
+        signal: AbortSignal.timeout(4000), // short timeout — don't wait on dead localhost
       });
       if (bridgeRes.ok) {
         const data = await bridgeRes.json();
-        if (data && data.response) {
-          cleanReply = data.response;
-          neuralAudioB64 = data.audio_base64 || '';
-          setVoiceDemoOnline(true);
+        if (data?.response) {
+          const reply = data.response.replace(/[*#_~`]/g, '').trim();
+          setLastAgentReply(reply);
+          playVoiceAudio(data.audio_base64 || '', () => startListening());
+          return;
         }
       }
-    } catch (bridgeErr) {
-      console.error("[VoiceOverlay] Bridge fetch failed:", bridgeErr);
+    } catch (_) { /* bridge offline — fall to Render */ }
+
+    // Tier 3: Render backend /api/chat — always reachable from mobile/Vercel
+    try {
+      const renderRes = await fetch(`${RENDER_API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: queryText }),
+        signal: AbortSignal.timeout(30000),
+      });
+      if (renderRes.ok) {
+        const data = await renderRes.json();
+        const reply = (data.message || data.data?.message || '').replace(/[*#_~`]/g, '').trim();
+        if (reply) {
+          setLastAgentReply(reply);
+          speakWithBrowser(reply, () => startListening());
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('[VoiceOverlay] Render API failed:', err);
     }
 
-    if (!cleanReply) {
-      cleanReply = lang === 'hi'
-        ? "माफ़ करें, मैं अभी कनेक्ट नहीं कर पा रहा हूँ।"
-        : "Sorry, I am unable to reach the neural voice server right now.";
-    }
-
-    const cleanSpoken = cleanReply.replace(/[*#_~`]/g, '').trim();
-    setLastAgentReply(cleanSpoken);
-
-    playVoiceAudio(neuralAudioB64, () => {
-      updateVoiceStatus('listening');
-      startListening();
-    });
+    // All tiers failed
+    const errMsg = lang === 'hi'
+      ? 'माफ़ करें, नेटवर्क से कनेक्ट नहीं हो पाया। कृपया दोबारा कोशिश करें।'
+      : 'Sorry, could not reach the server. Please check your connection and try again.';
+    setLastAgentReply(errMsg);
+    speakWithBrowser(errMsg, () => startListening());
   };
 
   const initVoiceConnection = useCallback(async () => {
