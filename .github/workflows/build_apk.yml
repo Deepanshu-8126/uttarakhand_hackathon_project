@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -55,26 +55,28 @@ jobs:
       - name: Get Flutter Packages
         run: flutter pub get
 
-      - name: Build Android APK (Release)
+      - name: Build Android APKs (Release & Debug)
         run: |
           flutter build apk --release --no-tree-shake-icons
+          flutter build apk --debug
 
-      - name: Locate and Rename APK
+      - name: Locate and Package APKs
         run: |
           mkdir -p ../dist-apk
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
             cp build/app/outputs/flutter-apk/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.apk
           elif [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
             cp build/app/outputs/apk/release/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.apk
-          else
-            find build -name "*.apk" -exec cp {} ../dist-apk/Discover-Uttarakhand-v1.0.apk \;
+          fi
+          if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
+            cp build/app/outputs/flutter-apk/app-debug.apk ../dist-apk/Discover-Uttarakhand-Debug.apk
           fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Discover-Uttarakhand-Android-APK
-          path: dist-apk/Discover-Uttarakhand-v1.0.apk
+          path: dist-apk/*.apk
           if-no-files-found: error
           retention-days: 30
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getCardImages } from '../utils/imageHelpers';
+import { getCardImages, getHimalayanFallbackImage } from '../utils/imageHelpers';
 
 /**
  * Minimal & Clean DestinationCard
@@ -18,19 +18,23 @@ const DestinationCard = ({ destination, distance }) => {
   const locationLabel = locationParts.length > 0 ? locationParts.join(' • ') : (destination.district || 'Uttarakhand');
 
   const images = getCardImages(destination);
-  const coverImage = images[0] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
+  const coverImage = images[0] || getHimalayanFallbackImage(destination);
 
   return (
     <Link
       to={`/destinations/${destination.slug || destination._id}`}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-stone-200/80 group text-left"
     >
-      {/* 1. Clean Destination Photo */}
+      {/* 1. Clean Destination Photo with Self-Healing Fallback */}
       <div className="relative h-56 w-full overflow-hidden bg-stone-100">
         <img
           src={coverImage}
           alt={destination.name || 'Destination in Uttarakhand'}
           loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = getHimalayanFallbackImage(destination);
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
       </div>
