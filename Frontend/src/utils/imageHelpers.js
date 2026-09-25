@@ -67,14 +67,91 @@ const MOUNTAIN_STAY_IMAGES = [
   'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop'  // Himalayan Valley Orchard Cabin
 ];
 
-const VEHICLE_RENTAL_IMAGES = [
-  'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=1200&auto=format&fit=crop', // Royal Enfield Himalayan Adventure
-  'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?q=80&w=1200&auto=format&fit=crop', // Royal Enfield Classic 350 Reborn
-  'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=1200&auto=format&fit=crop', // Mahindra Thar 4x4 Mountain Expedition
-  'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=1200&auto=format&fit=crop', // Self-Drive Mountain Sedan
-  'https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=1200&auto=format&fit=crop', // Mountain Tourer Cruiser
-  'https://images.unsplash.com/photo-1508974239320-0a029497e820?q=80&w=1200&auto=format&fit=crop'  // Himalayan Scrambler / Trail Bike
+export const VEHICLE_RENTAL_IMAGES = [
+  '/assets/rentals/dhanaulti-royal-enfield-himalayan/cover.jpg', // Himalayan 450
+  '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg', // Classic 350
+  '/assets/rentals/srinagar-mahindra-thar/cover.jpg', // Thar 4x4
+  '/assets/rentals/srinagar-honda-activa-6g/cover.jpg', // Activa 6G
+  '/assets/rentals/lansdowne-tvs-jupiter/cover.jpg', // TVS Jupiter
+  '/assets/rentals/haldwani-maruti-suzuki-dzire/cover.jpg', // Swift Dzire
+  '/assets/rentals/ranikhet-mahindra-scorpio/cover.jpg', // Scorpio Classic
+  '/assets/rentals/nainital-toyota-innova-crysta/cover.jpg', // Innova Crysta
+  '/assets/rentals/chopta-tvs-apache-rtr-160/cover.jpg', // Apache RTR
+  '/assets/rentals/chamoli-hero-xpulse-200/cover.jpg' // XPulse 200
 ];
+
+export function getRealVehicleAsset(name = '', type = '') {
+  const n = (name + ' ' + type).toLowerCase();
+  
+  // Royal Enfield / Adventure / Cruisers
+  if (n.includes('himalayan')) return '/assets/rentals/dhanaulti-royal-enfield-himalayan/cover.jpg';
+  if (n.includes('classic 350') || n.includes('classic') || n.includes('standard')) return '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg';
+  if (n.includes('bullet')) return '/assets/rentals/tehri-royal-enfield-bullet-350/cover.jpg';
+  if (n.includes('meteor')) return '/assets/rentals/rudraprayag-royal-enfield-meteor-350/cover.jpg';
+  if (n.includes('interceptor') || n.includes('continental')) return '/assets/rentals/kanatal-royal-enfield-interceptor-650/cover.jpg';
+  if (n.includes('thunderbird')) return '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg';
+
+  // Scooters
+  if (n.includes('activa 5g')) return '/assets/rentals/lansdowne-honda-activa-5g/cover.jpg';
+  if (n.includes('activa')) return '/assets/rentals/srinagar-honda-activa-6g/cover.jpg';
+  if (n.includes('jupiter')) return '/assets/rentals/lansdowne-tvs-jupiter/cover.jpg';
+  if (n.includes('ntorq')) return '/assets/rentals/rishikesh-tvs-ntorq-125/cover.jpg';
+  if (n.includes('access')) return '/assets/rentals/ramnagar-suzuki-access-125/cover.jpg';
+  if (n.includes('burgman')) return '/assets/rentals/ramnagar-suzuki-burgman-street/cover.jpg';
+  if (n.includes('vespa')) return '/assets/rentals/bhimtal-vespa-zx-125/cover.jpg';
+  if (n.includes('fascino') || n.includes('ray zr') || n.includes('ray')) return '/assets/rentals/bhimtal-yamaha-fascino/cover.jpg';
+  if (n.includes('scooty') || n.includes('scooter') || n.includes('dio')) return '/assets/rentals/srinagar-honda-activa-6g/cover.jpg';
+  
+  // Bikes / Trail
+  if (n.includes('xpulse') || n.includes('impulse') || n.includes('scram')) return '/assets/rentals/chamoli-hero-xpulse-200/cover.jpg';
+  if (n.includes('apache')) return '/assets/rentals/chopta-tvs-apache-rtr-160/cover.jpg';
+  if (n.includes('pulsar')) return '/assets/rentals/ramnagar-bajaj-pulsar-150/cover.jpg';
+  if (n.includes('duke') || n.includes('ktm') || n.includes('rc 200') || n.includes('rc 390')) return '/assets/rentals/bhimtal-ktm-duke-200/cover.jpg';
+  if (n.includes('r15')) return '/assets/rentals/rishikesh-yamaha-r15-v4/cover.jpg';
+  if (n.includes('mt-15') || n.includes('fz')) return '/assets/rentals/ramnagar-yamaha-mt-15/cover.jpg';
+  if (n.includes('avenger')) return '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg';
+  if (n.includes('splendor')) return '/assets/rentals/kotdwar-hero-splendor-plus/cover.jpg';
+  if (n.includes('hf deluxe') || n.includes('deluxe')) return '/assets/rentals/kotdwar-hero-hf-deluxe/cover.jpg';
+  if (n.includes('shine')) return '/assets/rentals/kanatal-honda-shine/cover.jpg';
+
+  // SUVs / 4x4 / Big Mountain Cars
+  if (n.includes('thar') || n.includes('gurkha')) return '/assets/rentals/srinagar-mahindra-thar/cover.jpg';
+  if (n.includes('scorpio')) return '/assets/rentals/ranikhet-mahindra-scorpio/cover.jpg';
+  if (n.includes('xuv') || n.includes('xuv700') || n.includes('xuv300')) return '/assets/rentals/tehri-mahindra-xuv700/cover.jpg';
+  if (n.includes('xylo')) return '/assets/rentals/bhimtal-mahindra-xylo/cover.jpg';
+  if (n.includes('marazzo')) return '/assets/rentals/chopta-mahindra-marazzo/cover.jpg';
+  if (n.includes('bolero')) return '/assets/rentals/mukteshwar-mahindra-bolero-camper/cover.jpg';
+  if (n.includes('innova')) return '/assets/rentals/nainital-toyota-innova-crysta/cover.jpg';
+  if (n.includes('fortuner')) return '/assets/rentals/haridwar-toyota-fortuner/cover.jpg';
+  if (n.includes('etios')) return '/assets/rentals/tehri-toyota-etios/cover.jpg';
+  if (n.includes('creta') || n.includes('venue')) return '/assets/rentals/rudraprayag-hyundai-creta/cover.jpg';
+  if (n.includes('seltos')) return '/assets/rentals/dhanaulti-kia-seltos/cover.jpg';
+  if (n.includes('nexon')) return '/assets/rentals/mussoorie-tata-nexon/cover.jpg';
+  if (n.includes('harrier')) return '/assets/rentals/rishikesh-tata-harrier/cover.jpg';
+  if (n.includes('safari')) return '/assets/rentals/tehri-tata-safari/cover.jpg';
+  if (n.includes('hector')) return '/assets/rentals/mukteshwar-mg-hector/cover.jpg';
+  if (n.includes('duster')) return '/assets/rentals/chamoli-renault-duster/cover.jpg';
+  if (n.includes('traveller') || n.includes('tempo')) return '/assets/rentals/bhimtal-tempo-traveller-12-seater/cover.jpg';
+
+  // Hatchback & Sedans
+  if (n.includes('dzire') || n.includes('swift dzire')) return '/assets/rentals/haldwani-maruti-suzuki-dzire/cover.jpg';
+  if (n.includes('swift')) return '/assets/rentals/srinagar-maruti-suzuki-swift/cover.jpg';
+  if (n.includes('i20')) return '/assets/rentals/joshimath-hyundai-i20/cover.jpg';
+  if (n.includes('baleno')) return '/assets/rentals/pithoragarh-maruti-suzuki-baleno/cover.jpg';
+  if (n.includes('city') || n.includes('honda city')) return '/assets/rentals/rudraprayag-honda-city/cover.jpg';
+  if (n.includes('celerio')) return '/assets/rentals/tehri-maruti-suzuki-celerio/cover.jpg';
+  if (n.includes('wagonr') || n.includes('wagon r')) return '/assets/rentals/tehri-maruti-wagonr/cover.jpg';
+  if (n.includes('alto')) return '/assets/rentals/ranikhet-maruti-alto-800/cover.jpg';
+  if (n.includes('ertiga')) return '/assets/rentals/ranikhet-maruti-suzuki-ertiga/cover.jpg';
+  if (n.includes('ciaz')) return '/assets/rentals/rudraprayag-honda-city/cover.jpg';
+
+  // Category fallback
+  if (n.includes('bike') || n.includes('motorcycle')) return '/assets/rentals/dhanaulti-royal-enfield-himalayan/cover.jpg';
+  if (n.includes('suv') || n.includes('4x4')) return '/assets/rentals/srinagar-mahindra-thar/cover.jpg';
+  if (n.includes('sedan') || n.includes('car') || n.includes('hatchback')) return '/assets/rentals/haldwani-maruti-suzuki-dzire/cover.jpg';
+
+  return '/assets/rentals/srinagar-honda-activa-6g/cover.jpg';
+}
 
 // ── 3. Intelligent Self-Healing Fallback Provider ────────────────────────────
 export function getHimalayanFallbackImage(item) {
@@ -130,6 +207,21 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg') {
     }
   }
 
+  const isVehicle = item.category?.toLowerCase()?.includes('rental') || 
+                    item.category?.toLowerCase()?.includes('bike') || 
+                    item.category?.toLowerCase()?.includes('car') || 
+                    item.category?.toLowerCase()?.includes('scooter') || 
+                    item.type?.toLowerCase()?.includes('bike') || 
+                    item.type?.toLowerCase()?.includes('scooter') || 
+                    item.type?.toLowerCase()?.includes('car') || 
+                    item.type?.toLowerCase()?.includes('motorcycle') || 
+                    item.type?.toLowerCase()?.includes('suv') || 
+                    item.type?.toLowerCase()?.includes('sedan') || 
+                    item.vehicleType || 
+                    item.businessName || 
+                    item.pricePerDay || 
+                    (Array.isArray(item.vehicles) && item.vehicles.length > 0);
+
   const addUrl = (val) => {
     if (!val) return;
     let url = null;
@@ -141,7 +233,18 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg') {
 
     if (url && typeof url === 'string') {
       // Filter out generic duplicate svg illustrations and low-res diagram screenshots
-      if (url.includes('.svg') || url.includes('interior.png')) return;
+      if (url.includes('.svg') || url.includes('interior.png')) {
+        if (isVehicle) {
+          url = getRealVehicleAsset(item.name || item.title, item.type || item.category);
+        } else {
+          return;
+        }
+      }
+
+      // If vehicle image is an Unsplash generic stock photo, substitute with authentic local vehicle asset
+      if (isVehicle && url.includes('unsplash.com')) {
+        url = getRealVehicleAsset(item.name || item.title, item.type || item.category);
+      }
 
       // Filter out purged 404 Wikimedia URLs (such as Bhatta fall)
       if (url.includes('Bhatta_fall_mussoorie.jpg') || url.includes('Gunji') || url.includes('Lake_Mist')) {
@@ -154,9 +257,14 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg') {
     }
   };
 
-  // 1. Primary cover image / image
-  if (item.coverImage) addUrl(item.coverImage);
-  if (item.image) addUrl(item.image);
+  // For individual vehicle items, prioritize vehicle's specific image over parent fleet cover
+  if (isVehicle && (item.businessName || item.type || item.typeDetail)) {
+    if (item.image) addUrl(item.image);
+    if (item.coverImage && item.coverImage !== item.image) addUrl(item.coverImage);
+  } else {
+    if (item.coverImage) addUrl(item.coverImage);
+    if (item.image) addUrl(item.image);
+  }
   if (item.profileImage) addUrl(item.profileImage);
 
   // 2. Extract vehicle photos from rental fleets
@@ -193,19 +301,6 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg') {
 
   // If no valid real photos found, provide intelligent fallback
   if (images.length === 0) {
-    const isVehicle = item.category?.toLowerCase()?.includes('rental') || 
-                      item.category?.toLowerCase()?.includes('bike') || 
-                      item.category?.toLowerCase()?.includes('car') || 
-                      item.category?.toLowerCase()?.includes('scooter') || 
-                      item.type?.toLowerCase()?.includes('bike') || 
-                      item.type?.toLowerCase()?.includes('scooter') || 
-                      item.type?.toLowerCase()?.includes('car') || 
-                      item.type?.toLowerCase()?.includes('motorcycle') || 
-                      item.type?.toLowerCase()?.includes('suv') || 
-                      item.vehicleType || 
-                      item.pricePerDay || 
-                      (Array.isArray(item.vehicles) && item.vehicles.length > 0);
-
     const isStay = item.category?.toLowerCase()?.includes('stay') || 
                    item.category?.toLowerCase()?.includes('homestay') || 
                    item.category?.toLowerCase()?.includes('camp') || 
@@ -213,11 +308,7 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg') {
                    item.pricePerNight;
 
     if (isVehicle) {
-      const seedStr = (item.name || item.id || item._id || 'vehicle').toString();
-      let hash = 0;
-      for (let i = 0; i < seedStr.length; i++) hash = (hash << 5) - hash + seedStr.charCodeAt(i);
-      const idx = Math.abs(hash) % VEHICLE_RENTAL_IMAGES.length;
-      return [VEHICLE_RENTAL_IMAGES[idx]];
+      return [getRealVehicleAsset(item.name || item.title || item.type, item.type || item.category)];
     }
 
     if (isStay) {
