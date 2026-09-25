@@ -74,25 +74,60 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
 
   Widget _buildRentalsTab() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       itemCount: rentals.length,
       itemBuilder: (context, index) {
         final r = rentals[index];
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4)),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: CachedNetworkImage(
-                  imageUrl: r.imageUrl,
-                  height: 160,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: AppTheme.beige),
-                  errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.two_wheeler, color: AppTheme.forestGreen, size: 48)),
-                ),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    child: CachedNetworkImage(
+                      imageUrl: r.imageUrl,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: const Color(0xFFF3EFE6)),
+                      errorWidget: (context, url, error) => Container(
+                        color: const Color(0xFFF3EFE6),
+                        child: const Icon(Icons.two_wheeler, color: Color(0xFF0F3D2E), size: 48),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.verified, size: 12, color: Color(0xFF34D399)),
+                          SizedBox(width: 4),
+                          Text('3-Layer Verified Partner', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -101,36 +136,54 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(r.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                        ),
-                        if (r.isVerified)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: const Color(0xFFD1FAE5), borderRadius: BorderRadius.circular(999)),
-                            child: const Text('Verified Partner', style: TextStyle(color: Color(0xFF065F46), fontSize: 10, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            r.name,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.3),
                           ),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.star_rounded, color: Color(0xFFD97706), size: 16),
+                            const SizedBox(width: 2),
+                            Text(r.rating.toString(), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(r.location, style: const TextStyle(color: AppTheme.mutedText, fontSize: 12)),
-                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 13, color: Color(0xFF047857)),
+                        const SizedBox(width: 4),
+                        Text(r.location, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('₹${r.pricePerDay}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.forestGreen)),
-                            const Text('per day • Helmet included', style: TextStyle(fontSize: 10, color: AppTheme.mutedText)),
+                            Text('₹${r.pricePerDay}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                            const Text('per day • Helmet included', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
                           ],
                         ),
                         ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F3D2E),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                            elevation: 0,
+                          ),
                           onPressed: () {
                             _showBookingDialog(context, r.name, '₹${r.pricePerDay}/day');
                           },
-                          child: const Text('Book Now'),
+                          child: const Text('Book Ride', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                         ),
                       ],
                     ),
@@ -146,25 +199,60 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
 
   Widget _buildStaysTab() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       itemCount: stays.length,
       itemBuilder: (context, index) {
         final s = stays[index];
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4)),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: CachedNetworkImage(
-                  imageUrl: s.imageUrl,
-                  height: 160,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: AppTheme.beige),
-                  errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.cottage, color: AppTheme.earthBrown, size: 48)),
-                ),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    child: CachedNetworkImage(
+                      imageUrl: s.imageUrl,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: const Color(0xFFF3EFE6)),
+                      errorWidget: (context, url, error) => Container(
+                        color: const Color(0xFFF3EFE6),
+                        child: const Icon(Icons.cottage, color: Color(0xFF0F3D2E), size: 48),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.shield, size: 12, color: Color(0xFF34D399)),
+                          SizedBox(width: 4),
+                          Text('100% Escrow Verified Stay', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -173,50 +261,65 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(s.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                          child: Text(s.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.3)),
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
-                            Text('${s.rating}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            const Icon(Icons.star_rounded, color: Color(0xFFD97706), size: 16),
+                            const SizedBox(width: 2),
+                            Text('${s.rating}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))),
                           ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text('${s.location} • ${s.stayType}', style: const TextStyle(color: AppTheme.mutedText, fontSize: 12)),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 13, color: Color(0xFF047857)),
+                        const SizedBox(width: 4),
+                        Text('${s.location} • ${s.stayType}', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 6,
                       children: s.amenities.map((a) {
-                        return Chip(
-                          label: Text(a, style: const TextStyle(fontSize: 10)),
-                          padding: EdgeInsets.zero,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor: AppTheme.beige,
-                          side: BorderSide.none,
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3EFE6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(a, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('₹${s.pricePerNight}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.earthBrown)),
-                            const Text('per night • Verified Host', style: TextStyle(fontSize: 10, color: AppTheme.mutedText)),
+                            Text('₹${s.pricePerNight}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                            const Text('per night • Verified Host', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
                           ],
                         ),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.earthBrown),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F3D2E),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                            elevation: 0,
+                          ),
                           onPressed: () {
                             _showBookingDialog(context, s.name, '₹${s.pricePerNight}/night');
                           },
-                          child: const Text('Reserve Stay'),
+                          child: const Text('Reserve Stay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                         ),
                       ],
                     ),

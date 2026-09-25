@@ -38,15 +38,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         children: screens,
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
         ),
         child: SafeArea(
           child: BottomNavigationBar(
@@ -54,35 +48,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             onTap: _onTabChanged,
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
-            selectedItemColor: AppTheme.forestGreen,
-            unselectedItemColor: AppTheme.mutedText,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
+            selectedItemColor: const Color(0xFF0F3D2E),
+            unselectedItemColor: const Color(0xFF64748B),
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: -0.2),
             unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
             elevation: 0,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.explore_outlined),
-                activeIcon: Icon(Icons.explore),
+                icon: Icon(Icons.explore_outlined, size: 22),
+                activeIcon: Icon(Icons.explore, size: 22),
                 label: 'Explore',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.two_wheeler_outlined),
-                activeIcon: Icon(Icons.two_wheeler),
+                icon: Icon(Icons.two_wheeler_outlined, size: 22),
+                activeIcon: Icon(Icons.two_wheeler, size: 22),
                 label: 'Rentals',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.map_outlined),
-                activeIcon: Icon(Icons.map),
+                icon: Icon(Icons.map_outlined, size: 22),
+                activeIcon: Icon(Icons.map, size: 22),
                 label: 'GIS Map',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.luggage_outlined),
-                activeIcon: Icon(Icons.luggage),
+                icon: Icon(Icons.luggage_outlined, size: 22),
+                activeIcon: Icon(Icons.luggage, size: 22),
                 label: 'Plan Trip',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.auto_awesome_outlined),
-                activeIcon: Icon(Icons.auto_awesome),
+                icon: Icon(Icons.auto_awesome_outlined, size: 22),
+                activeIcon: Icon(Icons.auto_awesome, size: 22),
                 label: 'AI Copilot',
               ),
             ],

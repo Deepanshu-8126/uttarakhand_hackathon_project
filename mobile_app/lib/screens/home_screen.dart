@@ -117,34 +117,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Hero Banner ──────────────────────────────────────────
+                    // ── Hero Banner Carousel (Exact match to Website Hero) ──
                     _buildHeroBanner(),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
 
-                    // ── Search Bar ───────────────────────────────────────────
+                    // ── Search Bar (Clean Website Pill) ──────────────────────
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppTheme.borderLight),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withOpacity(0.03),
                               blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
                         child: TextField(
                           onChanged: (val) => setState(() => searchQuery = val),
                           decoration: InputDecoration(
-                            hintText: 'Where do you want to go in Uttarakhand?',
-                            hintStyle: TextStyle(fontSize: 13, color: AppTheme.mutedText),
-                            prefixIcon: const Icon(Icons.search, color: AppTheme.forestGreen, size: 20),
+                            hintText: 'Search valleys, temples, stays, or rides...',
+                            hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                            prefixIcon: const Icon(Icons.search, color: Color(0xFF0F3D2E), size: 20),
                             suffixIcon: searchQuery.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.close, size: 16),
@@ -159,9 +159,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 14),
 
-                    // ── Category Filter Pills ────────────────────────────────
+                    // ── Category Filter Pills (Exact Website FilterPills) ─────
                     SizedBox(
-                      height: 38,
+                      height: 36,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -171,72 +171,45 @@ class _HomeScreenState extends State<HomeScreen> {
                           final isSelected = selectedFilter == cat;
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              label: Text(
-                                cat,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected ? Colors.white : AppTheme.textDark,
+                            child: InkWell(
+                              onTap: () => setState(() => selectedFilter = cat),
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF0F3D2E) : Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF0F3D2E) : const Color(0xFFE2E8F0),
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 2))]
+                                      : null,
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSelected ? Colors.white : const Color(0xFF334155),
+                                  ),
                                 ),
                               ),
-                              selected: isSelected,
-                              showCheckmark: false,
-                              selectedColor: AppTheme.forestGreen,
-                              backgroundColor: AppTheme.beige,
-                              side: BorderSide.none,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                              onSelected: (_) => setState(() => selectedFilter = cat),
                             ),
                           );
                         },
                       ),
                     ),
 
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 18),
 
-                    // ── Live Mountain Radar Strip ─────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFFCD34D)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.shield_outlined, color: AppTheme.amberWarning, size: 20),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    'Pahadi Safety Radar Active',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
-                                  ),
-                                  Text(
-                                    'High altitude check, landslide warnings & road updates are verified live.',
-                                    style: TextStyle(fontSize: 10, color: Color(0xFFB45309)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => widget.onNavigateTab(2), // Go to map
-                              child: const Text('View Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // ── The Devbhoomi Trust Standard (Exact match to Website ProblemStatement) ──
+                    _buildDevbhoomiTrustBanner(),
 
                     const SizedBox(height: 22),
 
-                    // ── Destinations Grid ────────────────────────────────────
-                    _buildSectionHeader('Explore Uttarakhand', 'Discover valleys, peaks and quiet villages', () {}),
+                    // ── Destinations Section (Exact match to Website ExploreSection) ──
+                    _buildSectionHeader('Explore Uttarakhand', 'Pristine valleys, sacred shrines, and authentic mountain life', () {}),
                     const SizedBox(height: 12),
                     _buildDestinationsGrid(),
 
@@ -270,26 +243,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroBanner() {
+    final heroSlides = [
+      {
+        'title': 'DISCOVER UTTARAKHAND',
+        'subtitle': 'Where Sacred Himalayas Meet The Sky',
+        'tag': 'GPS VERIFIED • LIVE CORRIDOR',
+        'image': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+        'dest': 'Nainital & Kumaon Lakes',
+      },
+      {
+        'title': 'ADI KAILASH & OM PARVAT',
+        'subtitle': 'Ancient Shiva Pilgrimage at 5,945m',
+        'tag': 'HIGH ALTITUDE TREK • ESCROW READY',
+        'image': 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=80',
+        'dest': 'Pithoragarh Border Trails',
+      },
+    ];
+
+    final currentSlide = heroSlides[activeSlide % heroSlides.length];
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        height: 200,
+        height: 220,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 16, offset: const Offset(0, 6)),
+            BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.18), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           child: Stack(
             fit: StackFit.expand,
             children: [
               CachedNetworkImage(
-                imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+                imageUrl: currentSlide['image']!,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: AppTheme.darkGreen),
-                errorWidget: (context, url, error) => Container(color: AppTheme.darkGreen, child: const Icon(Icons.terrain, color: Colors.white24, size: 64)),
+                placeholder: (context, url) => Container(color: const Color(0xFF09261C)),
+                errorWidget: (context, url, error) => Container(color: const Color(0xFF09261C)),
               ),
               Container(
                 decoration: BoxDecoration(
@@ -297,15 +289,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      Colors.black.withOpacity(0.85),
-                      Colors.black.withOpacity(0.2),
+                      const Color(0xFF09261C).withOpacity(0.92),
+                      const Color(0xFF09261C).withOpacity(0.35),
                       Colors.transparent,
                     ],
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,32 +305,51 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: const Color(0xFF059669).withOpacity(0.90),
                         borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
                       ),
-                      child: const Text(
-                        'RENT YOUR RIDE',
-                        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1),
+                      child: Text(
+                        currentSlide['tag']!,
+                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.8),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Take the Scenic Route.',
-                      style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+                    Text(
+                      currentSlide['title']!,
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                     ),
-                    const Text(
-                      'Explore Uttarakhand at your own pace with verified local rentals.',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    Text(
+                      currentSlide['subtitle']!,
+                      style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11, fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppTheme.forestGreen,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      ),
-                      onPressed: () => widget.onNavigateTab(3), // Plan Trip
-                      child: const Text('PLAN MY TRIP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF0F3D2E),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                          ),
+                          onPressed: () => widget.onNavigateTab(3), // Plan Trip
+                          icon: const Icon(Icons.luggage, size: 14, color: Color(0xFF0F3D2E)),
+                          label: const Text('PLAN JOURNEY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white60),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                          ),
+                          onPressed: () => widget.onNavigateTab(2), // GIS Map
+                          child: const Text('VIEW RADAR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -350,14 +361,110 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildDevbhoomiTrustBanner() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.shield_outlined, size: 13, color: Color(0xFF0F3D2E)),
+                      SizedBox(width: 4),
+                      Text(
+                        'THE DEVBHOOMI STANDARD',
+                        style: TextStyle(color: Color(0xFF0F3D2E), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Safer Mountain Travel.\nZero Booking Fraud.',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), height: 1.25),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'High-altitude verified stays, GPS-tracked bike fleet & 100% escrow protection against sudden mountain pass closures.',
+              style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDFBF7),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('100%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                        Text('Escrow Protected', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDFBF7),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('3-Layer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                        Text('Verified Fleet', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title, String subtitle, VoidCallback onSeeAll) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textDark)),
-          Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.mutedText)),
+          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.3)),
+          const SizedBox(height: 2),
+          Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
         ],
       ),
     );
@@ -369,10 +476,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No destinations found.')));
     }
     return SizedBox(
-      height: 240,
+      height: 280,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: list.length,
         itemBuilder: (context, index) {
           final dest = list[index];
@@ -382,46 +489,80 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => DestinationDetailScreen(destination: dest)),
             ),
             child: Container(
-              width: 175,
+              width: 220,
               margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                     child: CachedNetworkImage(
                       imageUrl: dest.imageUrl,
-                      height: 120,
+                      height: 140,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: AppTheme.beige),
-                      errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.landscape, color: AppTheme.forestGreen)),
+                      placeholder: (context, url) => Container(color: const Color(0xFFF3EFE6)),
+                      errorWidget: (context, url, error) => Container(color: const Color(0xFFF3EFE6), child: const Icon(Icons.landscape, color: Color(0xFF0F3D2E))),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(dest.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                        Text('${dest.district} • ${dest.region}', maxLines: 1, style: const TextStyle(fontSize: 10, color: AppTheme.mutedText)),
-                        const SizedBox(height: 6),
+                        Text(
+                          dest.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A)),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 12, color: Color(0xFF047857)),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                '${dest.district} • ${dest.region}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('From ₹${dest.estimatedBudget}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.earthBrown)),
-                            Row(
-                              children: [
-                                const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
-                                Text(dest.rating.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                              ],
+                            Text(
+                              'From ₹${dest.estimatedBudget}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF0F3D2E)),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 13, color: Color(0xFFD97706)),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    dest.rating.toString(),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -439,50 +580,112 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRentalsList() {
     return SizedBox(
-      height: 185,
+      height: 250,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: rentals.length,
         itemBuilder: (context, index) {
           final r = rentals[index];
           return Container(
-            width: 190,
+            width: 210,
             margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: r.imageUrl,
-                    height: 85,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: AppTheme.beige),
-                    errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.two_wheeler, color: AppTheme.forestGreen)),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                Text(r.location, style: const TextStyle(fontSize: 10, color: AppTheme.mutedText)),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Stack(
                   children: [
-                    Text('₹${r.pricePerDay}/day', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.forestGreen)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: AppTheme.forestGreen, borderRadius: BorderRadius.circular(999)),
-                      child: const Text('Rent', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: CachedNetworkImage(
+                        imageUrl: r.imageUrl,
+                        height: 125,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(color: const Color(0xFFF3EFE6)),
+                        errorWidget: (context, url, error) => Container(
+                          color: const Color(0xFFF3EFE6),
+                          child: const Icon(Icons.two_wheeler, color: Color(0xFF0F3D2E), size: 36),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.verified, size: 10, color: Color(0xFF34D399)),
+                            SizedBox(width: 3),
+                            Text('3-Layer Verified', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        r.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '₹${r.pricePerDay}',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E)),
+                              ),
+                              const Text('/day • Helmet incl.', style: TextStyle(fontSize: 9, color: Color(0xFF64748B))),
+                            ],
+                          ),
+                          InkWell(
+                            onTap: () => widget.onNavigateTab(1),
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F3D2E),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text('Book', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -494,51 +697,100 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStaysList() {
     return SizedBox(
-      height: 185,
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: stays.length,
         itemBuilder: (context, index) {
           final s = stays[index];
           return Container(
-            width: 200,
+            width: 210,
             margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: s.imageUrl,
-                    height: 85,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: AppTheme.beige),
-                    errorWidget: (context, url, error) => Container(color: AppTheme.beige, child: const Icon(Icons.cottage, color: AppTheme.earthBrown)),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(s.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                Text(s.location, style: const TextStyle(fontSize: 10, color: AppTheme.mutedText)),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Stack(
                   children: [
-                    Text('₹${s.pricePerNight}/night', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.earthBrown)),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 12, color: Colors.amber),
-                        Text(s.rating.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      ],
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: CachedNetworkImage(
+                        imageUrl: s.imageUrl,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(color: const Color(0xFFF3EFE6)),
+                        errorWidget: (context, url, error) => Container(
+                          color: const Color(0xFFF3EFE6),
+                          child: const Icon(Icons.cottage, color: Color(0xFF0F3D2E), size: 36),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.shield, size: 10, color: Color(0xFF34D399)),
+                            SizedBox(width: 3),
+                            Text('Verified Stay', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        s.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '₹${s.pricePerNight}/night',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E)),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded, size: 14, color: Color(0xFFD97706)),
+                              Text(s.rating.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
