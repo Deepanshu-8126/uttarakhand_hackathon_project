@@ -51,6 +51,8 @@ import {
   Briefcase,
   ExternalLink,
   Car,
+  Loader2,
+  Globe,
 } from 'lucide-react';
 import { getDestinations } from '../api/destinationApi';
 import { getSpiritualPlaces } from '../api/spiritualApi';
@@ -429,6 +431,137 @@ export default function MapPage() {
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'altitude'
   const searchContainerRef = useRef(null);
 
+  // Live Map & Satellite GIS Search State (Geoapify / Google Places Fallback)
+  const [apiSearchResults, setApiSearchResults] = useState([]);
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
+  const searchDebounceRef = useRef(null);
+
+  // Search places via Geoapify / Places API
+  const searchMapPlacesApi = useCallback(async (queryText) => {
+    const q = (queryText || '').trim();
+    if (!q || q.length < 2) {
+      setApiSearchResults([]);
+      setIsSearchingApi(false);
+      return [];
+    }
+
+    setIsSearchingApi(true);
+    try {
+      const res = await placesApi.searchPlaces(q);
+      const items = Array.isArray(res?.data) ? res.data : [];
+
+      const formatted = items
+        .filter((p) => p.location?.lat && p.location?.lng)
+        .map((p, idx) => {
+          const lat = Number(p.location.lat);
+          const lng = Number(p.location.lng);
+          return {
+            id: p.place_id || `api-spot-${lat}-${lng}-${idx}`,
+            name: p.name && p.name !== '?' && p.name.trim() !== '' ? p.name : p.vicinity || q,
+            slug: `api-${p.place_id || `${lat}-${lng}`}`,
+            type: 'radar',
+            category: 'radar',
+            categoryLabel: 'Live GIS Landmark',
+            badgeText: p.provider?.includes('Geoapify') ? 'Geoapify HD GIS' : 'Live Map Radar',
+            district: p.vicinity || 'Uttarakhand',
+            region: 'Himalayan Radar',
+            coordinates: [lat, lng],
+            altitude: '1,950m',
+            altitudeNum: 1950,
+            image:
+              p.photo_urls?.[0] ||
+              'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800&auto=format&fit=crop',
+            description: p.vicinity ? `${p.name} in ${p.vicinity}.` : 'Verified geographic location in Uttarakhand.',
+            link: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.name} ${p.vicinity || ''}`)}`,
+            isExternal: true,
+            rating: p.rating || 4.8,
+            user_ratings_total: p.user_ratings_total || 30,
+            _raw: p,
+            isLiveApi: true,
+          };
+        });
+
+      setApiSearchResults(formatted);
+      return formatted;
+    } catch (err) {
+      console.warn('[MapPage] Live API place search error:', err);
+      return [];
+    } finally {
+      setIsSearchingApi(false);
+    }
+  }, []);
+
+  // Select search result (DB or Live API spot)
+  const handleSelectSearchResult = useCallback((loc) => {
+    if (!loc) return;
+    if (loc.isLiveApi) {
+      setLocations((prev) => {
+        const exists = prev.some(
+          (l) =>
+            l.id === loc.id ||
+            (Math.abs(l.coordinates[0] - loc.coordinates[0]) < 0.0001 &&
+              Math.abs(l.coordinates[1] - loc.coordinates[1]) < 0.0001)
+        );
+        return exists ? prev : [loc, ...prev];
+      });
+    }
+
+    setActiveLocation(loc);
+    setFlyCoords({ coords: loc.coordinates, zoom: 14 });
+    setSearchFocused(false);
+  }, []);
+
+  // Execute full search on Enter or clicking Search button
+  const handleExecuteSearch = useCallback(
+    async (queryText) => {
+      const q = (queryText || searchQuery || '').trim();
+      if (!q) return;
+
+      setSearchFocused(true);
+
+      const qLower = q.toLowerCase();
+      const dbMatches = locations.filter(
+        (l) =>
+          l.name.toLowerCase().includes(qLower) ||
+          l.district.toLowerCase().includes(qLower) ||
+          (l.region && l.region.toLowerCase().includes(qLower))
+      );
+
+      const apiResults = await searchMapPlacesApi(q);
+
+      if (dbMatches.length > 0) {
+        handleSelectSearchResult(dbMatches[0]);
+      } else if (apiResults && apiResults.length > 0) {
+        handleSelectSearchResult(apiResults[0]);
+      }
+    },
+    [searchQuery, locations, searchMapPlacesApi, handleSelectSearchResult]
+  );
+
+  // Debounced API search when typing
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q || q.length < 2) {
+      setApiSearchResults([]);
+      setIsSearchingApi(false);
+      return;
+    }
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      searchMapPlacesApi(q);
+    }, 450);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchQuery, searchMapPlacesApi]);
+
   // Safety Overlays State (Mountain Trust Protocol)
   const [safetyLayers, setSafetyLayers] = useState({
     landslideRisk: false,
@@ -595,19 +728,39 @@ export default function MapPage() {
           });
         }
 
-        // Guarantee fallback set if needed
-        if (all.length < 10) {
-          const defaults = [
-            { name: 'Kedarnath Temple', category: 'spiritual', district: 'Rudraprayag', coords: [30.7333, 79.0667], altitude: '3,583m' },
-            { name: 'Adi Kailash', category: 'destination', district: 'Pithoragarh', coords: [30.3167, 80.6333], altitude: '5,945m' },
-            { name: 'Badrinath Dham', category: 'spiritual', district: 'Chamoli', coords: [30.7465, 79.4942], altitude: '3,300m' },
-            { name: 'Auli Ski Meadow', category: 'activity', district: 'Chamoli', coords: [30.5189, 79.5674], altitude: '2,800m' },
-            { name: 'Rishikesh & Ganga Ghats', category: 'destination', district: 'Dehradun', coords: [30.0869, 78.2676], altitude: '372m' },
-            { name: 'Valley of Flowers', category: 'destination', district: 'Chamoli', coords: [30.7280, 79.5960], altitude: '3,658m' },
-            { name: 'Almora', category: 'destination', district: 'Almora', coords: [29.5971, 79.6591], altitude: '1,638m' },
-            { name: 'Askot Musk Deer Sanctuary', category: 'destination', district: 'Pithoragarh', coords: [29.7600, 80.3500], altitude: '2,150m' },
-          ];
-          defaults.forEach((df, i) => {
+        // Always ensure comprehensive set of iconic Uttarakhand destinations exist
+        const defaults = [
+          { name: 'Kedarnath Temple', category: 'spiritual', district: 'Rudraprayag', coords: [30.7333, 79.0667], altitude: '3,583m' },
+          { name: 'Adi Kailash', category: 'destination', district: 'Pithoragarh', coords: [30.3167, 80.6333], altitude: '5,945m' },
+          { name: 'Badrinath Dham', category: 'spiritual', district: 'Chamoli', coords: [30.7465, 79.4942], altitude: '3,300m' },
+          { name: 'Auli Ski Meadow', category: 'activity', district: 'Chamoli', coords: [30.5189, 79.5674], altitude: '2,800m' },
+          { name: 'Rishikesh & Ganga Ghats', category: 'destination', district: 'Dehradun', coords: [30.0869, 78.2676], altitude: '372m' },
+          { name: 'Valley of Flowers', category: 'destination', district: 'Chamoli', coords: [30.7280, 79.5960], altitude: '3,658m' },
+          { name: 'Mussoorie Queen of Hills', category: 'destination', district: 'Dehradun', coords: [30.4598, 78.0644], altitude: '2,005m' },
+          { name: 'Lansdowne Hill Cantonment', category: 'destination', district: 'Pauri Garhwal', coords: [29.8378, 78.6818], altitude: '1,706m' },
+          { name: 'Nainital Lake City', category: 'destination', district: 'Nainital', coords: [29.3919, 79.4542], altitude: '2,084m' },
+          { name: 'Haridwar Railhead Hub', category: 'destination', district: 'Haridwar', coords: [29.9457, 78.1642], altitude: '314m' },
+          { name: 'Chopta & Tungnath Meadow', category: 'activity', district: 'Rudraprayag', coords: [30.4889, 79.2172], altitude: '3,680m' },
+          { name: 'Ranikhet Pine Ridge', category: 'destination', district: 'Almora', coords: [29.6434, 79.4322], altitude: '1,869m' },
+          { name: 'Kausani Himalayan View', category: 'destination', district: 'Bageshwar', coords: [29.8447, 79.5969], altitude: '1,890m' },
+          { name: 'Dayara Bugyal High Alpine', category: 'activity', district: 'Uttarkashi', coords: [30.8520, 78.5410], altitude: '3,650m' },
+          { name: 'Gangotri Dham Glacier', category: 'spiritual', district: 'Uttarkashi', coords: [30.9940, 79.0706], altitude: '3,048m' },
+          { name: 'Yamunotri Dham Source', category: 'spiritual', district: 'Uttarkashi', coords: [31.0140, 78.4600], altitude: '3,291m' },
+          { name: 'Hemkund Sahib Gurudwara', category: 'spiritual', district: 'Chamoli', coords: [30.7000, 79.5800], altitude: '4,160m' },
+          { name: 'Munsiyari Panchachuli Base', category: 'destination', district: 'Pithoragarh', coords: [30.0667, 80.2333], altitude: '2,200m' },
+          { name: 'Joshimath Himalayan Gateway', category: 'destination', district: 'Chamoli', coords: [30.5560, 79.5660], altitude: '1,890m' },
+          { name: 'Uttarkashi Bhagirathi Valley', category: 'destination', district: 'Uttarkashi', coords: [30.7248, 78.4464], altitude: '1,158m' },
+          { name: 'Dhanaulti Eco Park', category: 'destination', district: 'Tehri Garhwal', coords: [30.4500, 78.2300], altitude: '2,286m' },
+          { name: 'Chakrata Tiger Falls', category: 'destination', district: 'Dehradun', coords: [30.7016, 77.8696], altitude: '2,118m' },
+          { name: 'Almora Cultural Hub', category: 'destination', district: 'Almora', coords: [29.5971, 79.6591], altitude: '1,638m' },
+          { name: 'Askot Musk Deer Sanctuary', category: 'destination', district: 'Pithoragarh', coords: [29.7600, 80.3500], altitude: '2,150m' },
+        ];
+
+        defaults.forEach((df, i) => {
+          const exists = all.some(
+            (item) => item.name.toLowerCase().includes(df.name.toLowerCase().slice(0, 8))
+          );
+          if (!exists) {
             all.push({
               id: `default-${i}`,
               name: df.name,
@@ -622,8 +775,8 @@ export default function MapPage() {
               description: `Iconic Himalayan landmark in ${df.district}, Uttarakhand.`,
               link: `/${df.category === 'stay' ? 'stays' : df.category === 'spiritual' ? 'spiritual' : 'destinations'}/${df.name.toLowerCase().replace(/\s+/g, '-')}`,
             });
-          });
-        }
+          }
+        });
 
         setLocations(all);
         if (all.length > 0) {
@@ -721,6 +874,20 @@ export default function MapPage() {
     return matches.length > 0 ? matches.slice(0, 4) : locations.slice(0, 4);
   }, [locations]);
 
+  // Live local DB search matches
+  const dbSearchMatches = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    return locations
+      .filter(
+        (loc) =>
+          loc.name.toLowerCase().includes(q) ||
+          loc.district.toLowerCase().includes(q) ||
+          (loc.region && loc.region.toLowerCase().includes(q))
+      )
+      .slice(0, 6);
+  }, [locations, searchQuery]);
+
   return (
     <div className="h-screen flex flex-col bg-[#f8fafc] text-slate-800 font-sans overflow-hidden antialiased select-none">
       
@@ -734,72 +901,216 @@ export default function MapPage() {
           {/* Search Input & Category Filter Chips */}
           <div className="flex items-center flex-1 min-w-0 gap-2.5 overflow-x-auto no-scrollbar py-0.5">
             
-            {/* Search Bar with Popular Destinations Popup */}
-            <div className="relative min-w-[240px] sm:min-w-[280px] lg:min-w-[320px] shrink-0 z-30" ref={searchContainerRef}>
+            {/* Search Bar with Popular Destinations & Live GIS Popup */}
+            <div className="relative min-w-[260px] sm:min-w-[300px] lg:min-w-[360px] shrink-0 z-30" ref={searchContainerRef}>
               <div className="relative flex items-center">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#0f3d2e]">
-                  <Search size={15} />
-                </span>
+                {/* Clickable Search / Spinner Button */}
+                <button
+                  type="button"
+                  onClick={() => handleExecuteSearch(searchQuery)}
+                  className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#0f3d2e] hover:text-emerald-700 transition cursor-pointer z-10"
+                  title="Search places, shrines & Live Map API (Enter)"
+                >
+                  {isSearchingApi ? (
+                    <Loader2 size={16} className="animate-spin text-[#0f3d2e]" />
+                  ) : (
+                    <Search size={16} className="hover:scale-110 transition-transform" />
+                  )}
+                </button>
+
                 <input
                   id="map-search-input"
                   type="text"
-                  placeholder="Search places, districts, shrines..."
+                  placeholder="Search places, towns, live map GIS..."
                   value={searchQuery}
                   onFocus={() => setSearchFocused(true)}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-16 py-2 text-xs font-medium bg-stone-50/80 border border-stone-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 focus:border-[#0f3d2e] focus:bg-white text-stone-900 placeholder:text-stone-400 transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleExecuteSearch(searchQuery);
+                    }
+                  }}
+                  className="w-full pl-9 pr-18 py-2 text-xs font-semibold bg-stone-50/80 border border-stone-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/30 focus:border-[#0f3d2e] focus:bg-white text-stone-900 placeholder:text-stone-400 placeholder:font-normal transition-all"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 gap-1">
+
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1 z-10">
                   {searchQuery ? (
                     <button
                       type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="p-1 text-stone-400 hover:text-stone-600 rounded-full"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setApiSearchResults([]);
+                      }}
+                      className="p-1 text-stone-400 hover:text-stone-600 rounded-full cursor-pointer"
+                      title="Clear search"
                     >
                       <X size={13} />
                     </button>
-                  ) : (
-                    <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-stone-500 bg-white border border-stone-200 rounded shadow-2xs">
-                      ⌘K
-                    </kbd>
-                  )}
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => handleExecuteSearch(searchQuery)}
+                    className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-50 hover:bg-[#0f3d2e] text-[#0f3d2e] hover:text-white border border-emerald-200 rounded-lg transition shadow-2xs cursor-pointer"
+                    title="Run live search"
+                  >
+                    Go
+                  </button>
                 </div>
               </div>
 
-              {/* Popular Destinations Dropdown */}
+              {/* Comprehensive Dropdown: Local DB Matches + Live Satellite/GIS API */}
               {searchFocused && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-md border border-stone-200 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-stone-100 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="px-3.5 py-2 bg-stone-50/80 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                    <span>Popular Destinations</span>
-                    <span className="text-[9px] font-normal lowercase text-stone-400">click to view</span>
-                  </div>
-                  <div className="p-1.5">
-                    {popularSuggestions.map((pop) => (
-                      <button
-                        key={pop.id}
-                        type="button"
-                        onClick={() => {
-                          handleSelectLocation(pop);
-                          setSearchFocused(false);
-                          setSearchQuery('');
-                        }}
-                        className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-stone-50 flex items-center justify-between group/item transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200 text-[#0f3d2e] flex items-center justify-center shrink-0">
-                            <Mountain size={12} />
+                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white/98 backdrop-blur-md border border-stone-200 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-stone-100 animate-in fade-in slide-in-from-top-1 duration-150 max-h-[440px] flex flex-col">
+                  
+                  {/* If user hasn't typed anything yet: Show Popular Destinations */}
+                  {!searchQuery.trim() ? (
+                    <div>
+                      <div className="px-3.5 py-2 bg-stone-50/90 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                        <span>Popular Destinations (1-Tap Explore)</span>
+                        <span className="text-[9px] font-normal lowercase text-stone-400">click to view</span>
+                      </div>
+                      <div className="p-1.5 max-h-64 overflow-y-auto">
+                        {popularSuggestions.map((pop) => (
+                          <button
+                            key={pop.id}
+                            type="button"
+                            onClick={() => handleSelectSearchResult(pop)}
+                            className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-stone-50 flex items-center justify-between group/item transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200 text-[#0f3d2e] flex items-center justify-center shrink-0">
+                                <Mountain size={12} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-stone-900 truncate">{pop.name}</p>
+                                <p className="text-[10px] text-stone-500 truncate">{pop.district} • {pop.altitude}</p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-[#0f3d2e] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              {pop.categoryLabel}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    /* User is actively searching */
+                    <div className="overflow-y-auto flex-1 divide-y divide-stone-100">
+                      
+                      {/* Section 1: Matching Database Locations */}
+                      {dbSearchMatches.length > 0 && (
+                        <div>
+                          <div className="px-3.5 py-1.5 bg-stone-50/90 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                            <span>Database Locations ({dbSearchMatches.length})</span>
+                            <span className="text-[9px] font-semibold text-emerald-800">Verified</span>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-stone-900 truncate">{pop.name}</p>
-                            <p className="text-[10px] text-stone-500 truncate">{pop.district} • {pop.altitude}</p>
+                          <div className="p-1 space-y-0.5">
+                            {dbSearchMatches.map((loc) => (
+                              <button
+                                key={loc.id}
+                                type="button"
+                                onClick={() => handleSelectSearchResult(loc)}
+                                className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-emerald-50/60 flex items-center justify-between transition-colors cursor-pointer group"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-6 h-6 rounded-lg bg-emerald-100/70 text-[#0f3d2e] flex items-center justify-center shrink-0 border border-emerald-200">
+                                    <MapPin size={12} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-stone-900 truncate group-hover:text-[#0f3d2e]">{loc.name}</p>
+                                    <p className="text-[10px] text-stone-500 truncate">{loc.district} • {loc.altitude}</p>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                                  {loc.categoryLabel}
+                                </span>
+                              </button>
+                            ))}
                           </div>
                         </div>
-                        <span className="text-[10px] font-bold text-[#0f3d2e] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          {pop.categoryLabel}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                      )}
+
+                      {/* Section 2: Live GIS & Satellite Map API Results */}
+                      <div>
+                        <div className="px-3.5 py-1.5 bg-emerald-50/60 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#0f3d2e] border-y border-emerald-100">
+                          <span className="flex items-center gap-1.5">
+                            <Compass size={11} className="text-[#0f3d2e]" />
+                            <span>Live GIS &amp; Satellite Map Results</span>
+                          </span>
+                          {isSearchingApi ? (
+                            <span className="flex items-center gap-1 text-[9px] text-[#0f3d2e]">
+                              <Loader2 size={10} className="animate-spin" /> Searching...
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-emerald-700">{apiSearchResults.length} found</span>
+                          )}
+                        </div>
+
+                        {isSearchingApi && apiSearchResults.length === 0 ? (
+                          <div className="p-3.5 flex items-center gap-2.5 text-xs text-stone-500">
+                            <Loader2 size={13} className="animate-spin text-[#0f3d2e] shrink-0" />
+                            <span>Querying Geoapify &amp; Map Satellite GIS across Uttarakhand...</span>
+                          </div>
+                        ) : apiSearchResults.length > 0 ? (
+                          <div className="p-1 space-y-0.5">
+                            {apiSearchResults.map((place) => (
+                              <button
+                                key={place.id}
+                                type="button"
+                                onClick={() => handleSelectSearchResult(place)}
+                                className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-emerald-50/70 flex items-center justify-between transition-colors cursor-pointer group"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-6 h-6 rounded-lg bg-[#0f3d2e] text-emerald-300 flex items-center justify-center shrink-0">
+                                    <Globe size={12} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-stone-900 truncate group-hover:text-[#0f3d2e]">{place.name}</p>
+                                    <p className="text-[10px] text-stone-500 truncate">{place.district}</p>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-black text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                                  Live Pin 📍
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : !isSearchingApi && dbSearchMatches.length === 0 ? (
+                          <div className="p-4 text-center space-y-2">
+                            <p className="text-xs text-stone-500">
+                              No places found matching &ldquo;{searchQuery}&rdquo;.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleExecuteSearch(searchQuery)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#0f3d2e] hover:bg-[#15533f] rounded-xl shadow-xs transition cursor-pointer"
+                            >
+                              <Search size={12} />
+                              <span>Search Live Uttarakhand GIS</span>
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* Bottom Instant API Query Button */}
+                  {searchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => handleExecuteSearch(searchQuery)}
+                      className="w-full text-left p-2.5 bg-stone-50 hover:bg-emerald-50 text-[#0f3d2e] flex items-center justify-between text-xs font-bold transition border-t border-stone-200 cursor-pointer shrink-0"
+                    >
+                      <span className="flex items-center gap-1.5 truncate">
+                        <Globe size={13} className="text-[#0f3d2e] shrink-0" />
+                        <span className="truncate">Search entire Uttarakhand via Live Map GIS for &ldquo;{searchQuery}&rdquo;</span>
+                      </span>
+                      <ArrowRight size={13} className="shrink-0" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -895,6 +1206,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('rental')}
+       
               className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'rental'
                   ? 'bg-sky-700 text-white shadow-xs ring-2 ring-sky-400/50'

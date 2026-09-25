@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RentalCard from '../components/RentalCard';
 import CategoryHero from '../components/CategoryHero';
+import RentalHero from '../components/rentals/RentalHero';
 import Pagination from '../components/common/Pagination';
 import { useRentals } from '../hooks/useRentals';
 import { LocateFixed, X } from 'lucide-react';
@@ -206,15 +207,17 @@ const Rentals = () => {
       <Navbar />
       
       <main className="flex-grow flex flex-col pb-20">
-        <CategoryHero 
-          title="Rent Your Ride"
-          subtitle="Your road. Your pace."
-          description="Choose your ride and explore Uttarakhand your way."
-          bgImage="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=2000&auto=format&fit=crop"
+        <RentalHero 
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(cat) => setSelectedCategory(cat)}
+          onDetectLocation={handleDetectLocation}
+          isDetectingLocation={isDetectingLocation}
+          userLocation={userLocation}
         />
         
         {/* Rent Your Ride Section */}
-        <section className="pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <section id="rentals-fleet-grid" className="pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
           
           {/* ── SMART GPS & CITY HUBS QUICK SELECTOR ── */}
           <div className="mb-6 bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-sm">
