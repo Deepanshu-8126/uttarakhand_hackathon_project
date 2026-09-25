@@ -1524,7 +1524,7 @@ export default function MapPage() {
               : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(corr.name + ' Uttarakhand')}`;
 
             return (
-              <div className="absolute top-4 right-4 z-[400] flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[calc(100vw-2rem)]">
+              <div className="absolute top-16 sm:top-4 right-2 sm:right-4 z-[400] flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur-md px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl shadow-lg border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[calc(100vw-1rem)]">
                 <div className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full shrink-0 shadow-xs"
@@ -1614,7 +1614,7 @@ export default function MapPage() {
             <HimalayanCorridorsLayer activeCorridorId={activeCorridorId} />
 
             {/* Bottom-Left Navigation Tools inside Leaflet Context */}
-            <div className="absolute bottom-20 left-4 z-[400]">
+            <div className="absolute bottom-24 md:bottom-6 left-3 sm:left-4 z-[400]">
               <MapNavigationTools onRecenter={() => setActiveLocation(null)} />
             </div>
 
@@ -1841,8 +1841,8 @@ export default function MapPage() {
           </MapContainer>
 
           {/* ── Floating Bottom Toolbar (Corridor Radar, Plan Trip, AI Copilot) ── */}
-          <div className="absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto" data-purpose="floating-quick-actions">
-            <nav className="flex items-center gap-1 bg-[#0d281e]/95 backdrop-blur-xl px-2 py-1.5 rounded-full shadow-2xl border border-emerald-900/60 text-xs font-semibold text-white">
+          <div className="absolute bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[calc(100vw-20px)] overflow-x-auto no-scrollbar" data-purpose="floating-quick-actions">
+            <nav className="flex items-center gap-1 bg-[#0d281e]/95 backdrop-blur-xl px-2 py-1.5 rounded-full shadow-2xl border border-emerald-900/60 text-xs font-semibold text-white shrink-0">
               {/* Action 1: Corridor Radar */}
               <button
                 type="button"
@@ -1891,31 +1891,34 @@ export default function MapPage() {
 
         </section>
 
-        {/* ── Right Location List Sidebar (25% / 360px - 410px) ───── */}
+        {/* ── Right Location List / Mobile Bottom Sheet (Mobile: rounded-t-[24px], Desktop: w-[360px]-410px sidebar) ───── */}
         <aside
           className={`${
             sidebarOpen ? 'flex' : 'hidden'
-          } w-full md:w-[360px] lg:w-[410px] bg-stone-50 border-l border-stone-200 flex flex-col h-full z-20 shadow-lg md:shadow-none shrink-0`}
+          } fixed inset-x-0 bottom-0 top-[38%] md:relative md:inset-auto md:top-auto md:w-[360px] lg:w-[410px] bg-stone-50 border-t md:border-t-0 md:border-l border-stone-200 flex flex-col h-[62%] md:h-full z-40 rounded-t-[24px] md:rounded-none shadow-2xl md:shadow-none shrink-0 transition-transform duration-300`}
           data-purpose="locations-sidebar"
         >
+          {/* Mobile Grab Handle */}
+          <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto my-2 md:hidden shrink-0 cursor-pointer" onClick={() => setSidebarOpen(false)} />
+
           {/* Sidebar Header */}
-          <div className="px-4 py-3.5 border-b border-stone-200 bg-white flex flex-col gap-2.5 shrink-0">
+          <div className="px-4 py-3 border-b border-stone-200 bg-white flex flex-col gap-2 shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-black tracking-wider text-stone-900 uppercase">
+                  <h2 className="text-sm sm:text-base font-black tracking-wider text-stone-900 uppercase">
                     LOCATIONS
                   </h2>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-[#0f3d2e] text-white">
                     {filteredLocations.length}
                   </span>
                 </div>
-                <p className="text-xs text-stone-500 mt-0.5 font-medium">
+                <p className="text-[11px] sm:text-xs text-stone-500 mt-0.5 font-medium">
                   {filteredLocations.length} verified places available
                 </p>
               </div>
 
-              {/* Sort Toggle Button */}
+              {/* Sort Toggle & Mobile Close Sheet Buttons */}
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -1924,6 +1927,14 @@ export default function MapPage() {
                   title={`Sorted by ${sortBy === 'name' ? 'Name (A-Z)' : 'Altitude (High-Low)'}`}
                 >
                   <ArrowUpDown size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="md:hidden p-1.5 rounded-lg border border-stone-200 hover:bg-stone-100 text-stone-500 cursor-pointer"
+                  title="Close sheet"
+                >
+                  <X size={15} />
                 </button>
               </div>
             </div>
