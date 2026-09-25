@@ -438,11 +438,40 @@ export const useMapStore = create((set, get) => ({
     const targetDay = { ...updatedDays[targetIdx] };
     const itemType = (item.type || item.itemType || 'activity').toLowerCase();
 
+    const itemId = item._id || item.id || item.place_id || item.name;
+    const isAlreadyAdded = (list) => (list || []).some(existing => 
+      (existing._id && existing._id === itemId) || 
+      (existing.id && existing.id === itemId) || 
+      (existing.place_id && existing.place_id === itemId) ||
+      (existing.name && existing.name.toLowerCase() === (item.name || '').toLowerCase())
+    );
+
     if (itemType === 'stay' || itemType === 'hotel' || itemType === 'homestay') {
+      if (isAlreadyAdded(targetDay.stays)) {
+        get().showToast(`"${item.name}" is already in ${targetDay.title?.split(':')[0] || 'your trip'}!`);
+        set({ addToTripModalItem: null });
+        return;
+      }
       targetDay.stays = [...(targetDay.stays || []), item];
     } else if (itemType === 'rental' || itemType === 'car' || itemType === 'bike') {
+      if (isAlreadyAdded(targetDay.rentals)) {
+        get().showToast(`"${item.name}" is already reserved for ${targetDay.title?.split(':')[0] || 'your trip'}!`);
+        set({ addToTripModalItem: null });
+        return;
+      }
       targetDay.rentals = [...(targetDay.rentals || []), item];
     } else {
+      if (isAlreadyAdded(targetDay.activities)) {
+        get().showToast(`"${item.name}" is already added to ${targetDay.title?.split(':')[0] || 'your trip'}!`);
+        set({ addToTripModalItem: null });
+        return;
+      }
+      const totalActivities = (targetDay.activities || []).length;
+      if (totalActivities >= 8) {
+        get().showToast(`Day limit reached (8 stops max). Keep time to rest!`);
+        set({ addToTripModalItem: null });
+        return;
+      }
       targetDay.activities = [...(targetDay.activities || []), item];
     }
 
