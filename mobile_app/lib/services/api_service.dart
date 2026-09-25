@@ -71,14 +71,18 @@ class ApiService {
 
   // ── AI Copilot Chat ────────────────────────────────────────────────────────
   static Future<Map<String, dynamic>> sendCopilotMessage(
-      String message, {String? destination}) async {
+      String message, {String? destination, bool isVoice = false}) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/agent/chat'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'message': message,
-          'pageContext': destination != null ? {'destinationName': destination} : null,
+          'pageContext': {
+            'pageType': isVoice ? 'VOICE_AGENT' : 'MOBILE_COPILOT',
+            'currentPage': isVoice ? 'COPILOT_VOICE' : 'MOBILE_APP',
+            if (destination != null) 'destinationName': destination,
+          },
         }),
       ).timeout(const Duration(seconds: 25));
 

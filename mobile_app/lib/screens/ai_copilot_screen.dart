@@ -64,7 +64,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     });
   }
 
-  Future<void> _handleSendMessage([String? overrideText]) async {
+  Future<void> _handleSendMessage([String? overrideText, bool isVoice = false]) async {
     final text = (overrideText ?? _controller.text).trim();
     if (text.isEmpty) return;
 
@@ -76,7 +76,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     });
     _scrollToBottom();
 
-    final result = await ApiService.sendCopilotMessage(text);
+    final result = await ApiService.sendCopilotMessage(text, isVoice: isVoice);
 
     if (mounted) {
       setState(() {
@@ -326,7 +326,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                       return InkWell(
                         onTap: () {
                           Navigator.pop(ctx);
-                          _handleSendMessage(topic);
+                          _handleSendMessage(topic, true);
                         },
                         borderRadius: BorderRadius.circular(999),
                         child: Container(
