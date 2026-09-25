@@ -31,8 +31,21 @@ export function cleanTextForSpeech(rawText) {
     .trim();
 }
 
+let cachedVoices = [];
+
+function loadVoices() {
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    cachedVoices = window.speechSynthesis.getVoices();
+  }
+}
+
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
 /**
- * Speak text aloud using browser Web Speech API
+ * Speak text aloud using best available natural neural voice
  */
 export function speakText(text, { 
   lang = 'hi-IN', 
@@ -60,19 +73,38 @@ export function speakText(text, {
   try {
     const utterance = new SpeechSynthesisUtterance(clean);
     
-    // Select best available voice (Prefer Indian Hindi or English voice if available)
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      (v.lang === 'hi-IN' || v.lang.startsWith('hi')) || 
-      (v.lang === 'en-IN') ||
-      (v.name.includes('India') || v.name.includes('Hindi'))
-    ) || voices.find(v => v.lang.startsWith('en')) || null;
+    // Refresh voices if empty
+    if (!cachedVoices || cachedVoices.length === 0) {
+      loadVoices();
+    }
+    const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+    
+    // Check if text has Devanagari (Hindi) characters
+    const hasHindi = /[\u0900-\u097F]/.test(clean);
+    const targetLang = hasHindi ? 'hi-IN' : (lang || 'en-IN');
+
+    // Rank voices by naturalness and language match
+    let preferredVoice = null;
+    
+    if (hasHindi || targetLang.startsWith('hi')) {
+      preferredVoice = voices.find(v => v.name.includes('Natural') && (v.lang.startsWith('hi') || v.name.includes('Hindi')))
+        || voices.find(v => v.name.includes('Google') && (v.lang.startsWith('hi') || v.name.includes('Hindi')))
+        || voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi'))
+        || voices.find(v => v.name.includes('Neerja') || v.name.includes('Swara') || v.name.includes('Madhur') || v.name.includes('Hemant'))
+        || voices.find(v => v.name.includes('India'))
+        || voices.find(v => v.lang === 'en-IN');
+    } else {
+      preferredVoice = voices.find(v => v.name.includes('Natural') && (v.lang === 'en-IN' || v.name.includes('India')))
+        || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+        || voices.find(v => v.lang === 'en-IN')
+        || voices.find(v => v.lang.startsWith('en'));
+    }
 
     if (preferredVoice) {
       utterance.voice = preferredVoice;
       utterance.lang = preferredVoice.lang;
     } else {
-      utterance.lang = lang;
+      utterance.lang = targetLang;
     }
 
     utterance.rate = rate;
