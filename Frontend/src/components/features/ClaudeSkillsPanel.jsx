@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Mountain, Map, MessageSquare, AlertTriangle, 
-  Sparkles, CheckCircle2, ArrowRight, ShieldCheck, Compass, HeartPulse, Radio
+  Mountain, Map, MessageSquare, 
+  Sparkles, CheckCircle2, ArrowRight, Radio
 } from 'lucide-react';
 
 const TOOLS = [

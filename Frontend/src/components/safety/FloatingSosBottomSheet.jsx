@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
-  Radio, 
   WifiOff, 
   Wifi, 
   Users, 
   PhoneCall, 
-  MapPin, 
   X, 
   AlertOctagon, 
   CheckCircle2, 
-  Compass,
-  Sparkles,
-  Signal,
-  RotateCcw
+  Compass
 } from 'lucide-react';
 
 export default function FloatingSosBottomSheet() {
@@ -67,7 +62,7 @@ export default function FloatingSosBottomSheet() {
         osc.start();
         osc.stop(ctx.currentTime + 0.35);
       }
-    } catch (e) {
+    } catch {
       // Audio context might be restricted before user gesture
     }
 
