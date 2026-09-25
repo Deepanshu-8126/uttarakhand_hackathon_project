@@ -140,6 +140,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/truth', truthRoutes);
 app.use('/api/safety', safetyRoutes);
 app.use('/api/places', placesRoutes);
+app.use('/api/search', placesRoutes);
 app.use('/internal/agent', internalAgentRoutes);
 
 // Liveness & Application Health Check

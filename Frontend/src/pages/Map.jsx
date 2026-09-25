@@ -135,6 +135,22 @@ const CATEGORY_STYLES = {
     badgeText: '🚗 VEHICLE FLEET',
     iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>`,
   },
+  verified: {
+    color: '#0F2B1F', // Brand green pin for verified catalog places
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-300',
+    text: 'text-[#0F2B1F]',
+    badgeText: '✅ VERIFIED',
+    iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>`,
+  },
+  ai_discovery: {
+    color: '#64748B', // Gray pin for unverified AI/OSM discoveries
+    bg: 'bg-slate-100',
+    border: 'border-slate-300',
+    text: 'text-slate-600',
+    badgeText: '🌐 AI DISCOVERY',
+    iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  },
 };
 
 // ─── Custom Category SVG Marker ──────────────────────────────
@@ -909,14 +925,14 @@ export default function MapPage() {
       <Navbar />
 
       {/* ── 2. SubHeader Filters & Search Bar ─────────────────────── */}
-      <div className="bg-white border-b border-slate-200 px-4 lg:px-6 py-2.5 shrink-0 z-20 shadow-xs" data-purpose="filter-bar">
-        <div className="flex flex-wrap items-center justify-between gap-3 max-w-full">
+      <div className="bg-white border-b border-slate-200 px-3 sm:px-4 lg:px-6 py-2 shrink-0 z-20 shadow-xs" data-purpose="filter-bar">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 max-w-full">
           
           {/* Search Input & Category Filter Chips */}
-          <div className="flex items-center flex-1 min-w-0 gap-2.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center flex-1 min-w-0 gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5">
             
             {/* Search Bar with Popular Destinations & Live GIS Popup */}
-            <div className="relative min-w-[260px] sm:min-w-[300px] lg:min-w-[360px] shrink-0 z-30" ref={searchContainerRef}>
+            <div className="relative min-w-[200px] sm:min-w-[280px] lg:min-w-[340px] shrink-0 z-30" ref={searchContainerRef}>
               <div className="relative flex items-center">
                 {/* Clickable Search / Spinner Button */}
                 <button
@@ -1343,27 +1359,28 @@ export default function MapPage() {
           )}
 
           {/* Top Left: Unified Premium Glassmorphic Map Control Dock */}
-          <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-[400] flex items-center gap-1.5 select-none">
-            <div className="flex items-center bg-white/95 backdrop-blur-md rounded-2xl p-1 shadow-md border border-stone-200/90 text-xs font-medium">
+          <div className="absolute top-2 left-2 right-2 sm:right-auto sm:top-4 sm:left-4 z-[400] flex items-center gap-1.5 select-none max-w-[calc(100vw-16px)] sm:max-w-none overflow-x-auto no-scrollbar py-0.5">
+            <div className="flex items-center bg-white/95 backdrop-blur-md rounded-2xl p-1 shadow-md border border-stone-200/90 text-xs font-medium shrink-0">
               {/* Map Tile Switchers */}
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
                   onClick={() => setActiveTile('geoapify')}
-                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-1.5 min-h-[38px] sm:min-h-[42px] rounded-xl transition-all font-bold flex items-center gap-1.5 ${
                     activeTile === 'geoapify'
                       ? 'bg-[#0f3d2e] text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                   }`}
                 >
                   <Compass size={13} className={activeTile === 'geoapify' ? 'text-emerald-300' : 'text-stone-400'} />
-                  <span>Geoapify HD</span>
+                  <span className="hidden xs:inline">Geoapify HD</span>
+                  <span className="xs:hidden">GIS</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTile('voyager')}
-                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-1.5 min-h-[38px] sm:min-h-[42px] rounded-xl transition-all font-bold flex items-center gap-1.5 ${
                     activeTile === 'voyager'
                       ? 'bg-[#0f3d2e] text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -1376,20 +1393,21 @@ export default function MapPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTile('satellite')}
-                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-1.5 min-h-[38px] sm:min-h-[42px] rounded-xl transition-all font-bold flex items-center gap-1.5 ${
                     activeTile === 'satellite'
                       ? 'bg-[#0f3d2e] text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                   }`}
                 >
                   <Layers size={13} className={activeTile === 'satellite' ? 'text-emerald-300' : 'text-stone-400'} />
-                  <span>Satellite 3D</span>
+                  <span className="hidden sm:inline">Satellite 3D</span>
+                  <span className="sm:hidden">Satellite</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTile('dark')}
-                  className={`px-2.5 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 ${
+                  className={`px-2 sm:px-2.5 py-1.5 min-h-[38px] sm:min-h-[42px] rounded-xl transition-all font-bold flex items-center gap-1.5 ${
                     activeTile === 'dark'
                       ? 'bg-[#0f3d2e] text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -1408,7 +1426,7 @@ export default function MapPage() {
                 <button
                   type="button"
                   onClick={() => setSafetyPanelOpen(!safetyPanelOpen)}
-                  className={`px-3 py-1.5 rounded-xl transition-all font-bold flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 min-h-[38px] sm:min-h-[42px] rounded-xl transition-all font-bold flex items-center gap-1.5 cursor-pointer ${
                     safetyPanelOpen || Object.values(safetyLayers).some(Boolean)
                       ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs'
                       : 'text-stone-700 hover:bg-stone-100'
