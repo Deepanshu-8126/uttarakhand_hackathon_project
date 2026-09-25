@@ -68,9 +68,61 @@ export default function RentalCard({ rental, userCoords }) {
     return null;
   }, [userCoords, rental]);
 
+  const getVehicleSpecs = (name = '', type = '') => {
+    const n = (name + ' ' + type).toLowerCase();
+    if (n.includes('himalayan') || n.includes('scram') || n.includes('xpulse')) {
+      return [
+        { label: '411cc High Torque', icon: '⚡' },
+        { label: 'Luggage Panniers', icon: '🧳' },
+        { label: 'Dual ABS', icon: '🛡️' },
+        { label: '2 Helmets', icon: '🪖' },
+      ];
+    }
+    if (n.includes('classic') || n.includes('bullet') || n.includes('meteor') || n.includes('hunter')) {
+      return [
+        { label: '349cc Engine', icon: '⚡' },
+        { label: 'Hill Cruise Gear', icon: '⚙️' },
+        { label: 'Pillion Backrest', icon: '🛡️' },
+        { label: 'Helmet Included', icon: '🪖' },
+      ];
+    }
+    if (n.includes('thar') || n.includes('gurkha') || n.includes('4x4')) {
+      return [
+        { label: '4x4 High/Low Range', icon: '🏔️' },
+        { label: '2.2L mHawk Diesel', icon: '⚡' },
+        { label: '226mm Clearance', icon: '📐' },
+        { label: 'Hill Descent Control', icon: '🛡️' },
+      ];
+    }
+    if (n.includes('scorpio') || n.includes('innova') || n.includes('fortuner') || n.includes('xuv')) {
+      return [
+        { label: '7-Seater SUV', icon: '👥' },
+        { label: 'Turbo Diesel', icon: '⚡' },
+        { label: 'All-Terrain Tires', icon: '🛞' },
+        { label: 'Dual AC + Roof Rack', icon: '❄️' },
+      ];
+    }
+    if (n.includes('activa') || n.includes('jupiter') || n.includes('ntorq') || n.includes('access') || n.includes('scooter')) {
+      return [
+        { label: '110cc Automatic', icon: '⚡' },
+        { label: '50 km/l Fuel Avg', icon: '⛽' },
+        { label: 'Boot Storage', icon: '📦' },
+        { label: 'Helmet Included', icon: '🪖' },
+      ];
+    }
+    return [
+      { label: 'Pahadi Tested', icon: '🏔️' },
+      { label: 'Full Insurance', icon: '📜' },
+      { label: 'GPS Live Beacon', icon: '📡' },
+      { label: 'Zero Security Deposit', icon: '💳' },
+    ];
+  };
+
+  const specs = getVehicleSpecs(rental.name, rental.type || rental.category);
+
   return (
     <>
-      <div className="bg-white rounded-3xl overflow-hidden card-shadow flex flex-col h-full border border-stone-200/80 hover:border-stone-300 transition-all duration-300 justify-between">
+      <div className="bg-white rounded-3xl overflow-hidden card-shadow flex flex-col h-full border border-stone-200/80 hover:border-stone-400 transition-all duration-300 justify-between">
         
         {/* ── 1. Image Container (16:9 Mobile, 4:3 Desktop) ───────────────────── */}
         <div className="relative aspect-[16/9] sm:aspect-[4/3] w-full overflow-hidden bg-stone-100 group">
@@ -135,22 +187,22 @@ export default function RentalCard({ rental, userCoords }) {
         <div className="p-4 sm:p-5 flex flex-col flex-grow justify-between">
           <div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-900 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300/60">
                 {rental.type || rental.category || 'Rental Vehicle'}
               </span>
-              <span className="text-[10px] text-stone-400 font-semibold">
-                Escrow Protected
+              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                100% Escrow Protected
               </span>
             </div>
 
-            <h3 className="text-base font-bold text-slate-900 mb-1 group-hover:text-[#0f3d2e] transition-colors line-clamp-1">
+            <h3 className="text-base font-extrabold text-slate-900 mb-1 group-hover:text-[#0f3d2e] transition-colors line-clamp-1">
               {rental.name}
             </h3>
 
-            <div className="text-xs text-slate-500 font-medium mb-3 flex items-center justify-between gap-1">
+            <div className="text-xs text-slate-600 font-medium mb-2.5 flex items-center justify-between gap-1">
               <span className="flex items-center gap-1 truncate">
-                <span className="text-slate-400">📍</span>
-                <span className="truncate">{locationText}</span>
+                <span className="text-emerald-700">📍</span>
+                <span className="truncate font-semibold">{locationText}</span>
               </span>
               {distanceKm !== null && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1 ${
@@ -164,15 +216,15 @@ export default function RentalCard({ rental, userCoords }) {
               )}
             </div>
 
-            {rental.features && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {(Array.isArray(rental.features) ? rental.features : [rental.features]).slice(0, 2).map((feat, i) => (
-                  <span key={i} className="text-[10px] bg-stone-100 text-slate-600 font-medium px-2 py-0.5 rounded-md">
-                    {feat}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Technical Mountain Vehicle Specs Grid */}
+            <div className="grid grid-cols-2 gap-1.5 mb-3 bg-stone-50 p-2.5 rounded-xl border border-stone-200/80">
+              {specs.map((spec, idx) => (
+                <div key={idx} className="flex items-center gap-1.5 text-[10.5px] font-semibold text-slate-700 truncate">
+                  <span className="text-xs">{spec.icon}</span>
+                  <span className="truncate">{spec.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* ── 3. Price & Action Bar ───────────────────────────────────── */}

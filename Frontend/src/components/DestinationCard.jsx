@@ -26,7 +26,7 @@ const DestinationCard = ({ destination, distance }) => {
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-stone-200/80 group text-left"
     >
       {/* 1. Clean Destination Photo with Self-Healing Fallback */}
-      <div className="relative h-56 w-full overflow-hidden bg-stone-100">
+      <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-stone-100">
         <img
           src={coverImage}
           alt={destination.name || 'Destination in Uttarakhand'}
@@ -40,10 +40,10 @@ const DestinationCard = ({ destination, distance }) => {
       </div>
 
       {/* 2. Content */}
-      <div className="p-6 flex flex-col flex-grow justify-between space-y-4">
+      <div className="p-4 sm:p-6 flex flex-col flex-grow justify-between space-y-3 sm:space-y-4">
         <div>
           {/* Title */}
-          <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#1a4331] transition-colors leading-snug">
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-[#1a4331] transition-colors leading-snug">
             {destination.name}
           </h3>
 

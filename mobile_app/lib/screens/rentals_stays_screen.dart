@@ -158,8 +158,47 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                       children: [
                         const Icon(Icons.location_on, size: 13, color: Color(0xFF047857)),
                         const SizedBox(width: 4),
-                        Text(r.location, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500)),
+                        Expanded(
+                          child: Text(
+                            r.location,
+                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFA5D6A7)),
+                          ),
+                          child: const Text(
+                            '100% Escrow Guard',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
+                          ),
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Technical Specs Badges
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _getVehicleSpecChips(r.name).map((chip) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Text(
+                            chip,
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                          ),
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -169,7 +208,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('₹${r.pricePerDay}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
-                            const Text('per day • Helmet included', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                            const Text('per day • Zero Security Deposit', style: TextStyle(fontSize: 10, color: Color(0xFF047857), fontWeight: FontWeight.w700)),
                           ],
                         ),
                         ElevatedButton(
@@ -195,6 +234,26 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
         );
       },
     );
+  }
+
+  List<String> _getVehicleSpecChips(String name) {
+    final n = name.toLowerCase();
+    if (n.includes('himalayan') || n.includes('scram') || n.includes('xpulse')) {
+      return ['⚡ 411cc High Torque', '🧳 Luggage Panniers', '🛡️ Dual ABS', '🪖 2 Helmets'];
+    }
+    if (n.includes('classic') || n.includes('bullet') || n.includes('meteor')) {
+      return ['⚡ 349cc Engine', '⚙️ Hill Cruise Gear', '🛡️ Backrest', '🪖 Helmet Included'];
+    }
+    if (n.includes('thar') || n.includes('gurkha') || n.includes('4x4')) {
+      return ['🏔️ 4x4 High-Low', '⚡ 2.2L mHawk Diesel', '📐 226mm Clearance', '🛡️ Hill Descent'];
+    }
+    if (n.includes('scorpio') || n.includes('innova') || n.includes('fortuner')) {
+      return ['👥 7-Seater SUV', '⚡ Turbo Diesel', '🛞 All-Terrain Tires', '❄️ Roof Rack'];
+    }
+    if (n.includes('activa') || n.includes('jupiter') || n.includes('ntorq') || n.includes('scooter')) {
+      return ['⚡ 110cc Auto', '⛽ 50 km/l Avg', '📦 Boot Storage', '🪖 Helmet Included'];
+    }
+    return ['🏔️ Hill Tested', '📜 Full Insurance', '📡 GPS Live Beacon', '💳 Zero Deposit'];
   }
 
   Widget _buildStaysTab() {

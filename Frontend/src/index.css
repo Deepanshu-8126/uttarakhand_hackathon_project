@@ -35,6 +35,15 @@
     }
   }
 
+  /* Mobile Safe Area & Touch Standards */
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
   body {
     background-color: var(--color-cream);
     color: var(--color-text-dark);
