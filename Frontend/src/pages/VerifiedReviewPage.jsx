@@ -313,50 +313,50 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
   });
 
   return (
-    <div className="min-h-screen bg-[#0A0E14] text-slate-100 font-sans selection:bg-[#00FF88]/20 selection:text-[#00FF88]">
+    <div className="min-h-screen bg-[#F8FAF9] text-slate-900 font-sans selection:bg-[#E8F5E9] selection:text-[#0f3d2e]">
       <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-28">
         
         {/* Page Top Header with Web3 Verified Badge */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-[#1F293D] pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-stone-200/80 pb-6">
           <div>
             <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-              <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-950/80 text-[#00FF88] border border-[#00FF88]/40 shadow-[0_0_12px_rgba(0,255,136,0.2)]">
+              <span className="text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-[#E8F5E9] text-[#0f3d2e] border border-emerald-300 shadow-xs">
                 VISITOR FEEDBACK • WEB3 VERIFIED
               </span>
-              <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
-                <ShieldCheck size={14} className="text-[#00FF88]" />
-                Zero Fake Reviews · GPS &amp; AI Proven
+              <span className="text-xs text-stone-500 font-semibold flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-emerald-700" />
+                Zero Fake Reviews · GPS &amp; On-Chain Proven
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
               On-Chain Himalayan Feedback
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-              Reviews on Discovery Uttarakhand are minted as NFTs only after physical GPS trail completion. Every voice is immutable, genuine, and rewarded.
+            <p className="text-xs sm:text-sm text-stone-600 mt-1 max-w-xl">
+              Reviews on Discovery Uttarakhand are minted on-chain only after physical GPS trail completion. Every voice is immutable, genuine, and rewarded.
             </p>
           </div>
 
           {/* Tab Switcher: Write Review vs Public Feed */}
-          <div className="flex items-center bg-[#151A26] p-1 rounded-2xl border border-[#1F293D] w-full sm:w-auto shrink-0">
+          <div className="flex items-center bg-stone-100 p-1.5 rounded-2xl border border-stone-200/90 w-full sm:w-auto shrink-0 shadow-xs">
             <button
               onClick={() => setActiveTab('write')}
               className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === 'write'
-                  ? 'bg-gradient-to-r from-emerald-600 to-[#0f3d2e] text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#0f3d2e] text-white shadow-sm'
+                  : 'text-stone-600 hover:text-slate-900'
               }`}
             >
-              <Sparkles size={14} className={activeTab === 'write' ? 'text-[#00FF88]' : ''} />
+              <Sparkles size={14} className={activeTab === 'write' ? 'text-emerald-300' : ''} />
               <span>Write Review</span>
             </button>
             <button
               onClick={() => setActiveTab('feed')}
               className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === 'feed'
-                  ? 'bg-gradient-to-r from-emerald-600 to-[#0f3d2e] text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#0f3d2e] text-white shadow-sm'
+                  : 'text-stone-600 hover:text-slate-900'
               }`}
             >
               <FileCheck size={14} />
@@ -372,15 +372,15 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
           <div className="space-y-8 animate-in fade-in duration-300">
             
             {/* ── STEP 1: VERIFY YOUR JOURNEY (AUTO) ── */}
-            <div className="bg-[#151A26] border border-[#1F293D] rounded-3xl p-5 sm:p-7 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#00FF88]/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="bg-white border border-stone-200/90 rounded-[28px] p-5 sm:p-7 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="flex items-center justify-between gap-3 mb-5 border-b border-[#1F293D]/80 pb-4">
+              <div className="flex items-center justify-between gap-3 mb-5 border-b border-stone-100 pb-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-[#00FF88] flex items-center justify-center font-black text-xs border border-[#00FF88]/40">
+                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-[#0f3d2e] flex items-center justify-center font-black text-xs border border-emerald-300">
                     1
                   </span>
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-300">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-800">
                     Step 1 · Trip Verification (Auto)
                   </span>
                 </div>
@@ -389,10 +389,10 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                 <button
                   type="button"
                   onClick={() => setIsTrekVerified(!isTrekVerified)}
-                  className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`text-[10px] font-bold px-3 py-1 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
                     isTrekVerified
-                      ? 'bg-emerald-950/60 border-emerald-500/40 text-[#00FF88]'
-                      : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+                      ? 'bg-emerald-50 border-emerald-300 text-[#0f3d2e]'
+                      : 'bg-rose-50 border-rose-300 text-rose-800'
                   }`}
                   title="Demo switch to test verified vs unverified behavior"
                 >
@@ -404,78 +404,78 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               {isTrekVerified ? (
                 <div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
-                    <div className="bg-[#0A0E14] border border-[#1F293D] p-3.5 rounded-2xl">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                    <div className="bg-[#f8faf9] border border-emerald-100/80 p-4 rounded-2xl shadow-xs">
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block mb-1">
                         Tracked Expedition
                       </span>
-                      <p className="text-sm font-black text-white leading-snug">
+                      <p className="text-sm font-black text-slate-900 leading-snug">
                         {VERIFIED_TRIP_MOCK.title}
                       </p>
-                      <span className="text-[11px] text-slate-400 mt-1 block">
+                      <span className="text-[11px] text-stone-500 mt-1 block">
                         🗓️ {VERIFIED_TRIP_MOCK.date}
                       </span>
                     </div>
 
-                    <div className="bg-[#0A0E14] border border-[#1F293D] p-3.5 rounded-2xl">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                    <div className="bg-[#f8faf9] border border-emerald-100/80 p-4 rounded-2xl shadow-xs">
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block mb-1">
                         GPS Route Status
                       </span>
-                      <p className="text-xs font-black text-[#00FF88] flex items-center gap-1.5">
-                        <CheckCircle2 size={14} className="text-[#00FF88] shrink-0" />
+                      <p className="text-xs font-black text-emerald-800 flex items-center gap-1.5">
+                        <CheckCircle2 size={14} className="text-emerald-700 shrink-0" />
                         <span>GPS Trail Completed</span>
                       </p>
-                      <span className="text-[11px] text-slate-300 font-semibold mt-1 block">
+                      <span className="text-[11px] text-stone-600 font-semibold mt-1 block">
                         📍 {VERIFIED_TRIP_MOCK.trailDistance} ({VERIFIED_TRIP_MOCK.elevationGain})
                       </span>
                     </div>
 
-                    <div className="bg-[#0A0E14] border border-[#1F293D] p-3.5 rounded-2xl">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                    <div className="bg-[#f8faf9] border border-emerald-100/80 p-4 rounded-2xl shadow-xs">
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block mb-1">
                         Waypoint Photos
                       </span>
-                      <p className="text-xs font-black text-[#00FF88] flex items-center gap-1.5">
-                        <CheckCircle2 size={14} className="text-[#00FF88] shrink-0" />
+                      <p className="text-xs font-black text-emerald-800 flex items-center gap-1.5">
+                        <CheckCircle2 size={14} className="text-emerald-700 shrink-0" />
                         <span>Photos Uploaded: {VERIFIED_TRIP_MOCK.photosCount}/{VERIFIED_TRIP_MOCK.photosMax}</span>
                       </p>
-                      <span className="text-[11px] text-slate-400 mt-1 block">
+                      <span className="text-[11px] text-stone-500 mt-1 block">
                         Geo-tagged &amp; Timestamps intact
                       </span>
                     </div>
 
-                    <div className="bg-[#0A0E14] border border-[#1F293D] p-3.5 rounded-2xl">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                    <div className="bg-[#f8faf9] border border-emerald-100/80 p-4 rounded-2xl shadow-xs">
+                      <span className="text-[10px] font-bold uppercase text-stone-500 block mb-1">
                         Escrow Guide Attestation
                       </span>
-                      <p className="text-xs font-bold text-white">
+                      <p className="text-xs font-bold text-slate-900">
                         {VERIFIED_TRIP_MOCK.guideName}
                       </p>
-                      <span className="text-[10px] text-emerald-400/90 bg-emerald-950/70 border border-emerald-800/40 px-2 py-0.5 rounded-md inline-block mt-1">
+                      <span className="text-[10px] text-emerald-800 bg-[#E8F5E9] border border-emerald-300 font-bold px-2 py-0.5 rounded-md inline-block mt-1">
                         Signed On-Chain
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 p-3 rounded-2xl bg-emerald-950/40 border border-[#00FF88]/40">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#00FF88] animate-ping" />
-                    <span className="text-xs font-black text-[#00FF88]">
+                  <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-[#E8F5E9] border border-emerald-300/80">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+                    <span className="text-xs font-bold text-[#0f3d2e]">
                       ✅ Verified Status: Eligible for Web3 Verified Review &amp; 50 DevBhoomi Coins
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="p-6 rounded-2xl bg-rose-950/30 border border-rose-800/60 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-rose-900/50 text-rose-300 flex items-center justify-center mx-auto mb-3 border border-rose-700/50">
+                <div className="p-6 rounded-2xl bg-rose-50/70 border border-rose-200 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center mx-auto mb-3 border border-rose-300">
                     <Lock size={22} />
                   </div>
-                  <h3 className="text-lg font-black text-white mb-1">
+                  <h3 className="text-lg font-black text-slate-900 mb-1">
                     Complete your trek to unlock review
                   </h3>
-                  <p className="text-xs text-rose-200/80 max-w-md mx-auto mb-4">
-                    Our anti-fraud engine requires 100% GPS trail completion and guide sign-off to prevent paid or fake promotional reviews.
+                  <p className="text-xs text-rose-900/80 max-w-md mx-auto mb-4">
+                    Our truth verification engine requires 100% GPS trail completion and guide sign-off to prevent paid or unverified promotional reviews.
                   </p>
                   <button
                     onClick={() => setIsTrekVerified(true)}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#0f3d2e] hover:bg-[#154e3b] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
                   >
                     Simulate Trek Completion (Demo)
                   </button>
@@ -483,30 +483,30 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               )}
             </div>
 
-            {/* ── STEP 2: AI ASSISTED REVIEW (MAIN FORM) ── */}
-            <div className={`bg-[#151A26] border border-[#1F293D] rounded-3xl p-5 sm:p-7 shadow-xl space-y-6 ${!isTrekVerified ? 'opacity-50 pointer-events-none' : ''}`}>
-              <div className="flex items-center gap-2.5 border-b border-[#1F293D]/80 pb-4">
-                <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-[#00FF88] flex items-center justify-center font-black text-xs border border-[#00FF88]/40">
+            {/* ── STEP 2: AUTHENTIC REVIEW & RATING (MAIN FORM) ── */}
+            <div className={`bg-white border border-stone-200/90 rounded-[28px] p-5 sm:p-7 shadow-sm space-y-6 ${!isTrekVerified ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="flex items-center gap-2.5 border-b border-stone-100 pb-4">
+                <span className="w-6 h-6 rounded-full bg-emerald-100 text-[#0f3d2e] flex items-center justify-center font-black text-xs border border-emerald-300">
                   2
                 </span>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-300">
-                  Step 2 · AI Assisted Review
+                <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                  Step 2 · Your Authentic Review &amp; Rating
                 </span>
               </div>
 
               {/* Title */}
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   How was your Uttarakhand experience?
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Share candid insights. AI will help format and polish your advice for fellow pilgrims and trekkers.
+                <p className="text-xs text-stone-600 mt-1">
+                  Share candid insights and actionable tips for fellow pilgrims and mountain trekkers.
                 </p>
               </div>
 
               {/* Rate Journey */}
-              <div className="bg-[#0A0E14] border border-[#1F293D] p-4 sm:p-5 rounded-2xl">
-                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2.5">
+              <div className="bg-[#f8faf9] border border-emerald-100/80 p-4 sm:p-5 rounded-2xl">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-stone-500 mb-2.5">
                   Rate Your Journey
                 </label>
                 <div className="flex items-center gap-4 flex-wrap">
@@ -524,26 +524,26 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                           size={28}
                           className={`transition-colors ${
                             star <= (hoverRating || rating)
-                              ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                              : 'text-slate-600'
+                              ? 'text-amber-500 fill-amber-500 drop-shadow-xs'
+                              : 'text-stone-300'
                           }`}
                         />
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm font-black text-[#00FF88] bg-emerald-950/70 border border-emerald-800/40 px-3 py-1 rounded-full">
+                  <span className="text-sm font-black text-[#0f3d2e] bg-[#E8F5E9] border border-emerald-300 px-3 py-1 rounded-full">
                     {ratingLabels[hoverRating || rating]}
                   </span>
                 </div>
               </div>
 
-              {/* Your Experience Textarea with AI Buttons */}
+              {/* Your Experience Textarea with Clean Polish Buttons */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Your Experience (Review & Feedback)
+                  <label className="text-[11px] font-black uppercase tracking-wider text-stone-600">
+                    Your Experience (Review &amp; Feedback)
                   </label>
-                  <span className="text-[11px] text-slate-500 font-medium">
+                  <span className="text-[11px] text-stone-500 font-medium">
                     {reviewText.length} characters
                   </span>
                 </div>
@@ -554,26 +554,26 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Describe trail conditions, safety, homestay quality, or tips for future travelers..."
-                    className="w-full bg-[#0A0E14] border border-[#1F293D] focus:border-[#00FF88] focus:ring-1 focus:ring-[#00FF88] rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all leading-relaxed"
+                    className="w-full bg-white border border-stone-300 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-2xl p-4 text-sm text-slate-900 placeholder:text-stone-400 outline-none transition-all leading-relaxed shadow-2xs"
                   />
                   {isAiRewriting && (
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-xs rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-[#00FF88] animate-in fade-in">
-                      <Sparkles size={16} className="animate-spin" />
-                      <span>Refining & Polishing Review...</span>
+                    <div className="absolute inset-0 bg-white/85 backdrop-blur-xs rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-[#0f3d2e] animate-in fade-in">
+                      <Sparkles size={16} className="text-emerald-700 animate-spin" />
+                      <span>Polishing &amp; Formatting Review...</span>
                     </div>
                   )}
                 </div>
 
-                {/* AI Assistant Buttons */}
+                {/* Quick Polish Buttons */}
                 <div className="flex items-center gap-2 flex-wrap pt-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-1">
-                    <Sparkles size={12} className="text-[#00FF88]" /> AI Refine:
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1 mr-1">
+                    <Sparkles size={12} className="text-emerald-700" /> Quick Polish:
                   </span>
 
                   <button
                     type="button"
                     onClick={() => handleAiAction('helpful')}
-                    className="px-3 py-1.5 rounded-xl bg-[#0A0E14] hover:bg-emerald-950/60 border border-[#1F293D] hover:border-[#00FF88]/40 text-xs font-bold text-slate-300 hover:text-[#00FF88] transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-xs font-bold text-stone-700 hover:text-emerald-900 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <span>Enhance Clarity</span>
                   </button>
@@ -581,7 +581,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                   <button
                     type="button"
                     onClick={() => handleAiAction('hindi')}
-                    className="px-3 py-1.5 rounded-xl bg-[#0A0E14] hover:bg-emerald-950/60 border border-[#1F293D] hover:border-[#00FF88]/40 text-xs font-bold text-slate-300 hover:text-[#00FF88] transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-xs font-bold text-stone-700 hover:text-emerald-900 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <span>🌐 Add Hindi</span>
                   </button>
@@ -589,7 +589,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                   <button
                     type="button"
                     onClick={() => handleAiAction('summarize')}
-                    className="px-3 py-1.5 rounded-xl bg-[#0A0E14] hover:bg-emerald-950/60 border border-[#1F293D] hover:border-[#00FF88]/40 text-xs font-bold text-slate-300 hover:text-[#00FF88] transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 text-xs font-bold text-stone-700 hover:text-emerald-900 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <span>⚡ Summarize</span>
                   </button>
@@ -597,17 +597,17 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               </div>
 
               {/* Upload Proof (Web3 2x2 Grid) */}
-              <div className="bg-[#0A0E14] border border-[#1F293D] p-4 sm:p-5 rounded-2xl space-y-3">
+              <div className="bg-[#f8faf9] border border-emerald-100/80 p-4 sm:p-5 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-emerald-950 block">
                       Uploaded Proof (Web3 On-Chain Evidence)
                     </span>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      These photos will be minted as cryptographic proof on-chain with GPS metadata.
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      These photos will be recorded as cryptographic proof on-chain with GPS metadata.
                     </p>
                   </div>
-                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-950/70 border border-[#00FF88]/40 text-[#00FF88]">
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-[#E8F5E9] border border-emerald-300 text-[#0f3d2e]">
                     IPFS Ready
                   </span>
                 </div>
@@ -617,7 +617,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                   {VERIFIED_TRIP_MOCK.photos.map((photo, idx) => (
                     <div
                       key={idx}
-                      className="group relative rounded-xl overflow-hidden border border-[#1F293D] bg-stone-900 aspect-square"
+                      className="group relative rounded-xl overflow-hidden border border-stone-200/90 bg-stone-100 aspect-square shadow-2xs"
                     >
                       <img
                         src={photo.url}
@@ -628,11 +628,11 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                         <span className="text-[10px] font-black text-white line-clamp-1">
                           {photo.caption}
                         </span>
-                        <span className="text-[9px] font-mono text-[#00FF88] flex items-center gap-0.5 mt-0.5">
+                        <span className="text-[9px] font-mono text-emerald-300 flex items-center gap-0.5 mt-0.5">
                           <MapPin size={9} />
                           {photo.coords}
                         </span>
-                        <span className="text-[8px] text-slate-400 font-mono mt-0.5">
+                        <span className="text-[8px] text-stone-300 font-mono mt-0.5">
                           CID: {photo.hash.slice(0, 10)}...
                         </span>
                       </div>
@@ -644,10 +644,10 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               {/* Tags Selector (Max 3) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Auto-Suggested AI Tags (Pick up to 3)
+                  <label className="text-[11px] font-black uppercase tracking-wider text-stone-600">
+                    Experience Highlights (Pick up to 3)
                   </label>
-                  <span className="text-[11px] text-slate-500 font-semibold">
+                  <span className="text-[11px] text-stone-500 font-semibold">
                     {selectedTags.length}/3 selected
                   </span>
                 </div>
@@ -662,11 +662,11 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                         onClick={() => toggleTag(tag)}
                         className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                           isSelected
-                            ? 'bg-[#00FF88]/15 border-[#00FF88] text-[#00FF88] shadow-[0_0_8px_rgba(0,255,136,0.2)]'
-                            : 'bg-[#0A0E14] border-[#1F293D] text-slate-400 hover:text-white hover:border-slate-600'
+                            ? 'bg-[#E8F5E9] border-emerald-400 text-[#0f3d2e] shadow-2xs'
+                            : 'bg-white border-stone-200 text-stone-600 hover:text-slate-900 hover:border-emerald-300'
                         }`}
                       >
-                        {isSelected && <Check size={12} className="inline mr-1 text-[#00FF88]" />}
+                        {isSelected && <Check size={12} className="inline mr-1 text-emerald-700" />}
                         {tag}
                       </button>
                     );
@@ -676,13 +676,13 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
 
             </div>
 
-            {/* ── STEP 3: SUBMIT & MINT (WEB3 MAGIC) ── */}
-            <div className="bg-[#151A26] border border-[#1F293D] rounded-3xl p-5 sm:p-7 shadow-xl space-y-6">
-              <div className="flex items-center gap-2.5 border-b border-[#1F293D]/80 pb-4">
-                <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-[#00FF88] flex items-center justify-center font-black text-xs border border-[#00FF88]/40">
+            {/* ── STEP 3: SUBMIT & MINT (ON-CHAIN TRUST) ── */}
+            <div className="bg-white border border-stone-200/90 rounded-[28px] p-5 sm:p-7 shadow-sm space-y-6">
+              <div className="flex items-center gap-2.5 border-b border-stone-100 pb-4">
+                <span className="w-6 h-6 rounded-full bg-emerald-100 text-[#0f3d2e] flex items-center justify-center font-black text-xs border border-emerald-300">
                   3
                 </span>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-300">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-800">
                   Step 3 · Submit &amp; Mint On Polygon
                 </span>
               </div>
@@ -690,10 +690,10 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               {mintStatus === 'idle' && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-black text-white">
-                      Ready to immortalize your feedback?
+                    <h3 className="text-lg font-black text-slate-900">
+                      Ready to record your verified feedback?
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-stone-600 mt-0.5">
                       Earn +50 DevBhoomi Coins and receive a Soulbound Review NFT proof.
                     </p>
                   </div>
@@ -702,67 +702,67 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     type="button"
                     onClick={handleStartMint}
                     disabled={!isTrekVerified}
-                    className="px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-[#00FF88] to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm transition-all shadow-[0_0_20px_rgba(0,255,136,0.3)] hover:shadow-[0_0_30px_rgba(0,255,136,0.5)] cursor-pointer active:scale-98 flex items-center justify-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-6 py-4 rounded-2xl bg-[#0f3d2e] hover:bg-[#154e3b] text-white font-black text-sm transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-98 flex items-center justify-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <Sparkles size={18} className="text-slate-950" />
-                    <span>⚡ Submit &amp; Mint Verified Badge →</span>
+                    <Sparkles size={18} className="text-emerald-300" />
+                    <span>Submit &amp; Mint Verified Badge →</span>
                   </button>
                 </div>
               )}
 
               {/* Minting Step-by-Step Animation */}
               {(mintStatus === 'checking' || mintStatus === 'minting' || mintStatus === 'rewarded') && (
-                <div className="p-6 rounded-2xl bg-[#0A0E14] border border-[#00FF88]/30 space-y-4">
+                <div className="p-6 rounded-2xl bg-[#f8faf9] border border-emerald-200 space-y-4 shadow-xs">
                   <div className="text-center mb-4">
-                    <span className="text-xs font-black uppercase tracking-wider text-[#00FF88] block">
+                    <span className="text-xs font-black uppercase tracking-wider text-[#0f3d2e] block">
                       Cryptographic Review Validation in Progress
                     </span>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-stone-500 mt-1">
                       Generating zero-knowledge proof of trail completion...
                     </p>
                   </div>
 
-                  {/* Stage 1: AI Anti-Spam Check */}
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#151A26] border border-[#1F293D]">
+                  {/* Stage 1: Authenticity & Truth Check */}
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-stone-200/80">
                     <div className="flex items-center gap-3">
                       {mintStatus === 'checking' ? (
-                        <RefreshCw size={18} className="text-amber-400 animate-spin" />
+                        <RefreshCw size={18} className="text-amber-600 animate-spin" />
                       ) : (
-                        <CheckCircle2 size={18} className="text-[#00FF88]" />
+                        <CheckCircle2 size={18} className="text-emerald-600" />
                       )}
                       <div>
-                        <span className="text-xs font-bold text-white block">
-                          Step 1: AI Checking for fake/spam...
+                        <span className="text-xs font-bold text-slate-900 block">
+                          Step 1: Authenticity &amp; Trail Verification...
                         </span>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-stone-500">
                           {mintStatus === 'checking'
-                            ? 'Evaluating semantic authenticity & natural language cadence...'
-                            : '✅ Authentic Trekker Voice (Spam Score: 0.01)'}
+                            ? 'Evaluating trail waypoint telemetry and GPS timestamps...'
+                            : '✅ Authentic Trekker Voice (Verified Trail Presence)'}
                         </span>
                       </div>
                     </div>
                     <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md ${
-                      mintStatus === 'checking' ? 'bg-amber-950 text-amber-300' : 'bg-emerald-950 text-[#00FF88]'
+                      mintStatus === 'checking' ? 'bg-amber-100 text-amber-800' : 'bg-[#E8F5E9] text-[#0f3d2e]'
                     }`}>
                       {mintStatus === 'checking' ? 'Analyzing' : 'Passed'}
                     </span>
                   </div>
 
                   {/* Stage 2: Minting Review NFT */}
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#151A26] border border-[#1F293D]">
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-stone-200/80">
                     <div className="flex items-center gap-3">
                       {mintStatus === 'minting' ? (
-                        <RefreshCw size={18} className="text-[#00FF88] animate-spin" />
+                        <RefreshCw size={18} className="text-emerald-600 animate-spin" />
                       ) : mintStatus === 'rewarded' ? (
-                        <CheckCircle2 size={18} className="text-[#00FF88]" />
+                        <CheckCircle2 size={18} className="text-emerald-600" />
                       ) : (
-                        <Lock size={18} className="text-slate-600" />
+                        <Lock size={18} className="text-stone-400" />
                       )}
                       <div>
-                        <span className="text-xs font-bold text-white block">
+                        <span className="text-xs font-bold text-slate-900 block">
                           Step 2: Minting Review NFT on Polygon POS...
                         </span>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-stone-500">
                           {mintStatus === 'minting'
                             ? 'Broadcasting transaction to contract 0x712a...982b'
                             : mintStatus === 'rewarded'
@@ -773,28 +773,28 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     </div>
                     <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md ${
                       mintStatus === 'minting'
-                        ? 'bg-emerald-950 text-[#00FF88] animate-pulse'
+                        ? 'bg-emerald-100 text-[#0f3d2e] animate-pulse'
                         : mintStatus === 'rewarded'
-                        ? 'bg-emerald-950 text-[#00FF88]'
-                        : 'bg-stone-800 text-slate-500'
+                        ? 'bg-[#E8F5E9] text-[#0f3d2e]'
+                        : 'bg-stone-100 text-stone-500'
                     }`}>
                       {mintStatus === 'minting' ? 'Minting ⏳' : mintStatus === 'rewarded' ? 'Minted' : 'Waiting'}
                     </span>
                   </div>
 
                   {/* Stage 3: Reward Coins */}
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#151A26] border border-[#1F293D]">
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-stone-200/80">
                     <div className="flex items-center gap-3">
                       {mintStatus === 'rewarded' ? (
-                        <Coins size={18} className="text-amber-400 animate-bounce" />
+                        <Coins size={18} className="text-amber-500 animate-bounce" />
                       ) : (
-                        <Coins size={18} className="text-slate-600" />
+                        <Coins size={18} className="text-stone-400" />
                       )}
                       <div>
-                        <span className="text-xs font-bold text-white block">
+                        <span className="text-xs font-bold text-slate-900 block">
                           Step 3: Rewarding DevBhoomi Coins
                         </span>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-stone-500">
                           {mintStatus === 'rewarded'
                             ? '🪙 +50 DevBhoomi Coins credited to your Web3 wallet!'
                             : 'Pending transaction finality'}
@@ -802,7 +802,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                       </div>
                     </div>
                     <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md ${
-                      mintStatus === 'rewarded' ? 'bg-amber-950 text-amber-300' : 'bg-stone-800 text-slate-500'
+                      mintStatus === 'rewarded' ? 'bg-amber-100 text-amber-900 font-bold' : 'bg-stone-100 text-stone-500'
                     }`}>
                       {mintStatus === 'rewarded' ? '+50 COINS' : '0 COINS'}
                     </span>
@@ -812,44 +812,44 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
 
               {/* Stage 4: Final Success Card */}
               {mintStatus === 'success' && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0F2B1F] via-[#151A26] to-[#0A0E14] border-2 border-[#00FF88] shadow-[0_0_30px_rgba(0,255,136,0.25)] animate-in fade-in zoom-in-95 space-y-4">
+                <div className="p-6 rounded-2xl bg-[#E8F5E9] border-2 border-emerald-400 shadow-sm animate-in fade-in zoom-in-95 space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-[#00FF88]/20 text-[#00FF88] flex items-center justify-center shrink-0 border border-[#00FF88]/50 shadow-[0_0_15px_rgba(0,255,136,0.4)]">
-                        <Award size={26} />
+                      <div className="w-12 h-12 rounded-2xl bg-white text-[#0f3d2e] flex items-center justify-center shrink-0 border border-emerald-300 shadow-xs">
+                        <Award size={26} className="text-emerald-700" />
                       </div>
                       <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-[#00FF88] bg-emerald-950 px-2.5 py-0.5 rounded-full border border-[#00FF88]/40">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#0f3d2e] bg-white px-2.5 py-0.5 rounded-full border border-emerald-300">
                           On-Chain Review Verified
                         </span>
-                        <h3 className="text-xl font-black text-white mt-1">
+                        <h3 className="text-xl font-black text-slate-900 mt-1">
                           Your review is now VERIFIED &amp; on-chain.
                         </h3>
-                        <p className="text-xs text-slate-300 mt-0.5">
-                          It cannot be faked or deleted. You earned <strong>50 DevBhoomi Coins</strong> 🪙!
+                        <p className="text-xs text-stone-600 mt-0.5">
+                          It cannot be faked or altered. You earned <strong>50 DevBhoomi Coins</strong> 🪙!
                         </p>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-2xl font-black text-amber-400 flex items-center gap-1 justify-end">
-                        <Coins size={22} className="text-amber-400" /> +50
+                      <span className="text-2xl font-black text-amber-700 flex items-center gap-1 justify-end">
+                        <Coins size={22} className="text-amber-600" /> +50
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400">DevBhoomi Balance</span>
+                      <span className="text-[10px] font-bold text-stone-500">DevBhoomi Balance</span>
                     </div>
                   </div>
 
-                  <div className="bg-[#0A0E14] p-3.5 rounded-xl border border-[#1F293D] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="bg-white p-3.5 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-mono">Polygon POS Tx Hash:</span>
-                      <span className="font-mono text-[#00FF88] font-bold break-all">
+                      <span className="text-[10px] text-stone-500 block font-mono">Polygon POS Tx Hash:</span>
+                      <span className="font-mono text-emerald-800 font-bold break-all">
                         {mintTxHash}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => alert(`Polygonscan Explorer:\nTx: ${mintTxHash}\nContract: 0x9320...4821\nStatus: Success`)}
-                      className="px-3 py-1.5 rounded-lg bg-[#151A26] hover:bg-stone-800 text-[11px] font-bold text-slate-200 border border-[#1F293D] flex items-center gap-1 shrink-0 self-start sm:self-auto cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-[11px] font-bold text-slate-800 border border-stone-200 flex items-center gap-1 shrink-0 self-start sm:self-auto cursor-pointer"
                     >
                       <span>View on-chain</span>
                       <ExternalLink size={12} />
@@ -859,7 +859,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <button
                       onClick={() => setActiveTab('feed')}
-                      className="px-4 py-2.5 rounded-xl bg-[#00FF88] text-slate-950 font-black text-xs hover:bg-[#00e67a] transition-all cursor-pointer flex items-center gap-1.5 shadow-md"
+                      className="px-5 py-2.5 rounded-xl bg-[#0f3d2e] hover:bg-[#164e3c] text-white font-black text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                     >
                       <span>View in Public Feed</span>
                       <ArrowRight size={14} />
@@ -880,10 +880,10 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
           <div className="space-y-6 animate-in fade-in duration-300">
             
             {/* Filter Bar */}
-            <div className="flex items-center justify-between gap-4 flex-wrap bg-[#151A26] p-3.5 rounded-2xl border border-[#1F293D]">
-              <div className="flex items-center gap-2">
-                <Filter size={15} className="text-[#00FF88]" />
-                <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+            <div className="flex items-center justify-between gap-4 flex-wrap bg-stone-100 p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Filter size={15} className="text-emerald-700" />
+                <span className="text-xs font-black uppercase tracking-wider text-slate-700">
                   Filters:
                 </span>
                 {[
@@ -896,8 +896,8 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     onClick={() => setFilterType(item.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
                       filterType === item.id
-                        ? 'bg-[#00FF88]/20 border-[#00FF88] text-[#00FF88] shadow-[0_0_10px_rgba(0,255,136,0.2)]'
-                        : 'bg-[#0A0E14] border-[#1F293D] text-slate-400 hover:text-white'
+                        ? 'bg-[#0f3d2e] border-[#0f3d2e] text-white shadow-xs'
+                        : 'bg-white border-stone-200 text-stone-600 hover:text-slate-900'
                     }`}
                   >
                     {item.label}
@@ -907,7 +907,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
 
               <button
                 onClick={() => setActiveTab('write')}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-[#0f3d2e] hover:from-emerald-500 hover:to-[#0f3d2e] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#0f3d2e] hover:bg-[#164e3c] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
               >
                 <span>Write Review</span>
                 <ArrowRight size={13} />
@@ -919,7 +919,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               {filteredReviews.map((rev) => (
                 <div
                   key={rev.id}
-                  className="bg-[#151A26] border border-[#1F293D] hover:border-[#00FF88]/40 rounded-3xl p-5 sm:p-7 shadow-lg transition-all"
+                  className="bg-white border border-stone-200/90 hover:border-emerald-300 rounded-[26px] p-5 sm:p-7 shadow-xs hover:shadow-md transition-all"
                 >
                   {/* Top: User Avatar + Name + Verified Badge + Trek Tag */}
                   <div className="flex items-start justify-between gap-3 flex-wrap mb-3.5">
@@ -927,24 +927,24 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                       <img
                         src={rev.user.avatar}
                         alt={rev.user.name}
-                        className="w-11 h-11 rounded-2xl object-cover border-2 border-[#00FF88]/40 shadow-xs"
+                        className="w-11 h-11 rounded-2xl object-cover border-2 border-emerald-300 shadow-xs"
                       />
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-black text-sm sm:text-base text-white">
+                          <h4 className="font-black text-sm sm:text-base text-slate-900">
                             {rev.user.name}
                           </h4>
                           {rev.isVerified && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#00FF88]/15 text-[#00FF88] border border-[#00FF88]/50 shadow-[0_0_8px_rgba(0,255,136,0.25)]">
-                              <CheckCircle2 size={11} className="text-[#00FF88]" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#E8F5E9] text-[#0f3d2e] border border-emerald-300">
+                              <CheckCircle2 size={11} className="text-emerald-700" />
                               <span>VERIFIED REVIEW</span>
                             </span>
                           )}
-                          <span className="text-[10px] font-bold text-slate-300 bg-[#0A0E14] border border-[#1F293D] px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] font-bold text-stone-600 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded-md">
                             Trek Completed ({rev.trailDist || 'Tracked'})
                           </span>
                         </div>
-                        <span className="text-[11px] text-slate-400 font-mono">
+                        <span className="text-[11px] text-stone-500 font-mono">
                           Wallet: {rev.user.wallet} • {rev.tripName}
                         </span>
                       </div>
@@ -959,20 +959,20 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                             size={14}
                             className={
                               s <= rev.rating
-                                ? 'text-amber-400 fill-amber-400'
-                                : 'text-slate-600'
+                                ? 'text-amber-500 fill-amber-500'
+                                : 'text-stone-300'
                             }
                           />
                         ))}
                       </div>
-                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                      <span className="text-[11px] text-stone-500 block mt-0.5">
                         {rev.date}
                       </span>
                     </div>
                   </div>
 
                   {/* Review Text */}
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed mb-4 whitespace-pre-line">
+                  <p className="text-xs sm:text-sm text-stone-700 leading-relaxed mb-4 whitespace-pre-line">
                     {rev.text}
                   </p>
 
@@ -982,7 +982,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                       {rev.tags.map((t) => (
                         <span
                           key={t}
-                          className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#0A0E14] text-slate-300 border border-[#1F293D]"
+                          className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200"
                         >
                           #{t}
                         </span>
@@ -996,7 +996,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                       {rev.photos.map((p, idx) => (
                         <div
                           key={idx}
-                          className="relative w-36 h-24 rounded-xl overflow-hidden border border-[#1F293D] shrink-0 bg-stone-900 group"
+                          className="relative w-36 h-24 rounded-xl overflow-hidden border border-stone-200/90 shrink-0 bg-stone-100 group shadow-2xs"
                         >
                           <img
                             src={p.url}
@@ -1004,7 +1004,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-1.5 flex items-end">
-                            <span className="text-[9px] font-mono text-[#00FF88] flex items-center gap-0.5">
+                            <span className="text-[9px] font-mono text-emerald-300 flex items-center gap-0.5">
                               <MapPin size={9} />
                               {p.coords}
                             </span>
@@ -1015,27 +1015,27 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                   )}
 
                   {/* Bottom: Helpful • Coins Earned • View on-chain link */}
-                  <div className="flex items-center justify-between border-t border-[#1F293D] pt-3.5 text-xs text-slate-400 flex-wrap gap-2">
+                  <div className="flex items-center justify-between border-t border-stone-100 pt-3.5 text-xs text-stone-500 flex-wrap gap-2">
                     <div className="flex items-center gap-4">
                       <button
                         type="button"
                         onClick={() => handleUpvote(rev.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all cursor-pointer border ${
                           rev.hasUpvoted
-                            ? 'bg-[#00FF88]/20 text-[#00FF88] font-bold'
-                            : 'hover:text-white hover:bg-[#0A0E14]'
+                            ? 'bg-[#E8F5E9] text-[#0f3d2e] border-emerald-300 font-bold'
+                            : 'bg-white border-stone-200 text-stone-600 hover:text-slate-900 hover:bg-stone-50'
                         }`}
                       >
-                        <ThumbsUp size={13} className={rev.hasUpvoted ? 'text-[#00FF88]' : ''} />
+                        <ThumbsUp size={13} className={rev.hasUpvoted ? 'text-emerald-700' : ''} />
                         <span>Helpful ({rev.helpfulCount})</span>
                       </button>
 
-                      <span className="flex items-center gap-1 font-bold text-amber-400">
-                        <Coins size={14} className="text-amber-400" />
+                      <span className="flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                        <Coins size={14} className="text-amber-600" />
                         <span>Coins Earned: {rev.coinsEarned}</span>
                       </span>
 
-                      <span className="hidden sm:inline font-mono text-[11px] text-slate-500">
+                      <span className="hidden sm:inline font-mono text-[11px] text-stone-400">
                         NFT #{rev.nftTokenId}
                       </span>
                     </div>
@@ -1043,7 +1043,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     <button
                       type="button"
                       onClick={() => alert(`Polygonscan Explorer:\nTx: ${rev.txHash}\nToken: ${rev.nftTokenId}\nStatus: Confirmed`)}
-                      className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 hover:text-[#00FF88] hover:underline cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer font-semibold"
                     >
                       <span>View on Polygonscan</span>
                       <ExternalLink size={12} />
