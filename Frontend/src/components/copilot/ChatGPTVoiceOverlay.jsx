@@ -331,7 +331,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryText, lang }),
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(1200)
       });
       if (bridgeRes.ok) {
         const data = await bridgeRes.json();
