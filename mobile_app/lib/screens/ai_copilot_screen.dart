@@ -10,11 +10,13 @@ class AiCopilotScreen extends StatefulWidget {
   State<AiCopilotScreen> createState() => _AiCopilotScreenState();
 }
 
-class _AiCopilotScreenState extends State<AiCopilotScreen> {
+class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
+  bool _isVoiceModalOpen = false;
+  late AnimationController _voicePulseController;
 
   final List<String> _quickSuggestions = [
     'Nainital 2 din ka plan',
@@ -26,6 +28,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   @override
   void initState() {
     super.initState();
+    _voicePulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
     // Welcome message from Pahadi Copilot
     _messages.add(
       ChatMessage(
@@ -35,6 +42,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         suggestions: _quickSuggestions,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _voicePulseController.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _scrollToBottom() {
@@ -166,6 +181,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   ),
                   const SizedBox(width: 8),
                   CircleAvatar(
+                    backgroundColor: const Color(0xFFE8F5E9),
+                    child: IconButton(
+                      icon: const Icon(Icons.mic, color: AppTheme.forestGreen, size: 20),
+                      tooltip: 'Voice Mode',
+                      onPressed: _openVoiceDialog,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  CircleAvatar(
                     backgroundColor: AppTheme.forestGreen,
                     child: IconButton(
                       icon: const Icon(Icons.send, color: Colors.white, size: 18),
@@ -178,6 +202,162 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _openVoiceDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.70,
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F2B1F),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF059669).withOpacity(0.25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.auto_awesome, color: Color(0xFF34D399), size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'ChatGPT Voice Copilot',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              Text(
+                                'Real-time Conversational Voice Guide',
+                                style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  // Animated Pulsing Glowing Audio Orb
+                  AnimatedBuilder(
+                    animation: _voicePulseController,
+                    builder: (context, child) {
+                      final scale = 1.0 + (_voicePulseController.value * 0.22);
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 150 * scale,
+                            height: 150 * scale,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF10B981).withOpacity(0.18 - (_voicePulseController.value * 0.08)),
+                            ),
+                          ),
+                          Container(
+                            width: 110,
+                            height: 110,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [Color(0xFF34D399), Color(0xFF059669), Color(0xFF064E3B)],
+                              ),
+                              boxShadow: [
+                                BoxShadow(color: Color(0xFF10B981), blurRadius: 28, spreadRadius: 4),
+                              ],
+                            ),
+                            child: const Icon(Icons.mic, color: Colors.white, size: 48),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Listening & Thinking in Real-Time...',
+                    style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap any topic below to speak directly with the AI:',
+                    style: TextStyle(color: Colors.white60, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      'Tell me about Kedarnath history',
+                      'Tapkeshwar temple timings & facts',
+                      'Best time to visit Nainital',
+                      'Rishikesh bike rental rates',
+                    ].map((topic) {
+                      return InkWell(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _handleSendMessage(topic);
+                        },
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.volume_up_outlined, color: Color(0xFF6EE7B7), size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                topic,
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
