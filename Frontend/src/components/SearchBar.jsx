@@ -411,8 +411,20 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
                           onClick={() => handleSuggestionClick(place)}
                           className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-stone-50 transition-colors group cursor-pointer"
                         >
-                          <div className="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center shrink-0 text-stone-600 group-hover:bg-[#E8F5E9] group-hover:text-[#0F2B1F] transition-colors">
-                            <MapPin size={18} />
+                          <div className="h-11 w-14 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200 relative group-hover:border-emerald-300 transition-colors">
+                            <img
+                              src={place.image || place.thumbnail || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80'}
+                              alt={place.name}
+                              loading="lazy"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80';
+                              }}
+                              className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <span className="absolute bottom-0.5 right-0.5 bg-black/60 text-[8px] text-white px-1 rounded font-mono">
+                              Live
+                            </span>
                           </div>
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">

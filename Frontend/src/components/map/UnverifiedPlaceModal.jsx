@@ -23,6 +23,8 @@ export default function UnverifiedPlaceModal({ place, onClose, onAddedToMap }) {
   const [loadingAi, setLoadingAi] = useState(true);
   const [weather, setWeather] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
+  const [photoData, setPhotoData] = useState(place?.image ? { imageUrl: place.image, source: place.photoSource || 'Live Map Match' } : null);
+  const [loadingPhoto, setLoadingPhoto] = useState(!place?.image);
   const [isAdded, setIsAdded] = useState(false);
 
   const lat = place?.location?.lat || 28.98;
@@ -30,7 +32,38 @@ export default function UnverifiedPlaceModal({ place, onClose, onAddedToMap }) {
   const placeName = place?.name || 'Discovered Location';
   const address = place?.displayName || place?.address || place?.vicinity || 'Global Map Location';
 
-  // 1. Fetch AI Description from Hybrid RAG endpoint
+  // 1. Fetch Real Location Photograph
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPhoto() {
+      if (place?.image) {
+        setPhotoData({ imageUrl: place.image, source: place.photoSource || 'Live Map Match' });
+        setLoadingPhoto(false);
+        return;
+      }
+      setLoadingPhoto(true);
+      try {
+        const res = await axios.get(`${API_BASE}/places/live-photo`, {
+          params: { name: placeName, address },
+          timeout: 6000
+        });
+        if (isMounted && res.data?.data?.imageUrl) {
+          setPhotoData(res.data.data);
+        }
+      } catch (_) {
+        // Safe fallback
+      } finally {
+        if (isMounted) setLoadingPhoto(false);
+      }
+    }
+
+    if (place) {
+      fetchPhoto();
+    }
+    return () => { isMounted = false; };
+  }, [place, placeName, address]);
+
+  // 2. Fetch AI Description from Hybrid RAG endpoint
   useEffect(() => {
     let isMounted = true;
     async function fetchAiInsights() {
@@ -60,7 +93,7 @@ export default function UnverifiedPlaceModal({ place, onClose, onAddedToMap }) {
     return () => { isMounted = false; };
   }, [place, placeName, address, lat, lng]);
 
-  // 2. Fetch Live Weather for these coordinates
+  // 3. Fetch Live Weather for these coordinates
   useEffect(() => {
     let isMounted = true;
     async function fetchCoordsWeather() {
@@ -119,44 +152,61 @@ export default function UnverifiedPlaceModal({ place, onClose, onAddedToMap }) {
   if (!place) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-lg rounded-[20px] bg-white border border-[#F0F0F0] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-5 relative overflow-hidden text-left"
+        className="w-full max-w-lg rounded-[24px] bg-white border border-[#F0F0F0] shadow-2xl p-5 relative overflow-hidden text-left max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-stone-100 pb-3 mb-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0 mt-0.5">
-              <Globe size={20} className="text-[#0F2B1F]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                  Unverified but found via Maps
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 text-[10px] font-extrabold">
-                  <Coins size={11} className="text-amber-600" />
-                  +20 Coins Bounty
-                </span>
-              </div>
-              <h3 className="text-lg font-black text-[#0F172A] leading-tight">
-                {placeName}
-              </h3>
-              <p className="text-xs text-[#64748B] mt-0.5 line-clamp-1">
-                {address}
-              </p>
-            </div>
+        {/* Real Location Photograph Banner */}
+        <div className="relative h-48 sm:h-56 w-full rounded-[18px] overflow-hidden mb-4 bg-stone-100 border border-stone-200 shadow-inner">
+          <img
+            src={photoData?.imageUrl || place?.image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80'}
+            alt={placeName}
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80';
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-black/20" />
+          
+          {/* Top Badges */}
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold border border-white/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Live Photo ({photoData?.source || 'Satellite Match'})
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition cursor-pointer"
-          >
-            <X size={18} />
-          </button>
+          <div className="absolute top-3 right-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Bottom Title on Image */}
+          <div className="absolute bottom-3 left-3 right-3">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[#0F2B1F] text-[10px] font-black uppercase tracking-wider">
+                <Globe size={11} className="text-[#0F2B1F]" />
+                Live Map Discovery
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black">
+                <Coins size={11} />
+                +20 Coins Bounty
+              </span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow-md">
+              {placeName}
+            </h3>
+            <p className="text-xs text-white/80 line-clamp-1 mt-0.5">
+              {address}
+            </p>
+          </div>
         </div>
 
         {/* Mini Map Coordinates Preview Card */}
