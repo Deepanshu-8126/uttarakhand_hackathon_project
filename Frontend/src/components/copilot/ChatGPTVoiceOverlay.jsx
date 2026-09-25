@@ -17,9 +17,12 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const [micErrorMessage, setMicErrorMessage] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [voiceDemoOnline, setVoiceDemoOnline] = useState(false);
+  const [typedInput, setTypedInput] = useState('');
+  const [micFailed, setMicFailed] = useState(false);
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
   const voiceStatusRef = useRef('idle');
+  const wsRef = useRef(null);
 
   const updateVoiceStatus = (status) => {
     voiceStatusRef.current = status;
@@ -42,30 +45,88 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     }
   }, [isOpen]);
 
+  const audioPlayerRef = useRef(null);
+
+  const playVoiceAudio = useCallback((audioBase64, fallbackText, onFinish) => {
+    stopSpeaking();
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+      } catch (e) {}
+      audioPlayerRef.current = null;
+    }
+
+    if (isMuted) {
+      if (onFinish) onFinish();
+      return;
+    }
+
+    updateVoiceStatus('speaking');
+
+    if (audioBase64) {
+      try {
+        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+        audioPlayerRef.current = audio;
+        audio.onended = () => {
+          audioPlayerRef.current = null;
+          if (onFinish) onFinish();
+        };
+        audio.onerror = (e) => {
+          console.warn("[VoiceAudio] Error playing base64 audio, fallback to TTS:", e);
+          audioPlayerRef.current = null;
+          if (fallbackText) {
+            speakText(fallbackText, {
+              lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
+              rate: 1.05,
+              onEnd: onFinish,
+              onError: onFinish
+            });
+          } else if (onFinish) onFinish();
+        };
+        audio.play().catch((playErr) => {
+          console.warn("[VoiceAudio] Autoplay blocked, falling back to TTS:", playErr);
+          if (fallbackText) {
+            speakText(fallbackText, {
+              lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
+              rate: 1.05,
+              onEnd: onFinish,
+              onError: onFinish
+            });
+          } else if (onFinish) onFinish();
+        });
+        return;
+      } catch (e) {
+        console.warn("[VoiceAudio] Exception playing audio:", e);
+      }
+    }
+
+    // Fallback to Web Speech Synthesis if no base64 audio
+    if (fallbackText) {
+      speakText(fallbackText, {
+        lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
+        rate: 1.05,
+        onEnd: onFinish,
+        onError: onFinish
+      });
+    } else if (onFinish) onFinish();
+  }, [isMuted, lang]);
+
   const GREETINGS = {
     hi: "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
     en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
   };
 
   const playGreetingAndListen = useCallback(() => {
-    stopSpeaking();
     const greetingText = GREETINGS[lang] || GREETINGS.en;
     setLastAgentReply(greetingText);
     
+    // Connect to WS bridge immediately
+    connectBridgeWS();
+
     if (!isMuted) {
-      updateVoiceStatus('speaking');
-      speakText(greetingText, {
-        lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
-        rate: 1.05,
-        onStart: () => updateVoiceStatus('speaking'),
-        onEnd: () => {
-          updateVoiceStatus('listening');
-          startListening();
-        },
-        onError: () => {
-          updateVoiceStatus('listening');
-          startListening();
-        }
+      playVoiceAudio(null, greetingText, () => {
+        updateVoiceStatus('listening');
+        startListening();
       });
     } else {
       updateVoiceStatus('listening');
@@ -73,7 +134,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     }
   }, [lang, isMuted]);
 
-  // Stop TTS and speech recognition on unmount or close
+  // Stop TTS, audio player and speech recognition on unmount or close
   useEffect(() => {
     if (!isOpen) {
       stopVoiceLoop();
@@ -89,6 +150,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const stopVoiceLoop = () => {
     updateVoiceStatus('idle');
     stopSpeaking();
+    if (audioPlayerRef.current) {
+      try { audioPlayerRef.current.pause(); } catch (e) {}
+      audioPlayerRef.current = null;
+    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
@@ -103,32 +168,88 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     }
   };
 
+  // Connect to bridge WebSocket for real-time voice query processing
+  const connectBridgeWS = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+    try {
+      const ws = new WebSocket('ws://localhost:8765/ws/voice');
+      wsRef.current = ws;
+      ws.onopen = () => {
+        setVoiceDemoOnline(true);
+        console.log('[VoiceWS] Connected to langchain-ai/voice-demo bridge');
+      };
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'response' && msg.text) {
+            const cleanSpoken = msg.text.replace(/[*#_~`]/g, '').replace(/\b(http|https):\/\/\S+/gi, '').replace(/\s+/g, ' ').trim();
+            setLastAgentReply(cleanSpoken);
+            setTranscript('');
+            playVoiceAudio(msg.audio_base64, cleanSpoken, () => {
+              updateVoiceStatus('listening');
+              startListening();
+            });
+          } else if (msg.type === 'status') {
+            if (msg.status === 'processing') updateVoiceStatus('processing');
+          } else if (msg.type === 'ready') {
+            setVoiceDemoOnline(true);
+            if (msg.audio_base64) {
+              setLastAgentReply(msg.greeting || GREETINGS[lang] || GREETINGS.en);
+              playVoiceAudio(msg.audio_base64, msg.greeting, () => {
+                updateVoiceStatus('listening');
+                startListening();
+              });
+            }
+          }
+        } catch (e) {}
+      };
+      ws.onerror = () => { setVoiceDemoOnline(false); };
+      ws.onclose = () => { wsRef.current = null; };
+    } catch (e) {
+      console.warn('[VoiceWS] Could not connect to bridge:', e.message);
+    }
+  }, [lang, isMuted, playVoiceAudio]);
+
+  // Send query through WS bridge (preferred) or HTTP fallback
+  const sendToBridge = useCallback((queryText) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'query', query: queryText, lang }));
+      updateVoiceStatus('processing');
+    } else {
+      // HTTP fallback
+      handleVoiceQuerySubmit(queryText);
+    }
+  }, [lang]);
+
   const startListening = async () => {
     stopSpeaking();
     setMicErrorMessage('');
+
+    // Ensure WS bridge is connected
+    connectBridgeWS();
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setMicErrorMessage("Speech recognition is not supported in this browser. Please use Google Chrome, Brave, or Microsoft Edge.");
+      setMicFailed(true);
+      updateVoiceStatus('idle');
       return;
     }
 
-    // Explicitly verify / request mic permission
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    // Verify mic permission
+    if (navigator.mediaDevices?.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(t => t.stop());
       } catch (micErr) {
-        console.warn("[VoiceAgent] Mic access denied:", micErr);
-        setMicErrorMessage("Microphone access was denied. Please allow microphone permissions in your browser address bar.");
+        setMicErrorMessage('Microphone access denied. Use the text box below to type your question.');
+        setMicFailed(true);
         updateVoiceStatus('idle');
         return;
       }
     }
 
     try {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch (e) {}
-      }
+      if (recognitionRef.current) { try { recognitionRef.current.abort(); } catch (e) {} }
 
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
@@ -136,68 +257,48 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       recognition.interimResults = true;
       recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
 
-      recognition.onstart = () => {
-        updateVoiceStatus('listening');
-        setTranscript('');
-      };
+      recognition.onstart = () => { updateVoiceStatus('listening'); setTranscript(''); };
 
       recognition.onresult = (event) => {
-        let interimText = '';
-        let finalText = '';
-
+        let finalText = '', interimText = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalText += event.results[i][0].transcript;
-          } else {
-            interimText += event.results[i][0].transcript;
-          }
+          if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
+          else interimText += event.results[i][0].transcript;
         }
-
         const currentText = finalText || interimText;
         if (currentText) {
           setTranscript(currentText);
-
-          // Debounce auto-send after user stops talking for 1.8s
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
-            if (currentText.trim().length > 2) {
-              handleVoiceQuerySubmit(currentText.trim());
-            }
+            if (currentText.trim().length > 2) sendToBridge(currentText.trim());
           }, 1800);
         }
       };
 
       recognition.onerror = (e) => {
-        console.warn("[VoiceAgent] Recognition error:", e.error);
-        if (e.error === 'not-allowed') {
-          setMicErrorMessage("Microphone permission blocked. Please allow microphone access in your browser settings.");
-          updateVoiceStatus('idle');
-        } else if (e.error === 'network') {
-          setMicErrorMessage("Network issue with speech service. Check your internet connection.");
+        console.warn('[VoiceAgent] STT error:', e.error);
+        if (e.error === 'network' || e.error === 'not-allowed') {
+          // STT unavailable → switch to type-to-ask mode
+          setMicFailed(true);
+          setMicErrorMessage(e.error === 'network'
+            ? '🎙️ Mic STT offline. Use text below or tap a topic chip.'
+            : 'Microphone blocked. Type your question below.');
           updateVoiceStatus('idle');
         } else if (e.error === 'no-speech') {
-          if (voiceStatusRef.current === 'listening') {
-            try { recognition.start(); } catch (err) {}
-          }
+          if (voiceStatusRef.current === 'listening') { try { recognition.start(); } catch (err) {} }
         } else {
           updateVoiceStatus('idle');
         }
       };
 
       recognition.onend = () => {
-        if (voiceStatusRef.current === 'listening') {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.warn('[VoiceAgent] onend restart error:', e);
-          }
-        }
+        if (voiceStatusRef.current === 'listening') { try { recognition.start(); } catch (e) {} }
       };
 
       recognition.start();
     } catch (err) {
-      console.error("[VoiceAgent] Start error:", err);
-      setMicErrorMessage(err.message || "Failed to start microphone.");
+      setMicFailed(true);
+      setMicErrorMessage('Failed to start microphone. Type your question below.');
       updateVoiceStatus('idle');
     }
   };
@@ -222,24 +323,26 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     };
 
     let cleanReply = '';
+    let neuralAudioB64 = '';
 
-    // 1. Try local langchain-ai/voice-demo bridge first
+    // Direct to local langchain-ai/voice-demo bridge
     try {
       const bridgeRes = await fetch('http://localhost:8765/api/voice/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryText, lang }),
-        signal: AbortSignal.timeout(6000)
+        signal: AbortSignal.timeout(10000)
       });
       if (bridgeRes.ok) {
         const data = await bridgeRes.json();
         if (data && data.response) {
           cleanReply = data.response;
+          neuralAudioB64 = data.audio_base64 || '';
           setVoiceDemoOnline(true);
         }
       }
     } catch (bridgeErr) {
-      console.log("[VoiceAgent] Voice-demo bridge offline, fallback to agentApi:", bridgeErr?.message);
+      console.log("[VoiceAgent] Voice-demo bridge error:", bridgeErr?.message);
     }
 
     if (!cleanReply) {
@@ -267,25 +370,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
     setLastAgentReply(cleanSpoken);
 
-    if (!isMuted && cleanSpoken) {
-      updateVoiceStatus('speaking');
-      speakText(cleanSpoken, {
-        lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
-        rate: 1.05,
-        onStart: () => updateVoiceStatus('speaking'),
-        onEnd: () => {
-          updateVoiceStatus('listening');
-          startListening();
-        },
-        onError: () => {
-          updateVoiceStatus('listening');
-          startListening();
-        }
-      });
-    } else {
+    playVoiceAudio(neuralAudioB64, cleanSpoken, () => {
       updateVoiceStatus('listening');
       startListening();
-    }
+    });
   };
 
   if (!isOpen) return null;

@@ -1,188 +1,102 @@
 /**
- * Discovery Uttarakhand - Phase 7 Agent API Client
- * Frontend client — tries langchain-ai/voice-demo bridge first, falls back to Render backend.
+ * Discovery Uttarakhand - Agent API Client
+ * Powered directly by langchain-ai/voice-demo bridge (Port 8765).
+ * Completely replaced old backend flow with new Gemini Devbhoomi Agent.
  */
 
-const LIVE_BACKEND_URL = "https://uttarakhand-hackathon-project.onrender.com/api";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? LIVE_BACKEND_URL : "http://localhost:5000/api");
-const BRIDGE_URL = "http://localhost:8765";
+const BRIDGE_URL = import.meta.env.VITE_VOICE_BRIDGE_URL || "http://localhost:8765";
 
 /**
- * Try the local voice-demo bridge first for any chat message.
- * Returns parsed response object or null if bridge is offline/fails.
+ * Send message to the voice-demo AI Agent.
  */
-async function tryBridgeChat({ message, history, pageContext }) {
+export async function sendAgentMessage({ message, history, pageContext }) {
   try {
     const res = await fetch(`${BRIDGE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history: history || [], pageContext }),
-      signal: AbortSignal.timeout(7000)
+      signal: AbortSignal.timeout(15000)
     });
-    if (!res.ok) return null;
+
+    if (!res.ok) {
+      throw new Error(`Agent error: HTTP ${res.status}`);
+    }
+
     const data = await res.json();
-    if (data?.success && data?.response?.message) return data;
-    return null;
-  } catch (_) {
-    return null;
+    return data;
+  } catch (err) {
+    console.error("[agentApi] Bridge error:", err);
+    return {
+      success: false,
+      message: "Devbhoomi AI agent is connecting. Please ensure voice-demo bridge is active on port 8765.",
+      response: {
+        message: "Devbhoomi Voice & Chat Agent is starting up. Please check if voice-demo bridge is running on port 8765.",
+        toolsUsed: [],
+        type: "error"
+      }
+    };
   }
 }
 
-export async function sendAgentMessage({ message, tripId, sessionId, chatId, history, pageContext }) {
-  // 1. Try local voice-demo bridge first
-  const bridgeData = await tryBridgeChat({ message, history, pageContext });
-  if (bridgeData) return bridgeData;
+/**
+ * Stream message to the voice-demo AI Agent for chat UI.
+ * Emits status, chunk, and final events so Zustand chatStore updates seamlessly.
+ */
+export async function streamAgentMessage({ message, history, pageContext, onUpdate, onEvent, signal }) {
+  const emit = onUpdate || onEvent || (() => {});
 
-  // 2. Fallback to Render backend
+  emit({ type: 'status', message: 'Devbhoomi AI · Consulting Devbhoomi Guide...' });
+
   try {
-    const token = localStorage.getItem("token");
-    const headers = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    const body = { message };
-    if (tripId) body.tripId = tripId;
-    if (sessionId) body.sessionId = sessionId;
-    if (chatId) body.chatId = chatId;
-    if (history) body.history = history;
-    if (pageContext) body.pageContext = pageContext;
-
-    const response = await fetch(`${API_BASE}/agent/chat`, {
+    const res = await fetch(`${BRIDGE_URL}/api/chat`, {
       method: "POST",
-      headers,
-      body: JSON.stringify(body)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history: history || [], pageContext }),
+      signal: signal || AbortSignal.timeout(20000)
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: data.message || "Failed to reach AI Copilot",
-        sessionId: null
-      };
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
     }
+
+    const data = await res.json();
+    const resp = data?.response || {};
+    const text = resp.message || "I am your Devbhoomi travel guide.";
+
+    emit({ type: 'status', message: 'Devbhoomi AI · Ready' });
+
+    // Stream text in small realistic chunks for smooth UI typing effect
+    const words = text.split(" ");
+    for (let i = 0; i < words.length; i += 4) {
+      const chunk = words.slice(i, i + 4).join(" ") + (i + 4 < words.length ? " " : "");
+      emit({ type: 'chunk', text: chunk });
+      await new Promise(r => setTimeout(r, 20));
+    }
+
+    // Emit final event with full grounded response payload
+    emit({
+      type: 'final',
+      response: {
+        message: text,
+        confidence: resp.confidence || 'grounded',
+        toolsUsed: resp.toolsUsed || [],
+        type: resp.type || 'answer',
+        suggestedActions: resp.suggestedActions || ['Explore Homestays', 'Check Mountain Safety', 'Live Weather'],
+        citations: resp.citations || [],
+        tripContext: resp.tripContext || null
+      }
+    });
 
     return data;
   } catch (err) {
-    console.error("[agentApi] Network error:", err);
-    return {
-      success: false,
-      message: "Network error - could not reach AI Copilot. Please check your connection.",
-      sessionId: null
-    };
-  }
-}
-
-export async function streamAgentMessage({ message, tripId, sessionId, chatId, history, pageContext, onUpdate, onEvent, signal }) {
-  const emit = onUpdate || onEvent || (() => {});
-
-  // 1. Try local voice-demo bridge first — emit as synthetic stream events
-  const bridgeData = await tryBridgeChat({ message, history, pageContext });
-  if (bridgeData) {
-    const resp = bridgeData.response;
-    emit({ type: 'status', message: 'Devbhoomi AI · Ready' });
-    emit({ type: 'chunk', text: resp.message });
-    emit({ type: 'done', response: { message: resp.message, toolsUsed: resp.toolsUsed || [], type: 'answer', suggestedActions: [] } });
-    return;
-  }
-
-  // 2. Fallback — stream from Render backend
-  try {
-    const token = localStorage.getItem("token");
-    const headers = { 
-      "Content-Type": "application/json",
-      "Accept": "text/event-stream, application/json"
-    };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    const body = { message };
-    if (tripId) body.tripId = tripId;
-    if (sessionId) body.sessionId = sessionId;
-    if (chatId) body.chatId = chatId;
-    if (history) body.history = history;
-    if (pageContext) body.pageContext = pageContext;
-
-    const response = await fetch(`${API_BASE}/agent/chat`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal
-    });
-
-    if (!response.ok) {
-      let errorMsg = `HTTP ${response.status}`;
-      try {
-        const errText = await response.text();
-        const errJson = JSON.parse(errText);
-        errorMsg = errJson.message || errText;
-      } catch (_) {}
-      emit({ type: 'error', message: errorMsg });
-      return;
-    }
-
-    const contentType = response.headers.get("content-type") || "";
-
-    // If server returned direct JSON
-    if (contentType.includes("application/json")) {
-      const data = await response.json();
-      const respObj = data.response || data;
-      const respText = respObj.message || data.message || "";
-      
-      emit({ type: 'status', message: 'Ready' });
-      if (respText) {
-        emit({ type: 'chunk', text: respText });
-      }
-      if (respObj.uiActions && Array.isArray(respObj.uiActions)) {
-        respObj.uiActions.forEach(a => emit({ type: 'action', action: a }));
-      }
-      emit({ type: 'final', response: respObj, sessionId: data.sessionId, chatId: data.chatId });
-      emit({ type: 'done', response: respObj, sessionId: data.sessionId, chatId: data.chatId });
-      return data;
-    }
-
-    if (!response.body) {
-      throw new Error("ReadableStream not available. Fetch environment may not support streaming.");
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || ""; 
-
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const dataStr = line.slice(6).trim();
-          if (!dataStr) continue;
-          try {
-            const data = JSON.parse(dataStr);
-            emit(data);
-
-            // Emit aliases for compatibility between drawer and store
-            if (data.type === 'done') {
-              emit({ type: 'final', response: data.response || data, sessionId: data.sessionId, chatId: data.chatId });
-            } else if (data.type === 'ui_action' && data.action) {
-              emit({ type: 'action', action: data.action });
-            }
-          } catch (e) {
-            console.error("[agentApi] Error parsing SSE chunk:", e.message);
-          }
-        }
-      }
-    }
-  } catch (err) {
     if (err.name === 'AbortError') {
-      console.log("[agentApi] Streaming aborted.");
       emit({ type: 'aborted' });
       return;
     }
-    console.error("[agentApi] Network error during stream:", err);
-    emit({ type: 'error', message: "Network error - could not reach AI Copilot." });
+    console.error("[agentApi] Stream error:", err);
+    emit({
+      type: 'error',
+      message: 'Could not connect to Devbhoomi Voice-Demo agent. Ensure port 8765 bridge is running.'
+    });
   }
 }

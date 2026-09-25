@@ -8,12 +8,14 @@ Gemini Live voice companion.
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import os
 import sys
 from pathlib import Path
 
+import edge_tts
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,6 +73,24 @@ def _get_genai_client():
     if not GOOGLE_API_KEY:
         raise ValueError("GOOGLE_API_KEY environment variable is not set")
     return genai.Client(api_key=GOOGLE_API_KEY)
+
+
+async def synthesize_neural_voice(text: str, lang: str = "hi") -> str:
+    """Generate crystal-clear neural voice audio as base64-encoded MP3 using edge-tts."""
+    voice = "hi-IN-SwaraNeural" if (lang and lang.startswith("hi")) else "en-IN-NeerjaNeural"
+    clean = text.replace("*", "").replace("#", "").replace("_", "").strip()
+    if not clean:
+        return ""
+    try:
+        communicate = edge_tts.Communicate(clean, voice)
+        audio_bytes = bytearray()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_bytes.extend(chunk["data"])
+        return base64.b64encode(audio_bytes).decode("utf-8")
+    except Exception as e:
+        logger.warning(f"Neural TTS generation failed: {e}")
+        return ""
 
 
 class VoiceQueryRequest(BaseModel):
@@ -188,6 +208,8 @@ Respond as Devbhoomi Companion — helpful, detailed, markdown-formatted."""
             "message": response.text.strip(),
             "toolsUsed": tools_used,
             "type": "answer",
+            "confidence": "grounded",
+            "suggestedActions": ["Explore Homestays", "Check Mountain Safety", "Live Weather"],
             "engine": "langchain-ai/voice-demo",
         }
     }
@@ -253,10 +275,14 @@ Respond as the Devbhoomi Voice Companion in 1-3 spoken, clear, natural sentences
 
     clean_text = response.text.replace("*", "").replace("#", "").strip()
 
+    # Generate neural human speech audio (MP3 base64)
+    audio_b64 = await synthesize_neural_voice(clean_text, req.lang)
+
     return {
         "response": clean_text,
         "tools_used": tools_used,
         "engine": "langchain-ai/voice-demo",
+        "audio_base64": audio_b64,
     }
 
 
@@ -266,11 +292,16 @@ async def websocket_voice_endpoint(websocket: WebSocket):
     await websocket.accept()
     logger.info("[ws] Client connected to Devbhoomi Voice-Demo WebSocket")
     
+    # Pre-generate greeting audio in natural Hindi/English voice
+    greeting_text = "Namaste! I am your Devbhoomi travel companion. How can I help you explore Uttarakhand today?"
+    greeting_audio = await synthesize_neural_voice(greeting_text, "en")
+
     # Send welcome handshake
     await websocket.send_json({
         "type": "ready",
         "engine": "langchain-ai/voice-demo",
-        "greeting": "Namaste! I am your Devbhoomi travel companion. How can I help you explore Uttarakhand today?",
+        "greeting": greeting_text,
+        "audio_base64": greeting_audio,
     })
 
     try:
@@ -292,6 +323,7 @@ async def websocket_voice_endpoint(websocket: WebSocket):
                 await websocket.send_json({
                     "type": "response",
                     "text": result["response"],
+                    "audio_base64": result.get("audio_base64", ""),
                     "tools_used": result.get("tools_used", []),
                 })
                 await websocket.send_json({"type": "status", "status": "idle"})

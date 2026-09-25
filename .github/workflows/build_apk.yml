@@ -49,6 +49,9 @@ jobs:
           flutter --version
           dart --version
 
+      - name: Clean Previous Flutter Builds
+        run: flutter clean
+
       - name: Get Flutter Packages
         run: flutter pub get
 
@@ -61,18 +64,18 @@ jobs:
         run: |
           mkdir -p ../dist-apk
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.apk
+            cp build/app/outputs/flutter-apk/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.2.apk
           elif [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
-            cp build/app/outputs/apk/release/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.apk
+            cp build/app/outputs/apk/release/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.2.apk
           fi
           if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
-            cp build/app/outputs/flutter-apk/app-debug.apk ../dist-apk/Discover-Uttarakhand-Debug.apk
+            cp build/app/outputs/flutter-apk/app-debug.apk ../dist-apk/Discover-Uttarakhand-v1.0.2-Debug.apk
           fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Discover-Uttarakhand-Android-APK
+          name: Discover-Uttarakhand-Android-APK-v1.0.2
           path: dist-apk/*.apk
           if-no-files-found: error
           retention-days: 30
@@ -81,19 +84,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0-apk
-          name: "Discover Uttarakhand Android APK v1.0.0"
+          tag_name: v1.0.2-apk
+          name: "Discover Uttarakhand Android APK v1.0.2 (Fresh Build)"
           body: |
-            ## 🏔️ Discovery Uttarakhand Android App v1.0.0
-            
-            **Direct 1-Click APK Download** (No Flutter or Android Studio needed):
-            - **[Discover-Uttarakhand-v1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0-apk/Discover-Uttarakhand-v1.0.apk)** (Release APK - Recommended)
-            - **[Discover-Uttarakhand-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0-apk/Discover-Uttarakhand-Debug.apk)** (Debug APK - Works on all developer devices)
+            ## 🏔️ Discovery Uttarakhand Android App v1.0.2
+
+            **Direct 1-Click APK Download** (Fresh Build with AI Copilot + Voice Demo + Technical Rental Specs):
+            - **[Discover-Uttarakhand-v1.0.2.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.2-apk/Discover-Uttarakhand-v1.0.2.apk)** (Release APK - Recommended)
+            - **[Discover-Uttarakhand-v1.0.2-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.2-apk/Discover-Uttarakhand-v1.0.2-Debug.apk)** (Debug APK - Works on all developer devices)
             
             ### Instructions:
-            1. Download `Discover-Uttarakhand-v1.0.apk` (or Debug version).
-            2. If Android warns *"File might be harmful / Install from unknown source"*, tap **Settings -> Allow from this source** or **Install Anyway**.
-            3. Open the app!
+            1. Uninstall any older app version from your phone if installed.
+            2. Download `Discover-Uttarakhand-v1.0.2.apk`.
+            3. Tap **Install / Allow from this source**.
+            4. Open the app!
           files: dist-apk/*.apk
           draft: false
           prerelease: false
@@ -102,8 +106,8 @@ jobs:
 
       - name: Generate Release Notes & Summary
         run: |
-          echo "### 🚀 Discovery Uttarakhand Android APK Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Discovery Uttarakhand Android APK v1.0.2 Built Successfully!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **App Version**: 1.0.0+1" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Version**: 1.0.2+3" >> $GITHUB_STEP_SUMMARY
           echo "- **Platform**: Android (APK)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Direct Download**: [Download Discover-Uttarakhand-v1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0-apk/Discover-Uttarakhand-v1.0.apk)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Direct Download**: [Download Discover-Uttarakhand-v1.0.2.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.2-apk/Discover-Uttarakhand-v1.0.2.apk)" >> $GITHUB_STEP_SUMMARY
