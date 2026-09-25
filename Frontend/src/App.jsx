@@ -26,6 +26,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminManagement from './pages/AdminManagement';
 import VerificationProofPage from './pages/VerificationProofPage';
 import PartnerDashboardPage from './pages/partner/PartnerDashboardPage';
+import GuideDashboard from './pages/GuideDashboard';
+import LiveTrackingPage from './pages/LiveTrackingPage';
+import RescueOpsPage from './pages/RescueOpsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import CheckoutPage from './pages/CheckoutPage';
 import BottomNavBar from './components/navigation/BottomNavBar';
@@ -65,6 +68,9 @@ function App() {
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideProfilePage />} />
               <Route path="/map" element={<MapPage />} />
+              <Route path="/guide" element={<GuideDashboard />} />
+              <Route path="/live/:tripId" element={<LiveTrackingPage />} />
+              <Route path="/rescue-ops" element={<RescueOpsPage />} />
               <Route path="/trip-planner" element={<TripPlanner />} />
               <Route path="/copilot" element={<CopilotPage />} />
               <Route path="/innovations" element={<InnovationShowcasePage />} />

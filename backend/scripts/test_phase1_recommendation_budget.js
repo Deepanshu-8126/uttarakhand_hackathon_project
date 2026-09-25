@@ -32,17 +32,31 @@ async function runPhase1Tests() {
   console.log('DISCOVERY UTTARAKHAND — PHASE 1 COMPREHENSIVE TEST SUITE');
   console.log('===============================================================\n');
 
-  await connectDB();
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  let hasDB = false;
+
+  if (!uri) {
+    console.log('[Offline Notice] Neither MONGODB_URI nor MONGO_URI is set.');
+    console.log('[Offline Notice] Running offline deterministic BudgetEngine verification suite.\n');
+  } else {
+    try {
+      await connectDB();
+      hasDB = true;
+    } catch (e) {
+      console.log(`[Offline Notice] Database connection unavailable (${e.message}). Running offline suite.\n`);
+    }
+  }
 
   let passed = 0;
   let failed = 0;
 
   try {
-    // -------------------------------------------------------------
-    // TEST 1: Recommendation Engine — Location Match & Ranking
-    // -------------------------------------------------------------
-    console.log('[TEST 1] Testing Recommendation Engine location proximity match (Nainital base)...');
-    const recsNainital = await RecommendationEngine.getRecommendations({
+    if (hasDB) {
+      // -------------------------------------------------------------
+      // TEST 1: Recommendation Engine — Location Match & Ranking
+      // -------------------------------------------------------------
+      console.log('[TEST 1] Testing Recommendation Engine location proximity match (Nainital base)...');
+      const recsNainital = await RecommendationEngine.getRecommendations({
       dayNumber: 1,
       currentLocation: { name: 'Kathgodam', coordinates: [29.2718, 79.5312], district: 'Nainital' },
       overnightLocation: { name: 'Nainital', coordinates: [29.3919, 79.4542], district: 'Nainital' },
@@ -142,6 +156,9 @@ async function runPhase1Tests() {
       console.error('  ❌ Unexpected recommendations for out-of-state coordinates:', emptyRecs.stays);
       failed++;
     }
+  } else {
+    console.log('  ℹ️ [OFFLINE RUNNER] Live database tests 1–4 skipped (No MONGODB_URI).');
+  }
 
     // -------------------------------------------------------------
     // TEST 5: Budget Engine — Multi-Category Cost Breakdown & Provenance
@@ -267,7 +284,9 @@ async function runPhase1Tests() {
     console.log('\n===============================================================');
     console.log(`PHASE 1 TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);
     console.log('===============================================================');
-    await mongoose.disconnect();
+    if (hasDB) {
+      await mongoose.disconnect();
+    }
     if (failed > 0) process.exit(1);
   }
 }

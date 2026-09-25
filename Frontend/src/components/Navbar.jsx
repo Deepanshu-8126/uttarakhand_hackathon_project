@@ -20,7 +20,9 @@ import {
   Building,
   Calendar,
   Languages,
-  MapPin
+  MapPin,
+  AlertTriangle,
+  Radio
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
@@ -188,6 +190,16 @@ export default function Navbar() {
               </span>
             </button>
 
+            {/* Safety / SOS Button */}
+            <Link
+              to="/rescue-ops"
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-rose-300/60 bg-rose-50/80 hover:bg-rose-100 text-rose-700 text-[10px] font-bold transition shadow-2xs"
+              title="Trek Safety & Rescue Operations"
+            >
+              <AlertTriangle size={11} className="text-rose-500" />
+              <span>Safety</span>
+            </Link>
+
             {/* Language Switcher Button (Desktop & Mobile) */}
             <button
               type="button"
@@ -299,6 +311,24 @@ export default function Navbar() {
                         >
                           <Compass size={14} />
                           <span>My Active Trips &amp; SOS</span>
+                        </Link>
+
+                        <Link
+                          to="/guide"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-emerald-50 transition-colors text-[#0f3d2e] font-bold"
+                        >
+                          <Mountain size={14} className="text-emerald-700" />
+                          <span>🏔️ Guide Portal</span>
+                        </Link>
+
+                        <Link
+                          to="/rescue-ops"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-50 transition-colors text-rose-700 font-bold"
+                        >
+                          <Radio size={14} className="text-rose-500" />
+                          <span>🚨 Rescue Ops</span>
                         </Link>
 
                         <Link
@@ -433,7 +463,26 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
+
+                {/* Safety: Guide Portal & Rescue Ops */}
+                <Link
+                  to="/guide"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[#0f3d2e] font-bold text-xs shadow-2xs transition-all"
+                >
+                  <Mountain size={16} className="text-emerald-700" />
+                  <span>🏔️ Guide Portal</span>
+                </Link>
+                <Link
+                  to="/rescue-ops"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-700 font-bold text-xs shadow-2xs transition-all"
+                >
+                  <AlertTriangle size={16} className="text-rose-500" />
+                  <span>🚨 Rescue Ops</span>
+                </Link>
               </div>
+
             </div>
 
             <div className="pt-4 border-t border-stone-200 space-y-2">
