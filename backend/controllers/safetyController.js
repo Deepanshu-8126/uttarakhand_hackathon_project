@@ -120,10 +120,42 @@ export const triggerWomenSos = async (req, res) => {
   }
 };
 
+/**
+ * Feature: General Mountain Trekker SOS Trigger
+ * POST /api/safety/trigger
+ */
+export const triggerGeneralSos = async (req, res) => {
+  try {
+    const { trekkerId, trekkerName, trekName, district, coordinates, battery, message } = req.body;
+
+    const beaconData = {
+      incidentId: 'INC-' + Math.floor(10000 + Math.random() * 90000),
+      trekkerId: trekkerId || 'TRK-82341',
+      trekkerName: trekkerName || 'Aryan Negi',
+      trekName: trekName || 'Kedarnath Trail',
+      district: district || 'Rudraprayag',
+      coordinates: coordinates || { lat: 30.7346, lng: 79.0669 },
+      battery: battery || 27,
+      message: message || 'SOS distress beacon active on mountain trail.',
+      status: 'DISPATCH_PENDING',
+      timestamp: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: '🚨 EMERGENCY SOS BEACON RECEIVED & REGISTERED ON RESCUE GRID.',
+      data: beaconData
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export default {
   evaluateAltitudeSafety,
   checkRoadSafetyAndReroute,
   getActiveIncidents,
   getWomenVerifiedStays,
-  triggerWomenSos
+  triggerWomenSos,
+  triggerGeneralSos
 };

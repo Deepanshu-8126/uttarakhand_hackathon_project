@@ -4,10 +4,14 @@ import {
   checkRoadSafetyAndReroute, 
   getActiveIncidents, 
   getWomenVerifiedStays, 
-  triggerWomenSos 
+  triggerWomenSos,
+  triggerGeneralSos 
 } from '../controllers/safetyController.js';
 
 const router = express.Router();
+
+// General Mountain Trekker SOS Grid Trigger
+router.post('/trigger', triggerGeneralSos);
 
 // Altitude Sickness Guard (>3000m)
 router.post('/altitude-check', evaluateAltitudeSafety);
