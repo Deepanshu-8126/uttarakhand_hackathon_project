@@ -4,8 +4,8 @@ import '../models/destination.dart';
 import '../models/stay.dart';
 
 class ApiService {
-  // Configurable base URL: Android emulator uses 10.0.2.2 for localhost, or live server URL
-  static String baseUrl = 'http://10.0.2.2:5000/api';
+  // Live Render production backend URL (fallback to offline dataset)
+  static String baseUrl = 'https://uttarakhand-hackathon-project.onrender.com/api';
 
   // ── Destinations ───────────────────────────────────────────────────────────
   static Future<List<Destination>> getDestinations() async {
