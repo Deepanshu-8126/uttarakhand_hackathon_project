@@ -80,7 +80,7 @@ class ApiService {
           'message': message,
           'pageContext': destination != null ? {'destinationName': destination} : null,
         }),
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
