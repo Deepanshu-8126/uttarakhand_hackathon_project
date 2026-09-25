@@ -602,6 +602,8 @@ export default function MapPage() {
       }
     } else if (Array.isArray(target) && target.length === 2) {
       setFlyCoords({ coords: target, zoom: 14 });
+    } else if (typeof target === 'object' && target?.coords) {
+      setFlyCoords({ coords: target.coords, zoom: target.zoom || 15 });
     }
   }, []);
 
@@ -1442,42 +1444,82 @@ export default function MapPage() {
             </div>
           </div>
 
-          {/* Active Himalayan Corridor Floating Status Pill */}
-          {activeCorridorId && !transitDrawerOpen && HIMALAYAN_CORRIDORS[activeCorridorId] && (
-            <div className="absolute top-4 right-4 z-[400] flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full shrink-0 shadow-xs"
-                  style={{ backgroundColor: HIMALAYAN_CORRIDORS[activeCorridorId].color }}
-                />
-                <div className="text-left">
-                  <p className="text-xs font-black text-stone-900 leading-tight">
-                    {HIMALAYAN_CORRIDORS[activeCorridorId].name}
-                  </p>
-                  <p className="text-[10px] text-stone-500 font-semibold">
-                    {HIMALAYAN_CORRIDORS[activeCorridorId].totalKm} • {HIMALAYAN_CORRIDORS[activeCorridorId].duration}
-                  </p>
+          {/* Active Himalayan Corridor Floating Status Pill with Start & Real Google Maps Actions */}
+          {activeCorridorId && !transitDrawerOpen && HIMALAYAN_CORRIDORS[activeCorridorId] && (() => {
+            const corr = HIMALAYAN_CORRIDORS[activeCorridorId];
+            const firstSt = corr.stations[0];
+            const lastSt = corr.stations[corr.stations.length - 1];
+            const gMapsUrl = firstSt && lastSt
+              ? `https://www.google.com/maps/dir/?api=1&origin=${firstSt.coords[0]},${firstSt.coords[1]}&destination=${lastSt.coords[0]},${lastSt.coords[1]}&travelmode=driving`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(corr.name + ' Uttarakhand')}`;
+
+            return (
+              <div className="absolute top-4 right-4 z-[400] flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[calc(100vw-2rem)]">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0 shadow-xs"
+                    style={{ backgroundColor: corr.color }}
+                  />
+                  <div className="text-left">
+                    <p className="text-xs font-black text-stone-900 leading-tight">
+                      {corr.name}
+                    </p>
+                    <p className="text-[10px] text-stone-500 font-semibold">
+                      {corr.totalKm} • {corr.duration}
+                    </p>
+                  </div>
                 </div>
+                <div className="h-5 w-px bg-stone-200 shrink-0 hidden sm:block" />
+
+                {/* Start Navigation on Map Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (firstSt?.coords) {
+                      setFlyCoords({ coords: firstSt.coords, zoom: 15 });
+                    }
+                  }}
+                  className="text-xs font-bold text-white bg-[#0f3d2e] hover:bg-[#185340] px-2.5 py-1 rounded-xl transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                  title="Start journey from first corridor stop on map"
+                >
+                  <Navigation size={11} className="text-emerald-300" />
+                  <span>Start Here</span>
+                </button>
+
+                {/* Real Google Maps Button */}
+                <a
+                  href={gMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-[#0f3d2e] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-xl transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                  title="Open turn-by-turn navigation in official Google Maps app"
+                >
+                  <ExternalLink size={11} />
+                  <span>Google Maps ↗</span>
+                </a>
+
+                {/* Details Drawer Button */}
+                <button
+                  type="button"
+                  onClick={() => setTransitDrawerOpen(true)}
+                  className="text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-xl transition cursor-pointer flex items-center gap-1"
+                >
+                  <span>Details</span>
+                  <ChevronRight size={12} />
+                </button>
+
+                {/* Clear Button */}
+                <button
+                  type="button"
+                  onClick={() => setActiveCorridorId(null)}
+                  className="w-6 h-6 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 flex items-center justify-center transition cursor-pointer"
+                  title="Clear Corridor Layer"
+                >
+                  <X size={12} />
+                </button>
               </div>
-              <div className="h-5 w-px bg-stone-200 shrink-0" />
-              <button
-                type="button"
-                onClick={() => setTransitDrawerOpen(true)}
-                className="text-xs font-bold text-[#0f3d2e] bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-xl transition cursor-pointer flex items-center gap-1"
-              >
-                <span>Details</span>
-                <ChevronRight size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveCorridorId(null)}
-                className="w-6 h-6 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 flex items-center justify-center transition cursor-pointer"
-                title="Clear Corridor Layer"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Leaflet Map Engine */}
           <MapContainer

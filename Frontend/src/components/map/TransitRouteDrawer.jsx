@@ -633,6 +633,31 @@ export default function TransitRouteDrawer({
     }
   };
 
+  // Real Google Maps Directions URL (Coordinates first, place names fallback)
+  const googleMapsDirectionsUrl = useMemo(() => {
+    const origParam = originStation.coords
+      ? `${originStation.coords[0]},${originStation.coords[1]}`
+      : encodeURIComponent(`${originStation.name}, Uttarakhand`);
+    const destParam = destStation.coords
+      ? `${destStation.coords[0]},${destStation.coords[1]}`
+      : encodeURIComponent(`${destStation.name}, Uttarakhand`);
+
+    return `https://www.google.com/maps/dir/?api=1&origin=${origParam}&destination=${destParam}&travelmode=driving`;
+  }, [originStation, destStation]);
+
+  const handleStartJourney = () => {
+    onSelectCorridor(activeCorridor.id);
+    if (onFlyToCorridor) {
+      if (originStation.coords) {
+        onFlyToCorridor({ coords: originStation.coords, zoom: 15, isStartingJourney: true });
+      } else {
+        onFlyToCorridor(activeCorridor.id);
+      }
+    }
+    // Auto-dock drawer so user sees live starting map and highway
+    onClose();
+  };
+
   const handleCopyItinerary = () => {
     const text = `🏔️ Himalayan Route Plan: ${originStation.name} ➔ ${destStation.name}
 🛣️ Corridor: ${activeCorridor.name} (${activeCorridor.highway})
@@ -875,16 +900,43 @@ Generated via Discovery Uttarakhand GIS.`;
                 </div>
               </div>
 
-              {/* ─── Primary CTA: Show Route on Map ─── */}
-              <button
-                type="button"
-                onClick={() => handleShowOnMap(activeCorridor.id)}
-                className="w-full py-3 px-4 rounded-xl bg-[#0f3d2e] hover:bg-[#185340] text-white font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer group active:scale-[0.99]"
-              >
-                <Compass size={15} className="text-emerald-300 group-hover:rotate-45 transition-transform" />
-                <span>Show Complete Route on Map</span>
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </button>
+              {/* ─── Primary Route Actions: Start Here + Real Google Maps + Fit Corridor ─── */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {/* Action 1: Start Navigation / Journey from Here */}
+                  <button
+                    type="button"
+                    onClick={handleStartJourney}
+                    className="py-3 px-3.5 rounded-xl bg-[#0f3d2e] hover:bg-[#185340] text-white font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer group active:scale-[0.98]"
+                    title={`Start live mountain journey from ${originStation.name} on map`}
+                  >
+                    <Navigation size={15} className="text-emerald-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <span className="truncate">Start From Here (Map)</span>
+                  </button>
+
+                  {/* Action 2: Open in Real Google Maps */}
+                  <a
+                    href={googleMapsDirectionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-3 px-3.5 rounded-xl bg-white hover:bg-emerald-50 text-[#0f3d2e] border-2 border-[#0f3d2e] font-black text-xs shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer group active:scale-[0.98] text-center"
+                    title="Open turn-by-turn navigation in official Google Maps app"
+                  >
+                    <ExternalLink size={14} className="text-[#0f3d2e] group-hover:scale-110 transition-transform shrink-0" />
+                    <span className="truncate">Real Google Maps ↗</span>
+                  </a>
+                </div>
+
+                {/* Action 3: Fit Complete Corridor on Map */}
+                <button
+                  type="button"
+                  onClick={() => handleShowOnMap(activeCorridor.id)}
+                  className="w-full py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Compass size={13} className="text-emerald-700" />
+                  <span>Fit Entire Corridor Bounds on Map</span>
+                </button>
+              </div>
 
               {/* ─── Multi-Mode Transport Matrix Selector ─── */}
               <div className="space-y-2">
@@ -1044,7 +1096,7 @@ Generated via Discovery Uttarakhand GIS.`;
                 </div>
               </div>
 
-              {/* ─── Share & Copy Itinerary Action ─── */}
+              {/* ─── Share, Google Maps & Copy Itinerary Action ─── */}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -1054,6 +1106,17 @@ Generated via Discovery Uttarakhand GIS.`;
                   {copiedToast ? <Check size={14} className="text-emerald-600" /> : <Copy size={13} />}
                   <span>{copiedToast ? 'Copied to Clipboard!' : 'Copy Route Plan'}</span>
                 </button>
+
+                <a
+                  href={googleMapsDirectionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] border border-emerald-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs shrink-0"
+                  title="Open live directions in Google Maps"
+                >
+                  <ExternalLink size={13} />
+                  <span>Google Maps ↗</span>
+                </a>
               </div>
 
               {/* ─── Emergency Mountain Hotline Card ─── */}
