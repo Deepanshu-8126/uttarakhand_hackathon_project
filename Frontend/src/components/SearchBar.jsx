@@ -137,13 +137,13 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
   };
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-2xl mx-auto mb-10">
+    <div ref={containerRef} className="relative w-full max-w-2xl mx-auto mb-7">
       
-      {/* ── Focused Explore Search Bar ── */}
-      <div className="relative flex items-center w-full bg-white rounded-full card-shadow border border-border-light px-4 py-2 sm:py-2.5 shadow-md hover:shadow-xl transition-all duration-300">
+      {/* ── Focused Explore Search Bar (56px Height, Rounded-full, Premium Shadow) ── */}
+      <div className="relative flex items-center w-full h-[56px] bg-white rounded-full border border-[#E2E8F0] pl-2.5 pr-2 shadow-lg shadow-black/5 hover:shadow-xl transition-all duration-300">
         
-        <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-forest-green shrink-0 mr-3">
-          <Search size={17} strokeWidth={2.2} />
+        <div className="w-10 h-10 rounded-full bg-[#E8F5E9] flex items-center justify-center text-[#0F2B1F] shrink-0 mr-3 shadow-2xs">
+          <Search size={18} strokeWidth={2.5} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -156,14 +156,14 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
             onFocus={() => {
               if (value && suggestions.length > 0) setShowDropdown(true);
             }}
-            placeholder="Search destinations, shrines, treks, or any hidden place (e.g. Hemkund)..."
+            placeholder="Search destinations, shrines, bugyals..."
             aria-label="Search destinations"
-            className="w-full outline-none text-sm font-semibold text-text-dark placeholder:text-muted-text/70 bg-transparent truncate"
+            className="w-full outline-none text-sm font-semibold text-slate-800 placeholder:text-slate-400 bg-transparent truncate pr-2"
           />
         </div>
 
         {isSearchingApi && (
-          <div className="mr-2 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full animate-pulse border border-emerald-200">
+          <div className="mr-2 text-[10px] font-bold text-emerald-800 bg-[#E8F5E9] px-2.5 py-0.5 rounded-full animate-pulse border border-emerald-300 shrink-0">
             Radar active
           </div>
         )}
@@ -171,10 +171,10 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
         {value && (
           <button
             onClick={handleClear}
-            className="h-7 w-7 rounded-full flex items-center justify-center text-muted-text hover:text-text-dark hover:bg-slate-100 transition-colors shrink-0 mr-2"
+            className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0 mr-1.5 cursor-pointer"
             aria-label="Clear search"
           >
-            <X size={15} />
+            <X size={15} strokeWidth={2.5} />
           </button>
         )}
 
@@ -184,8 +184,9 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
             const grid = document.getElementById('explore-grid');
             if (grid) grid.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="h-9 px-5 rounded-full bg-forest-green hover:bg-dark-green text-white font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm hover:scale-[1.02] transition-all cursor-pointer shrink-0"
+          className="h-[42px] px-7 rounded-full bg-[#0F2B1F] hover:bg-[#153e2d] text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-[#0F2B1F]/20 hover:shadow-lg transition-all cursor-pointer shrink-0 active:scale-95"
         >
+          <Sparkles size={14} className="text-emerald-300" />
           <span>Find</span>
         </button>
       </div>

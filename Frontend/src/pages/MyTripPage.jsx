@@ -650,14 +650,24 @@ export default function MyTripPage() {
               <span>Back to Planner</span>
             </button>
 
-            <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5 ${
-              session.status === 'Saved' 
-                ? 'bg-forest-green text-white' 
-                : 'bg-slate-100 text-slate-700 border border-slate-200'
-            }`}>
-              {session.status === 'Saved' ? <Check size={13} /> : <Sparkles size={13} />}
-              {session.status === 'Saved' ? 'Saved to Profile' : 'Custom Itinerary'}
-            </span>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/trekker"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all shadow-2xs"
+              >
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+                <span>Trekker Live & SOS</span>
+              </Link>
+
+              <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5 ${
+                session.status === 'Saved' 
+                  ? 'bg-forest-green text-white' 
+                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+              }`}>
+                {session.status === 'Saved' ? <Check size={13} /> : <Sparkles size={13} />}
+                {session.status === 'Saved' ? 'Saved to Profile' : 'Custom Itinerary'}
+              </span>
+            </div>
           </div>
 
           {/* Title and actions */}

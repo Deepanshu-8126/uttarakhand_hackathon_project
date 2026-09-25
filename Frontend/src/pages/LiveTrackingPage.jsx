@@ -79,9 +79,9 @@ function getMockSession(tripId) {
       { time: '14:10', sender: 'TREKKER', msg: 'Reached checkpoint 3, weather clear' },
     ],
     emergencyContacts: [
-      { label: 'Rescue Team Lead', name: 'Capt. R. Singh (SDRF)', phone: '+919876511234', status: 'ON CALL', color: 'emerald' },
-      { label: 'Local Police', name: 'Tehri Garhwal HQ', phone: '+9101376232101', status: 'AVAILABLE', color: 'blue' },
-      { label: 'District Hospital', name: 'Bhagirathipur Emergency', phone: '+919876555678', status: 'STANDBY', color: 'amber' },
+      { label: 'Community Rescue Lead', name: 'Guide Ramesh Rawat', phone: '+919876511234', status: 'ON CALL', color: 'emerald' },
+      { label: 'Mountain Police Post', name: 'Tehri Garhwal Outpost', phone: '+9101376232101', status: 'AVAILABLE', color: 'blue' },
+      { label: 'Hill Clinic & Aid Post', name: 'Bhagirathipur Emergency Aid', phone: '+919876555678', status: 'STANDBY', color: 'amber' },
     ]
   };
 }
@@ -92,6 +92,36 @@ export default function LiveTrackingPage() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [reportCopied, setReportCopied] = useState(false);
   const [now, setNow] = useState(Date.now());
+
+  // Real-time synchronization with localStorage mock grid
+  const [livePos, setLivePos] = useState(null);
+  const [liveSos, setLiveSos] = useState(null);
+  const [guideDispatch, setGuideDispatch] = useState(null);
+
+  useEffect(() => {
+    const syncGrid = () => {
+      try {
+        const storedSos = localStorage.getItem('sosActive');
+        if (storedSos) setLiveSos(JSON.parse(storedSos));
+        else setLiveSos(null);
+
+        const storedTrek = localStorage.getItem('currentTrek');
+        if (storedTrek) setLivePos(JSON.parse(storedTrek));
+
+        const storedRescue = localStorage.getItem('rescueDispatched');
+        if (storedRescue) setGuideDispatch(JSON.parse(storedRescue));
+        else setGuideDispatch(null);
+      } catch (_) {}
+    };
+
+    syncGrid();
+    window.addEventListener('storage', syncGrid);
+    const interval = setInterval(syncGrid, 1000);
+    return () => {
+      window.removeEventListener('storage', syncGrid);
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 15000);
@@ -109,8 +139,20 @@ export default function LiveTrackingPage() {
     };
   }, []);
 
-  const lastPoint = session.trail[session.trail.length - 1];
-  const polylineCoords = session.trail.map(p => [p.lat, p.lng]);
+  const dynamicTrail = session.trail.map((p, idx) => {
+    if (idx === session.trail.length - 1 && (livePos || liveSos)) {
+      return {
+        ...p,
+        lat: liveSos?.lat || livePos?.lat || p.lat,
+        lng: liveSos?.lng || livePos?.lng || p.lng,
+        label: `LIVE BEACON · ${liveSos ? 'SOS SIGNAL' : 'TRAIL PING'}`
+      };
+    }
+    return p;
+  });
+
+  const lastPoint = dynamicTrail[dynamicTrail.length - 1];
+  const polylineCoords = dynamicTrail.map(p => [p.lat, p.lng]);
 
   const handleDownloadReport = () => {
     const reportText = `DISCOVERY UTTARAKHAND — RESCUE OPS INCIDENT REPORT
@@ -381,13 +423,33 @@ Timestamp: ${new Date().toISOString()}`;
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
                 Est. Rescue Time
               </span>
-              <p className="text-xl font-black text-[#FFA500]">{session.estimatedRescueTime}</p>
+              <p className="text-xl font-black text-[#FFA500]">{guideDispatch?.eta || session.estimatedRescueTime}</p>
               <p className="text-[10px] text-slate-400 mt-1">
-                Ground SDRF Response ETA
+                Community Grid Response ETA
               </p>
             </div>
 
           </div>
+
+          {/* Guide Dispatch Status Banner */}
+          {guideDispatch && (
+            <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/60 text-emerald-200 text-xs flex items-center justify-between gap-3 animate-in fade-in shadow-lg shadow-emerald-950/30">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#00FF88] animate-ping shrink-0" />
+                <div>
+                  <span className="font-bold text-white">
+                    Guide {guideDispatch.guide || 'Ramesh Rawat'} has accepted distress beacon!
+                  </span>
+                  <p className="text-[11px] text-emerald-300">
+                    En route to coordinates ({lastPoint.lat.toFixed(4)}, {lastPoint.lng.toFixed(4)}) • Incoming ETA: {guideDispatch.eta || '18 mins'}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-600/40 shrink-0">
+                DISPATCHED
+              </span>
+            </div>
+          )}
 
           {/* Interactive Dark Leaflet Terrain Map Card */}
           <div className="rounded-2xl bg-[#151A26] border border-slate-800/80 overflow-hidden shadow-2xl flex flex-col">
@@ -624,7 +686,7 @@ Timestamp: ${new Date().toISOString()}`;
               className="py-2.5 rounded-xl bg-[#1c2333] hover:bg-slate-700 border border-slate-700 text-center text-xs font-bold text-slate-200 transition cursor-pointer flex flex-col items-center justify-center gap-1"
             >
               <Shield size={13} className="text-red-400" />
-              <span>1070 SDRF</span>
+              <span>Grid Line 1070</span>
             </a>
 
             <Link

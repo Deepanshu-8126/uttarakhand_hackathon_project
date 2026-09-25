@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { RefreshCw, Map, Zap, Mountain, Star, Sparkles, Navigation, Plus, Radio, ArrowRight } from 'lucide-react';
+import { RefreshCw, Map, Zap, Mountain, Star, Sparkles, Navigation, Plus, Radio, ArrowRight, ShieldCheck } from 'lucide-react';
 import SearchBar from './SearchBar';
 import FilterPills from './FilterPills';
 import DestinationCard from './DestinationCard';
@@ -130,22 +130,25 @@ const SkeletonCard = () => (
 // ── Stats strip — 4 metric cards matching Discovery Uttarakhand standard ──
 const StatsStrip = ({ destinationCount }) => {
   const stats = [
-    { value: `${destinationCount || 100}+`, label: 'Destinations', icon: Mountain },
+    { value: `${destinationCount || 106}+`, label: 'Destinations', icon: Mountain },
     { value: '50+', label: 'Verified Routes', icon: Map },
-    { value: '250+', label: 'Stays & Camps', icon: Star },
-    { value: '500+', label: 'Certified Guides', icon: Zap },
+    { value: '250+', label: 'Stories', icon: Star },
+    { value: '500+', label: 'Certified Guides', icon: ShieldCheck },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
       {stats.map(({ value, label, icon: Icon }) => (
-        <div key={label} className="bg-white p-4 rounded-2xl border border-stone-200/80 flex items-center space-x-3.5 shadow-sm hover:border-emerald-500/30 transition-all">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center flex-shrink-0">
-            <Icon size={20} />
+        <div 
+          key={label} 
+          className="h-[96px] bg-white p-4 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#F0F0F0] flex items-center gap-3.5 hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300 group cursor-default"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-[#E8F5E9] text-[#0F2B1F] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
+            <Icon size={24} strokeWidth={2.5} />
           </div>
-          <div>
-            <div className="text-xl font-extrabold text-slate-900 tracking-tight">{value}</div>
-            <div className="text-xs text-slate-500 font-medium">{label}</div>
+          <div className="min-w-0">
+            <div className="text-[22px] font-black text-[#0F172A] tracking-tight leading-tight">{value}</div>
+            <div className="text-[13px] text-[#64748B] font-medium leading-tight mt-0.5 truncate">{label}</div>
           </div>
         </div>
       ))}
@@ -272,23 +275,23 @@ const ExploreSection = () => {
   };
 
   return (
-    <section id="explore" className="pt-20 pb-28 md:pt-24 md:pb-36 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <section id="explore" className="pt-16 pb-28 md:pt-20 md:pb-36 px-5 max-w-7xl mx-auto w-full">
 
       {/* Section header */}
-      <div className="text-center mb-8">
-        <p className="text-forest-green text-xs font-bold tracking-wide mb-2.5">
+      <div className="text-center mb-6">
+        <p className="text-emerald-800 text-xs font-bold tracking-wider uppercase mb-2">
           Discover Uttarakhand
         </p>
-        <h2 className="text-4xl md:text-5xl font-bold text-text-dark mb-3 tracking-tight">
+        <h2 className="text-[32px] sm:text-4xl md:text-5xl font-black text-[#0F172A] mb-2.5 tracking-tight leading-tight">
           Explore Uttarakhand
         </h2>
-        <p className="text-muted-text text-base md:text-lg font-medium max-w-2xl mx-auto">
+        <p className="text-slate-600/70 text-sm sm:text-base font-medium max-w-xl mx-auto leading-[1.6]">
           Discover valleys, peaks, sacred shrines, and hidden mountain landmarks across 13 districts &amp; live satellite radar.
         </p>
       </div>
 
       {/* Category filter pills */}
-      <div className="flex justify-center mb-4">
+      <div className="flex justify-center mb-7">
         <FilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
       </div>
 

@@ -32,7 +32,7 @@ export default function BottomNavBar() {
   const isMyTripsActive = currentPath.startsWith('/my-trip') || currentPath.startsWith('/profile');
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-stone-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] safe-area-bottom">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-stone-200/80 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] safe-area-bottom">
       
       {/* ── Central Elevated Action Button (Plan Trip) ── */}
       <div className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-auto">

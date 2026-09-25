@@ -4,12 +4,13 @@ import {
   Shield, AlertTriangle, MapPin, Clock, Users, Mountain,
   Battery, BatteryLow, BatteryMedium, Signal, Radio, Phone,
   ChevronRight, Thermometer, Wifi, Bell, Send, CheckCircle2,
-  AlertCircle, Search, ExternalLink, Activity, ArrowUpRight
+  AlertCircle, Search, ExternalLink, Activity, ArrowUpRight,
+  HeartHandshake, RadioTower
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
-// ─── 6 Active Treks Mock Data (Aligned with Panel 2) ───────────────────────────
-const TREK_DATA = [
+// ─── Initial Base Treks ────────────────────────────────────────────────────────
+const BASE_TREKS = [
   {
     id: 'TRK-82341',
     name: 'Kedarnath Yatra A',
@@ -22,15 +23,7 @@ const TREK_DATA = [
     signal: 'Weak (1 Bar)',
     signalLevel: 1,
     temp: '6°C',
-    status: 'SOS',
-    statusBadge: 'MISSING',
-    borderColor: '#FF2E2E',
-    statusBg: 'bg-[#FF2E2E]/15 text-[#FF2E2E] border-[#FF2E2E]/40',
-    dotColor: '#FF2E2E',
-    lat: 30.63,
-    lng: 78.85,
-    altitude: '2,740m',
-    alertMessage: 'SOS distress beacon active. No heartbeat ping received for 42 minutes.',
+    altitude: '3,583m',
   },
   {
     id: 'TRK-72910',
@@ -144,18 +137,11 @@ const TREK_DATA = [
   },
 ];
 
-// Online SDRF Certified Mountain Guides
+// Online Certified Mountain Guides (Community Network)
 const REGISTERED_GUIDES = [
-  { name: 'Ramesh Negi', district: 'Rudraprayag', location: 'Kedarnath Base Camp (Zone 4)', phone: '+919871234567', status: 'On Standby' },
-  { name: 'Suresh Kumar', district: 'Chamoli', location: 'Ghangaria Checkpost', phone: '+919876501234', status: 'Patrolling' },
-  { name: 'Deepak Rawat', district: 'Chamoli', location: 'Joshimath SDRF Station', phone: '+919812398765', status: 'Ready Deploy' },
-];
-
-// Recent SOS Log Timeline
-const SOS_LOGS = [
-  { id: 1, time: '14:30 IST', title: 'Kedarnath (TRK-82341)', desc: 'SOS beacon triggered by Aryan Negi. Lat: 30.63° N, Lng: 78.85° E. Battery 27%.', type: 'sos' },
-  { id: 2, time: '13:45 IST', title: 'Valley of Flowers (TRK-72910)', desc: 'Delay threshold exceeded by 60 min. Checkpoint ping pending.', type: 'warn' },
-  { id: 3, time: '11:15 IST', title: 'Chopta Tungnath (TRK-91204)', desc: 'Weather advisory acknowledged by guide Amit Joshi. Team on route.', type: 'info' },
+  { name: 'Ramesh Rawat', district: 'Rudraprayag', location: 'Kedarnath Base Camp Checkpost', phone: '+919871234567', status: 'On Standby' },
+  { name: 'Suresh Kumar', district: 'Chamoli', location: 'Ghangaria Pass Checkpost', phone: '+919876501234', status: 'Patrolling' },
+  { name: 'Deepak Rawat', district: 'Chamoli', location: 'Joshimath Relay Station', phone: '+919812398765', status: 'Ready Deploy' },
 ];
 
 export default function RescueOpsPage() {
@@ -166,8 +152,75 @@ export default function RescueOpsPage() {
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [alertSuccessToast, setAlertSuccessToast] = useState(false);
 
+  // Live state synchronized with local mesh storage
+  const [liveSos, setLiveSos] = useState(null);
+  const [liveTrekPos, setLiveTrekPos] = useState(null);
+  const [rescueDispatchInfo, setRescueDispatchInfo] = useState(null);
+
+  useEffect(() => {
+    const syncGrid = () => {
+      try {
+        const storedSos = localStorage.getItem('sosActive');
+        if (storedSos) {
+          setLiveSos(JSON.parse(storedSos));
+        } else {
+          setLiveSos(null);
+        }
+
+        const storedTrek = localStorage.getItem('currentTrek');
+        if (storedTrek) {
+          setLiveTrekPos(JSON.parse(storedTrek));
+        }
+
+        const storedRescue = localStorage.getItem('rescueDispatched');
+        if (storedRescue) {
+          setRescueDispatchInfo(JSON.parse(storedRescue));
+        } else {
+          setRescueDispatchInfo(null);
+        }
+      } catch (_) {}
+    };
+
+    syncGrid();
+    window.addEventListener('storage', syncGrid);
+    const interval = setInterval(syncGrid, 1000);
+    return () => {
+      window.removeEventListener('storage', syncGrid);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Construct dynamic trek list with live telemetry
+  const treks = BASE_TREKS.map((trek) => {
+    if (trek.id === 'TRK-82341') {
+      const isSos = Boolean(liveSos);
+      return {
+        ...trek,
+        status: isSos ? 'SOS' : 'Active',
+        statusBadge: isSos ? 'MISSING' : 'ON TRACK',
+        borderColor: isSos ? '#FF2E2E' : '#00FF88',
+        statusBg: isSos
+          ? 'bg-[#FF2E2E]/15 text-[#FF2E2E] border-[#FF2E2E]/40'
+          : 'bg-[#00FF88]/15 text-[#00FF88] border-[#00FF88]/40',
+        dotColor: isSos ? '#FF2E2E' : '#00FF88',
+        lat: liveSos?.lat || liveTrekPos?.lat || 30.7346,
+        lng: liveSos?.lng || liveTrekPos?.lng || 79.0669,
+        battery: liveSos?.battery || liveTrekPos?.battery || 27,
+        lastPing: liveSos?.time || liveTrekPos?.lastPing || '14:30 IST',
+        alertMessage: isSos
+          ? (liveSos?.message || 'SOS distress beacon active. No heartbeat ping received for 42 minutes.')
+          : null,
+      };
+    }
+    return trek;
+  });
+
+  const activeSosCount = treks.filter(t => t.status === 'SOS').length;
+  const warningsCount = treks.filter(t => t.status === 'Warning').length;
+  const activeCount = treks.filter(t => t.status === 'Active').length;
+
   // Filter logic
-  const filteredTreks = TREK_DATA.filter((trek) => {
+  const filteredTreks = treks.filter((trek) => {
     const matchesFilter =
       filter === 'ALL' ? true :
       filter === 'SOS' ? trek.status === 'SOS' :
@@ -201,8 +254,8 @@ export default function RescueOpsPage() {
         <div className="fixed top-20 right-4 z-50 bg-[#151A26] border border-[#00FF88]/50 text-white px-5 py-3 rounded-xl shadow-2xl shadow-[#00FF88]/10 flex items-center gap-3 animate-in fade-in slide-in-from-top-3">
           <CheckCircle2 size={18} className="text-[#00FF88]" />
           <div>
-            <p className="text-xs font-black text-[#00FF88]">BROADCAST TRANSMITTED</p>
-            <p className="text-[11px] text-slate-300">Emergency alert dispatched to all 13 District Emergency Ops Centers.</p>
+            <p className="text-xs font-black text-[#00FF88]">COMMUNITY BROADCAST TRANSMITTED</p>
+            <p className="text-[11px] text-slate-300">P2P mesh advisory dispatched to all 13 mountain district relay posts.</p>
           </div>
         </div>
       )}
@@ -213,20 +266,24 @@ export default function RescueOpsPage() {
           <div>
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF2E2E] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF2E2E]" />
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${activeSosCount > 0 ? 'bg-[#FF2E2E]' : 'bg-[#00FF88]'} opacity-75`} />
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${activeSosCount > 0 ? 'bg-[#FF2E2E]' : 'bg-[#00FF88]'}`} />
               </span>
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-[#FF2E2E]/20 text-[#FF2E2E] border border-[#FF2E2E]/30">
-                LIVE COMMAND
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                activeSosCount > 0
+                  ? 'bg-[#FF2E2E]/20 text-[#FF2E2E] border-[#FF2E2E]/30'
+                  : 'bg-emerald-950/60 text-[#00FF88] border-[#00FF88]/30'
+              }`}>
+                {activeSosCount > 0 ? 'LIVE COMMAND · DISTRESS BEACON' : 'LIVE COMMAND · ALL SECURE'}
               </span>
               <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
-                RESCUE OPS — Uttarakhand State Disaster Response
+                RESCUE OPS — Uttarakhand Community Rescue Grid
               </h1>
             </div>
             <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
               <span>13 Districts Monitoring</span>
               <span className="text-slate-600">•</span>
-              <span className="text-slate-400">Police & SDRF Integrated Feed</span>
+              <span className="text-slate-400">Decentralized Mountain Safety & Buddy Network</span>
               <span className="text-slate-600">•</span>
               <span className="text-emerald-400 font-medium">Last updated: Just now</span>
             </p>
@@ -234,36 +291,63 @@ export default function RescueOpsPage() {
 
           <div className="flex items-center gap-2">
             <Link
+              to="/trekker"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#3B82F6]/50 bg-[#3B82F6]/10 text-blue-300 hover:text-white hover:bg-[#3B82F6]/20 transition-colors flex items-center gap-1.5"
+            >
+              <Users size={13} className="text-[#3B82F6]" />
+              <span>Trekker Simulator</span>
+            </Link>
+            <Link
               to="/guide"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#2A3343] bg-[#151A26] text-slate-300 hover:text-white hover:border-slate-500 transition-colors flex items-center gap-1.5"
             >
               <Radio size={13} className="text-emerald-400" />
               <span>Guide Cockpit</span>
             </Link>
-            <a
-              href="tel:1070"
-              className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#FF2E2E]/20 text-[#FF2E2E] border border-[#FF2E2E]/40 hover:bg-[#FF2E2E]/30 transition-colors flex items-center gap-1.5"
-            >
-              <Phone size={13} />
-              <span>SDRF 1070</span>
-            </a>
           </div>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
 
+        {/* ─── Judge 2-Tab Testing Instructions Box ──────────────────────────── */}
+        <div className="mb-6 rounded-2xl border border-[#3B82F6]/40 bg-[#3B82F6]/10 p-4 relative overflow-hidden">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-[#3B82F6]/20 border border-[#3B82F6]/40 flex items-center justify-center shrink-0 mt-0.5 text-[#3B82F6] font-black text-sm">
+              🧪
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xs font-black uppercase tracking-wider text-blue-300">
+                Hackathon Live Demo Testing Flow (2 Browser Tabs)
+              </h2>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                <strong>Tab 1 (Trekker):</strong> Open <Link to="/trekker" className="text-cyan-400 underline font-bold">/trekker</Link> (Aryan Negi). Click <strong>[Start My Trek]</strong> & then <strong>[🚨 BROADCAST SOS TO GRID]</strong>.
+                <br />
+                <strong>Tab 2 (Admin Command):</strong> Look at this screen right now — <strong>TRK-82341</strong> instantly lights up in red, coordinates sync in real-time, and clicking the card opens the full Live Radar Panel 2!
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* ─── STATS ROW (4 Cards) ────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
           {/* Card 1: Active SOS */}
-          <div className="rounded-xl border border-[#FF2E2E]/50 bg-[#FF2E2E]/10 p-4 transition-all hover:bg-[#FF2E2E]/15">
+          <div className={`rounded-xl border p-4 transition-all ${
+            activeSosCount > 0
+              ? 'border-[#FF2E2E]/60 bg-[#FF2E2E]/15 shadow-lg shadow-red-950/40'
+              : 'border-[#2A3343] bg-[#151A26]'
+          }`}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#FF2E2E]">Active SOS</span>
-              <AlertTriangle size={15} className="text-[#FF2E2E] animate-pulse" />
+              <span className={`text-[10px] font-black uppercase tracking-wider ${activeSosCount > 0 ? 'text-[#FF2E2E]' : 'text-slate-400'}`}>
+                Active SOS
+              </span>
+              <AlertTriangle size={15} className={activeSosCount > 0 ? 'text-[#FF2E2E] animate-pulse' : 'text-slate-500'} />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">1</span>
-              <span className="text-[11px] text-[#FF2E2E] font-medium">Immediate SDRF action</span>
+              <span className="text-3xl font-black text-white">{activeSosCount}</span>
+              <span className={`text-[11px] font-medium ${activeSosCount > 0 ? 'text-[#FF2E2E]' : 'text-slate-400'}`}>
+                {activeSosCount > 0 ? 'Immediate grid action' : 'Zero active distress'}
+              </span>
             </div>
           </div>
 
@@ -274,7 +358,7 @@ export default function RescueOpsPage() {
               <AlertCircle size={15} className="text-[#FFA500]" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">1</span>
+              <span className="text-3xl font-black text-white">{warningsCount}</span>
               <span className="text-[11px] text-[#FFA500] font-medium">Delayed / Weather hold</span>
             </div>
           </div>
@@ -286,7 +370,7 @@ export default function RescueOpsPage() {
               <Activity size={15} className="text-[#3B82F6]" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">6</span>
+              <span className="text-3xl font-black text-white">{treks.length}</span>
               <span className="text-[11px] text-blue-300 font-medium">13 High-altitude passes</span>
             </div>
           </div>
@@ -322,7 +406,7 @@ export default function RescueOpsPage() {
                       : 'text-slate-400 hover:text-white hover:bg-[#2A3343]/60'
                   }`}
                 >
-                  All Treks ({TREK_DATA.length})
+                  All Treks ({treks.length})
                 </button>
                 <button
                   type="button"
@@ -334,7 +418,7 @@ export default function RescueOpsPage() {
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#FF2E2E]" />
-                  SOS Alerts (1)
+                  SOS Alerts ({activeSosCount})
                 </button>
                 <button
                   type="button"
@@ -346,7 +430,7 @@ export default function RescueOpsPage() {
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#FFA500]" />
-                  Warnings (1)
+                  Warnings ({warningsCount})
                 </button>
                 <button
                   type="button"
@@ -358,7 +442,7 @@ export default function RescueOpsPage() {
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00FF88]" />
-                  Active (4)
+                  Active ({activeCount})
                 </button>
               </div>
 
@@ -379,7 +463,6 @@ export default function RescueOpsPage() {
             <div className="space-y-3">
               {filteredTreks.map((trek) => {
                 const isSOS = trek.status === 'SOS';
-                const isWarn = trek.status === 'Warning';
 
                 return (
                   <div
@@ -387,7 +470,7 @@ export default function RescueOpsPage() {
                     onClick={() => navigate(`/live/${trek.id}`)}
                     style={{ borderLeftColor: trek.borderColor }}
                     className={`group relative rounded-xl border border-[#2A3343] border-l-4 bg-[#151A26] p-4 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:border-slate-500/80 ${
-                      isSOS ? 'shadow-red-950/20 hover:shadow-[#FF2E2E]/10' : ''
+                      isSOS ? 'shadow-red-950/30 hover:shadow-[#FF2E2E]/20 bg-red-950/20' : ''
                     }`}
                   >
                     {/* Top Row: Trek Name, ID, District & Right Status Badge */}
@@ -446,13 +529,28 @@ export default function RescueOpsPage() {
 
                     {/* SOS Alert Banner inside card if active */}
                     {trek.alertMessage && (
-                      <div className={`mb-3 p-2 rounded-lg text-xs flex items-center gap-2 border ${
+                      <div className={`mb-3 p-2.5 rounded-lg text-xs flex items-center gap-2 border ${
                         isSOS
-                          ? 'bg-[#FF2E2E]/10 border-[#FF2E2E]/30 text-red-200'
+                          ? 'bg-[#FF2E2E]/15 border-[#FF2E2E]/40 text-red-200'
                           : 'bg-[#FFA500]/10 border-[#FFA500]/30 text-amber-200'
                       }`}>
-                        <AlertTriangle size={13} className={`shrink-0 ${isSOS ? 'text-[#FF2E2E]' : 'text-[#FFA500]'}`} />
-                        <span className="text-[11px] font-medium truncate">{trek.alertMessage}</span>
+                        <AlertTriangle size={14} className={`shrink-0 ${isSOS ? 'text-[#FF2E2E] animate-bounce' : 'text-[#FFA500]'}`} />
+                        <span className="text-[11px] font-semibold">{trek.alertMessage}</span>
+                      </div>
+                    )}
+
+                    {/* Guide Rescue Dispatch Banner (If Guide Ramesh Rawat clicked Rescue) */}
+                    {isSOS && rescueDispatchInfo && (
+                      <div className="mb-3 p-2.5 rounded-lg text-xs flex items-center justify-between bg-emerald-950/60 border border-emerald-600/50 text-emerald-200">
+                        <div className="flex items-center gap-2">
+                          <HeartHandshake size={14} className="text-[#00FF88]" />
+                          <span className="text-[11px] font-bold">
+                            Guide {rescueDispatchInfo.guide || 'Ramesh Rawat'} dispatched for rescue (ETA {rescueDispatchInfo.eta || '18m'})
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-900/60 px-2 py-0.5 rounded">
+                          ACTIVE
+                        </span>
                       </div>
                     )}
 
@@ -467,7 +565,7 @@ export default function RescueOpsPage() {
                             <Battery size={13} className="text-emerald-400" />
                           )}
                           <span className={trek.battery < 30 ? 'text-[#FF2E2E] font-bold' : 'text-slate-300'}>
-                            {trek.batteryLabel}
+                            {trek.battery}%
                           </span>
                         </span>
 
@@ -492,19 +590,6 @@ export default function RescueOpsPage() {
                   </div>
                 );
               })}
-
-              {filteredTreks.length === 0 && (
-                <div className="p-8 text-center bg-[#151A26] border border-[#2A3343] rounded-xl text-slate-400">
-                  <AlertCircle size={28} className="mx-auto mb-2 text-slate-600" />
-                  <p className="text-sm font-semibold">No treks match your current filter.</p>
-                  <button
-                    onClick={() => { setFilter('ALL'); setSearchQuery(''); }}
-                    className="mt-2 text-xs text-[#3B82F6] hover:underline"
-                  >
-                    Reset all filters
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
@@ -529,10 +614,6 @@ export default function RescueOpsPage() {
               <div className="p-3 bg-[#0A0E14] relative">
                 <svg viewBox="0 0 420 300" className="w-full h-auto select-none">
                   <defs>
-                    <radialGradient id="radarScan" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.12" />
-                      <stop offset="100%" stopColor="#0A0E14" stopOpacity="0" />
-                    </radialGradient>
                     <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
                       <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1A2230" strokeWidth="0.8" />
                     </pattern>
@@ -550,34 +631,38 @@ export default function RescueOpsPage() {
                     opacity="0.85"
                   />
 
-                  {/* State District lines simplified */}
-                  <line x1="120" y1="40" x2="170" y2="150" stroke="#1F2937" strokeWidth="1" strokeDasharray="3 3" />
-                  <line x1="210" y1="35" x2="220" y2="180" stroke="#1F2937" strokeWidth="1" strokeDasharray="3 3" />
-                  <line x1="320" y1="60" x2="280" y2="210" stroke="#1F2937" strokeWidth="1" strokeDasharray="3 3" />
-                  <line x1="50" y1="150" x2="280" y2="170" stroke="#1F2937" strokeWidth="1" strokeDasharray="3 3" />
-
                   {/* Background Text */}
                   <text x="210" y="155" textAnchor="middle" fill="#2A3343" fontSize="18" fontWeight="900" letterSpacing="5" opacity="0.5">
-                    UTTARAKHAND SATELLITE
+                    COMMUNITY RADAR
                   </text>
 
-                  {/* Plot all 6 treks on schematic map */}
-                  {/* 1. Kedarnath (SOS) */}
+                  {/* Plot Kedarnath (TRK-82341) */}
                   <g
                     className="cursor-pointer"
                     onClick={() => navigate('/live/TRK-82341')}
                   >
-                    <circle cx="160" cy="110" r="22" fill="#FF2E2E" opacity="0.2">
-                      <animate attributeName="r" values="10;28;10" dur="2s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" values="0.4;0.05;0.4" dur="2s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="160" cy="110" r="7" fill="#FF2E2E" stroke="#FFFFFF" strokeWidth="1.5" />
-                    <text x="160" y="94" textAnchor="middle" fill="#FF2E2E" fontSize="9" fontWeight="900">
-                      🚨 KEDARNATH (SOS)
-                    </text>
+                    {activeSosCount > 0 ? (
+                      <>
+                        <circle cx="160" cy="110" r="24" fill="#FF2E2E" opacity="0.25">
+                          <animate attributeName="r" values="10;30;10" dur="2s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.4;0.05;0.4" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="160" cy="110" r="7" fill="#FF2E2E" stroke="#FFFFFF" strokeWidth="1.5" />
+                        <text x="160" y="94" textAnchor="middle" fill="#FF2E2E" fontSize="9" fontWeight="900">
+                          🚨 KEDARNATH (SOS)
+                        </text>
+                      </>
+                    ) : (
+                      <>
+                        <circle cx="160" cy="110" r="5" fill="#00FF88" stroke="#FFFFFF" strokeWidth="1" />
+                        <text x="160" y="96" textAnchor="middle" fill="#00FF88" fontSize="8" fontWeight="bold">
+                          Kedarnath (Safe)
+                        </text>
+                      </>
+                    )}
                   </g>
 
-                  {/* 2. Valley of Flowers (Warning) */}
+                  {/* 2. Valley of Flowers */}
                   <g className="cursor-pointer" onClick={() => navigate('/live/TRK-72910')}>
                     <circle cx="270" cy="100" r="5" fill="#FFA500" stroke="#FFFFFF" strokeWidth="1" />
                     <text x="270" y="88" textAnchor="middle" fill="#FFA500" fontSize="8" fontWeight="bold">
@@ -593,7 +678,7 @@ export default function RescueOpsPage() {
                     </text>
                   </g>
 
-                  {/* 4. Chopta Tungnath */}
+                  {/* 4. Chopta */}
                   <g className="cursor-pointer" onClick={() => navigate('/live/TRK-91204')}>
                     <circle cx="210" cy="130" r="4.5" fill="#00FF88" />
                     <text x="210" y="145" textAnchor="middle" fill="#94A3B8" fontSize="7.5">
@@ -622,8 +707,8 @@ export default function RescueOpsPage() {
                 <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-[#2A3343]/60 px-1">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#FF2E2E] animate-ping" />
-                      <span>SOS Beacon</span>
+                      <span className="w-2 h-2 rounded-full bg-[#FF2E2E]" />
+                      <span>SOS Distress</span>
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[#FFA500]" />
@@ -639,45 +724,42 @@ export default function RescueOpsPage() {
               </div>
             </div>
 
-            {/* ─── Card: Emergency Control ───────────────────────────────────── */}
+            {/* ─── Card: Emergency Grid Control ──────────────────────────────── */}
             <div className="rounded-xl border border-[#2A3343] bg-[#151A26] p-4 shadow-lg">
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#2A3343]">
                 <div className="flex items-center gap-2">
                   <Shield size={16} className="text-[#FF2E2E]" />
-                  <h3 className="text-xs font-black uppercase tracking-wider text-white">Emergency Control</h3>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-white">Emergency Grid Control</h3>
                 </div>
                 <span className="text-[10px] text-rose-400 font-bold bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/40">
-                  DISASTER PROTOCOL
+                  GRID PROTOCOL
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {/* SDRF 1070 */}
                 <a
                   href="tel:1070"
                   className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-[#FFA500]/15 hover:bg-[#FFA500]/25 text-[#FFA500] border border-[#FFA500]/40 font-bold text-xs transition-all"
                 >
                   <Phone size={13} />
-                  <span>Call SDRF 1070</span>
+                  <span>Grid Line 1070</span>
                 </a>
 
-                {/* Police 112 */}
                 <a
                   href="tel:112"
                   className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-[#FF2E2E]/15 hover:bg-[#FF2E2E]/25 text-[#FF2E2E] border border-[#FF2E2E]/40 font-bold text-xs transition-all"
                 >
                   <Shield size={13} />
-                  <span>Call Police 112</span>
+                  <span>Helpline 112</span>
                 </a>
 
-                {/* Broadcast Alert */}
                 <button
                   type="button"
                   onClick={() => setBroadcastAlertActive(true)}
                   className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-[#3B82F6]/15 hover:bg-[#3B82F6]/25 text-[#3B82F6] border border-[#3B82F6]/40 font-bold text-xs transition-all cursor-pointer"
                 >
                   <Bell size={13} />
-                  <span>Broadcast Alert</span>
+                  <span>Broadcast Mesh</span>
                 </button>
               </div>
 
@@ -685,7 +767,7 @@ export default function RescueOpsPage() {
               {broadcastAlertActive && (
                 <form onSubmit={handleBroadcast} className="mt-3.5 pt-3 border-t border-[#2A3343] space-y-2.5 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-bold text-amber-300">Transmit Emergency Advisory (All Districts)</p>
+                    <p className="text-[11px] font-bold text-amber-300">Transmit Advisory to Community Mesh</p>
                     <button
                       type="button"
                       onClick={() => setBroadcastAlertActive(false)}
@@ -698,7 +780,7 @@ export default function RescueOpsPage() {
                     type="text"
                     value={broadcastMessage}
                     onChange={(e) => setBroadcastMessage(e.target.value)}
-                    placeholder="e.g. Flash flood warning in Rudraprayag, halt ascents..."
+                    placeholder="e.g. Fog warning on Kedarnath pass, hold ascent at checkpost..."
                     className="w-full bg-[#0A0E14] border border-[#2A3343] rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#3B82F6]"
                   />
                   <button
@@ -706,7 +788,7 @@ export default function RescueOpsPage() {
                     className="w-full py-2 rounded-lg bg-[#3B82F6] hover:bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Send size={12} />
-                    <span>Send Flash Broadcast</span>
+                    <span>Send Mesh Broadcast</span>
                   </button>
                 </form>
               )}
@@ -760,24 +842,44 @@ export default function RescueOpsPage() {
                   <Clock size={15} className="text-slate-400" />
                   <h3 className="text-xs font-black uppercase tracking-wider text-white">Recent SOS Log</h3>
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Last 24 Hours</span>
+                <span className="text-[10px] text-slate-500 font-mono">Mesh Audit</span>
               </div>
 
               <div className="relative pl-4 space-y-3.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#2A3343]">
-                {SOS_LOGS.map((log) => (
-                  <div key={log.id} className="relative group">
-                    <span
-                      className={`absolute -left-[14px] top-1 w-2 h-2 rounded-full border-2 border-[#151A26] ${
-                        log.type === 'sos' ? 'bg-[#FF2E2E]' : log.type === 'warn' ? 'bg-[#FFA500]' : 'bg-[#3B82F6]'
-                      }`}
-                    />
+                {liveSos ? (
+                  <div className="relative group">
+                    <span className="absolute -left-[14px] top-1 w-2 h-2 rounded-full border-2 border-[#151A26] bg-[#FF2E2E]" />
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-xs font-bold text-slate-200">{log.title}</p>
-                      <span className="text-[10px] font-mono text-slate-500 shrink-0">{log.time}</span>
+                      <p className="text-xs font-bold text-red-300">Kedarnath ({liveSos.trekker || 'TRK-82341'})</p>
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0">{liveSos.time || 'Just now'}</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{log.desc}</p>
+                    <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                      Beacon triggered: Lat {liveSos.lat}°N, Lng {liveSos.lng}°E. {liveSos.message}
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  <div className="relative group">
+                    <span className="absolute -left-[14px] top-1 w-2 h-2 rounded-full border-2 border-[#151A26] bg-[#00FF88]" />
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-xs font-bold text-emerald-300">Kedarnath Trail Checkpoint</p>
+                      <span className="text-[10px] font-mono text-slate-500 shrink-0">14:00 IST</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                      All beacons cleared. Normal routine grid pings acknowledged.
+                    </p>
+                  </div>
+                )}
+
+                <div className="relative group">
+                  <span className="absolute -left-[14px] top-1 w-2 h-2 rounded-full border-2 border-[#151A26] bg-[#FFA500]" />
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-xs font-bold text-slate-200">Valley of Flowers (TRK-72910)</p>
+                    <span className="text-[10px] font-mono text-slate-500 shrink-0">13:45 IST</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                    Fog delay reported. Checkpoint ping pending from Guide Suresh Kumar.
+                  </p>
+                </div>
               </div>
             </div>
 

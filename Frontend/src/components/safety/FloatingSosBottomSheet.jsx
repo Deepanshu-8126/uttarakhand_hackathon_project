@@ -10,8 +10,10 @@ import {
   X, 
   AlertOctagon, 
   CheckCircle2, 
-  BellRing,
-  Compass
+  Compass,
+  Sparkles,
+  Signal,
+  RotateCcw
 } from 'lucide-react';
 
 export default function FloatingSosBottomSheet() {
@@ -21,12 +23,63 @@ export default function FloatingSosBottomSheet() {
   const [countdown, setCountdown] = useState(5);
 
   const localBuddies = [
-    { name: 'Ramesh Singh Rawat', role: 'Certified Trek Guide', distance: '1.2 km away', signal: 'Radio CH-4 / Mesh', verified: true },
-    { name: 'SDRF Mountain Post (Guptkashi)', role: 'Disaster Relief & Oxygen', distance: '3.4 km away', signal: 'Satellite Link', verified: true },
-    { name: 'GMVN Eco Base Station', role: 'Shelter & Medical Post', distance: '4.8 km away', signal: 'VHF Emergency', verified: true },
+    { 
+      name: 'Ramesh Singh Rawat', 
+      role: 'Certified Trek Guide', 
+      distance: '1.2 km away', 
+      walkTime: '~18 min', 
+      signal: 'Radio CH-4 / Mesh', 
+      verified: true 
+    },
+    { 
+      name: 'SDRF Mountain Post (Guptkashi)', 
+      role: 'Disaster Relief & Oxygen', 
+      distance: '3.4 km away', 
+      walkTime: '~45 min', 
+      signal: 'Satellite Link', 
+      verified: true 
+    },
+    { 
+      name: 'GMVN Eco Base Station', 
+      role: 'Shelter & Medical Post', 
+      distance: '4.8 km away', 
+      walkTime: '~60 min', 
+      signal: 'VHF Emergency', 
+      verified: true 
+    },
   ];
 
+  // Sound + Haptic Vibration Mock
+  const playSosBeep = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      }
+    } catch (e) {
+      // Audio context might be restricted before user gesture
+    }
+
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([150, 75, 150, 75, 300]);
+      } catch (err) {}
+    }
+  };
+
   const handleTriggerSos = () => {
+    playSosBeep();
     setSosStatus('BROADCASTING');
     setCountdown(5);
   };
@@ -34,7 +87,10 @@ export default function FloatingSosBottomSheet() {
   useEffect(() => {
     let timer;
     if (sosStatus === 'BROADCASTING' && countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      timer = setTimeout(() => {
+        playSosBeep();
+        setCountdown(countdown - 1);
+      }, 1000);
     } else if (sosStatus === 'BROADCASTING' && countdown === 0) {
       setSosStatus('SENT');
     }
@@ -59,123 +115,139 @@ export default function FloatingSosBottomSheet() {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
           </span>
           <ShieldAlert size={18} className="text-white shrink-0" />
-          <span className="text-xs font-black tracking-wide uppercase">Safety & SOS</span>
+          <span className="text-xs font-black tracking-wide uppercase">Safety &amp; SOS</span>
         </button>
       </div>
 
       {/* ── Bottom Sheet & Backdrop ── */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-200">
           
           {/* Backdrop Click */}
           <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
 
           {/* Sheet Container */}
-          <div className="relative w-full max-w-lg bg-[#fdfbf7] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-stone-200 overflow-hidden z-10 animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-[#fdfbf7] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-stone-200/90 overflow-hidden z-10 animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
             
-            {/* Sheet Handle for Mobile */}
-            <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mt-3 sm:hidden" />
+            {/* Top Handle Bar */}
+            <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto my-3 shrink-0" />
 
             {/* Header */}
-            <div className="px-6 pt-5 pb-4 border-b border-stone-200/80 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                  <ShieldAlert size={18} className="text-[#d97706]" />
+            <div className="px-5 sm:px-6 pt-1 pb-4 border-b border-stone-200/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#F59E0B] border border-amber-200/70 flex items-center justify-center font-bold shadow-2xs shrink-0">
+                  <ShieldAlert size={20} className="text-[#F59E0B]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-stone-900 tracking-tight">
-                    Mountain Safety & SOS Grid
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
+                    Mountain Safety &amp; SOS Grid
                   </h3>
-                  <p className="text-[11px] text-stone-500 font-medium">
-                    Offline Mesh & Community Assistance Network
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Offline Mesh &amp; Community Assistance Network
                   </p>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-stone-200/60 hover:bg-stone-300 flex items-center justify-center text-stone-700 transition-colors"
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                aria-label="Close"
               >
                 <X size={16} />
               </button>
             </div>
 
             {/* Scrollable Content */}
-            <div className="p-6 space-y-5 overflow-y-auto">
+            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto">
 
-              {/* 1. TOP: Network Status Badge */}
-              <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                    isOfflineMode ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              {/* 1. Network Status Card */}
+              <div className="bg-white rounded-2xl p-4 border border-stone-200/90 shadow-sm flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                    isOfflineMode ? 'bg-[#FFF7ED] text-[#F59E0B] border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   }`}>
-                    {isOfflineMode ? <WifiOff size={18} /> : <Wifi size={18} />}
+                    {isOfflineMode ? <WifiOff size={19} /> : <Wifi size={19} />}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-stone-900">
+                      <span className="text-xs font-bold text-slate-900 truncate">
                         {isOfflineMode ? 'Network Status: Low / Offline Mesh' : 'Network Status: Online 4G'}
                       </span>
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      {isOfflineMode && (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                      )}
                     </div>
-                    <p className="text-[11px] text-stone-500">
-                      Auto-mesh protocol active via P2P Bluetooth & SMS Gateway
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      Auto-mesh via P2P Bluetooth &amp; SMS Gateway
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsOfflineMode(!isOfflineMode)}
-                  className="text-[10px] font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-lg transition-colors"
-                >
-                  {isOfflineMode ? 'Simulate Online' : 'Simulate Offline'}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsOfflineMode(!isOfflineMode)}
+                    className="text-[11px] font-bold text-slate-700 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-full transition-colors border border-stone-200/80 cursor-pointer shadow-2xs"
+                  >
+                    {isOfflineMode ? 'Simulate Online' : 'Simulate Offline'}
+                  </button>
+                </div>
               </div>
 
-              {/* GPS Coordinates Bar */}
-              <div className="bg-[#0f3d2e]/5 rounded-xl px-3.5 py-2.5 border border-[#0f3d2e]/15 flex items-center justify-between text-xs">
-                <span className="font-bold text-[#0f3d2e] flex items-center gap-1.5">
-                  <Compass size={14} />
-                  GPS Beacon Locked: 30.7346° N, 79.0669° E
-                </span>
-                <span className="text-[11px] font-semibold text-stone-600">Alt: 3,583m</span>
-              </div>
-
-              {/* 2. MIDDLE: Community SOS Grid */}
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
-                    <Users size={14} className="text-[#0f3d2e]" />
-                    Community SOS Grid Active: 3 Local Buddies nearby
+              {/* 2. GPS Card */}
+              <div className="bg-[#F0F5F0] rounded-xl px-4 py-3 border border-emerald-900/10 flex items-center justify-between text-xs gap-3">
+                <div className="flex items-center gap-2 text-[#0F2B1F] font-bold truncate">
+                  <Compass size={16} className="text-[#0F2B1F] shrink-0" />
+                  <span className="truncate">
+                    GPS Beacon Locked: <strong className="font-mono text-emerald-950">30.7346° N, 79.0669° E</strong>
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    Within 5 km
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[11px] font-bold text-emerald-900 block leading-tight">
+                    Alt: 3,583m
+                  </span>
+                  <span className="text-[9px] font-black uppercase text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded border border-emerald-300/50 inline-block mt-0.5">
+                    Accuracy: 3m
+                  </span>
+                </div>
+              </div>
+
+              {/* 3. Community Grid Section */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Users size={14} className="text-[#0F2B1F]" />
+                    <span>COMMUNITY SOS GRID ACTIVE: 3 LOCAL BUDDIES NEARBY</span>
+                  </span>
+                  <span className="text-[10px] font-extrabold text-emerald-800 bg-[#E8F5E9] px-2.5 py-0.5 rounded-full border border-emerald-200/80 shadow-2xs">
+                    Within 5km
                   </span>
                 </div>
 
+                {/* 3 Buddy Cards */}
                 <div className="space-y-2">
                   {localBuddies.map((buddy, idx) => (
                     <div 
                       key={idx}
-                      className="bg-white rounded-xl p-3 border border-stone-200 flex items-center justify-between hover:border-stone-300 transition-all"
+                      className="bg-white rounded-xl p-3 sm:p-3.5 border border-stone-200/90 flex items-center justify-between hover:border-emerald-300/80 transition-all shadow-xs gap-3"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-stone-100 text-[#0f3d2e] flex items-center justify-center font-bold text-xs border border-stone-200">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-[#E8F5E9] text-[#0F2B1F] flex items-center justify-center font-black text-xs border border-emerald-200/70 shrink-0">
                           {idx + 1}
                         </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-stone-900 leading-tight flex items-center gap-1">
-                            {buddy.name}
-                            <CheckCircle2 size={12} className="text-emerald-600" />
+                        <div className="min-w-0">
+                          <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight flex items-center gap-1 truncate">
+                            <span>{buddy.name}</span>
+                            <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
                           </h4>
-                          <p className="text-[10.5px] text-stone-500">
-                            {buddy.role} • <strong className="text-stone-700">{buddy.distance}</strong>
+                          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                            {buddy.role} • <strong className="text-slate-900 font-bold">{buddy.distance}</strong>{' '}
+                            <span className="text-slate-400 font-medium">({buddy.walkTime})</span>
                           </p>
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-semibold bg-stone-100 text-stone-600 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-bold bg-stone-100 text-slate-600 px-2.5 py-1 rounded-lg border border-stone-200 shrink-0">
                         {buddy.signal}
                       </span>
                     </div>
@@ -183,39 +255,41 @@ export default function FloatingSosBottomSheet() {
                 </div>
               </div>
 
-              {/* 3. BOTTOM: Broadcast SOS Button / Active State */}
+              {/* 4. Main Action Button: Broadcast SOS to Grid */}
               <div className="pt-2">
                 {sosStatus === 'IDLE' && (
                   <div>
                     <button
                       type="button"
                       onClick={handleTriggerSos}
-                      className="w-full py-4 px-6 rounded-2xl bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-red-600/30 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                      className="w-full h-[56px] px-6 rounded-2xl bg-[#DC2626] hover:bg-[#b91c1c] active:scale-[0.99] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-red-600/25 flex items-center justify-center gap-3 transition-all cursor-pointer"
                     >
-                      <AlertOctagon size={20} className="animate-bounce" />
-                      <span>Broadcast SOS to Grid</span>
+                      <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        <AlertOctagon size={18} className="text-white" />
+                      </div>
+                      <span>BROADCAST SOS TO GRID</span>
                     </button>
-                    <p className="text-center text-[11px] text-stone-500 mt-2 font-medium">
-                      Will auto-sync via SMS/Mesh when offline. Transmits emergency coordinates to all nearby guides & SDRF.
+                    <p className="text-center text-[11px] text-slate-500 mt-2 font-medium max-w-sm mx-auto leading-relaxed">
+                      Will auto-sync via SMS/Mesh when offline. Transmits emergency coordinates to all nearby guides &amp; SDRF.
                     </p>
                   </div>
                 )}
 
                 {sosStatus === 'BROADCASTING' && (
-                  <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-4 text-center animate-pulse">
-                    <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto mb-2 text-lg font-black">
+                  <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-5 text-center animate-pulse">
+                    <div className="w-12 h-12 rounded-full bg-[#DC2626] text-white flex items-center justify-center mx-auto mb-2 text-xl font-black shadow-md">
                       {countdown}
                     </div>
-                    <h4 className="text-sm font-black text-red-900">
+                    <h4 className="text-sm font-black text-red-950">
                       Broadcasting Distress Beacon in {countdown}s...
                     </h4>
-                    <p className="text-xs text-red-700 mt-1 mb-3">
-                      Sending GPS packet to 3 Local Buddies & Uttarakhand SDRF command.
+                    <p className="text-xs text-red-800 mt-1 mb-3">
+                      Sending GPS packet to 3 Local Buddies &amp; Uttarakhand SDRF command.
                     </p>
                     <button
                       type="button"
                       onClick={handleCancelSos}
-                      className="px-4 py-1.5 bg-stone-900 text-white text-xs font-bold rounded-lg hover:bg-black"
+                      className="px-5 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-black transition-colors cursor-pointer shadow-xs"
                     >
                       Cancel SOS
                     </button>
@@ -223,11 +297,11 @@ export default function FloatingSosBottomSheet() {
                 )}
 
                 {sosStatus === 'SENT' && (
-                  <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 text-center">
-                    <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto mb-2">
+                  <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-5 text-center">
+                    <div className="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto mb-2 shadow-xs">
                       <CheckCircle2 size={24} />
                     </div>
-                    <h4 className="text-sm font-black text-emerald-900">
+                    <h4 className="text-sm font-black text-emerald-950">
                       SOS Beacon Broadcasted!
                     </h4>
                     <p className="text-xs text-emerald-800 mt-1 mb-3">
@@ -236,7 +310,7 @@ export default function FloatingSosBottomSheet() {
                     <button
                       type="button"
                       onClick={handleCancelSos}
-                      className="px-4 py-1.5 bg-emerald-800 text-white text-xs font-bold rounded-lg hover:bg-emerald-900"
+                      className="px-5 py-2 bg-[#0F2B1F] text-white text-xs font-bold rounded-xl hover:bg-[#153e2d] transition-colors cursor-pointer shadow-xs"
                     >
                       Reset Grid Status
                     </button>
@@ -244,39 +318,47 @@ export default function FloatingSosBottomSheet() {
                 )}
               </div>
 
-              {/* Quick Dial Helplines */}
-              <div className="pt-3 border-t border-stone-200">
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block mb-2 text-center">
+              {/* 5. Quick Dial Helplines */}
+              <div className="pt-2 border-t border-stone-200/80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 text-center">
                   Official Uttarakhand Emergency Hotlines
                 </span>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <a 
                     href="tel:112"
-                    className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 flex flex-col items-center transition-colors"
+                    className="p-2.5 rounded-xl bg-white hover:bg-stone-100 text-slate-900 border border-stone-200/80 flex flex-col items-center transition-colors shadow-2xs"
                   >
-                    <PhoneCall size={14} className="text-[#0f3d2e] mb-1" />
-                    <span className="text-xs font-bold">112</span>
-                    <span className="text-[9px] text-stone-500">State Helpline</span>
+                    <PhoneCall size={14} className="text-[#0F2B1F] mb-1" />
+                    <span className="text-xs font-black">112</span>
+                    <span className="text-[9px] text-slate-500 font-medium">State Helpline</span>
                   </a>
 
                   <a 
                     href="tel:1070"
-                    className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 flex flex-col items-center transition-colors"
+                    className="p-2.5 rounded-xl bg-white hover:bg-stone-100 text-slate-900 border border-stone-200/80 flex flex-col items-center transition-colors shadow-2xs"
                   >
-                    <PhoneCall size={14} className="text-[#d97706] mb-1" />
-                    <span className="text-xs font-bold">1070</span>
-                    <span className="text-[9px] text-stone-500">Disaster Room</span>
+                    <PhoneCall size={14} className="text-[#F59E0B] mb-1" />
+                    <span className="text-xs font-black">1070</span>
+                    <span className="text-[9px] text-slate-500 font-medium">Disaster Room</span>
                   </a>
 
                   <a 
                     href="tel:108"
-                    className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 flex flex-col items-center transition-colors"
+                    className="p-2.5 rounded-xl bg-white hover:bg-stone-100 text-slate-900 border border-stone-200/80 flex flex-col items-center transition-colors shadow-2xs"
                   >
-                    <PhoneCall size={14} className="text-red-600 mb-1" />
-                    <span className="text-xs font-bold">108</span>
-                    <span className="text-[9px] text-stone-500">Mountain Med</span>
+                    <PhoneCall size={14} className="text-[#DC2626] mb-1" />
+                    <span className="text-xs font-black">108</span>
+                    <span className="text-[9px] text-slate-500 font-medium">Mountain Med</span>
                   </a>
                 </div>
+              </div>
+
+              {/* 6. Footer */}
+              <div className="text-center pt-1 pb-1">
+                <span className="text-[10px] text-slate-400 font-semibold inline-flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Powered by Mesh Protocol • Works without Internet</span>
+                </span>
               </div>
 
             </div>

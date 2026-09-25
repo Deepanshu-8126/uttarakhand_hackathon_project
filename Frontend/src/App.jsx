@@ -29,6 +29,7 @@ import PartnerDashboardPage from './pages/partner/PartnerDashboardPage';
 import GuideDashboard from './pages/GuideDashboard';
 import LiveTrackingPage from './pages/LiveTrackingPage';
 import RescueOpsPage from './pages/RescueOpsPage';
+import TrekkerLivePage from './pages/TrekkerLivePage';
 import VerifiedReviewPage from './pages/VerifiedReviewPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import CheckoutPage from './pages/CheckoutPage';
@@ -71,7 +72,10 @@ function App() {
               <Route path="/map" element={<MapPage />} />
               <Route path="/guide" element={<GuideDashboard />} />
               <Route path="/live/:tripId" element={<LiveTrackingPage />} />
+              <Route path="/admin/live/:tripId" element={<LiveTrackingPage />} />
               <Route path="/rescue-ops" element={<RescueOpsPage />} />
+              <Route path="/admin/rescue-ops" element={<RescueOpsPage />} />
+              <Route path="/trekker" element={<TrekkerLivePage />} />
               <Route path="/trip-planner" element={<TripPlanner />} />
               <Route path="/planner" element={<TripPlanner />} />
               <Route path="/review/:tripId" element={<VerifiedReviewPage />} />
