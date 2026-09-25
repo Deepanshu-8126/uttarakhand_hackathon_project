@@ -547,7 +547,7 @@ export default function HeroSection() {
 
       </div>
 
-      {/* ── 2. AI TRIP CONCIERGE CARD (Replacing Search Widget) ── */}
+      {/* ── 2. AI TRIP PLANNER CARD ── */}
       <div className="relative z-20 w-[calc(100%-1.5rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-4 sm:mt-6">
         <form 
           onSubmit={handleAiSubmit}
@@ -555,21 +555,21 @@ export default function HeroSection() {
         >
           {/* Top Label */}
           <div className="flex items-center justify-between mb-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200/70 text-[11px] font-black tracking-wider uppercase">
-              <Sparkles size={13} className="text-emerald-600 animate-pulse" />
-              <span>AI TRIP CONCIERGE ✨</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#0F2B1F] border border-emerald-200/80 text-[11px] font-bold tracking-wider uppercase">
+              <Sparkles size={13} className="text-[#0F2B1F]" />
+              <span>AI Trip Planner</span>
             </div>
             <span className="text-[11px] text-stone-500 font-medium hidden sm:inline-flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Real-time Itinerary Engine · Zero Search Filters
+              Autonomous Itinerary Engine · Instant Mountain Route
             </span>
           </div>
 
           {/* Large Input Field with Mic */}
-          <div className="relative flex items-center bg-stone-50/90 hover:bg-stone-50 focus-within:bg-white border-2 border-stone-200 focus-within:border-emerald-600 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 transition-all shadow-inner mb-3.5">
+          <div className="relative flex items-center bg-stone-50/90 hover:bg-stone-50 focus-within:bg-white border-2 border-stone-200 focus-within:border-[#0F2B1F] rounded-xl sm:rounded-2xl p-1.5 sm:p-2 transition-all shadow-inner mb-3.5">
             <input
               type="text"
-              placeholder={isListeningVoice ? "Listening... bolte rahiye..." : "Kaisa trip chahiye? likho ya bolo... e.g. '2 din ka peaceful village stay with local food'"}
+              placeholder={isListeningVoice ? "Listening... speak your destination or trip plan" : "Describe your dream journey... e.g. '3-day peaceful mountain retreat in Kumaon with local homestay'"}
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
               className="w-full bg-transparent text-sm sm:text-base font-semibold text-slate-900 placeholder:text-stone-400 outline-none px-3 py-1.5"
@@ -581,7 +581,7 @@ export default function HeroSection() {
               className={`p-2.5 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${
                 isListeningVoice
                   ? 'bg-rose-500 text-white border-rose-600 animate-pulse ring-4 ring-rose-200'
-                  : 'bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-800 border-stone-200 shadow-xs'
+                  : 'bg-white hover:bg-[#E8F5E9] text-slate-600 hover:text-[#0F2B1F] border-stone-200 shadow-xs'
               }`}
               title={isListeningVoice ? "Listening... click to stop" : "Voice Input (Speak your trip idea)"}
               aria-label="Voice search"
@@ -598,9 +598,9 @@ export default function HeroSection() {
                 Suggestions:
               </span>
               {[
-                { label: 'Snow Trek', icon: '❄️', query: '3 din ka snow trek near Chopta Tungnath' },
-                { label: 'Char Dham', icon: '🛕', query: 'Char Dham sacred pilgrimage yatra itinerary' },
-                { label: 'Budget <5k', icon: '💰', query: 'Budget trip under 5000 peaceful village stay' }
+                { label: 'Snow Trek', icon: '❄️', query: '3-day snow trek near Chopta Tungnath' },
+                { label: 'Char Dham', icon: '🛕', query: 'Char Dham sacred pilgrimage itinerary' },
+                { label: 'Budget Retreat', icon: '💰', query: 'Affordable mountain homestay trip under 5000' }
               ].map((chip) => {
                 const isSelected = aiPrompt === chip.query || (aiPrompt && chip.query.includes(aiPrompt));
                 return (
@@ -610,8 +610,8 @@ export default function HeroSection() {
                     onClick={() => handleChipClick(chip.query)}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                       isSelected
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                        : 'bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-900 border-stone-200 hover:border-emerald-300'
+                        ? 'bg-[#0F2B1F] text-white border-[#0F2B1F] shadow-sm'
+                        : 'bg-stone-100 hover:bg-[#E8F5E9] text-stone-700 hover:text-[#0F2B1F] border-stone-200 hover:border-emerald-300'
                     }`}
                   >
                     <span>{chip.icon}</span>
@@ -621,13 +621,13 @@ export default function HeroSection() {
               })}
             </div>
 
-            {/* Big Gradient Button */}
+            {/* Clean Professional Action Button */}
             <button
               type="submit"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-emerald-600 via-[#0f3d2e] to-[#09261c] hover:from-emerald-500 hover:to-[#0f3d2e] shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all cursor-pointer active:scale-98 shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm text-white bg-[#0F2B1F] hover:bg-[#163f2e] shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98 shrink-0"
             >
-              <Sparkles size={16} className="text-emerald-300" />
-              <span>✨ Generate My Trip with AI →</span>
+              <Sparkles size={15} className="text-emerald-300" />
+              <span>Generate Itinerary →</span>
             </button>
           </div>
         </form>
@@ -646,7 +646,7 @@ export default function HeroSection() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
             </span>
-            <span className="font-bold text-white">🟢 28 Live Trekkers</span>
+            <span className="font-bold text-white">28 Active Trekkers</span>
             <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
               Active Trails
             </span>
@@ -664,7 +664,7 @@ export default function HeroSection() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_#f43f5e]"></span>
             </span>
-            <span className="font-bold text-rose-200 group-hover:text-white transition-colors">🔴 SOS Ready</span>
+            <span className="font-bold text-rose-200 group-hover:text-white transition-colors">SOS Mesh Ready</span>
             <span className="text-[10px] font-medium text-rose-200/80 bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-800/40 hidden md:inline">
               SDRF Standby
             </span>

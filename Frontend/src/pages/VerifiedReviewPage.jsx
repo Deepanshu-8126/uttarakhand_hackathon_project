@@ -541,7 +541,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Your Experience (Kaisa laga?)
+                    Your Experience (Review & Feedback)
                   </label>
                   <span className="text-[11px] text-slate-500 font-medium">
                     {reviewText.length} characters
@@ -553,13 +553,13 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     rows={5}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Kya acha laga, kya mushkil thi... e.g. 'Chopta se Tungnath ka trail subah 6 baje bohot clear tha...'"
+                    placeholder="Describe trail conditions, safety, homestay quality, or tips for future travelers..."
                     className="w-full bg-[#0A0E14] border border-[#1F293D] focus:border-[#00FF88] focus:ring-1 focus:ring-[#00FF88] rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all leading-relaxed"
                   />
                   {isAiRewriting && (
                     <div className="absolute inset-0 bg-black/70 backdrop-blur-xs rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-[#00FF88] animate-in fade-in">
                       <Sparkles size={16} className="animate-spin" />
-                      <span>AI Refining &amp; Polishing Review...</span>
+                      <span>Refining & Polishing Review...</span>
                     </div>
                   )}
                 </div>
@@ -575,7 +575,7 @@ export default function VerifiedReviewPage({ defaultView = 'write' }) {
                     onClick={() => handleAiAction('helpful')}
                     className="px-3 py-1.5 rounded-xl bg-[#0A0E14] hover:bg-emerald-950/60 border border-[#1F293D] hover:border-[#00FF88]/40 text-xs font-bold text-slate-300 hover:text-[#00FF88] transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>✨ Make it more helpful</span>
+                    <span>Enhance Clarity</span>
                   </button>
 
                   <button
