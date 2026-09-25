@@ -3,7 +3,6 @@ import { Mic, MicOff, Volume2, VolumeX, X, Sparkles, Languages, Radio, RefreshCw
 import useChatStore from '../../store/chatStore';
 import { useMapStore } from '../../store/mapStore';
 import { sendAgentMessage } from '../../api/agentApi';
-import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../../utils/speechSynthesis';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) {
@@ -24,42 +23,18 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
   const voiceStatusRef = useRef('idle');
   const wsRef = useRef(null);
 
+  // Extract the base Bridge URL. Convert http to ws and https to wss.
+  const HTTP_BRIDGE_URL = import.meta.env.VITE_VOICE_BRIDGE_URL || 'http://127.0.0.1:8765';
+  const WS_BRIDGE_URL = HTTP_BRIDGE_URL.replace(/^http/, 'ws');
+
   const updateVoiceStatus = (status) => {
     voiceStatusRef.current = status;
     setVoiceStatus(status);
   };
 
-  const [activePort, setActivePort] = useState(8765);
-
-  // Check Devbhoomi AI voice bridge connection on open (port 8765 or port 8000)
-  useEffect(() => {
-    if (isOpen) {
-      let isMounted = true;
-      const detectBridge = async () => {
-        for (const port of [8765, 8000]) {
-          try {
-            const res = await fetch(`http://localhost:${port}/health`, { signal: AbortSignal.timeout(1200) });
-            if (res.ok) {
-              const data = await res.json();
-              if (isMounted) {
-                setActivePort(port);
-                setVoiceDemoOnline(true);
-                return;
-              }
-            }
-          } catch (e) {}
-        }
-        if (isMounted) setVoiceDemoOnline(false);
-      };
-      detectBridge();
-      return () => { isMounted = false; };
-    }
-  }, [isOpen]);
-
   const audioPlayerRef = useRef(null);
 
-  const playVoiceAudio = useCallback((audioBase64, fallbackText, onFinish) => {
-    stopSpeaking();
+  const playVoiceAudio = useCallback((audioBase64, onFinish) => {
     if (audioPlayerRef.current) {
       try {
         audioPlayerRef.current.pause();
@@ -67,100 +42,47 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       audioPlayerRef.current = null;
     }
 
-    if (isMuted) {
+    if (isMuted || !audioBase64) {
       if (onFinish) onFinish();
       return;
     }
 
     updateVoiceStatus('speaking');
 
-    if (audioBase64) {
-      try {
-        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-        audioPlayerRef.current = audio;
-        audio.onended = () => {
-          audioPlayerRef.current = null;
-          if (onFinish) onFinish();
-        };
-        audio.onerror = (e) => {
-          console.warn("[VoiceAudio] Error playing base64 audio, fallback to TTS:", e);
-          audioPlayerRef.current = null;
-          if (fallbackText) {
-            speakText(fallbackText, {
-              lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
-              rate: 1.05,
-              onEnd: onFinish,
-              onError: onFinish
-            });
-          } else if (onFinish) onFinish();
-        };
-        audio.play().catch((playErr) => {
-          console.warn("[VoiceAudio] Autoplay blocked, falling back to TTS:", playErr);
-          if (fallbackText) {
-            speakText(fallbackText, {
-              lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
-              rate: 1.05,
-              onEnd: onFinish,
-              onError: onFinish
-            });
-          } else if (onFinish) onFinish();
-        });
-        return;
-      } catch (e) {
-        console.warn("[VoiceAudio] Exception playing audio:", e);
-      }
-    }
-
-    // Fallback to Web Speech Synthesis if no base64 audio
-    if (fallbackText) {
-      speakText(fallbackText, {
-        lang: lang === 'hi' ? 'hi-IN' : 'en-IN',
-        rate: 1.05,
-        onEnd: onFinish,
-        onError: onFinish
+    try {
+      const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+      audioPlayerRef.current = audio;
+      audio.onended = () => {
+        audioPlayerRef.current = null;
+        if (onFinish) onFinish();
+      };
+      audio.onerror = (e) => {
+        console.warn("[VoiceAudio] Error playing base64 audio", e);
+        audioPlayerRef.current = null;
+        if (onFinish) onFinish();
+      };
+      audio.play().catch((playErr) => {
+        console.warn("[VoiceAudio] Autoplay blocked", playErr);
+        if (onFinish) onFinish();
       });
-    } else if (onFinish) onFinish();
-  }, [isMuted, lang]);
+    } catch (e) {
+      console.warn("[VoiceAudio] Exception playing audio:", e);
+      if (onFinish) onFinish();
+    }
+  }, [isMuted]);
 
   const GREETINGS = {
     hi: "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
     en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
   };
 
-  const playGreetingAndListen = useCallback(() => {
-    const greetingText = GREETINGS[lang] || GREETINGS.en;
-    setLastAgentReply(greetingText);
-    
-    // Connect to WS bridge immediately
+  const initVoiceConnection = useCallback(() => {
+    setLastAgentReply("Initializing Neural Voice...");
     connectBridgeWS();
-
-    if (!isMuted) {
-      playVoiceAudio(null, greetingText, () => {
-        updateVoiceStatus('listening');
-        startListening();
-      });
-    } else {
-      updateVoiceStatus('listening');
-      startListening();
-    }
   }, [lang, isMuted]);
-
-  // Stop TTS, audio player and speech recognition on unmount or close
-  useEffect(() => {
-    if (!isOpen) {
-      stopVoiceLoop();
-    } else {
-      setMicErrorMessage('');
-      playGreetingAndListen();
-    }
-    return () => {
-      stopVoiceLoop();
-    };
-  }, [isOpen, lang]);
 
   const stopVoiceLoop = () => {
     updateVoiceStatus('idle');
-    stopSpeaking();
     if (audioPlayerRef.current) {
       try { audioPlayerRef.current.pause(); } catch (e) {}
       audioPlayerRef.current = null;
@@ -168,9 +90,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
-      } catch (e) {
-        console.warn(e);
-      }
+      } catch (e) {}
       recognitionRef.current = null;
     }
     if (silenceTimerRef.current) {
@@ -179,15 +99,28 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) {
+      stopVoiceLoop();
+    } else {
+      setMicErrorMessage('');
+      initVoiceConnection();
+    }
+    return () => {
+      stopVoiceLoop();
+    };
+  }, [isOpen, lang]);
+
   // Connect to bridge WebSocket for real-time voice query processing
   const connectBridgeWS = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+    updateVoiceStatus('processing');
     try {
-      const ws = new WebSocket(`ws://localhost:${activePort}/ws/voice`);
+      const ws = new WebSocket(`${WS_BRIDGE_URL}/ws/voice`);
       wsRef.current = ws;
       ws.onopen = () => {
         setVoiceDemoOnline(true);
-        console.log(`[VoiceWS] Connected to Devbhoomi AI voice bridge on port ${activePort}`);
+        console.log(`[VoiceWS] Connected to Devbhoomi AI voice bridge at ${WS_BRIDGE_URL}`);
       };
       ws.onmessage = (event) => {
         try {
@@ -196,7 +129,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             const cleanSpoken = msg.text.replace(/[*#_~`]/g, '').replace(/\b(http|https):\/\/\S+/gi, '').replace(/\s+/g, ' ').trim();
             setLastAgentReply(cleanSpoken);
             setTranscript('');
-            playVoiceAudio(msg.audio_base64, cleanSpoken, () => {
+            playVoiceAudio(msg.audio_base64, () => {
               updateVoiceStatus('listening');
               startListening();
             });
@@ -206,7 +139,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             setVoiceDemoOnline(true);
             if (msg.audio_base64) {
               setLastAgentReply(msg.greeting || GREETINGS[lang] || GREETINGS.en);
-              playVoiceAudio(msg.audio_base64, msg.greeting, () => {
+              playVoiceAudio(msg.audio_base64, () => {
                 updateVoiceStatus('listening');
                 startListening();
               });
@@ -214,10 +147,15 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
           }
         } catch (e) {}
       };
-      ws.onerror = () => { setVoiceDemoOnline(false); };
+      ws.onerror = () => {
+        setVoiceDemoOnline(false);
+        // Cannot connect - wait in idle
+        updateVoiceStatus('idle');
+      };
       ws.onclose = () => { wsRef.current = null; };
     } catch (e) {
       console.warn('[VoiceWS] Could not connect to bridge:', e.message);
+      updateVoiceStatus('idle');
     }
   }, [lang, isMuted, playVoiceAudio]);
 
@@ -227,13 +165,14 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
       wsRef.current.send(JSON.stringify({ type: 'query', query: queryText, lang }));
       updateVoiceStatus('processing');
     } else {
-      // HTTP fallback
       handleVoiceQuerySubmit(queryText);
     }
   }, [lang]);
 
   const startListening = async () => {
-    stopSpeaking();
+    if (audioPlayerRef.current) {
+      try { audioPlayerRef.current.pause(); } catch (e) {}
+    }
     setMicErrorMessage('');
 
     // Ensure WS bridge is connected
@@ -316,7 +255,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
   const handleVoiceQuerySubmit = async (queryText) => {
     if (!queryText) return;
-    
+
     // Stop listening while AI processes
     updateVoiceStatus('processing');
     if (recognitionRef.current) {
@@ -324,69 +263,40 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
     }
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-    const pageContext = {
-      currentRoute: window.location?.pathname || '/copilot',
-      currentPage: 'COPILOT_VOICE',
-      pageType: 'VOICE_AGENT',
-      tripId: activeChat?.tripId || tripIdContext,
-      plannerForm: useMapStore.getState().plannerForm,
-      language: lang
-    };
-
     let cleanReply = '';
     let neuralAudioB64 = '';
 
-    // Direct to local Devbhoomi AI voice bridge (activePort first, then alternate)
-    const probePorts = [activePort, activePort === 8765 ? 8000 : 8765];
-    for (const port of probePorts) {
-      if (cleanReply) break;
-      try {
-        const bridgeRes = await fetch(`http://localhost:${port}/api/voice/ask`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: queryText, lang }),
-          signal: AbortSignal.timeout(3000)
-        });
-        if (bridgeRes.ok) {
-          const data = await bridgeRes.json();
-          if (data && data.response) {
-            cleanReply = data.response;
-            neuralAudioB64 = data.audio_base64 || '';
-            setVoiceDemoOnline(true);
-            break;
-          }
+    try {
+      const bridgeRes = await fetch(`${HTTP_BRIDGE_URL}/api/voice/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText, lang }),
+        signal: AbortSignal.timeout(6000)
+      });
+      if (bridgeRes.ok) {
+        const data = await bridgeRes.json();
+        if (data && data.response) {
+          cleanReply = data.response;
+          neuralAudioB64 = data.audio_base64 || '';
+          setVoiceDemoOnline(true);
         }
-      } catch (bridgeErr) {
-        // Try alternate port or fallback
       }
+    } catch (bridgeErr) {
+      console.error("[VoiceAgent] Bridge fetch failed:", bridgeErr);
     }
 
     if (!cleanReply) {
-      try {
-        const res = await sendAgentMessage({
-          message: queryText,
-          chatId: activeChat?._id || null,
-          tripId: activeChat?.tripId || tripIdContext,
-          pageContext
-        });
-
-        const replyContent = res?.response?.message || res?.message || (typeof res === 'string' ? res : '');
-        cleanReply = typeof replyContent === 'string' ? replyContent : (replyContent?.text || replyContent?.response || '');
-      } catch (err) {
-        console.error("[VoiceAgent] Query failed:", err);
-      }
+      const fallbackMsgs = {
+        hi: "माफ़ करें, मैं अभी सर्वर से कनेक्ट नहीं कर पा रहा हूँ।",
+        en: "Sorry, I am unable to reach the neural voice server right now."
+      };
+      cleanReply = fallbackMsgs[lang] || fallbackMsgs.en;
     }
 
-    // Clean any accidental markdown symbols (like **, *, #, _) from the spoken voice output
-    const cleanSpoken = (cleanReply || (lang === 'hi' ? 'उत्तर तैयार है।' : 'I have analyzed your request.'))
-      .replace(/[*#_~`]/g, '')
-      .replace(/\b(http|https):\/\/\S+/gi, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
+    const cleanSpoken = cleanReply.replace(/[*#_~`]/g, '').replace(/\b(http|https):\/\/\S+/gi, '').replace(/\s+/g, ' ').trim();
     setLastAgentReply(cleanSpoken);
 
-    playVoiceAudio(neuralAudioB64, cleanSpoken, () => {
+    playVoiceAudio(neuralAudioB64, () => {
       updateVoiceStatus('listening');
       startListening();
     });
@@ -396,7 +306,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#061911] flex flex-col justify-between p-5 sm:p-10 text-white animate-in fade-in duration-200 overflow-hidden">
-      
+
       {/* ── Top Header Controls ── */}
       <div className="flex items-center justify-between max-w-4xl mx-auto w-full shrink-0">
         <div className="flex items-center gap-2.5">
@@ -406,9 +316,9 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
           <div>
             <span className="font-black text-sm sm:text-base tracking-tight block text-white">Devbhoomi AI Voice Companion</span>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-500'}`} />
+              <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
               <span className="text-[10px] text-emerald-300/90 font-semibold uppercase tracking-wider">
-                {voiceDemoOnline ? 'Devbhoomi AI · Live' : 'Interactive Live Voice Guide'}
+                {voiceDemoOnline ? 'Interactive Live Voice Guide' : 'Bridge Offline'}
               </span>
             </div>
           </div>
@@ -420,7 +330,6 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             type="button"
             onClick={() => {
               setLang(lang === 'en' ? 'hi' : 'en');
-              stopSpeaking();
             }}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold transition-all cursor-pointer"
           >
@@ -432,7 +341,9 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
           <button
             type="button"
             onClick={() => {
-              if (!isMuted) stopSpeaking();
+              if (!isMuted && audioPlayerRef.current) {
+                try { audioPlayerRef.current.pause(); } catch(e) {}
+              }
               setIsMuted(!isMuted);
             }}
             className="p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors cursor-pointer"
@@ -458,10 +369,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
 
       {/* ── Central Animated Wave Visualizer / Orb ── */}
       <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full text-center my-4 min-h-0">
-        
+
         {/* Glowing Orb Animation */}
         <div className="relative mb-6 flex items-center justify-center shrink-0">
-          
+
           {/* Pulse Ripple Rings */}
           {voiceStatus === 'listening' && (
             <>
@@ -486,7 +397,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
             type="button"
             onClick={() => {
               if (voiceStatus === 'speaking') {
-                stopSpeaking();
+                if (audioPlayerRef.current) { try { audioPlayerRef.current.pause(); } catch(e){} }
                 updateVoiceStatus('listening');
                 startListening();
               } else if (voiceStatus === 'listening') {
@@ -547,7 +458,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
               {voiceStatus === 'listening'
                 ? (lang === 'hi' ? 'आपकी आवाज़ सुन रहे हैं…' : 'Listening to you…')
                 : voiceStatus === 'processing'
-                ? (lang === 'hi' ? 'उत्तर तैयार किया जा रहा है…' : 'Thinking & fetching facts…')
+                ? (lang === 'hi' ? 'न्यूरल वॉइस तैयार की जा रही है…' : 'Generating neural voice…')
                 : voiceStatus === 'speaking'
                 ? (lang === 'hi' ? 'AI गाइड बोल रहा है (Tap to interrupt)' : 'AI Copilot Speaking (Tap to stop)')
                 : (lang === 'hi' ? 'बोलने के लिए माइक दबाएं' : 'Tap Mic to Start')}
@@ -599,7 +510,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
                 setTranscript(sample);
                 handleVoiceQuerySubmit(sample);
               }}
-              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-bold text-emerald-200 hover:text-white transition-all cursor-pointer shadow-2xs"
+              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-bold text-emerald-200 hover:text-white transition-all cursor-pointer shadow-2sm"
             >
               {sample}
             </button>
@@ -607,7 +518,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose, tripIdContext }) 
         </div>
 
         <p className="text-[11px] text-stone-400 font-medium">
-          Powered by Google Gemini Live &amp; Devbhoomi Knowledge Engine
+          Powered by langchain-ai/voice-demo &copy; Google Gemini Live &amp; Devbhoomi Knowledge Engine
         </p>
       </div>
 
