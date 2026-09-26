@@ -196,11 +196,19 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     isPlayingChunksRef.current = false;
     nextPlayTimeRef.current = 0;
 
+    // Stop SpeechRecognition
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch (e) {}
+      recognitionRef.current = null;
+    }
+    recognitionActiveRef.current = false;
+
     // Stop chunk sources
     chunkSourcesRef.current.forEach((src) => {
       try { src.stop(); } catch (e) {}
     });
     chunkSourcesRef.current = [];
+
 
     if (audioPlayerRef.current) {
       try { audioPlayerRef.current.pause(); } catch (e) {}
@@ -578,9 +586,11 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       });
       if (renderRes.ok) {
         const data = await renderRes.json();
-        const reply = (data.data?.message || data.response?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
+        const reply = (data.response?.message || data.data?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
+        const suggestions = (data.response?.suggestedActions || []).map(a => a.label || a).filter(Boolean);
         if (reply) {
           setLastAgentReply(reply);
+          if (suggestions.length) setTranscript(''); // clear so chips don't interfere
           playGoogleNeuralTts(reply, () => startListening());
           return;
         }
