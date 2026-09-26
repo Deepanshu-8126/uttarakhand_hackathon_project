@@ -211,15 +211,16 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final agentResp = data['response'] ?? {};
+        final agentResp = data['data'] ?? data['response'] ?? data;
         final rawTools = agentResp['toolsUsed'] as List?;
         final tools = rawTools?.map((t) => t.toString()).toList() ?? ['searchDestinations', 'getWeather'];
+        final messageText = agentResp['message'] ?? (agentResp is String ? agentResp : data['message'] ?? 'Main aapki yatra me madad karne ke liye taiyaar hoon.');
         return {
-          'text': agentResp['message'] ?? 'Main aapki yatra me madad karne ke liye taiyaar hoon.',
+          'text': messageText,
           'toolsUsed': tools,
           'confidence': agentResp['confidence']?.toString() ?? 'grounded',
           'suggestions': (agentResp['suggestedActions'] as List?)
-                  ?.map((s) => s['label']?.toString() ?? '')
+                  ?.map((s) => (s is Map ? (s['label']?.toString() ?? '') : s.toString()))
                   .where((s) => s.isNotEmpty)
                   .toList() ??
               ['Explore Stays', 'Rent Bike', 'Weather Report'],

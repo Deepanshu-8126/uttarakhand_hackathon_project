@@ -21,5 +21,6 @@
       "value": "sk_omniroute"
     }
   ],
-  "java.configuration.updateBuildConfiguration": "disabled"
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "git.ignoreLimitWarning": true
 }
