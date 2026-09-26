@@ -127,7 +127,10 @@ export function speakText(text, {
     };
 
     activeUtterance = utterance;
-    window.speechSynthesis.speak(utterance);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    }
   } catch (err) {
     console.error('[SpeechSynthesis] Error speaking text:', err);
     if (onError) onError(err);

@@ -7,7 +7,7 @@
 import { BaseAiProvider } from './BaseAiProvider.js';
 
 export class GeminiProvider extends BaseAiProvider {
-  constructor(apiKey = process.env.GEMINI_API_KEY, modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash') {
+  constructor(apiKey = process.env.GEMINI_API_KEY, modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash') {
     super('gemini');
     this.apiKey = apiKey;
     this.modelName = modelName;

@@ -260,7 +260,8 @@ export default function DevbhoomiVoiceStudioModal({
           setLiveAiText('Thinking...');
 
           try {
-            const res = await fetch('https://uttarakhand-hackathon-project.onrender.com/api/agent/chat', {
+            const apiBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://uttarakhand-hackathon-project.onrender.com/api';
+            const res = await fetch(`${apiBase}/agent/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ message: userSaid })
