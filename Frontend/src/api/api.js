@@ -34,6 +34,15 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Gracefully clean expired/invalid auth tokens on 401
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+
     const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED';
     const isLocalhost = originalRequest && (
       (originalRequest.baseURL && originalRequest.baseURL.includes('localhost')) ||
