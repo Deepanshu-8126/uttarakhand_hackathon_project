@@ -506,15 +506,15 @@ export default function HeroSection() {
         {/* Clean, balanced cinematic gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/55 z-1" />
 
-        {/* Top Header: Occasion & Live Time-of-day Badge */}
+        {/* Top Header: Minimal Occasion & Live Spotlight Tag */}
         <div className="relative z-10 flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 backdrop-blur-md border border-emerald-400/30 text-xs font-semibold text-emerald-300 shadow-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="truncate max-w-[200px] sm:max-w-none">{currentMedia.occasion || timeBasedOccasion.title}</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-xs font-medium text-stone-200 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+            <span className="truncate max-w-[200px] sm:max-w-none text-emerald-300 font-semibold">{currentMedia.occasion || timeBasedOccasion.title}</span>
           </div>
 
           {/* Slide Indicator Dots / Count */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-xs text-white/80 font-mono">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-xs text-white/80 font-mono">
             <span>{currentIndex + 1}</span>
             <span className="text-white/40">/</span>
             <span>{slides.length}</span>

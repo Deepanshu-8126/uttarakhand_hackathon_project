@@ -43,7 +43,7 @@ export default function AdaptiveMountainDock() {
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[11px] font-bold transition-all cursor-pointer"
             title="View live mountain corridor safety status"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
             <ShieldAlert size={13} className="text-amber-400" />
             <span>Corridor Radar</span>
           </button>
