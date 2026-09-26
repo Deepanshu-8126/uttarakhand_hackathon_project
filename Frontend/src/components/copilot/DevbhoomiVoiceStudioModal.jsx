@@ -130,118 +130,28 @@ export default function DevbhoomiVoiceStudioModal({
 
   const startVoiceSession = async () => {
     setErrorMessage(null);
-    setStatus('processing');
+    setStatus('listening');
     setLiveAiText('');
     setLiveUserText('');
     currentAiTextRef.current = '';
     currentUserTextRef.current = '';
+    isProcessingRef.current = false;
 
-    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-
-    // On Production HTTPS, directly start resilient Web Speech + Neural voice without WebSocket blocking
-    if (isHttps) {
-      try {
-        const audioCtx = audioProcessor.initContext();
-        if (audioCtx.state === 'suspended') {
-          await audioCtx.resume();
-        }
-        const micAnalyser = await audioProcessor.startMicCapture(() => {});
-        setAnalyser(micAnalyser);
-        setOutputAnalyser(audioProcessor.getOutputAnalyser());
-      } catch (err) {
-        console.warn('[DevbhoomiVoiceStudio] Audio capture notice:', err);
-      }
-      setStatus('listening');
-      startUniversalSpeechFallback();
-      return;
-    }
-
+    // Direct Browser Web Speech Recognition for guaranteed zero-friction voice
     try {
       const audioCtx = audioProcessor.initContext();
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
       }
-
-      const micAnalyser = await audioProcessor.startMicCapture((base64Pcm) => {
-        if (!isMutedRef.current && liveClient.active()) {
-          liveClient.sendAudioChunk(base64Pcm);
-        }
-      });
-      setAnalyser(micAnalyser);
-      setOutputAnalyser(audioProcessor.getOutputAnalyser());
-
-      liveClient.connect(
-        {
-          voice: selectedVoice,
-          model: 'models/gemini-3.1-flash-live-preview',
-          systemPrompt: 'You are Devbhoomi AI, an intelligent, low-latency, warm Himalayan mountain guide for Uttarakhand. Keep spoken replies natural, authentic, and concise in Hindi, English, or friendly Hinglish.'
-        },
-        {
-          onConnected: () => {
-            setStatus('listening');
-          },
-          onAudioData: (base64Audio) => {
-            setStatus('speaking');
-            audioProcessor.playPcmChunk(base64Audio);
-          },
-          onTextData: (text) => {
-            currentAiTextRef.current += text;
-            setLiveAiText(currentAiTextRef.current);
-          },
-          onUserTextData: (text) => {
-            currentUserTextRef.current += text;
-            setLiveUserText(currentUserTextRef.current);
-          },
-          onTurnComplete: () => {
-            const finalAi = currentAiTextRef.current.trim();
-            const finalUser = currentUserTextRef.current.trim();
-
-            if (finalUser) {
-              setTranscriptHistory(prev => [...prev, { role: 'user', text: finalUser, time: getCurrentTimestamp() }]);
-            }
-            if (finalAi) {
-              setTranscriptHistory(prev => [...prev, { role: 'assistant', text: finalAi, time: getCurrentTimestamp() }]);
-            }
-
-            if (onTranscriptReceived && (finalUser || finalAi)) {
-              onTranscriptReceived(finalUser, finalAi);
-            }
-
-            currentAiTextRef.current = '';
-            currentUserTextRef.current = '';
-            setLiveAiText('');
-            setLiveUserText('');
-            setStatus('listening');
-          },
-          onInterrupted: () => {
-            audioProcessor.resetPlayback();
-            currentAiTextRef.current = '';
-            currentUserTextRef.current = '';
-            setLiveAiText('');
-            setLiveUserText('');
-            setStatus('listening');
-          },
-          onFallbackReady: () => {
-            console.log('[DevbhoomiVoiceStudio] Initializing Web Speech & Universal Live Voice Engine');
-            setStatus('listening');
-            startUniversalSpeechFallback();
-          },
-          onError: (err) => {
-            console.log('[DevbhoomiVoiceStudio] WebSocket notice:', err);
-            setStatus('listening');
-            startUniversalSpeechFallback();
-          },
-          onDisconnected: () => {
-            setStatus('idle');
-          }
-        }
-      );
-
+      audioProcessor.startMicCapture(() => {}).then((micAnalyser) => {
+        setAnalyser(micAnalyser);
+        setOutputAnalyser(audioProcessor.getOutputAnalyser());
+      }).catch((e) => console.warn('[AudioProcessor] Mic visualizer notice:', e));
     } catch (err) {
-      console.error('[DevbhoomiVoiceStudio] Starting Universal Voice Assistant:', err);
-      setStatus('listening');
-      startUniversalSpeechFallback();
+      console.warn('[DevbhoomiVoiceStudio] Audio capture notice:', err);
     }
+
+    startUniversalSpeechFallback();
   };
 
   const webSpeechRecRef = useRef(null);
