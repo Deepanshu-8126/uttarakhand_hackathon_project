@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../services/api_service.dart';
+import '../services/websocket_chat_service.dart';
 import 'sos_safety_screen.dart';
 
 class AiCopilotScreen extends StatefulWidget {
@@ -27,6 +28,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     'Best time for Auli skiing',
   ];
 
+  final WebSocketChatService _wsService = WebSocketChatService();
+  StreamSubscription? _wsSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +38,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
+
+    _initWebSocket();
 
     // Welcome message from Pahadi Copilot
     _messages.add(
@@ -48,8 +54,34 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     );
   }
 
+  void _initWebSocket() {
+    _wsService.connect();
+    _wsSubscription = _wsService.messageStream.listen((data) {
+      if (mounted && data['response'] != null) {
+        final agentResp = data['response'];
+        final replyText = agentResp['message'] ?? agentResp.toString();
+        setState(() {
+          _isTyping = false;
+          _messages.add(
+            ChatMessage(
+              text: replyText,
+              isUser: false,
+              timestamp: DateTime.now(),
+              toolsUsed: (agentResp['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
+              suggestions: (agentResp['suggestedActions'] as List?)?.map((e) => e.toString()).toList(),
+              confidence: agentResp['confidence']?.toString() ?? 'grounded',
+            ),
+          );
+        });
+        _scrollToBottom();
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _wsSubscription?.cancel();
+    _wsService.dispose();
     _voicePulseController.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -80,26 +112,29 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     });
     _scrollToBottom();
 
-    // Voice queries go through the voice-demo bridge
-    final result = isVoice
-        ? await ApiService.sendVoiceMessage(text, lang: 'en')
-        : await ApiService.sendCopilotMessage(text, isVoice: isVoice);
+    // Attempt WebSocket transmission first, with seamless HTTP fallback
+    final wsSent = _wsService.sendMessage(text: text, isVoice: isVoice);
+    if (!wsSent) {
+      final result = isVoice
+          ? await ApiService.sendVoiceMessage(text, lang: 'en')
+          : await ApiService.sendCopilotMessage(text, isVoice: isVoice);
 
-    if (mounted) {
-      setState(() {
-        _isTyping = false;
-        _messages.add(
-          ChatMessage(
-            text: result['text'] ?? '',
-            isUser: false,
-            timestamp: DateTime.now(),
-            suggestions: (result['suggestions'] as List?)?.map((e) => e.toString()).toList(),
-            toolsUsed: (result['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
-            confidence: result['confidence']?.toString() ?? 'grounded',
-          ),
-        );
-      });
-      _scrollToBottom();
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add(
+            ChatMessage(
+              text: result['text'] ?? '',
+              isUser: false,
+              timestamp: DateTime.now(),
+              suggestions: (result['suggestions'] as List?)?.map((e) => e.toString()).toList(),
+              toolsUsed: (result['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
+              confidence: result['confidence']?.toString() ?? 'grounded',
+            ),
+          );
+        });
+        _scrollToBottom();
+      }
     }
   }
 
