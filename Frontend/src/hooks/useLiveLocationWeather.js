@@ -105,8 +105,7 @@ export function useLiveLocationWeather() {
         fetchWeatherForCoords(lat, lon, resolvedCity);
       },
       (err) => {
-        console.warn('[useLiveLocationWeather] Geolocation denied or unavailable:', err.message);
-        // Location denied -> Use Kichha default as requested
+        // Location denied or timed out -> Gracefully use default coordinates without polluting console
         setCoords(DEFAULT_COORDS);
         setLocationName(DEFAULT_COORDS.city);
         fetchWeatherForCoords(DEFAULT_COORDS.lat, DEFAULT_COORDS.lon, DEFAULT_COORDS.city);

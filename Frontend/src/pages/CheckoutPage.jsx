@@ -239,8 +239,20 @@ export default function CheckoutPage() {
       return;
     }
 
-    // If Razorpay SDK is available, launch official payment modal
-    if (window.Razorpay) {
+    // Dynamic On-Demand SDK Loader (No idle preloads)
+    const loadRazorpay = () => {
+      return new Promise((resolve) => {
+        if (window.Razorpay) return resolve(true);
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.body.appendChild(s);
+      });
+    };
+
+    const isLoaded = await loadRazorpay();
+    if (isLoaded && window.Razorpay) {
       try {
         const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Tfve5JcWu17bY6';
         const options = {

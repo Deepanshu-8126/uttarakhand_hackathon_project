@@ -69,7 +69,7 @@ app.use((req, res, next) => {
   }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Internal-Secret');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Internal-Secret, x-session-id, x-request-id, x-client-id, x-trip-id, *');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -79,7 +79,9 @@ app.use((req, res, next) => {
 
 app.use(cors({
   origin: true,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Internal-Secret', 'x-session-id', 'x-request-id', 'x-client-id', 'x-trip-id', 'baggage', 'sentry-trace', '*']
 }));
 
 // Serve static uploaded assets

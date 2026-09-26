@@ -111,12 +111,12 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
         try {
           const res = await fetch(endpoint.url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-session-id': sessionId },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(
               endpoint.format === 'bridge'
-                ? { message: cleanText, lang: 'en', history: messages.slice(-4) }
+                ? { message: cleanText, lang: 'en', history: messages.slice(-4), sessionId }
                 : endpoint.format === 'voice_ask'
-                  ? { query: cleanText, lang: 'en' }
+                  ? { query: cleanText, lang: 'en', sessionId }
                   : { message: cleanText, query: cleanText, sessionId }
             ),
             signal: AbortSignal.any
