@@ -1,24 +1,19 @@
 import React from 'react';
-import { MapPin, ShieldCheck } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getCardImages, getHimalayanFallbackImage } from '../utils/imageHelpers';
+import { useFreshImage } from '../utils/images';
 
 /**
- * Minimal & Clean DestinationCard
- * Clutter-free design:
- * - Clean high-res photo without dots, arrows, heart icons, or top-left badges
- * - Title
- * - Location tags (GPS Verified • Escrow Ready)
- * - Location name (District • Region)
- * - Description text
- * - "EXPLORE →" button
+ * Minimal & Clean DestinationCard with Fresh Pexels/HD Auto-Loading
  */
 const DestinationCard = ({ destination, distance }) => {
   const locationParts = [destination.district, destination.region].filter(Boolean);
   const locationLabel = locationParts.length > 0 ? locationParts.join(' • ') : (destination.district || 'Uttarakhand');
 
   const images = getCardImages(destination);
-  const coverImage = images[0] || getHimalayanFallbackImage(destination);
+  const baseFallback = images[0] || getHimalayanFallbackImage(destination);
+  const coverImage = useFreshImage(destination.slug || destination.name, baseFallback);
 
   return (
     <Link
