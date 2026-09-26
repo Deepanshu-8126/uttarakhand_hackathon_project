@@ -95,7 +95,7 @@ export default function AdaptiveMountainDock() {
         {/* ── Slot 3: Right AI Copilot Launcher ── */}
         <button
           type="button"
-          onClick={() => setCopilotOpen(true)}
+          onClick={() => window.dispatchEvent(new CustomEvent('du_open_copilot'))}
           className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold shadow-md transition-all cursor-pointer"
         >
           <Sparkles size={13} className="text-amber-300 animate-pulse" />
@@ -103,19 +103,6 @@ export default function AdaptiveMountainDock() {
         </button>
 
       </aside>
-
-      {/* Embedded Copilot Drawer */}
-      <AICopilotDrawer
-        isOpen={copilotOpen}
-        onClose={() => setCopilotOpen(false)}
-        pageContext={{
-          currentRoute: location.pathname,
-          destinationName: currentDest,
-          destinationSlug: null,
-          pageType: location.pathname === '/' ? 'HOME' : 'GENERAL',
-          tripId: null
-        }}
-      />
     </>
   );
 }
