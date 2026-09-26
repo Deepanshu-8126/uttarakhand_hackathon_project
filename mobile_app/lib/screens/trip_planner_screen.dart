@@ -17,7 +17,32 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   int travelers = 2;
   String travelStyle = 'Balanced';
 
-  final List<String> destinations = ['Nainital', 'Kedarnath', 'Rishikesh', 'Auli', 'Binsar', 'Almora'];
+  final List<String> destinations = [
+    'Nainital',
+    'Kedarnath',
+    'Badrinath',
+    'Valley of Flowers',
+    'Auli',
+    'Rishikesh',
+    'Chopta & Tungnath',
+    'Munsiyari',
+    'Jim Corbett',
+    'Haridwar',
+    'Adi Kailash',
+    'Jageshwar Dham',
+    'Mussoorie',
+    'Dhanaulti',
+    'Gangotri',
+    'Yamunotri',
+    'Almora',
+    'Kausani',
+    'Ranikhet',
+    'Mukteshwar',
+    'Tehri Lake',
+    'Dayara Bugyal',
+    'Kedarkantha',
+    'Binsar',
+  ];
 
   @override
   Widget build(BuildContext context) {

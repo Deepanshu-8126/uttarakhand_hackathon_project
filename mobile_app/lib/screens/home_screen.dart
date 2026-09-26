@@ -59,11 +59,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Destination> get filteredDestinations {
+    final q = searchQuery.toLowerCase().trim();
     return destinations.where((dest) {
-      final matchesFilter = selectedFilter == 'All' || dest.category.toLowerCase() == selectedFilter.toLowerCase();
-      final matchesSearch = searchQuery.isEmpty ||
-          dest.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          dest.district.toLowerCase().contains(searchQuery.toLowerCase());
+      // If user is actively typing a search query, prioritize broad search over category pill
+      final matchesFilter = q.isNotEmpty || selectedFilter == 'All' || dest.category.toLowerCase() == selectedFilter.toLowerCase();
+      final matchesSearch = q.isEmpty ||
+          dest.name.toLowerCase().contains(q) ||
+          dest.district.toLowerCase().contains(q) ||
+          dest.region.toLowerCase().contains(q) ||
+          dest.category.toLowerCase().contains(q) ||
+          dest.shortDescription.toLowerCase().contains(q) ||
+          dest.description.toLowerCase().contains(q) ||
+          dest.highlights.any((h) => h.toLowerCase().contains(q)) ||
+          dest.experiences.any((e) => e.toLowerCase().contains(q));
       return matchesFilter && matchesSearch;
     }).toList();
   }
@@ -612,7 +620,43 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDestinationsGrid() {
     final list = filteredDestinations;
     if (list.isEmpty) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No destinations found.')));
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.travel_explore, size: 36, color: Color(0xFF0F3D2E)),
+            const SizedBox(height: 8),
+            Text(
+              searchQuery.isNotEmpty ? 'No exact match for "$searchQuery"' : 'No destinations found.',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Pahadi Copilot has real-time GIS & remote valley data.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F3D2E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              onPressed: () => widget.onNavigateTab(2), // Navigate to AI Copilot
+              icon: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF34D399)),
+              label: const Text('Ask Pahadi Copilot', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
     }
     return SizedBox(
       height: 280,

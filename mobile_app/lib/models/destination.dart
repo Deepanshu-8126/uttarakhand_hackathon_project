@@ -41,12 +41,23 @@ class Destination {
     String img = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
     if (json['coverImage'] != null) {
       if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
-        img = json['coverImage']['url'];
+        img = json['coverImage']['url'].toString();
       } else if (json['coverImage'] is String && json['coverImage'].isNotEmpty) {
-        img = json['coverImage'];
+        img = json['coverImage'].toString();
+      }
+    } else if (json['images'] is List && (json['images'] as List).isNotEmpty) {
+      final first = (json['images'] as List)[0];
+      if (first is Map && first['url'] != null) {
+        img = first['url'].toString();
+      } else if (first is String) {
+        img = first.toString();
       }
     } else if (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
       img = json['imageUrl'].toString();
+    }
+
+    if (img.startsWith('/assets/')) {
+      img = 'https://uttarakhand-hackathon-project.onrender.com$img';
     }
 
     double? lat;
@@ -62,6 +73,20 @@ class Destination {
       }
     }
 
+    int alt = 2000;
+    if (json['altitude'] is num) {
+      alt = (json['altitude'] as num).toInt();
+    } else if (json['altitude'] != null) {
+      alt = int.tryParse(json['altitude'].toString().replaceAll(RegExp(r'[^0-9]'), '')) ?? 2000;
+    }
+
+    int budget = 3500;
+    if (json['estimatedBudget'] is num) {
+      budget = (json['estimatedBudget'] as num).toInt();
+    } else if (json['budget'] is num) {
+      budget = (json['budget'] as num).toInt();
+    }
+
     return Destination(
       id: json['id'] ?? json['_id'] ?? json['slug'] ?? '',
       name: json['name'] ?? '',
@@ -71,11 +96,11 @@ class Destination {
       description: json['description'] ?? '',
       shortDescription: json['shortDescription'] ?? json['description'] ?? '',
       imageUrl: img,
-      rating: (json['rating'] ?? 4.8).toDouble(),
-      reviewsCount: json['reviewsCount'] ?? 142,
-      estimatedBudget: json['estimatedBudget'] ?? json['budget'] ?? 3500,
-      altitude: json['altitude'] ?? 2000,
-      bestTimeToVisit: json['bestTimeToVisit'] ?? 'March - June, Sept - Nov',
+      rating: json['rating'] is num ? (json['rating'] as num).toDouble() : 4.8,
+      reviewsCount: json['totalReviews'] ?? json['reviewsCount'] ?? json['reviewCount'] ?? 142,
+      estimatedBudget: budget,
+      altitude: alt,
+      bestTimeToVisit: json['bestTimeToVisit']?.toString() ?? 'March - June, Sept - Nov',
       highlights: (json['highlights'] as List?)?.map((e) => e.toString()).toList() ?? ['Mountain Panoramas', 'Peaceful Valleys', 'Pine Trails'],
       experiences: (json['experiences'] as List?)?.map((e) => e.toString()).toList() ?? ['Trekking', 'Photography', 'Local Cuisine'],
       latitude: lat,

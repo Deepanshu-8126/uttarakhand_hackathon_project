@@ -33,19 +33,19 @@ const PROMINENT_DESTINATIONS = [
   { name: 'Munsyari Panchachuli', slug: 'munsiyari', keywords: ['munsyari', 'munsiyari', 'panchachuli'], altitude: '2,200m', photo: '/assets/destinations/munsiyari/cover.jpg', tag: '5-Peak Alpenglow' },
   { name: 'Jim Corbett', slug: 'jim-corbett-national-park', keywords: ['corbett', 'jim corbett', 'dhikala'], altitude: '400m', photo: '/assets/yatra_sarthi/corbett.jpg', tag: 'Tiger Wilderness' },
   { name: 'Haridwar Har Ki Pauri', slug: 'haridwar', keywords: ['haridwar', 'har ki pauri'], altitude: '314m', photo: '/assets/yatra_sarthi/haridwar.jpg', tag: 'Ganga Gateway' },
-  { name: 'Adi Kailash & Om Parvat', slug: 'adi-kailash', keywords: ['adi kailash', 'om parvat'], altitude: '5,945m', photo: '/assets/destinations/pithoragarh/gallery-1.jpg', tag: 'Mystic Peak' },
-  { name: 'Jageshwar Dham', slug: 'jageshwar', keywords: ['jageshwar'], altitude: '1,870m', photo: '/assets/jageshwar.jpg', tag: 'Ancient Deodar Shrines' },
-  { name: 'Mussoorie Queen of Hills', slug: 'mussoorie', keywords: ['mussoorie', 'kempty', 'gun hill'], altitude: '2,005m', photo: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80', tag: 'Hill Station' },
-  { name: 'Dhanaulti & Kanatal', slug: 'dhanaulti', keywords: ['dhanaulti', 'kanatal', 'eco park'], altitude: '2,286m', photo: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80', tag: 'Cedar Forest' },
-  { name: 'Gangotri Shrine', slug: 'gangotri', keywords: ['gangotri', 'bhagirathi', 'gaumukh'], altitude: '3,100m', photo: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80', tag: 'Sacred Source' },
-  { name: 'Yamunotri Dham', slug: 'yamunotri', keywords: ['yamunotri', 'janki chatti'], altitude: '3,293m', photo: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80', tag: 'Sacred Thermal Kund' },
-  { name: 'Almora Heritage Town', slug: 'almora', keywords: ['almora', 'kasar devi'], altitude: '1,638m', photo: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80', tag: 'Cultural Capital' },
-  { name: 'Kausani Himalayas', slug: 'kausani', keywords: ['kausani', 'anasakti'], altitude: '1,890m', photo: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80', tag: 'Switzerland of India' },
-  { name: 'Ranikhet Pine Meadows', slug: 'ranikhet', keywords: ['ranikhet', 'chaubatia'], altitude: '1,869m', photo: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80', tag: 'Pine Meadows' },
-  { name: 'Mukteshwar Cliff', slug: 'mukteshwar', keywords: ['mukteshwar', 'chauli ki jali'], altitude: '2,285m', photo: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80', tag: 'Rock Climbing & Views' },
-  { name: 'Tehri Lake & Dam', slug: 'tehri', keywords: ['tehri', 'tehri lake'], altitude: '1,750m', photo: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80', tag: 'Water Sports' },
-  { name: 'Dayara Bugyal', slug: 'dayara-bugyal', keywords: ['dayara', 'dayara bugyal'], altitude: '3,810m', photo: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=80', tag: 'Alpine Bugyal' },
-  { name: 'Kedarkantha Winter Peak', slug: 'kedarkantha', keywords: ['kedarkantha', 'sankri'], altitude: '3,800m', photo: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80', tag: 'Winter Snow Trek' }
+  { name: 'Adi Kailash & Om Parvat', slug: 'adi-kailash', keywords: ['adi kailash', 'om parvat'], altitude: '5,945m', photo: '/assets/destinations/adi_kailash.jpg', tag: 'Mystic Peak' },
+  { name: 'Jageshwar Dham', slug: 'jageshwar', keywords: ['jageshwar'], altitude: '1,870m', photo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Jageshwar_Dham_Temple%2C_Almora_65.jpg/1920px-Jageshwar_Dham_Temple%2C_Almora_65.jpg', tag: 'Ancient Deodar Shrines' },
+  { name: 'Mussoorie Queen of Hills', slug: 'mussoorie', keywords: ['mussoorie', 'kempty', 'gun hill'], altitude: '2,005m', photo: '/assets/yatra_sarthi/mussoorie.jpg', tag: 'Hill Station' },
+  { name: 'Dhanaulti & Kanatal', slug: 'dhanaulti', keywords: ['dhanaulti', 'kanatal', 'eco park'], altitude: '2,286m', photo: '/assets/destinations/dhanaulti/cover.jpg', tag: 'Cedar Forest' },
+  { name: 'Gangotri Shrine', slug: 'gangotri', keywords: ['gangotri', 'bhagirathi', 'gaumukh'], altitude: '3,100m', photo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/Gangotri_Temple_nightview_WTK20150915-DSC_4122.jpg/1920px-Gangotri_Temple_nightview_WTK20150915-DSC_4122.jpg', tag: 'Sacred Source' },
+  { name: 'Yamunotri Dham', slug: 'yamunotri', keywords: ['yamunotri', 'janki chatti'], altitude: '3,293m', photo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/Holy_Yamuna_at_Yamunotri.jpg/1920px-Holy_Yamuna_at_Yamunotri.jpg', tag: 'Sacred Thermal Kund' },
+  { name: 'Almora Heritage Town', slug: 'almora', keywords: ['almora', 'kasar devi'], altitude: '1,638m', photo: '/assets/destinations/almora/cover.jpg', tag: 'Cultural Capital' },
+  { name: 'Kausani Himalayas', slug: 'kausani', keywords: ['kausani', 'anasakti'], altitude: '1,890m', photo: '/assets/destinations/kausani/cover.jpg', tag: 'Switzerland of India' },
+  { name: 'Ranikhet Pine Meadows', slug: 'ranikhet', keywords: ['ranikhet', 'chaubatia'], altitude: '1,869m', photo: '/assets/destinations/ranikhet/cover.jpg', tag: 'Pine Meadows' },
+  { name: 'Mukteshwar Cliff', slug: 'mukteshwar', keywords: ['mukteshwar', 'chauli ki jali'], altitude: '2,285m', photo: '/assets/destinations/mukteshwar/cover.jpg', tag: 'Rock Climbing & Views' },
+  { name: 'Tehri Lake & Dam', slug: 'tehri', keywords: ['tehri', 'tehri lake'], altitude: '1,750m', photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Tehri_dam_reservoir.jpg/1280px-Tehri_dam_reservoir.jpg', tag: 'Water Sports' },
+  { name: 'Dayara Bugyal', slug: 'dayara-bugyal', keywords: ['dayara', 'dayara bugyal'], altitude: '3,810m', photo: '/assets/destinations/uttarakhand_bugyal_panoramic.jpg', tag: 'Alpine Bugyal' },
+  { name: 'Kedarkantha Winter Peak', slug: 'kedarkantha', keywords: ['kedarkantha', 'sankri'], altitude: '3,800m', photo: '/assets/destinations/brahmatal_snow_trek.jpg', tag: 'Winter Snow Trek' }
 ];
 
 export default function MessageRenderer({ message, onSendPrompt: _onSendPrompt = () => {} }) {

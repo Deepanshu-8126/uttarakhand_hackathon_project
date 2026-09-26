@@ -4,16 +4,44 @@ import '../models/destination.dart';
 import '../models/stay.dart';
 
 class ApiService {
-  // Live Render production backend URL (fallback to offline dataset)
+  // Candidate base URLs (Local Node port 5000 first, Android emulator IP, and live Render backend)
+  static final List<String> candidateBaseUrls = [
+    'http://localhost:5000/api',
+    'http://10.0.2.2:5000/api',
+    'http://127.0.0.1:5000/api',
+    'https://uttarakhand-hackathon-project.onrender.com/api',
+  ];
   static String baseUrl = 'https://uttarakhand-hackathon-project.onrender.com/api';
+  static String? _activeBaseUrl;
+
+  /// Fast HTTP GET with automatic failover between local port 5000 & production Render
+  static Future<http.Response?> _get(String path, {Duration timeout = const Duration(seconds: 3)}) async {
+    if (_activeBaseUrl != null) {
+      try {
+        final res = await http.get(Uri.parse('$_activeBaseUrl$path')).timeout(timeout);
+        if (res.statusCode == 200) return res;
+      } catch (_) {
+        _activeBaseUrl = null;
+      }
+    }
+    for (final base in candidateBaseUrls) {
+      try {
+        final res = await http.get(Uri.parse('$base$path')).timeout(timeout);
+        if (res.statusCode == 200) {
+          _activeBaseUrl = base;
+          baseUrl = base;
+          return res;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
 
   // ── Destinations ───────────────────────────────────────────────────────────
   static Future<List<Destination>> getDestinations() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/destinations'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/destinations');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => Destination.fromJson(item)).toList();
@@ -25,10 +53,8 @@ class ApiService {
   // ── Spiritual Places ───────────────────────────────────────────────────────
   static Future<List<SpiritualPlace>> getSpiritualPlaces() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/spiritual'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/spiritual');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => SpiritualPlace.fromJson(item)).toList();
@@ -40,10 +66,8 @@ class ApiService {
   // ── Culture Places ─────────────────────────────────────────────────────────
   static Future<List<CulturePlace>> getCulturePlaces() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/culture'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/culture');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => CulturePlace.fromJson(item)).toList();
@@ -55,10 +79,8 @@ class ApiService {
   // ── Activities ─────────────────────────────────────────────────────────────
   static Future<List<ActivityItem>> getActivities() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/activities'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/activities');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => ActivityItem.fromJson(item)).toList();
@@ -70,10 +92,8 @@ class ApiService {
   // ── Rentals ────────────────────────────────────────────────────────────────
   static Future<List<Rental>> getRentals() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/rentals'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/rentals');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => Rental.fromJson(item)).toList();
@@ -85,10 +105,8 @@ class ApiService {
   // ── Stays ──────────────────────────────────────────────────────────────────
   static Future<List<Stay>> getStays() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/stays'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/stays');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => Stay.fromJson(item)).toList();
@@ -100,10 +118,8 @@ class ApiService {
   // ── Guides ─────────────────────────────────────────────────────────────────
   static Future<List<Guide>> getGuides() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/guides'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
+      final response = await _get('/guides');
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final list = (data['data'] ?? data) as List;
         return list.map((item) => Guide.fromJson(item)).toList();
@@ -459,8 +475,310 @@ class ApiService {
         latitude: 29.7042,
         longitude: 79.7547,
       ),
-    ];
-  }
+      Destination(
+        id: 'munsiyari',
+        name: 'Munsiyari',
+        district: 'Pithoragarh',
+        region: 'Kumaon',
+        category: 'Snow',
+        description: 'Perched in the eastern snow-flanked frontier of Kumaon, known for breathtaking close-up vistas of the 5-peaked Panchachuli massif and Milam Glacier trails.',
+        shortDescription: 'Gateway to Johar Valley and majestic 5-peak Panchachuli alpenglow.',
+        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.9,
+        reviewsCount: 240,
+        estimatedBudget: 4200,
+        altitude: 2200,
+        bestTimeToVisit: 'March to June, September to November',
+        highlights: ['Panchachuli 5-Peak Panorama', 'Birthi Falls', 'Khaliya Top Trek'],
+        experiences: ['Alpine Hiking', 'Tribal Wool Weaving', 'Glacier Expeditions'],
+        latitude: 30.0667,
+        longitude: 80.2333,
+      ),
+      Destination(
+        id: 'jim-corbett-national-park',
+        name: 'Jim Corbett National Park',
+        district: 'Nainital',
+        region: 'Kumaon',
+        category: 'Wildlife',
+        description: 'India oldest national park along the Ramganga River, world-famous for Royal Bengal Tigers, wild elephant herds, and dense sal forest safaris.',
+        shortDescription: 'Legendary Royal Bengal Tiger sanctuary with open jeep safaris.',
+        imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.8,
+        reviewsCount: 780,
+        estimatedBudget: 5500,
+        altitude: 400,
+        bestTimeToVisit: 'November to June',
+        highlights: ['Dhikala Tiger Zone', 'Ramganga River Wildlife Watch', 'Bijrani Safari Trail'],
+        experiences: ['Jeep Safari', 'Jungle Lodge Stay', 'Birding in River Sal Forests'],
+        latitude: 29.5300,
+        longitude: 78.7747,
+      ),
+      Destination(
+        id: 'haridwar',
+        name: 'Haridwar',
+        district: 'Haridwar',
+        region: 'Garhwal',
+        category: 'Spiritual',
+        description: 'Gateway to the Gods where holy Ganga enters the Indo-Gangetic plains, famed for grand evening Maha Aarti at Har Ki Pauri and ancient temples.',
+        shortDescription: 'Sacred Ganga gateway hosting the world-famous Har Ki Pauri Aarti.',
+        imageUrl: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.7,
+        reviewsCount: 920,
+        estimatedBudget: 2200,
+        altitude: 314,
+        bestTimeToVisit: 'October to April',
+        highlights: ['Har Ki Pauri Ganga Aarti', 'Mansa Devi Ropeway', 'Chandi Devi Temple'],
+        experiences: ['Sacred Ganga Dip', 'Heritage Ashram Walks', 'Pahadi Street Delicacies'],
+        latitude: 29.9457,
+        longitude: 78.1642,
+      ),
+      Destination(
+        id: 'adi-kailash',
+        name: 'Adi Kailash & Om Parvat',
+        district: 'Pithoragarh',
+        region: 'Kumaon',
+        category: 'Spiritual',
+        description: 'Mystical Himalayan pilgrimage peak resembling Mount Kailash, located near the Indo-Tibet border with sacred Parvati Sarovar and natural snow Om formation.',
+        shortDescription: 'Sacred high-altitude peak and natural snow Om symbol in Vyas Valley.',
+        imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.9,
+        reviewsCount: 150,
+        estimatedBudget: 12000,
+        altitude: 5945,
+        bestTimeToVisit: 'May to June, September to October',
+        highlights: ['Natural Snow Om Parvat', 'Parvati Sarovar Lake', 'Vyas Cave'],
+        experiences: ['High Altitude Yatra', 'Border Highway 4x4 Drive', 'Sacred Meditation'],
+        latitude: 30.3167,
+        longitude: 80.9500,
+      ),
+      Destination(
+        id: 'jageshwar',
+        name: 'Jageshwar Dham',
+        district: 'Almora',
+        region: 'Kumaon',
+        category: 'Spiritual',
+        description: 'Cluster of 124 ancient 8th-century stone shrines dedicated to Lord Shiva, sheltered deep within majestic century-old Himalayan deodar pine woods.',
+        shortDescription: 'Ancient 8th-century stone temple cluster nestled in dense deodar forests.',
+        imageUrl: 'https://images.unsplash.com/photo-1596404987012-4217117df854?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.9,
+        reviewsCount: 340,
+        estimatedBudget: 3200,
+        altitude: 1870,
+        bestTimeToVisit: 'Year-round, April to November',
+        highlights: ['124 Nagar-style Stone Shrines', 'Maha Mrityunjaya Temple', 'Deodar Sacred Forest'],
+        experiences: ['Ancient Architecture Walk', 'Rudrabhishek Pooja', 'Forest Meditation'],
+        latitude: 29.6416,
+        longitude: 79.8496,
+      ),
+      Destination(
+        id: 'mussoorie',
+        name: 'Mussoorie',
+        district: 'Dehradun',
+        region: 'Garhwal',
+        category: 'Nature',
+        description: 'The Queen of the Hills overlooking the Doon Valley, famous for its colonial Mall Road, cascading Kempty Falls, and winter line sunset phenomenon.',
+        shortDescription: 'Queen of the Hills with colonial charm, waterfalls, and panoramic Doon views.',
+        imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.7,
+        reviewsCount: 880,
+        estimatedBudget: 4000,
+        altitude: 2005,
+        bestTimeToVisit: 'March to June, September to November',
+        highlights: ['Mall Road & Camel Back Road', 'Kempty Falls', 'Gun Hill Viewpoint'],
+        experiences: ['Cable Car Ride', 'Colonial Heritage Walk', 'Winterline Viewing'],
+        latitude: 30.4598,
+        longitude: 78.0644,
+      ),
+      Destination(
+        id: 'dhanaulti',
+        name: 'Dhanaulti & Kanatal',
+        district: 'Tehri Garhwal',
+        region: 'Garhwal',
+        category: 'Nature',
+        description: 'Peaceful alpine retreat blanketed by towering deodars and rhododendrons, offering tranquil nature parks and panoramic views of Himalayan snow peaks.',
+        shortDescription: 'Serene deodar cedar haven away from crowded tourist circuits.',
+        imageUrl: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.8,
+        reviewsCount: 220,
+        estimatedBudget: 3200,
+        altitude: 2286,
+        bestTimeToVisit: 'September to June',
+        highlights: ['Eco Park Deodar Forest', 'Surkanda Devi Temple Ropeway', 'Apple Orchard Strolls'],
+        experiences: ['Forest Camping', 'Himalayan Ridge Walking', 'Pahadi Homestays'],
+        latitude: 30.4516,
+        longitude: 78.2394,
+      ),
+      Destination(
+        id: 'gangotri',
+        name: 'Gangotri Dham',
+        district: 'Uttarkashi',
+        region: 'Garhwal',
+        category: 'Spiritual',
+        description: 'Sacred river origin shrine honoring Goddess Ganga at 3,100 meters altitude, starting trailhead for the trek to Gaumukh glacier and Tapovan.',
+        shortDescription: 'Sacred Char Dham shrine honoring Ganga at 3,100m, trailhead to Gaumukh.',
+        imageUrl: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.9,
+        reviewsCount: 510,
+        estimatedBudget: 5000,
+        altitude: 3100,
+        bestTimeToVisit: 'May to June, September to October',
+        highlights: ['White Granite Ganga Temple', 'Bhagirath Shila', 'Surya Kund Gorges'],
+        experiences: ['Evening Ganga Aarti', 'Gaumukh Glacier Trek', 'Himalayan Hermitage Trails'],
+        latitude: 30.9947,
+        longitude: 78.9398,
+      ),
+      Destination(
+        id: 'yamunotri',
+        name: 'Yamunotri Dham',
+        district: 'Uttarkashi',
+        region: 'Garhwal',
+        category: 'Spiritual',
+        description: 'Origin shrine of sacred river Yamuna surrounded by rugged mountain ridges and boiling thermal hot springs of Surya Kund.',
+        shortDescription: 'Sacred thermal hot spring shrine at 3,293m, first stop of Char Dham.',
+        imageUrl: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.8,
+        reviewsCount: 460,
+        estimatedBudget: 4800,
+        altitude: 3293,
+        bestTimeToVisit: 'May to June, September to October',
+        highlights: ['Surya Kund Boiling Spring', 'Divya Shila', 'Janki Chatti Scenic Trail'],
+        experiences: ['Thermal Water Rice Cooking Prasad', 'Mountain Stream Crossing'],
+        latitude: 31.0140,
+        longitude: 78.4600,
+      ),
+      Destination(
+        id: 'almora',
+        name: 'Almora',
+        district: 'Almora',
+        region: 'Kumaon',
+        category: 'Culture',
+        description: 'Cultural heartbeat of Kumaon shaped like a horse saddle, famed for Kasar Devi magnetic belt, traditional Aipan folk art, and ancient Lala Bazaar.',
+        shortDescription: 'Cultural capital of Kumaon with vibrant heritage and Kasar Devi.',
+        imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.7,
+        reviewsCount: 390,
+        estimatedBudget: 2800,
+        altitude: 1638,
+        bestTimeToVisit: 'September to June',
+        highlights: ['Kasar Devi Crank Ridge', 'Bright End Corner Sunset', '200-Year-Old Lala Bazaar'],
+        experiences: ['Aipan Art Crafting', 'Singhori Sweet Tasting', 'Crank Ridge Meditation'],
+        latitude: 29.5971,
+        longitude: 79.6591,
+      ),
+      Destination(
+        id: 'kausani',
+        name: 'Kausani',
+        district: 'Bageshwar',
+        region: 'Kumaon',
+        category: 'Nature',
+        description: 'Dubbed the Switzerland of India by Mahatma Gandhi, offering an uninterrupted 300-km panoramic spectacle of Trishul, Nanda Devi, and Panchachuli peaks.',
+        shortDescription: 'The Switzerland of India with sweeping 300km Himalayan panoramas.',
+        imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.8,
+        reviewsCount: 310,
+        estimatedBudget: 3400,
+        altitude: 1890,
+        bestTimeToVisit: 'October to May',
+        highlights: ['Anasakti Ashram (Gandhi Ashram)', 'Tea Estate Plantations', 'Sunrise over Nanda Devi'],
+        experiences: ['Organic Himalayan Tea Tasting', 'Sunset Alpenglow Watch'],
+        latitude: 29.8543,
+        longitude: 79.5967,
+      ),
+      Destination(
+        id: 'ranikhet',
+        name: 'Ranikhet',
+        district: 'Almora',
+        region: 'Kumaon',
+        category: 'Nature',
+        description: 'Queen Meadows surrounded by towering pine forests, British-era cantonment churches, Asia highest 9-hole golf course, and fruit orchards.',
+        shortDescription: 'Pine meadows, British-era cantonment heritage, and golf greens.',
+        imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.7,
+        reviewsCount: 280,
+        estimatedBudget: 3000,
+        altitude: 1869,
+        bestTimeToVisit: 'September to June',
+        highlights: ['Upat 9-Hole Golf Course', 'Chaubatia Apple Orchards', 'Jhula Devi Temple Bells'],
+        experiences: ['Pine Forest Walking', 'Apple Cider Sampling', 'Kumaoni Craft Strolls'],
+        latitude: 29.6434,
+        longitude: 79.4322,
+      ),
+      Destination(
+        id: 'mukteshwar',
+        name: 'Mukteshwar',
+        district: 'Nainital',
+        region: 'Kumaon',
+        category: 'Adventure',
+        description: 'High ridge outpost set at 2,285m, famous for dramatic rocky cliff Chauli Ki Jali, fruit orchards, rock climbing, and uninterrupted snow views.',
+        shortDescription: 'Scenic rocky ridge famous for Chauli Ki Jali cliff and fruit orchards.',
+        imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.8,
+        reviewsCount: 350,
+        estimatedBudget: 3200,
+        altitude: 2285,
+        bestTimeToVisit: 'March to June, October to February',
+        highlights: ['Chauli Ki Jali Cliff Edge', '350-Year-Old Shiva Shrine', 'Himalayan Sunset Points'],
+        experiences: ['Rock Climbing & Rappelling', 'Orchard Walks', 'Alps-style Homestays'],
+        latitude: 29.4722,
+        longitude: 79.6472,
+      ),
+      Destination(
+        id: 'tehri',
+        name: 'Tehri Lake & Dam',
+        district: 'Tehri Garhwal',
+        region: 'Garhwal',
+        category: 'Adventure',
+        description: 'Asia largest man-made emerald reservoir offering speed boating, jet skiing, floating houseboats, and water zorbing against Himalayan backdrop.',
+        shortDescription: 'Massive emerald reservoir with world-class watersports and houseboats.',
+        imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.7,
+        reviewsCount: 410,
+        estimatedBudget: 3500,
+        altitude: 1750,
+        bestTimeToVisit: 'Year-round, October to May',
+        highlights: ['Floating Luxury Houseboats', 'Jet Ski & Banana Rides', 'Tehri Rock Dam Engineering'],
+        experiences: ['Speed Boating', 'Floating Huts Stay', 'Paramotoring over Lake'],
+        latitude: 30.3800,
+        longitude: 78.4800,
+      ),
+      Destination(
+        id: 'dayara-bugyal',
+        name: 'Dayara Bugyal',
+        district: 'Uttarkashi',
+        region: 'Garhwal',
+        category: 'Adventure',
+        description: 'One of the most expansive high-altitude alpine meadows in Asia at 3,810m, transforming from emerald flower carpet in summer to pristine ski powder in winter.',
+        shortDescription: 'One of Asia vastest alpine meadows with 360-degree snow peaks.',
+        imageUrl: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.9,
+        reviewsCount: 270,
+        estimatedBudget: 5000,
+        altitude: 3810,
+        bestTimeToVisit: 'May to November (Trek), December to February (Snow)',
+        highlights: ['Vast Velvet Alpine Grasslands', 'Bandarpunch Peak Vista', 'Barnala Tal Lake'],
+        experiences: ['Bugyal Trekking', 'Meadow Camping', 'Winter Snow Hiking'],
+        latitude: 30.8500,
+        longitude: 78.5500,
+      ),
+      Destination(
+        id: 'kedarkantha',
+        name: 'Kedarkantha Peak',
+        district: 'Uttarkashi',
+        region: 'Garhwal',
+        category: 'Snow',
+        description: 'India most iconic winter snow summit trek at 3,800m, starting from Sankri village with pine forests, frozen Juda Ka Talab, and 360-degree summit sunrise.',
+        shortDescription: 'Premier winter snow trek with 360-degree Himalayan sunrise summit.',
+        imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+        rating: 4.9,
+        reviewsCount: 610,
+        estimatedBudget: 6000,
+        altitude: 3800,
+        bestTimeToVisit: 'December to April (Snow Summit), May to October',
+        highlights: ['Summit Shiva Shrine', 'Frozen Juda Ka Talab Lake', 'Sankri Wooden Hamlet'],
+        experiences: ['Winter Snow Trekking', 'Summit Sunrise Photography', 'Bonfire Camping'],
+        latitude: 31.0200,
+        longitude: 78.1700,
+      ),
 
   static List<SpiritualPlace> _getLocalSpiritual() {
     return [

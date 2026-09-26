@@ -138,7 +138,7 @@ export class LivePlacePhotoService {
       photoUrl = 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80';
       category = 'Spiritual Heritage';
     } else if (/lake|tal|water|reservoir|dam/i.test(text)) {
-      photoUrl = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80';
+      photoUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Naini_lake_nainital_uttarakhand.jpg/1280px-Naini_lake_nainital_uttarakhand.jpg';
       category = 'Himalayan Lake';
     } else if (/snow|ski|bugyal|meadow|pass|glacier/i.test(text)) {
       photoUrl = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80';

@@ -2,7 +2,7 @@ import React from 'react';
 import { useMapStore } from '../../store/mapStore';
 import { MdStar, MdTerrain, MdLuggage, MdCheck } from 'react-icons/md';
 
-import { getHimalayanFallbackImage } from '../../utils/imageHelpers';
+import { getCardImages, getHimalayanFallbackImage } from '../../utils/imageHelpers';
 import { useFreshImage } from '../../utils/images';
 
 export default function DestinationCard({ destination }) {
@@ -17,7 +17,8 @@ export default function DestinationCard({ destination }) {
 
   const isSelected = selectedDestination?.id === destination.id;
   const isAdded = tripDestinations.some((d) => d.id === destination.id);
-  const baseFallback = destination.image || getHimalayanFallbackImage(destination);
+  const images = getCardImages(destination);
+  const baseFallback = images[0] || getHimalayanFallbackImage(destination);
   const displayImage = useFreshImage(destination.slug || destination.name, baseFallback);
 
   return (
