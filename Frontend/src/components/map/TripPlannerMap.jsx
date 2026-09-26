@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Link } from 'react-router-dom';
 import { useMapStore } from '../../store/mapStore';
 import { UTTARAKHAND_CENTER, DEFAULT_ZOOM, MIN_ZOOM, MAX_ZOOM, UTTARAKHAND_BOUNDS } from '../../utils/mapConstants';
-import { Plus, Check, MapPin, Layers, ExternalLink } from 'lucide-react';
+import { Plus, MapPin } from 'lucide-react';
 
 // Fix default Leaflet icon paths
 delete L.Icon.Default.prototype._getIconUrl;

@@ -1,12 +1,10 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Navigation,
   Mountain,
   ArrowLeftRight,
   Clock,
   MapPin,
-  AlertTriangle,
-  ChevronRight,
   X,
   Compass,
   PhoneCall,
@@ -16,8 +14,6 @@ import {
   Footprints,
   Shield,
   CheckCircle2,
-  Search,
-  Sparkles,
   Layers,
   ChevronDown,
   Copy,
