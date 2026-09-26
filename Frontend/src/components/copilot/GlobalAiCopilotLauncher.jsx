@@ -133,7 +133,7 @@ export default function GlobalAiCopilotLauncher() {
           aria-label={isOpen ? "Close AI Copilot" : "Open Devbhoomi AI Copilot"}
         >
           <div className="global-copilot-btn__icon-wrap">
-            {isOpen ? <X size={16} /> : <Sparkles size={16} className="text-amber-300 animate-pulse" />}
+            {isOpen ? <X size={16} /> : <Sparkles size={16} className="text-amber-300" />}
           </div>
           <span className="global-copilot-btn__label">Devbhoomi AI</span>
           <span className="global-copilot-tooltip">

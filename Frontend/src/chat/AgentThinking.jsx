@@ -33,7 +33,7 @@ export default function AgentThinking({ agent = 'Devbhoomi Companion', steps = [
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="p-1 rounded-md bg-emerald-100 text-emerald-800">
-            <Icon size={13} className={isStreaming ? 'animate-pulse' : ''} />
+            <Icon size={13} />
           </div>
           <span className="font-bold text-[#0f3d2e] shrink-0">
             {agent}
@@ -41,7 +41,7 @@ export default function AgentThinking({ agent = 'Devbhoomi Companion', steps = [
           <span className="text-stone-500 font-normal truncate max-w-[200px] sm:max-w-xs">
             {isStreaming ? (
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
                 {latestThought}
               </span>
             ) : (

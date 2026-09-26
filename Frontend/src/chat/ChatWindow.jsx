@@ -143,7 +143,7 @@ export default function ChatWindow({
         {messages.length <= 1 && (
           <div className="py-4 sm:py-6 px-2 max-w-xl mx-auto text-center space-y-5">
             <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-emerald-50 border border-emerald-200/80 shadow-sm text-emerald-700">
-              <Mountain size={28} className="text-emerald-700 animate-pulse" />
+              <Mountain size={28} className="text-emerald-700" />
             </div>
 
             <div className="space-y-1.5">

@@ -42,7 +42,7 @@ export default function BottomNavBar() {
           className="group flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full shadow-[0_8px_20px_rgba(15,61,46,0.35)] border-2 border-white transition-all transform active:scale-95 cursor-pointer bg-gradient-to-r from-forest-green to-dark-green-alt text-white hover:brightness-110"
           aria-label="Pahadi AI Copilot"
         >
-          <Sparkles size={13} className="text-amber-300 animate-pulse" />
+          <Sparkles size={13} className="text-amber-300" />
           <span className="text-[10.5px] font-black uppercase tracking-wider">AI Copilot</span>
         </button>
       </div>
