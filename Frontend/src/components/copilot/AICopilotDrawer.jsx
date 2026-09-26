@@ -18,11 +18,11 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId: _tripId, page
           flex flex-col overflow-hidden select-none
           /* Mobile: bottom slide-up sheet */
           bottom-0 left-0 right-0 top-auto
-          w-full rounded-t-[24px] border-t border-white/15
+          w-full rounded-t-[24px] border-t border-stone-200 bg-white
           max-h-[92dvh] h-[92dvh]
           /* SM+: right-side panel */
           sm:inset-y-0 sm:right-0 sm:left-auto sm:top-0 sm:bottom-0
-          sm:w-[480px] sm:max-h-full sm:h-full sm:rounded-none sm:border-t-0 sm:border-l
+          sm:w-[480px] sm:max-h-full sm:h-full sm:rounded-none sm:border-t-0 sm:border-l sm:border-stone-200
           ${isOpen
             ? 'translate-y-0 sm:translate-x-0'
             : 'translate-y-full sm:translate-x-full sm:translate-y-0'
@@ -36,9 +36,9 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId: _tripId, page
         {/* Mobile drag handle with click-to-close */}
         <div
           onClick={onClose}
-          className="sm:hidden flex justify-center items-center pt-3 pb-2 cursor-pointer flex-shrink-0 bg-[#040e09] rounded-t-[24px] active:opacity-75 transition-opacity touch-none"
+          className="sm:hidden flex justify-center items-center pt-3 pb-2 cursor-pointer flex-shrink-0 bg-white rounded-t-[24px] active:opacity-75 transition-opacity touch-none"
         >
-          <div className="w-10 h-1.5 rounded-full bg-white/25 active:bg-white/40 transition-colors" />
+          <div className="w-10 h-1.5 rounded-full bg-stone-300 active:bg-stone-400 transition-colors" />
         </div>
 
         {/* Chat Window Container */}

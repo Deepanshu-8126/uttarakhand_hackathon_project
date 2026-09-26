@@ -46,15 +46,15 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(16, 185, 129, 0.25);
+    background: rgba(15, 61, 46, 0.2);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(16, 185, 129, 0.5);
+    background: rgba(15, 61, 46, 0.4);
   }
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(16, 185, 129, 0.25) transparent;
+    scrollbar-color: rgba(15, 61, 46, 0.2) transparent;
   }
 
   html {
