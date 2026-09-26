@@ -37,6 +37,7 @@ import truthRoutes from './routes/truthRoutes.js';
 import safetyRoutes from './routes/safetyRoutes.js';
 import placesRoutes from './routes/placesRoutes.js';
 import internalAgentRoutes from './routes/internalAgentRoutes.js';
+import voiceRoutes from './routes/voiceRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Validate production environment variables
@@ -141,7 +142,44 @@ app.use('/api/truth', truthRoutes);
 app.use('/api/safety', safetyRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/search', placesRoutes);
+app.use('/api/voice', voiceRoutes);
+app.use('/voice', voiceRoutes);
 app.use('/internal/agent', internalAgentRoutes);
+
+// Unprefixed Aliases for Render & Mobile clients (e.g., /agent/chat, /chat, /destinations, /stays)
+app.use('/agent', agentRoutes);
+app.use('/chat', chatRoutes);
+app.use('/chats', chatRoutes);
+app.use('/destinations', destinationRoutes);
+app.use('/stays', stayRoutes);
+app.use('/rentals', rentalRoutes);
+app.use('/guides', guideRoutes);
+app.use('/activities', activityRoutes);
+app.use('/spiritual', spiritualRoutes);
+app.use('/culture', cultureRoutes);
+app.use('/health', (req, res) => res.redirect(307, '/api/health'));
+
+// Root & API Info Handlers
+app.get(['/', '/api'], (req, res) => {
+  res.status(200).json({
+    success: true,
+    name: "Discovery Uttarakhand API",
+    version: "1.0.0",
+    status: "online",
+    healthCheck: "/api/health",
+    frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+    endpoints: {
+      destinations: "/api/destinations",
+      stays: "/api/stays",
+      rentals: "/api/rentals",
+      guides: "/api/guides",
+      activities: "/api/activities",
+      copilot: "/api/agent/chat",
+      auth: "/api/auth",
+      health: "/api/health"
+    }
+  });
+});
 
 // Liveness & Application Health Check
 app.get('/api/health', (req, res) => {
