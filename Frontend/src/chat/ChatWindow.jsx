@@ -1,14 +1,13 @@
 /**
  * Devbhoomi Conversational AI - ChatWindow
- * Master conversational container with Clean Alpine White & Himalayan Emerald theme
+ * Slide-over Drawer Panel with Clean Alpine & Himalayan Emerald design
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Trash2, Mic, X, Compass, Shield, Mountain, Hotel, Route, ArrowRight, Check, Maximize2 } from 'lucide-react';
+import { RotateCw, Mic, X, Mountain, Route, CloudSun, Sparkles, ArrowRight } from 'lucide-react';
 import { useChatState } from './ChatState.js';
 import MessageRenderer from './MessageRenderer.jsx';
-import ChatInput from './ChatInput.jsx';
 import SuggestedActions from './SuggestedActions.jsx';
 import VoiceControls from './VoiceControls.jsx';
 
@@ -19,6 +18,7 @@ export default function ChatWindow({
   embedded = false
 }) {
   const navigate = useNavigate();
+  const [inputText, setInputText] = useState('');
   const {
     messages,
     isLoading,
@@ -42,186 +42,167 @@ export default function ChatWindow({
   // Last assistant message suggestions
   const latestSuggestions = messages[messages.length - 1]?.suggestions || [];
 
-  const starterCards = [
-    {
-      icon: Mountain,
-      title: "Plan 4-Day Trek",
-      desc: "Valley of Flowers & Hemkund Sahib itinerary...",
-      prompt: "Mujhe Valley of Flowers aur Hemkund Sahib ka 4-day trek plan bana do Delhi se start karke"
-    },
-    {
-      icon: Shield,
-      title: "Live Road & Weather",
-      desc: "Current monsoon advisories, landslides and...",
-      prompt: "Kedarnath aur Badrinath route ka live weather aur road safety status kaisa hai?"
-    }
-  ];
+  const handleSend = () => {
+    if (!inputText.trim() || isLoading) return;
+    sendMessage(inputText.trim());
+    setInputText('');
+  };
 
-  const quickPills = [
-    { label: "Kedarnath Dham Route & Acclimatization", prompt: "Kedarnath Dham route, biometric yatra registration and altitude acclimatization guide" },
-    { label: "Auli Skiing & Cable Car Guide", prompt: "Auli skiing season, ropeway cable car timings and best slope viewpoints" },
-    { label: "3-Day Rishikesh & Chopta Trip", prompt: "3-Day itinerary for Rishikesh river rafting and Chopta Tungnath Chandrashila summit" },
-    { label: "Check Live Himalayan Weather", prompt: "Live mountain weather and road conditions for high altitude passes in Uttarakhand" }
-  ];
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   return (
-    <div className={`flex flex-col h-full bg-white text-slate-800 overflow-hidden relative selection:bg-emerald-100 ${embedded ? 'border-t sm:border-t-0 sm:border-l border-stone-200/80' : ''}`}>
+    <div className="flex flex-col h-full bg-white text-slate-800 overflow-hidden relative selection:bg-emerald-100">
       
-      {/* ── Top Vibrant Gradient Accent Bar (Matching Image 2) ── */}
-      <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-emerald-600 via-teal-400 to-amber-400" />
-
-      {/* ── Ambient Alpine Glows ── */}
-      <div className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/5 rounded-full blur-[90px] pointer-events-none -mr-20 -mt-20" />
-      <div className="absolute bottom-16 left-0 w-60 sm:w-80 h-60 sm:h-80 bg-teal-500/5 rounded-full blur-[80px] pointer-events-none -ml-20" />
-
-      {/* ── Top Header (Matching Image 2) ── */}
-      <div className="shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-stone-100 bg-white/95 backdrop-blur-xl flex items-center justify-between z-10 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-50 border border-emerald-200/80 flex items-center justify-center shrink-0 shadow-2xs">
-            <Compass size={19} className="text-emerald-800" />
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+      {/* ── Drawer Top Bar / Header ── */}
+      <header className="p-4 sm:px-6 border-b border-slate-100 flex items-center justify-between bg-white/95 backdrop-blur-md sticky top-0 z-20 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0b533e] to-emerald-600 flex items-center justify-center text-white shadow-sm ring-2 ring-emerald-600/20 shrink-0">
+            <svg className="w-5 h-5 text-amber-300" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L14.39 8.26L21 9.27L16.2 13.97L17.34 20.73L12 17.27L6.66 20.73L7.8 13.97L3 9.27L9.61 8.26L12 2Z" />
+            </svg>
           </div>
-
-          <div className="flex flex-col justify-center min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm sm:text-base font-black text-[#0a3e2b] whitespace-nowrap tracking-tight">
-                Devbhoomi AI
-              </h2>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] sm:text-[11px] font-semibold text-emerald-800 whitespace-nowrap shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span>Devbhoomi Companion</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900 text-base leading-none">Devbhoomi AI</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 mt-0.5">
-              <Check size={12} className="text-emerald-600 stroke-[3]" />
-              <span>100% Grounded</span>
-            </div>
+            <p className="text-xs text-slate-500 font-normal mt-0.5">Devbhoomi Travel Copilot</p>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Header Actions */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <button
             type="button"
             onClick={() => setIsVoiceOpen(true)}
-            title="Open Live Voice Companion"
-            className="group px-3.5 sm:px-4 py-1.5 rounded-full bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 transition-all duration-200 active:scale-95 flex items-center gap-1.5 text-xs font-bold shadow-2xs cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer"
+            title="Voice Mode"
           >
-            <Mic size={13} className="text-emerald-700 group-hover:scale-110 transition-transform shrink-0" />
-            <span className="whitespace-nowrap">Voice Mode</span>
+            <Mic size={14} className="text-emerald-700" />
+            <span>Voice</span>
           </button>
 
           <button
             type="button"
             onClick={clearChat}
-            title="Reset conversation"
-            className="p-2 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-stone-50 transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Reset Conversation"
           >
-            <Trash2 size={16} />
+            <RotateCw size={15} />
           </button>
 
           {!embedded && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  navigate('/copilot');
-                }}
-                title="Open Fullscreen Copilot Page"
-                className="p-2 rounded-xl text-stone-400 hover:text-emerald-800 hover:bg-emerald-50 transition-colors cursor-pointer shrink-0"
-              >
-                <Maximize2 size={16} />
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                title="Close chat"
-                className="p-2 rounded-xl text-stone-400 hover:text-stone-800 hover:bg-stone-50 transition-colors cursor-pointer shrink-0"
-              >
-                <X size={16} />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Close Drawer"
+            >
+              <X size={18} strokeWidth={2.5} />
+            </button>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* ── Scrollable Messages Timeline ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 scroll-smooth z-0 custom-copilot-scrollbar">
+      {/* ── Drawer Scrollable Content Body ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 space-y-6 custom-copilot-scrollbar">
         
-        {/* Welcome Empty State if only 0 or 1 message */}
+        {/* Welcome Empty State if no messages or only initial prompt */}
         {messages.length <= 1 && (
-          <div className="py-2 sm:py-4 px-2 max-w-xl mx-auto text-center space-y-4 sm:space-y-5">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 border border-emerald-200/80 shadow-xs text-emerald-700 mx-auto">
-              <Mountain size={28} className="text-emerald-700" />
-            </div>
-
-            <div className="space-y-1.5">
-              <h3 className="text-xl sm:text-2xl font-black text-[#0a3e2b] tracking-tight">
+          <>
+            {/* Welcome Card & Peak Icon */}
+            <div className="rounded-2xl bg-gradient-to-b from-slate-50 to-white p-5 border border-slate-100 text-center flex flex-col items-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shadow-xs mb-3.5">
+                <Mountain size={24} className="text-emerald-800" />
+              </div>
+              <h2 className="font-bold text-slate-900 text-xl tracking-tight">
                 Welcome to Devbhoomi AI
-              </h3>
-              <p className="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-md mx-auto">
-                Ask anything about mountain routes, high-altitude acclimatization, live road safety alerts, or verified local homestays.
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-sm leading-relaxed">
+                Your intelligent Uttarakhand yatra navigator. Ask for instant trek itineraries, live route alerts, weather forecasts, or sacred temple timings.
               </p>
             </div>
 
-            {/* Quick Starter Cards (2 Columns matching Image 2) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-left">
-              {starterCards.map((card, idx) => {
-                const IconComponent = card.icon;
-                return (
+            {/* Quick Structured Action Cards (Grid 2 cols) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div
+                onClick={() => sendMessage('Mujhe 4-day Uttarakhand mountain trek plan bana do customized routes aur stay stops ke saath')}
+                className="p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-emerald-500/40 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
+                  <Route size={16} />
+                </div>
+                <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
+                  Plan 4-Day Trek
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                  Customized day-wise routes &amp; stay stops
+                </p>
+              </div>
+
+              <div
+                onClick={() => sendMessage('Kedarnath aur Mandakini valley ka live road condition aur weather kaisa hai?')}
+                className="p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-emerald-500/40 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
+                  <CloudSun size={16} />
+                </div>
+                <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
+                  Live Road &amp; Weather
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                  Mandakini valley alerts &amp; temperature
+                </p>
+              </div>
+            </div>
+
+            {/* Suggested Queries / Sparkle Chips */}
+            <div className="space-y-2.5">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Suggested Queries
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Kedarnath Dham Route', prompt: 'Kedarnath Dham trek route details, distance from Gaurikund, and safety tips' },
+                  { label: 'Auli Skiing Season', prompt: 'Auli skiing season timings, cable car tickets, and weather conditions' },
+                  { label: '3-Day Rishikesh', prompt: '3-Day Rishikesh spiritual and adventure itinerary with Ganga Aarti' },
+                  { label: 'Live Weather & Snow', prompt: 'Current live weather, snowfall updates and mountain pass conditions in Uttarakhand' },
+                ].map((item, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => sendMessage(card.prompt)}
-                    disabled={isLoading}
-                    className="group p-3.5 sm:p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-stone-200/90 hover:border-emerald-300 transition-all duration-200 active:scale-[0.98] text-left flex items-start gap-3 cursor-pointer shadow-2xs"
+                    onClick={() => sendMessage(item.prompt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100/90 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200/50 cursor-pointer"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-100 group-hover:bg-emerald-100 flex items-center justify-center shrink-0 transition-colors">
-                      <IconComponent size={17} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-sm font-bold text-stone-900 group-hover:text-[#0a3e2b] flex items-center justify-between">
-                        <span className="truncate">{card.title}</span>
-                        <ArrowRight size={13} className="text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                      </div>
-                      <div className="text-[11px] sm:text-xs text-stone-500 line-clamp-2 mt-0.5 leading-snug">
-                        {card.desc}
-                      </div>
-                    </div>
+                    <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2L14.39 8.26L21 9.27L16.2 13.97L17.34 20.73L12 17.27L6.66 20.73L7.8 13.97L3 9.27L9.61 8.26L12 2Z" />
+                    </svg>
+                    <span>{item.label}</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-
-            {/* 4 Prompt Pills (Arranged in 2 balanced rows matching Image 2) */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-              {quickPills.map((pill, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => sendMessage(pill.prompt)}
-                  disabled={isLoading}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-xs font-medium text-stone-700 shadow-2xs hover:border-stone-300 transition-all cursor-pointer whitespace-nowrap active:scale-95"
-                >
-                  <Sparkles size={11} className="text-emerald-600 shrink-0" />
-                  <span>{pill.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          </>
         )}
 
+        {/* Message History */}
         {messages.map((msg) => (
           <MessageRenderer key={msg.id} message={msg} onSendPrompt={(prompt) => sendMessage(prompt)} />
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Suggested Prompts & Actions ── */}
+      {/* Suggested Follow-up Actions */}
       {latestSuggestions.length > 0 && !isStreaming && (
-        <div className="shrink-0 px-3 sm:px-6 pt-1 pb-1 bg-gradient-to-t from-white to-transparent z-10">
+        <div className="shrink-0 px-4 py-1.5 bg-gradient-to-t from-white to-transparent z-10">
           <SuggestedActions
             suggestions={latestSuggestions}
             onSelect={(prompt) => sendMessage(prompt)}
@@ -230,18 +211,48 @@ export default function ChatWindow({
         </div>
       )}
 
-      {/* ── Bottom Input Bar ── */}
-      <div className="shrink-0 bg-white/95 border-t border-stone-200/80 backdrop-blur-xl z-10">
-        <ChatInput
-          onSend={(text) => sendMessage(text)}
-          onOpenVoice={() => setIsVoiceOpen(true)}
-          isLoading={isLoading}
-          isStreaming={isStreaming}
-          onStop={stopGeneration}
-        />
-      </div>
+      {/* ── Interactive Bottom Chat Input Area ── */}
+      <footer className="p-4 sm:p-5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+          <button
+            type="button"
+            onClick={() => setIsVoiceOpen(true)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors shrink-0 cursor-pointer"
+            title="Voice dictation"
+          >
+            <Mic size={17} />
+          </button>
+          
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask Devbhoomi AI anything..."
+            disabled={isLoading && !isStreaming}
+            className="flex-1 bg-transparent border-0 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 px-1 py-1 font-normal"
+          />
 
-      {/* ── Fullscreen Live Aoede Voice Overlay ── */}
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!inputText.trim() || (isLoading && !isStreaming)}
+            className={`w-9 h-9 rounded-xl bg-[#0b533e] hover:bg-[#073c2c] text-white flex items-center justify-center shadow-xs hover:shadow-md transition-all shrink-0 active:scale-95 cursor-pointer ${
+              !inputText.trim() ? 'opacity-60 cursor-not-allowed' : ''
+            }`}
+            title="Send message"
+          >
+            <svg className="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <p className="text-[11px] text-slate-400 text-center mt-2.5 select-none">
+          Powered by Uttarakhand Tourism Knowledge Engine
+        </p>
+      </footer>
+
+      {/* ── Fullscreen Live Voice Overlay ── */}
       <VoiceControls
         isOpen={isVoiceOpen}
         onClose={() => setIsVoiceOpen(false)}
