@@ -387,104 +387,96 @@ export default function Navbar() {
 
           </div>
         </div>
+      </header>
 
-        {/* ── 5. Mobile & Tablet Full-Screen Overlay (< 1024px) ───────────────── */}
-        {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center gap-6 p-6 lg:hidden overflow-y-auto animate-in fade-in duration-200">
-            {/* Close Button */}
+      {/* ── 5. Mobile & Tablet Full-Screen Overlay (< 1024px) ───────────────── */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center gap-6 p-6 lg:hidden overflow-y-auto animate-in fade-in duration-200">
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xl cursor-pointer"
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+
+          {/* Brand Logo in Overlay */}
+          <div className="flex items-center gap-3 mb-2 shrink-0">
+            <img
+              src="/logo.png"
+              alt="Discovery Uttarakhand"
+              className="w-10 h-10 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
+            />
+            <span className="font-extrabold text-xl text-[#0f3d2e]">Discovery Uttarakhand</span>
+          </div>
+
+          {/* Active Trip Banner if available */}
+          {activeTripDestination && (
+            <Link
+              to={activeTripUrl}
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full max-w-sm p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#0f3d2e] text-center shadow-xs"
+            >
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block mb-0.5">
+                🟢 Trip in Progress
+              </span>
+              <span className="font-extrabold text-sm text-emerald-950 block truncate">
+                {activeTripDestination} {activeTripDuration ? `(${activeTripDuration})` : ''}
+              </span>
+            </Link>
+          )}
+
+          {/* Navigation Overlay Links */}
+          <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                to={link.path}
+                onClick={(e) => handleNavClick(link, e)}
+                className="whitespace-nowrap text-lg font-bold text-stone-800 hover:text-[#0f3d2e] transition-colors py-1"
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <Link
+              to="/rescue-ops"
+              onClick={() => setMobileMenuOpen(false)}
+              className="whitespace-nowrap text-lg font-bold text-rose-600 hover:text-rose-700 transition-colors py-1"
+            >
+              🚨 Rescue Ops &amp; SOS
+            </Link>
+
+            <Link
+              to="/innovations"
+              onClick={() => setMobileMenuOpen(false)}
+              className="whitespace-nowrap text-lg font-bold text-emerald-700 hover:text-emerald-900 transition-colors py-1"
+            >
+              🛡️ Web3 Verification
+            </Link>
+
+            {/* Language Switcher in Overlay */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xl cursor-pointer"
-              aria-label="Close menu"
+              onClick={toggleLanguage}
+              className="mt-1 px-4 py-2 rounded-full bg-stone-100 hover:bg-emerald-50 border border-stone-200 text-sm font-bold text-stone-800 transition"
             >
-              ✕
+              {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
             </button>
 
-            {/* Brand Logo in Overlay */}
-            <div className="flex items-center gap-3 mb-2 shrink-0">
-              <img
-                src="/logo.png"
-                alt="Discovery Uttarakhand"
-                className="w-10 h-10 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
-              />
-              <span className="font-extrabold text-xl text-[#0f3d2e]">Discovery Uttarakhand</span>
-            </div>
-
-            {/* Active Trip Banner if available */}
-            {activeTripDestination && (
-              <Link
-                to={activeTripUrl}
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full max-w-sm p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#0f3d2e] text-center shadow-xs"
-              >
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block mb-0.5">
-                  🟢 Trip in Progress
-                </span>
-                <span className="font-extrabold text-sm text-emerald-950 block truncate">
-                  {activeTripDestination} {activeTripDuration ? `(${activeTripDuration})` : ''}
-                </span>
-              </Link>
-            )}
-
-            {/* Navigation Overlay Links */}
-            <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  to={link.path}
-                  onClick={(e) => handleNavClick(link, e)}
-                  className="whitespace-nowrap text-lg font-bold text-stone-800 hover:text-[#0f3d2e] transition-colors py-1"
-                >
-                  {link.label}
-                </Link>
-              ))}
-
-              <Link
-                to="/guide"
-                onClick={() => setMobileMenuOpen(false)}
-                className="whitespace-nowrap text-lg font-bold text-emerald-800 hover:text-[#0f3d2e] transition-colors py-1"
-              >
-                🏔️ Guide Portal
-              </Link>
-
-              <Link
-                to="/rescue-ops"
-                onClick={() => setMobileMenuOpen(false)}
-                className="whitespace-nowrap text-lg font-bold text-rose-600 hover:text-rose-700 transition-colors py-1"
-              >
-                🚨 Rescue Ops &amp; SOS
-              </Link>
-
-              <Link
-                to="/innovations"
-                onClick={() => setMobileMenuOpen(false)}
-                className="whitespace-nowrap text-lg font-bold text-emerald-700 hover:text-emerald-900 transition-colors py-1"
-              >
-                🛡️ Web3 Verification
-              </Link>
-
-              {/* Language Switcher in Overlay */}
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                className="mt-1 px-4 py-2 rounded-full bg-stone-100 hover:bg-emerald-50 border border-stone-200 text-sm font-bold text-stone-800 transition"
-              >
-                {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
-              </button>
-
-              {/* Plan Trip Primary CTA */}
-              <Link
-                to="/trip-planner"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full mt-1 py-3.5 px-6 rounded-full bg-[#0f3d2e] text-white font-extrabold text-sm text-center uppercase tracking-wider shadow-md active:scale-95"
-              >
-                {t('nav_plantrip') || 'Plan Trip Now'}
-              </Link>
-            </div>
+            {/* Plan Trip Primary CTA */}
+            <Link
+              to="/trip-planner"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full mt-1 py-3.5 px-6 rounded-full bg-[#0f3d2e] text-white font-extrabold text-sm text-center uppercase tracking-wider shadow-md active:scale-95"
+            >
+              {t('nav_plantrip') || 'Plan Trip Now'}
+            </Link>
           </div>
-        )}
-      </header>
+        </div>
+      )}
 
       {/* Global Location Modal */}
       <GlobalLocationModal
