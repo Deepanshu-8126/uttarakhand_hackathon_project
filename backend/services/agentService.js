@@ -535,13 +535,17 @@ async function _processAgenticTravelFlow({ message, tripContext, session, user, 
   }
 
   // 6. Trip Planning Flow & Multi-Turn State Machine
-  // Only trigger slot-filling when user explicitly asks to BUILD/GENERATE an itinerary/trip form,
-  // NOT when asking informational questions, history, timings, or general conversational inquiries.
+  // Trigger slot-filling when user plans a trip, mentions travel intent, or provides slot answers in an active planning conversation
   const isInformationalQuery = /(?:tell me about|information|timing|timings|history|kya hai|kaisa hai|baare me|kya dekh|mandir|temple|lake|waterfall|peak|trek guide|best time|story|facts|altitude)/i.test(clean);
   const isExplicitPlanningIntent = /(?:itinerary banao|trip plan karo|plan my trip|pura plan banao|booking plan|itinerary create)/i.test(clean) ||
-                                   (clean.split(/\s+/).length <= 4 && /(?:plan|itinerary)\b/i.test(clean) && !isInformationalQuery);
+                                   (clean.split(/\s+/).length <= 4 && /(?:plan|itinerary)\b/i.test(clean));
+  const isPlanningLanguage = /(?:trip|plan|jana hai|jaana hai|want to go|ghoomna|travel|bana do|chalo|start|where i can go|visit|itinerary)/i.test(lower);
+  const hasExtractedPlanningSlot = !!(entities.origin || entities.startDate || entities.duration || entities.travelers || entities.budget);
+  const isSlotFillingInProgress = !!(session?.contextEntities?.destination && (hasExtractedPlanningSlot || session?.contextEntities?.origin || session?.contextEntities?.startDate));
 
-  if (isExplicitPlanningIntent && !isInformationalQuery) {
+  const isPlanningIntent = ((isPlanningLanguage && !isInformationalQuery) || isExplicitPlanningIntent || isSlotFillingInProgress || (entities.destination && hasExtractedPlanningSlot));
+
+  if (isPlanningIntent && !isInformationalQuery) {
     const dest = entities.destination || activeDest;
     const orig = entities.origin;
     const sDate = entities.startDate;

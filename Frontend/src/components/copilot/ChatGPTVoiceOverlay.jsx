@@ -51,7 +51,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
   };
 
-  // Play HD Google Neural Voice Stream (Zero robotic OS browser TTS!)
+  // Play natural browser neural voice fallback
   const playGoogleNeuralTts = useCallback((text, onDone) => {
     if (!text || isMuted) {
       updateVoiceStatus('listening');
@@ -59,46 +59,55 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       return;
     }
     const cleanText = text.replace(/[*#_~`]/g, '').slice(0, 300);
-    const targetLang = (lang && lang.startsWith('hi')) ? 'hi' : 'en';
-    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=${targetLang}&client=tw-ob`;
+    const targetLang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
 
     try {
       if (audioPlayerRef.current) {
         try { audioPlayerRef.current.pause(); } catch (e) {}
         audioPlayerRef.current = null;
       }
-      updateVoiceStatus('speaking');
-      const audio = new Audio(googleTtsUrl);
-      audioPlayerRef.current = audio;
-      audio.onended = () => {
-        audioPlayerRef.current = null;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = targetLang;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(v => v.name.includes('Natural') && (v.lang.startsWith(targetLang.slice(0, 2))))
+          || voices.find(v => v.name.includes('Google') && (v.lang.startsWith(targetLang.slice(0, 2))))
+          || voices.find(v => v.name.includes('Neerja') || v.name.includes('Swara') || v.name.includes('India'))
+          || voices.find(v => v.lang.startsWith(targetLang.slice(0, 2)));
+        if (preferred) utterance.voice = preferred;
+
+        updateVoiceStatus('speaking');
+        utterance.onend = () => {
+          updateVoiceStatus('listening');
+          onDone?.();
+        };
+        utterance.onerror = () => {
+          updateVoiceStatus('listening');
+          onDone?.();
+        };
+        window.speechSynthesis.speak(utterance);
+      } else {
         updateVoiceStatus('listening');
         onDone?.();
-      };
-      audio.onerror = () => {
-        audioPlayerRef.current = null;
-        updateVoiceStatus('listening');
-        onDone?.();
-      };
-      audio.play().catch(() => {
-        audioPlayerRef.current = null;
-        updateVoiceStatus('listening');
-        onDone?.();
-      });
+      }
     } catch (e) {
       updateVoiceStatus('listening');
       onDone?.();
     }
   }, [isMuted, lang]);
 
-  // Play real-time 24kHz raw PCM chunks from Gemini Live with zero latency
+  // Play real-time 24kHz raw PCM chunks from Gemini Live with zero latency & jitter cushion
   const playPcmChunk = useCallback((base64Chunk) => {
     if (isMuted || !base64Chunk) return;
 
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!playbackContextRef.current || playbackContextRef.current.state === 'closed') {
-        playbackContextRef.current = new AudioCtx({ sampleRate: 24000 });
+        playbackContextRef.current = new AudioCtx();
       }
       const ctx = playbackContextRef.current;
       if (ctx.state === 'suspended') {
@@ -106,12 +115,17 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       }
 
       const binary = atob(base64Chunk);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const int16 = new Int16Array(bytes.buffer);
+      const len = binary.length;
+      if (len === 0) return;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
 
-      const float32 = new Float32Array(int16.length);
-      for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
+      const numSamples = Math.floor(len / 2);
+      const dataView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const float32 = new Float32Array(numSamples);
+      for (let i = 0; i < numSamples; i++) {
+        float32[i] = dataView.getInt16(i * 2, true) / 32768.0; // true = Little-Endian
+      }
 
       const buffer = ctx.createBuffer(1, float32.length, 24000);
       buffer.getChannelData(0).set(float32);
@@ -121,8 +135,9 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       source.connect(ctx.destination);
 
       const now = ctx.currentTime;
+      // 80ms smooth jitter cushion on stream initiation
       if (nextPlayTimeRef.current < now) {
-        nextPlayTimeRef.current = now + 0.12; // 120ms adaptive jitter cushion for smooth mobile playback
+        nextPlayTimeRef.current = now + 0.08;
       }
       source.start(nextPlayTimeRef.current);
       nextPlayTimeRef.current += buffer.duration;
