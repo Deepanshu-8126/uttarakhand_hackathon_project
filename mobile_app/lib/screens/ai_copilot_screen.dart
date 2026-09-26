@@ -358,30 +358,23 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               'speaking': 'AI replied — check chat below',
             }[voiceState]!;
 
-            final orbColor = {
-              'idle': const Color(0xFF059669),
-              'listening': const Color(0xFF10B981),
-              'processing': const Color(0xFFF59E0B),
-              'speaking': const Color(0xFF06B6D4),
-            }[voiceState]!;
+            String selectedLang = 'English';
 
             return Container(
-              height: MediaQuery.of(context).size.height * 0.78,
+              height: MediaQuery.of(context).size.height * 0.85,
               decoration: const BoxDecoration(
-                color: Color(0xFF071B12),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
               child: Column(
                 children: [
-                  // ── Top Gradient Accent Bar ──────────────────────────────
+                  // ── Top Header ───────────────────────────────────────────
                   Container(
-                    width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF0F4C3A), Color(0xFF064E3B), Color(0xFF022C22)],
-                      ),
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+                      color: Colors.white,
+                      border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -389,149 +382,154 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(7),
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF34D399).withOpacity(0.2),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFF34D399).withOpacity(0.4)),
+                                color: const Color(0xFF0B533E),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.auto_awesome, color: Color(0xFF34D399), size: 16),
+                              alignment: Alignment.center,
+                              child: const Text('★', style: TextStyle(color: Color(0xFFFCD34D), fontSize: 16)),
                             ),
                             const SizedBox(width: 10),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  children: const [
-                                    Text(
-                                      'Himalayan AI Copilot',
-                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text('AI', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 10, fontWeight: FontWeight.w900)),
-                                  ],
-                                ),
-                                Row(
                                   children: [
+                                    const Text('Devbhoomi AI', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900, fontSize: 15)),
+                                    const SizedBox(width: 6),
                                     Container(
-                                      width: 6,
-                                      height: 6,
-                                      margin: const EdgeInsets.only(right: 5),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF34D399),
-                                        shape: BoxShape.circle,
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFECFDF5),
+                                        borderRadius: BorderRadius.circular(999),
+                                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.circle, color: Color(0xFF10B981), size: 6),
+                                          SizedBox(width: 3),
+                                          Text('Active', style: TextStyle(color: Color(0xFF047857), fontSize: 9, fontWeight: FontWeight.bold)),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      voiceState == 'listening'
-                                          ? 'Listening to your voice...'
-                                          : voiceState == 'speaking'
-                                              ? 'Speaking ground intelligence...'
-                                              : voiceState == 'processing'
-                                                  ? 'Checking mountain data...'
-                                                  : 'Active & Ready',
-                                      style: const TextStyle(color: Color(0xFFA7F3D0), fontSize: 10, fontWeight: FontWeight.w600),
-                                    ),
                                   ],
                                 ),
+                                const Text('Devbhoomi Travel Copilot', style: TextStyle(color: Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.w500)),
                               ],
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white70, size: 22),
-                          onPressed: () => Navigator.pop(ctx),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF059669),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.circle, color: Color(0xFFA7F3D0), size: 6),
+                                  SizedBox(width: 4),
+                                  Text('Voice Active', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Color(0xFF64748B), size: 20),
+                              onPressed: () => Navigator.pop(ctx),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
 
-                  // ── Voice Content Body ─────────────────────────────────────
+                  // ── Main Content Area ────────────────────────────────────
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 10),
-
-                          // Center Pulsing Orb with Equalizer Bars
+                          // Glowing Center Mic Orb
                           AnimatedBuilder(
                             animation: _voicePulseController,
                             builder: (context, child) {
-                              final scale = voiceState == 'idle' ? 1.0 : 1.0 + (_voicePulseController.value * 0.16);
-                              final val = _voicePulseController.value;
-
                               return Column(
                                 children: [
-                                  Stack(
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color(0xFFD1FAE5).withOpacity(0.7),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981).withOpacity(0.15),
+                                          blurRadius: 20,
+                                          spreadRadius: 6,
+                                        ),
+                                      ],
+                                    ),
                                     alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        width: 140 * scale,
-                                        height: 140 * scale,
-                                        decoration: BoxDecoration(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        submit('Can you suggest the best 3-day trek itinerary starting from Rishikesh with live weather updates?');
+                                      },
+                                      child: Container(
+                                        width: 58,
+                                        height: 58,
+                                        decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: orbColor.withOpacity(0.12 - (val * 0.05)),
+                                          color: Color(0xFF0B533E),
                                         ),
+                                        child: const Icon(Icons.mic, color: Colors.white, size: 28),
                                       ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          if (voiceState == 'idle' || voiceState == 'speaking') {
-                                            submit('Namaste! Mujhe Uttarakhand me ghoomne ki best jagah aur real ground condition bataiye.');
-                                          }
-                                        },
-                                        child: Container(
-                                          width: 95,
-                                          height: 95,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            gradient: RadialGradient(
-                                              colors: [
-                                                orbColor.withOpacity(0.95),
-                                                orbColor.withOpacity(0.6),
-                                                const Color(0xFF042F24),
-                                              ],
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: orbColor.withOpacity(0.45),
-                                                blurRadius: 30,
-                                                spreadRadius: 4,
-                                              ),
-                                            ],
-                                          ),
-                                          child: Icon(
-                                            voiceState == 'processing'
-                                                ? Icons.hourglass_top
-                                                : voiceState == 'speaking'
-                                                    ? Icons.volume_up
-                                                    : Icons.mic,
-                                            color: Colors.white,
-                                            size: 38,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
+                                  const SizedBox(height: 12),
 
-                                  const SizedBox(height: 20),
+                                  // Status pill
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFECFDF5),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.circle, color: Color(0xFF10B981), size: 7),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          voiceState == 'speaking' ? 'Speaking ground intelligence...' : 'Listening to your voice...',
+                                          style: const TextStyle(color: Color(0xFF065F46), fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
 
-                                  // ── 7-Bar Animated Equalizer ───────────────
+                                  // 7 Animated Equalizer Bars
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: List.generate(7, (i) {
-                                      final multipliers = [0.4, 0.7, 1.0, 0.6, 0.9, 0.5, 0.8];
-                                      final isMoving = voiceState == 'listening' || voiceState == 'speaking';
-                                      final height = isMoving
-                                          ? (12 + (val * 24 * multipliers[i]))
-                                          : (6.0 + (multipliers[i] * 4));
-
+                                      final heights = [10.0, 16.0, 12.0, 18.0, 14.0, 9.0, 13.0];
+                                      final isBouncing = voiceState == 'listening' || voiceState == 'speaking';
+                                      final h = isBouncing ? (heights[i] + (_voicePulseController.value * 10)) : 6.0;
                                       return Container(
-                                        margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                                        width: 3.5,
-                                        height: height,
+                                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                                        width: 3,
+                                        height: h,
                                         decoration: BoxDecoration(
-                                          color: isMoving ? const Color(0xFF34D399) : const Color(0xFF059669).withOpacity(0.4),
+                                          color: const Color(0xFF10B981),
                                           borderRadius: BorderRadius.circular(999),
                                         ),
                                       );
@@ -542,89 +540,235 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                             },
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
 
-                          // Status label
-                          Text(
-                            statusLabel,
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Live transcript or reply container
-                          if (liveTranscript.isNotEmpty || lastReply.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white.withOpacity(0.12)),
-                              ),
-                              child: Text(
-                                lastReply.isNotEmpty ? lastReply : '“$liveTranscript”',
-                                style: TextStyle(
-                                  color: lastReply.isNotEmpty ? const Color(0xFF6EE7B7) : Colors.white,
-                                  fontSize: 12,
-                                  height: 1.4,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 4,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                          // 1. YOU SAID (LIVE TRANSCRIPT) Card
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
                             ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: const [
+                                    Icon(Icons.circle, color: Color(0xFF94A3B8), size: 5),
+                                    SizedBox(width: 5),
+                                    Text('YOU SAID (LIVE TRANSCRIPT)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.5)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  liveTranscript.isNotEmpty
+                                      ? '“$liveTranscript”'
+                                      : '“Can you suggest the best 3-day trek itinerary starting from Rishikesh with live weather updates?”',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF1E293B), fontStyle: FontStyle.italic, height: 1.35),
+                                ),
+                              ],
+                            ),
+                          ),
 
                           const SizedBox(height: 12),
 
-                          // Suggested voice prompt chips
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.center,
-                            children: [
-                              'Kedarnath trek altitude & safety',
-                              'Weather in Badrinath',
-                              'Valley of Flowers season',
-                              'Best homestays in Chopta',
-                            ].map((topic) {
-                              return GestureDetector(
-                                onTap: voiceState == 'idle' || voiceState == 'speaking'
-                                    ? () => submit(topic)
-                                    : null,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(999),
-                                    border: Border.all(color: Colors.white.withOpacity(0.15)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.volume_up_outlined, color: Color(0xFF6EE7B7), size: 12),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        topic,
-                                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
+                          // 2. Devbhoomi AI Speaking Card
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: const Color(0xFFBBF7D0)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0B533E),
+                                            borderRadius: BorderRadius.circular(5),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: const Text('★', style: TextStyle(color: Color(0xFFFCD34D), fontSize: 10)),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Text('Devbhoomi AI', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF0F172A))),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: const [
+                                        Icon(Icons.circle, color: Color(0xFF10B981), size: 6),
+                                        SizedBox(width: 4),
+                                        Text('Speaking', style: TextStyle(color: Color(0xFF047857), fontSize: 10, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              );
-                            }).toList(),
+                                const SizedBox(height: 8),
+                                Text(
+                                  lastReply.isNotEmpty
+                                      ? lastReply
+                                      : 'I recommend the Chopta – Tungnath – Chandrashila circuit. Current passes are sunny and clear at 14°C. Day 1: Rishikesh to Sari Village base. Day 2: Summit Tungnath & Chandrashila at sunrise. Day 3: Scenic return via Deoriatal lake.',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF334155), height: 1.4, fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                                      ),
+                                      child: const Text('14°C Clear Skies', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      ),
+                                      child: const Text('Moderate Difficulty', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
 
-                          const Spacer(),
+                          const SizedBox(height: 14),
 
-                          const Text(
-                            'Powered by Himalayan Ground Intelligence & Gemini Live',
-                            style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
+                          // 3. VOICE DIALECT / LANGUAGE Section
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('VOICE DIALECT / LANGUAGE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF94A3B8), letterSpacing: 0.5)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFECFDF5),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                                    ),
+                                    child: const Text('Auto-Detect On', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF047857))),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    'English',
+                                    'हिन्दी',
+                                    'गढ़वाली (Garhwali)',
+                                    'कुमाऊँनी (Kumaoni)',
+                                  ].map((l) {
+                                    final active = selectedLang == l;
+                                    return GestureDetector(
+                                      onTap: () => setModalState(() => selectedLang = l),
+                                      child: Container(
+                                        margin: const EdgeInsets.only(right: 6),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: active ? const Color(0xFF0B533E) : Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: active ? const Color(0xFF0B533E) : const Color(0xFFE2E8F0)),
+                                        ),
+                                        child: Text(
+                                          l,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                                            color: active ? Colors.white : const Color(0xFF334155),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 6),
                         ],
                       ),
+                    ),
+                  ),
+
+                  // ── Bottom Controls ──────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF334155),
+                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              icon: const Icon(Icons.keyboard_outlined, size: 16),
+                              label: const Text('Keyboard', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              onPressed: () => Navigator.pop(ctx),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                submit('Kedarnath Dham weather and Chopta snow status update');
+                              },
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFF059669),
+                                  boxShadow: [BoxShadow(color: Color(0x33059669), blurRadius: 10, offset: Offset(0, 3))],
+                                ),
+                                child: const Icon(Icons.mic, color: Colors.white, size: 22),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFEF2F2),
+                                foregroundColor: const Color(0xFFDC2626),
+                                elevation: 0,
+                                side: const BorderSide(color: Color(0xFFFECACA)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              icon: const Icon(Icons.stop, size: 14),
+                              label: const Text('Interrupt', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              onPressed: () {
+                                setModalState(() => voiceState = 'idle');
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text('Uttarakhand Tourism Real-time Speech AI Engine', style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
+                      ],
                     ),
                   ),
                 ],
