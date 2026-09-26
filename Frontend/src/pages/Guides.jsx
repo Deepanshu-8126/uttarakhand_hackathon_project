@@ -76,7 +76,10 @@ const Guides = () => {
         {/* Search & Filters */}
         <div className="w-full max-w-4xl mb-12 flex flex-col items-center gap-6">
           <div className="w-full relative">
+            <label htmlFor="guides-search-input" className="sr-only">Search guides by name, city or speciality</label>
             <input 
+              id="guides-search-input"
+              name="guidesSearch"
               type="text" 
               placeholder="Search guides by name, city or speciality..." 
               value={searchQuery}

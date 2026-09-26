@@ -81,7 +81,10 @@ const Footer = () => {
               <div className="lg:col-span-5">
                 <form onSubmit={handleSubscribe} className="space-y-1.5">
                   <div className="flex items-center gap-1.5 p-1 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-emerald-600 focus-within:bg-white transition-all">
+                    <label htmlFor="newsletter-footer-email" className="sr-only">Email address for travel updates</label>
                     <input
+                      id="newsletter-footer-email"
+                      name="newsletterEmail"
                       type="email"
                       value={newsletterEmail}
                       onChange={(e) => setNewsletterEmail(e.target.value)}
