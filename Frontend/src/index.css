@@ -87,9 +87,32 @@
     content-visibility: auto;
   }
 
-  @media (min-width: 1024px) and (max-width: 1536px) {
+  /* Universal responsive font scaling across all laptop and monitor displays */
+  html {
+    font-size: 14px;
+  }
+
+  @media (min-width: 640px) {
     html {
-      font-size: 92%;
+      font-size: 14.5px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  @media (min-width: 1440px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    html {
+      font-size: 16px;
     }
   }
 

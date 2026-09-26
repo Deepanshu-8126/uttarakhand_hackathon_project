@@ -87,13 +87,24 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
       if (abortControllerRef.current) abortControllerRef.current.abort();
       abortControllerRef.current = new AbortController();
 
-      // Tiered endpoint list: Local Node -> Local Python Bridge -> Cloud Render
-      const candidateEndpoints = [
-        { url: `${API_BASE}/agent/chat`, format: 'standard' },
-        { url: `http://localhost:8765/api/chat`, format: 'bridge' },
-        { url: `https://uttarakhand-hackathon-project.onrender.com/api/agent/chat`, format: 'standard' },
-        { url: `${API_BASE}/chat/query`, format: 'legacy' },
-      ];
+      // Build smart candidate endpoints based on HTTPS vs HTTP environment
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const PROD_API = 'https://uttarakhand-hackathon-project.onrender.com/api';
+
+      const candidateEndpoints = isHttps
+        ? [
+            { url: `${API_BASE.startsWith('http:') ? PROD_API : API_BASE}/agent/chat`, format: 'standard' },
+            { url: `${PROD_API}/agent/chat`, format: 'standard' },
+            { url: `${PROD_API}/voice/ask`, format: 'voice_ask' },
+            { url: `${PROD_API}/chat`, format: 'direct_chat' },
+          ]
+        : [
+            { url: `${API_BASE}/agent/chat`, format: 'standard' },
+            { url: `http://localhost:8765/api/chat`, format: 'bridge' },
+            { url: `${PROD_API}/agent/chat`, format: 'standard' },
+            { url: `${API_BASE}/voice/ask`, format: 'voice_ask' },
+            { url: `${API_BASE}/chat`, format: 'direct_chat' },
+          ];
 
       let lastError = null;
       for (const endpoint of candidateEndpoints) {
@@ -104,19 +115,21 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
             body: JSON.stringify(
               endpoint.format === 'bridge'
                 ? { message: cleanText, lang: 'en', history: messages.slice(-4) }
-                : { message: cleanText, sessionId }
+                : endpoint.format === 'voice_ask'
+                  ? { query: cleanText, lang: 'en' }
+                  : { message: cleanText, query: cleanText, sessionId }
             ),
             signal: AbortSignal.any
-              ? AbortSignal.any([abortControllerRef.current.signal, AbortSignal.timeout(7000)])
+              ? AbortSignal.any([abortControllerRef.current.signal, AbortSignal.timeout(30000)])
               : abortControllerRef.current.signal,
           });
 
           if (res.ok) {
             const resData = await res.json();
             const agentResp = resData.response || resData.data || resData;
-            const replyText = agentResp.message || (typeof agentResp === 'string' ? agentResp : '');
+            const replyText = agentResp.message || (typeof agentResp === 'string' ? agentResp : (resData.message || resData.response || ''));
             if (replyText) {
-              const suggestions = (agentResp.suggestedActions || []).map(a => a.label || a).filter(Boolean);
+              const suggestions = (agentResp.suggestedActions || resData.suggestions || []).map(a => a.label || a).filter(Boolean);
               const agentName = agentResp.agent || agentResp.meta?.provider || (endpoint.format === 'bridge' ? 'Devbhoomi AI' : 'Devbhoomi Companion');
               if (agentResp.tripContext) setEntities(agentResp.tripContext);
 
@@ -131,13 +144,13 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
                     m.id === assistantMsgId ? { ...m, content: snap, agent: agentName } : m
                   )
                 );
-                await new Promise((r) => setTimeout(r, 16));
+                await new Promise((r) => setTimeout(r, 12));
               }
 
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMsgId
-                    ? { ...m, content: replyText, agent: agentName, suggestions, data: agentResp.data || null }
+                    ? { ...m, content: replyText, agent: agentName, suggestions, data: agentResp.data || resData.data || null }
                     : m
                 )
               );
