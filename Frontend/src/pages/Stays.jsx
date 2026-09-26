@@ -29,7 +29,223 @@ import { getCardImages } from '../utils/imageHelpers';
 import AltitudeGuardModal from '../components/safety/AltitudeGuardModal';
 import WomenSosModal from '../components/safety/WomenSosModal';
 
-const ITEMS_PER_PAGE = 8;
+// ── Curated Real Unsplash High-Res Fallback Photo Collections for Stays ──────────
+const REAL_STAY_PHOTO_BANKS = [
+  [
+    'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1000&q=80'
+  ],
+  [
+    'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80'
+  ],
+  [
+    'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1000&q=80'
+  ]
+];
+
+// Interactive Stay Card with Story-Style (- - -) Photo Cycling & Escrow Protection
+function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onPlan }) {
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const stayId = stay.id || stay._id;
+
+  const cardImages = getCardImages(stay);
+  const fallbackSet = REAL_STAY_PHOTO_BANKS[index % REAL_STAY_PHOTO_BANKS.length];
+  const images = useMemo(() => {
+    const raw = cardImages.filter(img => typeof img === 'string' && img.length > 5 && !img.includes('placeholder'));
+    if (raw.length >= 2) return raw;
+    if (raw.length === 1) return [raw[0], ...fallbackSet.slice(1)];
+    return fallbackSet;
+  }, [cardImages, fallbackSet]);
+
+  // Auto-advance photos inside the card
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPhotoIndex((prev) => (prev + 1) % images.length);
+    }, 4200 + (index % 4) * 500);
+
+    return () => clearInterval(timer);
+  }, [images.length, index]);
+
+  const handlePrev = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPhotoIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPhotoIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const locDisplay = typeof stay.location === 'string'
+    ? stay.location
+    : (stay.city ? `${stay.city}${stay.district ? `, ${stay.district}` : ''}` : (stay.district || 'Uttarakhand'));
+
+  const priceNum = stay.price?.amount || stay.pricePerNight || (typeof stay.price === 'number' ? stay.price : 1200);
+  const facilitiesList = stay.facilities || stay.amenities || ['Mountain View', 'Hot Water', 'Homestyle Food'];
+
+  return (
+    <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-stone-200/80 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between group">
+      <div>
+        {/* Card Image Banner with Multi-Photo Carousel */}
+        <div className="relative h-52 sm:h-56 overflow-hidden bg-stone-900 select-none">
+          {images.map((img, idx) => (
+            <img
+              key={idx}
+              src={img}
+              alt={stay.name}
+              onError={(e) => {
+                e.currentTarget.src = fallbackSet[idx % fallbackSet.length];
+              }}
+              className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out ${
+                idx === photoIndex ? 'opacity-100 scale-100 group-hover:scale-105 transition-transform duration-700' : 'opacity-0 pointer-events-none'
+              }`}
+            />
+          ))}
+
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/35 pointer-events-none" />
+
+          {/* Top Story Dash Indicators */}
+          <div className="absolute top-2.5 inset-x-3 z-10 flex items-center gap-1.5">
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setPhotoIndex(idx);
+                }}
+                className={`h-1 flex-1 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === photoIndex ? 'bg-white shadow-xs' : 'bg-white/40 hover:bg-white/70'
+                }`}
+                title={`Photo ${idx + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Escrow Protected Ribbon */}
+          <div className="absolute top-6 left-3 z-10 bg-black/60 backdrop-blur-md text-emerald-300 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-xs flex items-center gap-1 border border-white/15">
+            <Shield size={11} className="text-emerald-400" />
+            <span>VERIFIED HOST</span>
+          </div>
+
+          {/* Wishlist Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleFav(stay);
+            }}
+            className={`absolute top-6 right-3 z-10 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-transform active:scale-90 cursor-pointer shadow-md ${
+              isFav ? 'bg-rose-500 text-white' : 'bg-black/50 hover:bg-black/80 text-white border border-white/20'
+            }`}
+            aria-label="Save to Wishlist"
+          >
+            <Heart size={14} className={isFav ? 'fill-white' : ''} />
+          </button>
+
+          {/* Hover Next/Prev Chevrons */}
+          <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white flex items-center justify-center pointer-events-auto transition-transform active:scale-95 cursor-pointer border border-white/20"
+              aria-label="Previous photo"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white flex items-center justify-center pointer-events-auto transition-transform active:scale-95 cursor-pointer border border-white/20"
+              aria-label="Next photo"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {/* Bottom Micro Trust Bar */}
+          <div className="absolute bottom-2.5 left-3 right-3 z-10 flex items-center justify-between text-[10px] bg-black/60 backdrop-blur-md text-stone-100 px-3 py-1 rounded-full border border-white/15">
+            <span className="flex items-center gap-1"><Crosshair size={10} className="text-emerald-400" /> GPS</span>
+            <span className="flex items-center gap-1"><Video size={10} className="text-emerald-400" /> Tour</span>
+            <span className="flex items-center gap-1"><Camera size={10} className="text-emerald-400" /> Host</span>
+            <span className="flex items-center gap-1 text-emerald-300 font-semibold"><Check size={10} className="text-emerald-400" /> Verified</span>
+          </div>
+        </div>
+
+        {/* Card Content Body */}
+        <div className="p-4 sm:p-5 space-y-2.5">
+          <div>
+            <h3 className="font-extrabold text-sm sm:text-base text-stone-900 group-hover:text-emerald-800 transition-colors leading-snug line-clamp-1">
+              {stay.name}
+            </h3>
+            <p className="text-xs text-stone-500 flex items-center mt-1">
+              <MapPin size={12} className="text-emerald-700 mr-1 shrink-0" />
+              <span className="truncate font-medium">{locDisplay}</span>
+            </p>
+          </div>
+
+          {/* Facility Chips */}
+          {facilitiesList.length > 0 && (
+            <div className="flex flex-wrap gap-1 pt-1">
+              {facilitiesList.slice(0, 3).map((f) => (
+                <span key={f} className="px-2.5 py-0.5 rounded-md bg-stone-100 text-[10px] text-stone-600 font-medium border border-stone-200/60">
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Card Footer */}
+      <div className="p-4 sm:p-5 pt-0 border-t border-stone-100 mt-2 flex items-center justify-between">
+        <div>
+          <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">Tariff</span>
+          <span className="text-sm sm:text-base font-black text-stone-900">
+            ₹{priceNum.toLocaleString('en-IN')} <span className="text-[11px] font-normal text-stone-500">/night</span>
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onAddToTrip(stay, priceNum, locDisplay, images[0])}
+            className="p-2 rounded-xl border border-emerald-700/30 text-emerald-800 hover:bg-emerald-50 transition-colors cursor-pointer shadow-2xs"
+            title="Add to Trip Day"
+          >
+            <Plus size={15} />
+          </button>
+          <Link 
+            to={`/stays/${stay.slug || stayId}`}
+            className="px-3 py-1.5 rounded-xl border border-stone-200 hover:border-emerald-700/40 text-xs font-bold text-stone-700 hover:text-emerald-800 transition-colors cursor-pointer"
+          >
+            Details
+          </Link>
+          <button 
+            type="button"
+            onClick={() => onPlan(stay)}
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-98"
+          >
+            Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Stays() {
   const navigate = useNavigate();
@@ -400,136 +616,30 @@ export default function Stays() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {paginatedStays.map((stay) => {
+              {paginatedStays.map((stay, idx) => {
                 const stayId = stay.id || stay._id;
                 const isFav = isFavorite ? isFavorite(stayId) : false;
-                const cardImages = getCardImages(stay);
-                const displayImage = cardImages[0] || 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800';
-
-                const locDisplay = typeof stay.location === 'string'
-                  ? stay.location
-                  : (stay.city ? `${stay.city}${stay.district ? `, ${stay.district}` : ''}` : (stay.district || 'Uttarakhand'));
-
-                const priceNum = stay.price?.amount || stay.pricePerNight || (typeof stay.price === 'number' ? stay.price : 1200);
-                const ratingNum = stay.rating || 4.8;
-                const facilitiesList = stay.facilities || stay.amenities || ['Pets not allowed'];
 
                 return (
-                  <div 
+                  <InteractiveStayCard
                     key={stayId}
-                    className="bg-white rounded-2xl overflow-hidden shadow-lg border border-[#1a4331]/10 flex flex-col justify-between group hover:shadow-xl transition-all"
-                  >
-                    <div>
-                      {/* Card Image Banner */}
-                      <div className="relative h-48 overflow-hidden bg-stone-100">
-                        <img
-                          src={displayImage}
-                          alt={stay.name}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800';
-                          }}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-
-                        {/* Escrow Protected Ribbon */}
-                        <div className="absolute top-3 left-3 bg-[#1a4331]/90 backdrop-blur-md text-emerald-300 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-sm flex items-center space-x-1 border border-white/10">
-                          <Shield size={11} className="text-emerald-400" />
-                          <span>ESCROW PROTECTED</span>
-                        </div>
-
-                        {/* Heart Wishlist Button */}
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite && toggleFavorite({ ...stay, itemType: 'stay' })}
-                          className={`absolute top-3 right-3 w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-colors cursor-pointer shadow-sm ${
-                            isFav ? 'bg-rose-50 text-rose-600' : 'bg-white/80 text-[#1a4331] hover:bg-white'
-                          }`}
-                          aria-label="Save to Wishlist"
-                        >
-                          <Heart size={13} className={isFav ? 'fill-rose-600' : ''} />
-                        </button>
-
-                        {/* Bottom Micro Trust Bar */}
-                        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[10px] bg-[#1a4331]/85 backdrop-blur-md text-[#fdfbf7] px-2.5 py-1 rounded-lg border border-white/10">
-                          <span className="flex items-center space-x-1"><Crosshair size={11} className="text-emerald-400" /> <span>GPS</span></span>
-                          <span className="flex items-center space-x-1"><Video size={11} className="text-emerald-400" /> <span>Video</span></span>
-                          <span className="flex items-center space-x-1"><Camera size={11} className="text-emerald-400" /> <span>Selfie</span></span>
-                          <span className="flex items-center space-x-1"><Check size={11} className="text-emerald-400" /> <span>Verified</span></span>
-                        </div>
-                      </div>
-
-                      {/* Card Content Body */}
-                      <div className="p-4 space-y-3">
-                        <div>
-                          <h3 className="font-bold text-sm text-[#1a4331] group-hover:text-emerald-600 transition-colors leading-snug line-clamp-1">
-                            {stay.name}
-                          </h3>
-                          <p className="text-[11px] text-[#1a4331]/70 flex items-center mt-1">
-                            <MapPin size={11} className="text-emerald-600 mr-1 shrink-0" />
-                            <span className="truncate">{locDisplay}</span>
-                          </p>
-                          <p className="text-[10px] text-[#1a4331]/50 mt-0.5">Location approximate — town/village centre</p>
-                        </div>
-
-                        {/* Facility Tags */}
-                        {facilitiesList.length > 0 && (
-                          <div className="flex flex-wrap gap-1 pt-1">
-                            {facilitiesList.slice(0, 4).map((f) => (
-                              <span key={f} className="px-2 py-0.5 rounded-md bg-[#1a4331]/5 text-[10px] text-[#1a4331]/80 font-medium">
-                                {f}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Card Footer Row */}
-                    <div className="p-4 pt-0 border-t border-[#1a4331]/5 mt-4 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs text-[#1a4331]/50 block">Price</span>
-                        <span className="text-sm font-extrabold text-[#1a4331]">
-                          ₹{priceNum.toLocaleString('en-IN')} <span className="text-[10px] font-normal text-[#1a4331]/70">/night</span>
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-1.5">
-                        <button
-                          type="button"
-                          onClick={() => openAddToTripModal({
-                            id: stayId,
-                            _id: stayId,
-                            name: stay.name,
-                            title: stay.name,
-                            itemType: 'stay',
-                            type: 'Homestay / Stay',
-                            location: locDisplay,
-                            price: priceNum,
-                            image: displayImage
-                          })}
-                          className="p-1.5 rounded-xl border border-emerald-600/30 text-emerald-800 hover:bg-emerald-50 transition-colors cursor-pointer"
-                          title="Add to Trip Day"
-                        >
-                          <Plus size={15} />
-                        </button>
-                        <Link 
-                          to={`/stays/${stay.slug || stayId}`}
-                          className="px-2.5 py-1.5 rounded-xl border border-[#1a4331]/20 text-xs font-semibold text-[#1a4331] hover:bg-[#1a4331]/5 transition-colors cursor-pointer"
-                        >
-                          Details
-                        </Link>
-                        <button 
-                          type="button"
-                          onClick={() => navigate(`/trip-planner?destination=${encodeURIComponent(stay.district || stay.city || stay.name)}`)}
-                          className="px-3 py-1.5 rounded-xl bg-[#1a4331] text-[#fdfbf7] text-xs font-semibold hover:bg-[#245a43] transition-colors cursor-pointer shadow-xs"
-                        >
-                          Plan
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
+                    stay={stay}
+                    index={idx}
+                    isFav={isFav}
+                    onToggleFav={(s) => toggleFavorite && toggleFavorite({ ...s, itemType: 'stay' })}
+                    onAddToTrip={(s, price, loc, img) => openAddToTripModal({
+                      id: stayId,
+                      _id: stayId,
+                      name: s.name,
+                      title: s.name,
+                      itemType: 'stay',
+                      type: 'Homestay / Stay',
+                      location: loc,
+                      price: price,
+                      image: img
+                    })}
+                    onPlan={(s) => navigate(`/trip-planner?destination=${encodeURIComponent(s.district || s.city || s.name)}`)}
+                  />
                 );
               })}
             </div>
