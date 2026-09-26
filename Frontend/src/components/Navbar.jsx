@@ -14,7 +14,8 @@ import {
   Car,
   Map,
   Languages,
-  MapPin
+  MapPin,
+  Route
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
@@ -83,6 +84,7 @@ export default function Navbar() {
 
   const navLinks = [
     { label: t('nav_explore') || 'Explore', path: '/explore', icon: Compass, isExplore: true },
+    { label: t('nav_planner') || 'Trip Planner', path: '/trip-planner', icon: Route },
     { label: t('nav_stays') || 'Stays', path: '/stays', icon: Bed },
     { label: t('nav_rentals') || 'Rentals', path: '/rentals', icon: Car },
     { label: t('nav_map') || 'Map', path: '/map', icon: Map },
@@ -113,30 +115,30 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-50 w-full backdrop-blur-xl transition-colors duration-200 ${
+      <header className={`sticky top-0 z-50 w-full backdrop-blur-xl transition-all duration-300 ${
         isDark 
           ? 'bg-[#040e09]/95 border-b border-white/[0.08] shadow-md text-white' 
-          : 'bg-white/95 border-b border-stone-200/80 shadow-xs text-stone-900'
+          : 'bg-white/95 border-b border-stone-200/90 shadow-sm text-stone-900'
       }`}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-18 lg:h-20 gap-3">
 
             {/* ── 1. Logo - NEVER squish ─────────────────────────────────── */}
-            <Link to="/" className="shrink-0 flex items-center gap-2 sm:gap-2.5 group">
+            <Link to="/" className="shrink-0 flex items-center gap-2.5 sm:gap-3 group">
               <img
                 src="/logo.png"
                 alt="Discovery Uttarakhand"
-                className={`w-7 h-7 sm:w-9 sm:h-9 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform shrink-0 ${
-                  isDark ? 'border border-emerald-500/30 bg-[#06140c]' : 'border border-emerald-900/10 bg-white'
+                className={`w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 object-contain rounded-2xl shadow-xs group-hover:scale-105 transition-transform duration-300 shrink-0 ${
+                  isDark ? 'border border-emerald-500/30 bg-[#06140c]' : 'border border-emerald-900/15 bg-white'
                 }`}
               />
               <div className="shrink-0">
-                <span className={`text-sm sm:text-base font-black tracking-tight block leading-none whitespace-nowrap ${
+                <span className={`text-base sm:text-lg lg:text-xl font-black tracking-tight block leading-none whitespace-nowrap ${
                   isDark ? 'text-white' : 'text-[#0f3d2e]'
                 }`}>
                   Discovery
                 </span>
-                <span className={`text-[8px] sm:text-[9px] font-bold tracking-widest uppercase block whitespace-nowrap ${
+                <span className={`text-[9px] sm:text-[10px] font-extrabold tracking-widest uppercase block whitespace-nowrap mt-0.5 ${
                   isDark ? 'text-emerald-400' : 'text-emerald-700'
                 }`}>
                   {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}

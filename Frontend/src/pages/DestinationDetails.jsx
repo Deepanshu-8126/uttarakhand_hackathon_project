@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import { getHimalayanFallbackImage } from '../utils/imageHelpers';
 
-// Fallback high-res alpine photos in case API is completely offline
+// Fallback high-res alpine photos in case API is offline or slow
 const CURATED_PEXELS_FALLBACKS = [
   {
     url: 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=1200&auto=format&fit=crop',
@@ -67,6 +67,61 @@ const CURATED_PEXELS_FALLBACKS = [
     photographer: 'Pexels Devbhoomi Lens',
     alt: 'Sunset Glow over Sacred Uttarakhand Peaks'
   },
+  {
+    url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Starry Himalayan Sky Archive',
+    alt: 'Milky Way Night View over Himalayan Ranges'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Pexels High Altitude Lens',
+    alt: 'Majestic Glacial Peak and Cloud Sea'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Alpine Stream Photography',
+    alt: 'Crystal Mountain Stream in Devbhoomi Forest'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Holy Rivers Explorer',
+    alt: 'Confluence of Emerald Himalayan Rivers'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1434394354979-a235cd36269d?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Snow Line Expeditions',
+    alt: 'Panoramic Snow Ridge Trail in Garhwal'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1511497584788-876761c1298b?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Oak & Pine Forest Trails',
+    alt: 'Golden Morning Sun Rays in Deodar Forest'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Highland Sunset Archive',
+    alt: 'Emerald Valley Reflection at Dusk'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Overland Himalayan Explorer',
+    alt: 'Scenic Mountain Pass Highway'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Alpine Valley Sentinel',
+    alt: 'Terraced Alpine Fields and Mountain Village'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Sacred Grove Chronicles',
+    alt: 'Autumn Colors in Himalayan Foothills'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=800&auto=format&fit=crop',
+    photographer: 'Tranquil Lake Archives',
+    alt: 'Mirror Lake View of Snow Peaks'
+  }
 ];
 
 export default function DestinationDetails() {
@@ -256,7 +311,7 @@ export default function DestinationDetails() {
 
     // 5. Fillers from Curated Alpine Fallbacks
     CURATED_PEXELS_FALLBACKS.forEach((fb) => {
-      if (list.length < 8) {
+      if (list.length < 18) {
         addPhoto(fb.url, fb.photographer, fb.alt);
       }
     });
