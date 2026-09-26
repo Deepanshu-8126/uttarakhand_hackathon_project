@@ -229,17 +229,23 @@ export function useFreshImage(destinationKey, fallbackUrl = null) {
       if (local) {
         setImageSrc(local);
       } else {
-        getFreshImage(destinationKey, fallbackUrl).then((url) => {
-          if (isMounted && url) {
-            setImageSrc(url);
-          }
-        });
+        getFreshImage(destinationKey, fallbackUrl)
+          .then((url) => {
+            if (isMounted && url) {
+              setImageSrc(url);
+            }
+          })
+          .catch(() => {
+            if (isMounted) {
+              setImageSrc(fallbackUrl || '/assets/yatra_sarthi/nainital.jpg');
+            }
+          });
       }
     }
     return () => { isMounted = false; };
   }, [destinationKey, fallbackUrl]);
 
-  return imageSrc;
+  return imageSrc || fallbackUrl || '/assets/yatra_sarthi/nainital.jpg';
 }
 
 export default {

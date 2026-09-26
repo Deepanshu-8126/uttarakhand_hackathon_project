@@ -200,9 +200,15 @@ export default function DevbhoomiVoiceStudioModal({
             setLiveUserText('');
             setStatus('listening');
           },
+          onFallbackReady: () => {
+            console.log('[DevbhoomiVoiceStudio] Initializing Web Speech & Universal Live Voice Engine');
+            setStatus('listening');
+            startUniversalSpeechFallback();
+          },
           onError: (err) => {
-            setErrorMessage(err);
-            setStatus('error');
+            console.log('[DevbhoomiVoiceStudio] WebSocket notice:', err);
+            setStatus('listening');
+            startUniversalSpeechFallback();
           },
           onDisconnected: () => {
             setStatus('idle');
@@ -211,13 +217,106 @@ export default function DevbhoomiVoiceStudioModal({
       );
 
     } catch (err) {
-      console.error('[DevbhoomiVoiceStudio] Failed to start voice session:', err);
-      setErrorMessage(err?.message || 'Microphone access denied or audio device not ready');
-      setStatus('error');
+      console.error('[DevbhoomiVoiceStudio] Starting Universal Voice Assistant:', err);
+      setStatus('listening');
+      startUniversalSpeechFallback();
+    }
+  };
+
+  const webSpeechRecRef = useRef(null);
+
+  const startUniversalSpeechFallback = () => {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      setStatus('listening');
+      return;
+    }
+
+    try {
+      if (webSpeechRecRef.current) {
+        try { webSpeechRecRef.current.stop(); } catch (e) {}
+      }
+
+      const rec = new SpeechRec();
+      rec.lang = 'hi-IN';
+      rec.continuous = true;
+      rec.interimResults = true;
+
+      rec.onresult = async (event) => {
+        let interim = '';
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) final += event.results[i][0].transcript;
+          else interim += event.results[i][0].transcript;
+        }
+
+        const currentText = (final || interim).trim();
+        setLiveUserText(currentText);
+
+        if (final && final.trim().length > 2) {
+          const userSaid = final.trim();
+          setTranscriptHistory(prev => [...prev, { role: 'user', text: userSaid, time: getCurrentTimestamp() }]);
+          setStatus('processing');
+          setLiveAiText('Thinking...');
+
+          try {
+            const res = await fetch('https://uttarakhand-hackathon-project.onrender.com/api/agent/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: userSaid })
+            });
+
+            const data = await res.json();
+            const reply = data.response?.message || data.message || data.response || 'Namaste! Main aapka Devbhoomi travel assistant hoon.';
+            const cleanReply = reply.replace(/[*#_~`]/g, '').trim();
+
+            setLiveAiText(cleanReply);
+            setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
+            setStatus('speaking');
+
+            if ('speechSynthesis' in window && !isSpeakerMuted) {
+              window.speechSynthesis.cancel();
+              const utt = new SpeechSynthesisUtterance(cleanReply);
+              utt.lang = 'hi-IN';
+              utt.rate = 1.0;
+              utt.onend = () => setStatus('listening');
+              utt.onerror = () => setStatus('listening');
+              window.speechSynthesis.speak(utt);
+            } else {
+              setTimeout(() => setStatus('listening'), 2000);
+            }
+          } catch (apiErr) {
+            console.warn('[UniversalVoice] API error, using local reply:', apiErr);
+            setStatus('listening');
+          }
+        }
+      };
+
+      rec.onerror = () => {
+        setStatus('listening');
+      };
+
+      rec.onend = () => {
+        if (isOpen && status !== 'speaking' && status !== 'processing') {
+          try { rec.start(); } catch (e) {}
+        }
+      };
+
+      webSpeechRecRef.current = rec;
+      rec.start();
+    } catch (e) {
+      console.warn('[UniversalVoice] Speech recognition init error:', e);
     }
   };
 
   const stopVoiceSession = () => {
+    if (webSpeechRecRef.current) {
+      try { webSpeechRecRef.current.stop(); } catch (e) {}
+      webSpeechRecRef.current = null;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     liveClient.disconnect();
     audioProcessor.destroy();
     setAnalyser(null);

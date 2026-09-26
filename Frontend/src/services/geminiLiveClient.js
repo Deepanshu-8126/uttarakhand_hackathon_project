@@ -1,6 +1,6 @@
 /**
  * Gemini Live WebSocket Client Manager for Discovery Uttarakhand
- * Multi-port failover support (8765 -> 8008 -> 5000) with automatic reconnection
+ * Production HTTPS (WSS) + Localhost (WS) + Seamless HTTP Voice Failover
  */
 
 export class GeminiLiveClient {
@@ -9,12 +9,43 @@ export class GeminiLiveClient {
     this.callbacks = null;
     this.isConnected = false;
     this.activeHostIndex = 0;
-    this.candidateHosts = [
-      'ws://127.0.0.1:8765',
-      'ws://localhost:8765',
-      'ws://127.0.0.1:8008',
-      'ws://localhost:8008'
-    ];
+    this.pingInterval = null;
+
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const envWs = import.meta.env.VITE_WS_URL || '';
+
+    // Production WSS first on HTTPS; localhost WS in local dev
+    this.candidateHosts = isHttps
+      ? [
+          envWs,
+          'wss://uttarakhand-hackathon-project.onrender.com',
+          'wss://uttarakhand-hackathon-project.onrender.com/ws',
+        ].filter(Boolean)
+      : [
+          envWs,
+          'ws://127.0.0.1:8765',
+          'ws://localhost:8765',
+          'ws://127.0.0.1:8008',
+          'ws://localhost:8008',
+          'wss://uttarakhand-hackathon-project.onrender.com'
+        ].filter(Boolean);
+  }
+
+  active() {
+    return this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  sendAudioChunk(base64Pcm) {
+    if (!this.active()) return;
+    try {
+      this.ws.send(JSON.stringify({
+        type: 'audio_chunk',
+        chunk: base64Pcm,
+        rate: 16000
+      }));
+    } catch (e) {
+      console.warn('[GeminiLiveClient] Failed to send audio chunk:', e);
+    }
   }
 
   connect(config = {}, callbacks = {}) {
@@ -35,24 +66,36 @@ export class GeminiLiveClient {
 
     const tryConnect = (hostIdx) => {
       if (hostIdx >= this.candidateHosts.length) {
-        callbacks.onError?.('Could not connect to Live Voice WebSocket server. Please ensure start_bridge.bat is running.');
+        console.log('[GeminiLiveClient] WebSockets unavailable on remote network. Ready for Universal HTTP Voice Fallback.');
+        this.callbacks?.onFallbackReady?.();
         return;
       }
 
-      const host = this.candidateHosts[hostIdx];
+      let host = this.candidateHosts[hostIdx].replace(/\/ws(\/live|\/voice)?$/, '');
       const wsUrl = `${host}/ws/live?${params.toString()}`;
 
       try {
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-          console.log(`[GeminiLiveClient] Connected to ${host}`);
+          console.log(`[GeminiLiveClient] ✅ Connected to ${host}`);
           this.activeHostIndex = hostIdx;
+          this.isConnected = true;
+          this.callbacks?.onConnected?.();
+
+          // 20-second Keepalive Ping for Render
+          if (this.pingInterval) clearInterval(this.pingInterval);
+          this.pingInterval = setInterval(() => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+              this.ws.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 20000);
         };
 
         this.ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            if (data.type === 'pong') return;
 
             if (data.type === 'connected' || data.type === 'ready') {
               this.isConnected = true;
@@ -84,25 +127,29 @@ export class GeminiLiveClient {
           }
         };
 
-        this.ws.onerror = (err) => {
-          // If first host failed, try next candidate
+        this.ws.onerror = () => {
           if (!this.isConnected && hostIdx + 1 < this.candidateHosts.length) {
-            this.ws?.close();
+            try { this.ws?.close(); } catch (e) {}
             tryConnect(hostIdx + 1);
           } else {
-            this.callbacks?.onError?.('Voice WebSocket connection issue. Falling back to local synthesizer.');
+            this.callbacks?.onFallbackReady?.();
           }
         };
 
         this.ws.onclose = () => {
           this.isConnected = false;
+          if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+          }
           this.callbacks?.onDisconnected?.();
         };
+
       } catch (err) {
         if (hostIdx + 1 < this.candidateHosts.length) {
           tryConnect(hostIdx + 1);
         } else {
-          callbacks.onError?.(err?.message || 'WebSocket connection error');
+          this.callbacks?.onFallbackReady?.();
         }
       }
     };
@@ -110,38 +157,22 @@ export class GeminiLiveClient {
     tryConnect(0);
   }
 
-  sendAudioChunk(base64Pcm) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        type: 'audio',
-        data: base64Pcm,
-        chunk: base64Pcm
-      }));
-    }
-  }
-
-  sendText(text) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        type: 'text',
-        text: text,
-        query: text
-      }));
-    }
-  }
-
   disconnect() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
     if (this.ws) {
-      this.ws.close();
+      try {
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ type: 'stop' }));
+        }
+        this.ws.close();
+      } catch (e) {}
       this.ws = null;
     }
     this.isConnected = false;
   }
-
-  active() {
-    return this.isConnected && this.ws?.readyState === WebSocket.OPEN;
-  }
 }
 
 export const liveClient = new GeminiLiveClient();
-export default liveClient;

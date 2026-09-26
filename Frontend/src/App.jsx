@@ -60,9 +60,6 @@ function App() {
                 <ErrorBoundary fallback={null}>
                   <SOSFloatingButton />
                 </ErrorBoundary>
-                <ErrorBoundary fallback={null}>
-                  <BottomNavBar />
-                </ErrorBoundary>
                 <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/explore" element={<Home />} />
