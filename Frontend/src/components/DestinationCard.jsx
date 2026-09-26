@@ -19,9 +19,13 @@ const DestinationCard = ({ destination, distance }) => {
   const baseFallback = rawDbImage || getHimalayanFallbackImage(destination);
   const coverImage = rawDbImage || useFreshImage(destination.slug || destination.name, baseFallback);
 
+  const destinationSlug = typeof destination.slug === 'string' && destination.slug.length > 0
+    ? destination.slug 
+    : (typeof destination._id === 'string' ? destination._id : (destination.name ? destination.name.toLowerCase().replace(/\s+/g, '-') : 'uttarakhand'));
+
   return (
     <Link
-      to={`/destinations/${destination.slug || destination._id}`}
+      to={`/destinations/${destinationSlug}`}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-stone-200/80 group text-left"
     >
       {/* 1. Clean Destination Photo with Smooth Shimmer & Self-Healing Fallback */}

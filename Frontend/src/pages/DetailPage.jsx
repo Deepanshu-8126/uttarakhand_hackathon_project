@@ -470,20 +470,24 @@ const DetailPage = () => {
                   Places to Visit Nearby
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {related.nearbyDestinations.slice(0, 3).map((d) => (
-                    <Link key={d._id || d.slug} to={`/destinations/${d.slug}`} className="bg-white rounded-3xl overflow-hidden card-shadow border border-border-light group flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all">
-                      <div className="h-40 bg-beige relative overflow-hidden">
-                        <img src={getImageSrc(d)} alt={d.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.onerror = null; e.target.src = getHimalayanFallbackImage(d); }} />
-                      </div>
-                      <div className="p-4 flex flex-col flex-grow justify-between">
-                        <div>
-                          <h4 className="font-black text-sm text-text-dark mb-1 font-display group-hover:text-forest-green transition-colors">{d.name}</h4>
-                          <p className="text-[11px] text-muted-text">{d.district}</p>
+                  {related.nearbyDestinations.slice(0, 3).map((d) => {
+                    const destSlug = typeof d.slug === 'string' ? d.slug : (typeof d._id === 'string' ? d._id : (d.name ? d.name.toLowerCase().replace(/\s+/g, '-') : ''));
+                    if (!destSlug) return null;
+                    return (
+                      <Link key={d._id || destSlug} to={`/destinations/${destSlug}`} className="bg-white rounded-3xl overflow-hidden card-shadow border border-border-light group flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all">
+                        <div className="h-40 bg-beige relative overflow-hidden">
+                          <img src={getImageSrc(d)} alt={d.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.onerror = null; e.target.src = getHimalayanFallbackImage(d); }} />
                         </div>
-                        <span className="text-forest-green text-xs font-bold mt-3 uppercase">Explore →</span>
-                      </div>
-                    </Link>
-                  ))}
+                        <div className="p-4 flex flex-col flex-grow justify-between">
+                          <div>
+                            <h4 className="font-black text-sm text-text-dark mb-1 font-display group-hover:text-forest-green transition-colors">{d.name}</h4>
+                            <p className="text-[11px] text-muted-text">{d.district}</p>
+                          </div>
+                          <span className="text-forest-green text-xs font-bold mt-3 uppercase">Explore →</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             )}
