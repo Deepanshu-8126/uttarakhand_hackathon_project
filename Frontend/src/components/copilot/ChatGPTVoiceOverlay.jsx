@@ -74,10 +74,6 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
   const liveSilentGainRef = useRef(null);
   const isAgentSpeakingRef = useRef(false);
 
-  // Web Speech API ref for real-time visual subtitles preview
-  const recognitionRef = useRef(null);
-  const recognitionActiveRef = useRef(false);
-
   // Base Bridge URL — local Python bridge (localhost) or env override
   const HTTP_BRIDGE_URL = import.meta.env.VITE_VOICE_BRIDGE_URL || 'http://127.0.0.1:8765';
   const WS_BRIDGE_URL = HTTP_BRIDGE_URL.replace(/^http/, 'ws');
@@ -215,12 +211,6 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       try { liveAudioCtxRef.current.close(); } catch (e) {}
       liveAudioCtxRef.current = null;
     }
-
-    if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch (e) {}
-      recognitionRef.current = null;
-    }
-    recognitionActiveRef.current = false;
 
     chunkSourcesRef.current.forEach((src) => {
       try { src.stop(); } catch (e) {}
@@ -374,42 +364,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     } catch (micErr) {
       console.warn('[VoiceOverlay] Live mic streaming failed:', micErr);
     }
-
-    // 2. Parallel Web Speech API purely for instant on-screen subtitle preview
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition && !recognitionActiveRef.current) {
-      try {
-        if (recognitionRef.current) {
-          try { recognitionRef.current.stop(); } catch (e) {}
-        }
-        const recognition = new SpeechRecognition();
-        recognitionRef.current = recognition;
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
-
-        recognition.onstart = () => {
-          recognitionActiveRef.current = true;
-        };
-        recognition.onresult = (e) => {
-          let text = '';
-          for (let i = 0; i < e.results.length; i++) {
-            text += e.results[i][0].transcript;
-          }
-          if (text) setTranscript(text);
-        };
-        recognition.onerror = () => {
-          recognitionActiveRef.current = false;
-        };
-        recognition.onend = () => {
-          recognitionActiveRef.current = false;
-        };
-        recognition.start();
-      } catch (err) {
-        console.warn('[VoiceOverlay] Subtitle recognition init error:', err);
-      }
-    }
-  }, [connectBridgeWS, lang]);
+  }, [connectBridgeWS]);
 
   // Submit text query (from topic chips) — WS → local bridge → Render API
   const handleVoiceQuerySubmit = async (queryText) => {
