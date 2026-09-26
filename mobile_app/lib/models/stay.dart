@@ -97,6 +97,7 @@ class Stay {
   final String imageUrl;
   final List<String> amenities;
   final bool isVerified;
+  final String description;
 
   Stay({
     required this.id,
@@ -108,6 +109,7 @@ class Stay {
     required this.imageUrl,
     required this.amenities,
     required this.isVerified,
+    this.description = '',
   });
 
   factory Stay.fromJson(Map<String, dynamic> json) {
@@ -173,6 +175,7 @@ class Stay {
       imageUrl: img,
       amenities: amenitiesList,
       isVerified: json['isAvailable'] ?? json['isVerified'] ?? true,
+      description: json['description']?.toString() ?? json['shortDescription']?.toString() ?? '',
     );
   }
 }
