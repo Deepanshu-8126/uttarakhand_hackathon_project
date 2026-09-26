@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   MapPin, ArrowRight, Sparkles, 
-  ChevronLeft, ChevronRight, Mic
+  ChevronLeft, ChevronRight, Mic,
+  Compass, Calendar, ShieldCheck, Smartphone, Mountain
 } from 'lucide-react';
 import { getDestinations } from '../api/destinationApi';
 
@@ -186,196 +187,231 @@ const DYNAMIC_OCCASION_SLIDES = [
   }
 ];
 
-// Curated 4 Category Pillars with distinct verified photos
-const CURATED_PILLARS = [
+// Curated Categories Filter Options
+const CURATED_CATEGORIES = ['All', 'Trekking', 'Spiritual', 'Offbeat', 'Nature'];
+
+// Curated Experiences featured data matching authentic Uttarakhand locales
+const CURATED_EXPERIENCES = [
   {
-    title: 'Spiritual Yatras',
-    subtitle: 'Char Dham, Panch Kedar & ancient Vedic shrines',
-    tag: 'Sacred Shrines',
-    images: [
-      '/assets/destinations/adi_kailash.jpg',
-      '/assets/yatra_sarthi/kedarnath.jpg',
-      '/assets/yatra_sarthi/badrinath.jpg',
-      '/assets/yatra_sarthi/haridwar.jpg'
-    ],
-    fallbackImg: '/assets/destinations/adi_kailash.jpg',
+    id: 'munsiyari',
+    title: 'Munsiyari Eco-Retreat',
+    category: 'Offbeat',
+    badge: 'Offbeat',
+    badgeBg: 'bg-amber-600/90 text-white',
+    subtitle: 'Experience the untouched beauty of the Panchachuli peaks.',
+    src: '/assets/destinations/munsiyari/cover.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=85',
+    link: '/destinations/munsiyari',
+    featured: true
+  },
+  {
+    id: 'jageshwar',
+    title: 'Jageshwar Dham',
+    category: 'Spiritual',
+    badge: 'Spiritual',
+    badgeBg: 'bg-emerald-700/90 text-white',
+    subtitle: 'Ancient temples amidst dense deodar forests.',
+    src: '/assets/jageshwar.jpg',
+    fallbackSrc: '/assets/destinations/adi_kailash.jpg',
     link: '/spiritual',
-    count: '50+ Shrines',
-    places: ['Adi Kailash', 'Kedarnath', 'Badrinath', 'Tungnath']
+    featured: true
   },
   {
-    title: 'High-Altitude Treks',
-    subtitle: 'Glacial passes, alpine bugyals & peak expeditions',
-    tag: 'Alpine Trails',
-    images: [
-      '/assets/destinations/om_parvat.jpg',
-      '/assets/destinations/tungnath_summit.jpg',
-      '/assets/destinations/chopta_snow_camp.jpg',
-      '/assets/yatra_sarthi/valley_of_flowers.jpg'
-    ],
-    fallbackImg: '/assets/destinations/om_parvat.jpg',
+    id: 'valley-of-flowers',
+    title: 'Valley of Flowers',
+    category: 'Trekking',
+    badge: 'Trekking',
+    badgeBg: 'bg-teal-700/90 text-white',
+    subtitle: 'Vibrant alpine meadows blooming with endemic wildflowers.',
+    src: '/assets/yatra_sarthi/valley_of_flowers.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=85',
+    link: '/destinations/valley-of-flowers',
+    featured: false
+  },
+  {
+    id: 'deoria-tal',
+    title: 'Deoria Tal',
+    category: 'Nature',
+    badge: 'Nature',
+    badgeBg: 'bg-emerald-800/90 text-white',
+    subtitle: 'Emerald mountain lake with Chaukhamba mirror reflections.',
+    src: '/assets/destinations/chandrashila_sunset_snow.jpg',
+    fallbackSrc: '/assets/yatra_sarthi/chopta.jpg',
+    link: '/destinations/chopta',
+    featured: false
+  },
+  {
+    id: 'kedarkantha',
+    title: 'Kedarkantha Summit',
+    category: 'Trekking',
+    badge: 'Trekking',
+    badgeBg: 'bg-teal-700/90 text-white',
+    subtitle: '360° snow-clad ridge panoramas in Govind Pashu Vihar.',
+    src: '/assets/destinations/kedarkantha_summit_view.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85',
     link: '/activities',
-    count: '50+ Trails',
-    places: ['Om Parvat Pass', 'Kuari Pass', 'Valley of Flowers', 'Chopta']
+    featured: false
   },
   {
-    title: 'Alpine Stays & KMVN',
-    subtitle: 'Authentic stone homestays, pine cottages & TRH lodges',
-    tag: 'Mountain Stays',
-    images: [
-      '/assets/destinations/chopta_snow_camp.jpg',
-      'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=85'
-    ],
-    fallbackImg: 'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1200&q=85',
-    link: '/stays',
-    count: '50+ Stays',
-    places: ['KMVN TRH', 'Sarmoli Homestay', 'Pine Cottages', 'Wood Cabins']
-  },
-  {
-    title: 'Culture & Living Heritage',
-    subtitle: 'Aipan crafts, folklore festivals & ancient high valleys',
-    tag: 'Pahadi Heritage',
-    images: [
-      '/assets/destinations/om_parvat.jpg',
-      '/assets/yatra_sarthi/nainital.jpg',
-      '/assets/yatra_sarthi/corbett.jpg',
-      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=85'
-    ],
-    fallbackImg: '/assets/destinations/om_parvat.jpg',
-    link: '/culture',
-    count: '50+ Traditions',
-    places: ['Chholiya Dance', 'Pahadi Architecture', 'Aipan Art', 'Mana Village']
+    id: 'adi-kailash',
+    title: 'Adi Kailash & Om Parvat',
+    category: 'Spiritual',
+    badge: 'Spiritual',
+    badgeBg: 'bg-emerald-700/90 text-white',
+    subtitle: 'Golden sunrise illuminating sacred Kumaon pinnacles.',
+    src: '/assets/destinations/adi_kailash.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=85',
+    link: '/spiritual',
+    featured: false
   }
 ];
 
-// Interactive Category Card with Story-Style Photo Transition
-function CategoryCard({ pillar, index }) {
-  const [photoIndex, setPhotoIndex] = useState(0);
-  const images = pillar.images && pillar.images.length > 0 ? pillar.images : [pillar.fallbackImg];
+// 5-Step Seamless Journeys Roadmap
+const JOURNEY_STEPS = [
+  {
+    id: 'discover',
+    title: 'Discover',
+    desc: 'Find curated experiences that match your travel style.',
+    icon: Compass,
+    isHighlighted: false
+  },
+  {
+    id: 'plan',
+    title: 'Plan',
+    desc: 'Customize itineraries with our smart planner.',
+    icon: Calendar,
+    isHighlighted: false
+  },
+  {
+    id: 'verify',
+    title: 'Verify',
+    desc: 'Connect with vetted local partners and experts.',
+    icon: ShieldCheck,
+    isHighlighted: false
+  },
+  {
+    id: 'book',
+    title: 'Book',
+    desc: 'Secure your stays, transport, and guides instantly.',
+    icon: Smartphone,
+    isHighlighted: false
+  },
+  {
+    id: 'travel',
+    title: 'Travel',
+    desc: 'Embark on your unforgettable eco-luxe journey.',
+    icon: Mountain,
+    isHighlighted: true
+  }
+];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setPhotoIndex((prev) => (prev + 1) % images.length);
-    }, 3800 + (index % 4) * 400);
-
-    return () => clearInterval(timer);
-  }, [images.length, index]);
-
-  const handlePrev = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setPhotoIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  const handleNext = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setPhotoIndex((prev) => (prev + 1) % images.length);
-  };
-
+// Curated Experience Card (Matches screenshot layout)
+function CuratedExperienceCard({ item, isLarge = false }) {
   return (
     <Link
-      to={pillar.link}
-      className="w-[78vw] sm:w-auto shrink-0 snap-center group relative h-76 sm:h-84 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col justify-between p-5 bg-slate-950 border border-stone-200/80"
+      to={item.link}
+      className={`group relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 block bg-stone-900 border border-stone-200/60 ${
+        isLarge ? 'h-64 sm:h-80 md:h-84' : 'h-56 sm:h-64 md:h-72'
+      }`}
     >
-      {/* Multiple Photos with Seamless Crossfade */}
-      {images.map((img, idx) => (
-        <img
-          key={idx}
-          src={img}
-          alt={pillar.title}
-          onError={(e) => {
-            if (pillar.fallbackImg && e.currentTarget.src !== pillar.fallbackImg) {
-              e.currentTarget.src = pillar.fallbackImg;
-            }
-          }}
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out ${
-            idx === photoIndex ? 'opacity-100 scale-100 group-hover:scale-105 transition-transform duration-700' : 'opacity-0'
-          }`}
-        />
-      ))}
+      {/* High-res authentic destination photography */}
+      <img
+        src={item.src}
+        alt={item.title}
+        onError={(e) => {
+          if (item.fallbackSrc && e.currentTarget.src !== item.fallbackSrc) {
+            e.currentTarget.src = item.fallbackSrc;
+          }
+        }}
+        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+      />
 
       {/* Cinematic Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
 
-      {/* Top Header */}
-      <div className="relative z-10 space-y-2.5">
-        <div className="flex items-center gap-1.5 w-full">
-          {images.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setPhotoIndex(idx);
-              }}
-              className={`h-1 flex-1 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === photoIndex
-                  ? 'bg-white shadow-xs'
-                  : 'bg-white/30 hover:bg-white/60'
-              }`}
-              title={`Photo ${idx + 1}`}
-            />
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/25 shadow-xs">
-            {pillar.tag}
-          </span>
-          <span className="text-xs font-semibold text-white bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/25">
-            {pillar.count}
-          </span>
-        </div>
-      </div>
-
-      {/* Hover Chevrons */}
-      <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-        <button
-          type="button"
-          onClick={handlePrev}
-          className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white flex items-center justify-center pointer-events-auto transition-transform active:scale-95 cursor-pointer"
-          aria-label="Previous photo"
-        >
-          <ChevronLeft size={14} />
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white flex items-center justify-center pointer-events-auto transition-transform active:scale-95 cursor-pointer"
-          aria-label="Next photo"
-        >
-          <ChevronRight size={14} />
-        </button>
-      </div>
-
-      {/* Bottom Details */}
-      <div className="relative z-10 text-white">
-        <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-1.5 text-white drop-shadow-md flex items-center justify-between">
-          <span className="text-white">{pillar.title}</span>
-          <ArrowRight size={16} className="text-white group-hover:translate-x-1 transition-all" />
+      {/* Card Content at Bottom Left */}
+      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 z-10">
+        <span className={`inline-block text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-md mb-1.5 shadow-xs ${item.badgeBg}`}>
+          {item.badge}
+        </span>
+        <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug drop-shadow-sm group-hover:text-emerald-200 transition-colors">
+          {item.title}
         </h3>
-        <p className="text-xs text-white/90 font-medium leading-relaxed mb-3 drop-shadow-xs">
-          {pillar.subtitle}
-        </p>
-
-        {pillar.places && (
-          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/20">
-            {pillar.places.map((place) => (
-              <span
-                key={place}
-                className="text-[10px] font-semibold text-white bg-white/15 px-2.5 py-0.5 rounded-full backdrop-blur-md border border-white/15 shadow-2xs"
-              >
-                {place}
-              </span>
-            ))}
-          </div>
+        {item.subtitle && (
+          <p className="text-[11px] sm:text-xs text-stone-200/90 font-medium mt-0.5 line-clamp-2 drop-shadow-xs max-w-md">
+            {item.subtitle}
+          </p>
         )}
       </div>
     </Link>
+  );
+}
+
+// "View All Destinations" Navigation Card
+function ViewAllCard() {
+  return (
+    <Link
+      to="/explore"
+      className="group relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 bg-stone-100 hover:bg-stone-200/80 border border-stone-200/90 flex flex-col items-center justify-center p-6 text-center h-56 sm:h-64 md:h-72"
+    >
+      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-stone-200/80 group-hover:bg-[#0f3d2e] group-hover:text-white flex items-center justify-center text-stone-800 transition-all duration-300 mb-2.5 shadow-xs">
+        <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
+      </div>
+      <span className="text-sm sm:text-base font-bold text-stone-900 group-hover:text-emerald-950 transition-colors">
+        View All Destinations
+      </span>
+    </Link>
+  );
+}
+
+// 5-Step Interconnected Roadmap Section (Matches screenshot)
+function SeamlessJourneysSection() {
+  return (
+    <div className="w-full max-w-5xl mx-auto mt-16 sm:mt-24 mb-6 text-center">
+      {/* Header */}
+      <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+        Seamless Journeys
+      </h2>
+      <p className="text-xs sm:text-sm text-stone-500 font-medium mt-1 max-w-lg mx-auto">
+        From inspiration to destination, we curate every step of your Himalayan adventure.
+      </p>
+
+      {/* 5 Interconnected Steps */}
+      <div className="relative mt-10 sm:mt-14">
+        {/* Horizontal Connecting Line across step icons on desktop */}
+        <div className="hidden md:block absolute top-7 left-14 right-14 h-0.5 bg-stone-200 -z-0" />
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 sm:gap-4 relative z-10">
+          {JOURNEY_STEPS.map((step) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.id} className="flex flex-col items-center text-center group">
+                {/* Step Circle Badge */}
+                <div
+                  className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                    step.isHighlighted
+                      ? 'bg-[#0f3d2e] text-emerald-300 shadow-emerald-950/20'
+                      : 'bg-white border border-stone-200 text-stone-700 hover:border-emerald-600 hover:text-emerald-700'
+                  }`}
+                >
+                  <Icon size={22} strokeWidth={1.8} />
+                </div>
+
+                {/* Step Title */}
+                <h4 className="text-xs sm:text-sm font-bold text-stone-900 mt-2.5 sm:mt-3">
+                  {step.title}
+                </h4>
+
+                {/* Step Subtitle */}
+                <p className="text-[11px] sm:text-xs text-stone-500 font-normal leading-relaxed mt-1 max-w-[140px]">
+                  {step.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -391,6 +427,14 @@ export default function HeroSection() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isListeningVoice, setIsListeningVoice] = useState(false);
   const voiceRecognitionRef = useRef(null);
+
+  // Curated Experiences Category Filter State
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const filteredExperiences = useMemo(() => {
+    if (activeCategory === 'All') return CURATED_EXPERIENCES;
+    return CURATED_EXPERIENCES.filter(item => item.category === activeCategory);
+  }, [activeCategory]);
 
   // Determine current occasion / time of day banner
   const timeBasedOccasion = useMemo(() => {
@@ -716,32 +760,71 @@ export default function HeroSection() {
         </form>
       </div>
 
-      {/* ── 3. Four Core Experience Pillars (Story Style Rotating Photos) ── */}
-      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-12 sm:mt-16">
-        <div className="flex items-center justify-between mb-6 px-1">
+      {/* ── 3. Curated Experiences Section (Matches Reference Screenshot) ── */}
+      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-14 sm:mt-20">
+        
+        {/* Header & Category Filter Pills */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8 px-1">
           <div>
-            <h2 className="text-xl sm:text-3xl font-black text-stone-900 tracking-tight">
-              Explore Uttarakhand By Experience
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-stone-900 tracking-tight">
+              Curated Experiences
             </h2>
-            <p className="text-xs sm:text-sm text-stone-500 font-medium mt-0.5">
-              Curated Himalayan journeys, high-altitude expeditions & sacred shrines
+            <p className="text-xs sm:text-sm text-stone-500 font-medium mt-1">
+              Find your perfect escape in the mountains.
             </p>
           </div>
-          <Link
-            to="/explore"
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-900 hover:translate-x-0.5 transition-all"
-          >
-            <span>View All Destinations</span>
-            <ArrowRight size={13} />
-          </Link>
+
+          {/* Category Filter Pills (Matches Screenshot) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+            {CURATED_CATEGORIES.map((cat) => {
+              const isActive = activeCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer shrink-0 ${
+                    isActive
+                      ? 'bg-[#0f3d2e] text-white shadow-xs'
+                      : 'bg-stone-100 hover:bg-stone-200/80 text-stone-600 border border-stone-200/80'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 snap-x">
-          {CURATED_PILLARS.map((pillar, idx) => (
-            <CategoryCard key={idx} pillar={pillar} index={idx} />
-          ))}
-        </div>
+        {/* Dynamic Layout matching exact screenshot proportions */}
+        {activeCategory === 'All' ? (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Top Row: 2 Featured Experiences (Munsiyari Eco-Retreat & Jageshwar Dham) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <CuratedExperienceCard item={CURATED_EXPERIENCES[0]} isLarge={true} />
+              <CuratedExperienceCard item={CURATED_EXPERIENCES[1]} isLarge={true} />
+            </div>
+
+            {/* Bottom Row: 3 Experiences (Valley of Flowers, Deoria Tal, View All Destinations) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <CuratedExperienceCard item={CURATED_EXPERIENCES[2]} />
+              <CuratedExperienceCard item={CURATED_EXPERIENCES[3]} />
+              <ViewAllCard />
+            </div>
+          </div>
+        ) : (
+          /* Filtered Category Grid */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {filteredExperiences.map((item) => (
+              <CuratedExperienceCard key={item.id} item={item} />
+            ))}
+            <ViewAllCard />
+          </div>
+        )}
       </div>
+
+      {/* ── 4. Seamless Journeys 5-Step Interconnected Roadmap ── */}
+      <SeamlessJourneysSection />
 
     </section>
   );

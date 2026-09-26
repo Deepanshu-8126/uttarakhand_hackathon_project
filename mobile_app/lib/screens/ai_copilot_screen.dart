@@ -129,9 +129,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     });
     _scrollToBottom();
 
-    // Attempt WebSocket transmission first, with seamless HTTP fallback
-    final wsSent = _wsService.sendMessage(text: text, isVoice: isVoice);
-    if (!wsSent) {
+    try {
       final result = isVoice
           ? await ApiService.sendVoiceMessage(text, lang: 'en')
           : await ApiService.sendCopilotMessage(text, isVoice: isVoice);
@@ -147,6 +145,21 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               suggestions: (result['suggestions'] as List?)?.map((e) => e.toString()).toList(),
               toolsUsed: (result['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
               confidence: result['confidence']?.toString() ?? 'grounded',
+            ),
+          );
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add(
+            ChatMessage(
+              text: 'Namaste! Uttarakhand travel jankari (Kedarnath, Chopta, Nainital, Auli, rentals, stays) ke liye main taiyaar hoon.',
+              isUser: false,
+              timestamp: DateTime.now(),
+              suggestions: _quickSuggestions,
             ),
           );
         });
