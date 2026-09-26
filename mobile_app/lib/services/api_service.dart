@@ -326,7 +326,6 @@ class ApiService {
       'suggestions': ['Kedarnath Trek', 'Valley of Flowers', 'Auli Skiing', 'Rent Bike'],
     };
   }
-  }
 
   // ── Fallback Local Data ────────────────────────────────────────────────────
   static List<Destination> _getLocalDestinations() {
