@@ -2,6 +2,6 @@
   "name": "discovery-uttarakhand",
   "private": true,
   "scripts": {
-    "build": "cd Frontend && npm install && npm run build"
+    "build": "node -e \"const fs=require('fs'), cp=require('child_process'); if(fs.existsSync('Frontend')) { cp.execSync('cd Frontend && npm install && npm run build', {stdio: 'inherit'}); } else { cp.execSync('npm run build', {stdio: 'inherit'}); }\""
   }
 }
