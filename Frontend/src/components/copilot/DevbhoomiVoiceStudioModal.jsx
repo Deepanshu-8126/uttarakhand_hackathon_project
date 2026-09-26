@@ -338,288 +338,200 @@ export default function DevbhoomiVoiceStudioModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/90 backdrop-blur-2xl animate-fade-in select-none overflow-y-auto">
+    <div className="fixed inset-0 z-[10000] flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 bg-[#030906] backdrop-blur-3xl text-white select-none overflow-hidden animate-in fade-in duration-300">
       
-      {/* Background Ambient Glows */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-600/15 rounded-full blur-[130px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-600/15 rounded-full blur-[130px] pointer-events-none animate-pulse" />
+      {/* Background Ambient Radial Glowing Orbs */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/15 rounded-full blur-[140px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[400px] h-[300px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Main Studio Card Container */}
-      <div className="relative flex flex-col w-full max-w-4xl max-h-[96dvh] my-auto p-3 sm:p-5 rounded-[2rem] bg-[#06120b]/95 border border-emerald-500/25 shadow-[0_0_80px_rgba(16,185,129,0.2)] backdrop-blur-3xl overflow-hidden text-white shrink-0">
+      {/* ── 1. Top Bar: Brand, Status Pill & Settings ────────────────────────────────── */}
+      <div className="w-full max-w-4xl flex items-center justify-between z-10 shrink-0">
         
-        {/* ── Top Header Bar (Fixed at Top) ─────────────────────────── */}
-        <div className="flex items-center justify-between w-full pb-2.5 sm:pb-3 border-b border-white/[0.08] shrink-0">
-          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 pr-2">
-            <div className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 text-white shadow-lg shrink-0">
-              <Radio className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-            </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h2 className="text-xs sm:text-base font-extrabold text-white tracking-tight truncate">
-                  Devbhoomi Voice Studio
-                </h2>
-                <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
-                  <Zap className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span className="whitespace-nowrap">Live WS</span>
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-[11px] text-stone-400 mt-0.5 truncate">
-                <span className="flex items-center gap-1 font-mono text-stone-300 shrink-0">
-                  <Clock className="w-3 h-3 text-stone-400" />
-                  {formatTime(callDuration)}
-                </span>
-                <span>•</span>
-                <span className="capitalize font-semibold text-stone-200 truncate">
-                  {status === 'speaking' ? '✨ Speaking...' :
-                   status === 'listening' ? (isMuted ? '🔇 Muted' : (micVolume > 5 ? '🎙️ Hearing speech' : '👂 Listening...')) :
-                   status === 'processing' ? '⚡ Connecting...' :
-                   status === 'error' ? '⚠️ Error' : 'Ready'}
-                </span>
-              </div>
-            </div>
+        {/* Brand Pill */}
+        <div className="flex items-center gap-2.5 bg-white/[0.05] border border-white/10 px-3.5 py-1.5 rounded-full backdrop-blur-xl shadow-md">
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-white shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin" style={{ animationDuration: '8s' }} />
           </div>
-
-          {/* Right Header Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <select
-              value={selectedVoice}
-              onChange={(e) => setSelectedVoice(e.target.value)}
-              className="bg-[#0b1f14] text-stone-200 text-[11px] sm:text-xs font-semibold px-2 sm:px-3 py-1.5 rounded-xl border border-emerald-500/30 hover:border-emerald-400 focus:outline-none cursor-pointer transition-all shrink-0 max-w-[140px] sm:max-w-none truncate"
-            >
-              {voices.map(v => (
-                <option key={v.id} value={v.id} className="bg-[#040e09] text-stone-200">
-                  {v.name}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={() => setVisualMode(visualMode === 'orb' ? 'wave' : 'orb')}
-              title={`Switch to ${visualMode === 'orb' ? 'Spectrum Wave' : '3D Fluid Orb'}`}
-              className="p-1.5 sm:p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-stone-300 hover:text-white transition-colors border border-white/10 shrink-0 cursor-pointer"
-            >
-              {visualMode === 'orb' ? <Activity className="w-4 h-4 text-emerald-400" /> : <Layers className="w-4 h-4 text-teal-400" />}
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 sm:p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-stone-400 hover:text-white transition-colors border border-white/10 shrink-0 cursor-pointer"
-              aria-label="Close studio"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <span className="text-xs font-black tracking-wider text-white uppercase">Devbhoomi Voice AI</span>
         </div>
 
-        {/* ── Scrollable Body Area (Anti-Overflow & Anti-Squish) ─────── */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1 my-2 space-y-3 scrollbar-thin scrollbar-thumb-white/10">
-          
-          {/* VU Meters Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 w-full px-3 sm:px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md shrink-0">
-            <div className="flex flex-wrap items-center gap-3 sm:gap-5">
-              {/* Mic Input Meter */}
-              <div className="flex items-center gap-1.5 text-xs">
-                <Mic className={`w-3.5 h-3.5 ${micVolume > 5 ? 'text-emerald-400 animate-bounce' : 'text-stone-500'} shrink-0`} />
-                <span className="text-stone-400 font-mono text-[10px] whitespace-nowrap">Mic:</span>
-                <div className="w-16 sm:w-24 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-75 rounded-full"
-                    style={{ width: `${micVolume}%` }}
-                  />
-                </div>
-                <span className={`font-mono text-[10px] w-6 ${micVolume > 5 ? 'text-emerald-400 font-bold' : 'text-stone-500'}`}>
-                  {micVolume}%
-                </span>
-              </div>
-
-              <span className="hidden sm:inline text-stone-700">|</span>
-
-              {/* AI Speaker Meter */}
-              <div className="flex items-center gap-1.5 text-xs">
-                <Volume2 className={`w-3.5 h-3.5 ${speakerVolume > 5 ? 'text-teal-400 animate-pulse' : 'text-stone-500'} shrink-0`} />
-                <span className="text-stone-400 font-mono text-[10px] whitespace-nowrap">AI:</span>
-                <div className="w-16 sm:w-24 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-75 rounded-full"
-                    style={{ width: `${speakerVolume}%` }}
-                  />
-                </div>
-                <span className={`font-mono text-[10px] w-6 ${speakerVolume > 5 ? 'text-teal-400 font-bold' : 'text-stone-500'}`}>
-                  {speakerVolume}%
-                </span>
-              </div>
-            </div>
-
-            {/* Test Audio Button */}
-            <button
-              type="button"
-              onClick={() => {
-                const ctx = audioProcessor.initPlaybackContext();
-                ctx.resume();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(520, ctx.currentTime);
-                gain.gain.setValueAtTime(0.12, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.35);
-              }}
-              className="text-[10px] sm:text-[11px] font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all shadow-sm cursor-pointer whitespace-nowrap"
-            >
-              🔊 Test Speaker
-            </button>
-          </div>
-
-          {/* Main Grid: Orb Visualizer + Live Captions Dialogue */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full items-center min-h-0">
-            
-            {/* Left: Responsive Visualizer Orb */}
-            <div className="lg:col-span-6 flex items-center justify-center py-2 sm:py-4">
-              <div className="relative w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 flex items-center justify-center shrink-0">
-                <VoiceVisualizer
-                  analyser={analyser}
-                  outputAnalyser={outputAnalyser}
-                  isActive={status !== 'idle' && status !== 'error'}
-                  status={status}
-                  mode={visualMode}
-                />
-              </div>
-            </div>
-
-            {/* Right: Captions & Live Dialogue Box */}
-            <div className="lg:col-span-6 flex flex-col h-full min-h-[160px] max-h-[220px] sm:max-h-[280px] lg:max-h-[340px] rounded-2xl bg-[#040e09]/90 border border-white/[0.08] backdrop-blur-xl p-3 shadow-xl overflow-hidden">
-              
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.06] shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-[11px] font-bold text-stone-300 uppercase tracking-wider">Live Captions</span>
-                </div>
-                <span className="text-[9px] text-emerald-400/80 font-mono">Real-time Stream</span>
-              </div>
-
-              {/* Dialogue Transcript Items */}
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1.5 scrollbar-thin scrollbar-thumb-white/10">
-                {transcriptHistory.map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`flex flex-col p-2.5 rounded-xl transition-all ${
-                      item.role === 'user' 
-                        ? 'bg-emerald-950/30 border border-emerald-500/25 ml-3 text-emerald-100' 
-                        : 'bg-white/[0.03] border border-white/[0.08] mr-3 text-stone-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className={`text-[10px] font-bold flex items-center gap-1 ${item.role === 'user' ? 'text-emerald-300' : 'text-teal-300'}`}>
-                        {item.role === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
-                        {item.role === 'user' ? 'You' : 'Devbhoomi AI'}
-                      </span>
-                      <span className="text-[9px] text-stone-500 font-mono">{item.time}</span>
-                    </div>
-                    <p className="text-xs leading-relaxed">
-                      {item.text}
-                    </p>
-                  </div>
-                ))}
-
-                {/* User Live Speech Delta */}
-                {liveUserText && (
-                  <div className="flex flex-col p-2.5 rounded-xl bg-emerald-900/30 border border-emerald-400/40 ml-3 animate-pulse">
-                    <span className="text-[10px] font-bold text-emerald-300 flex items-center gap-1 mb-0.5">
-                      <User className="w-3 h-3" /> You (Speaking...)
-                    </span>
-                    <p className="text-xs text-emerald-100 font-medium">
-                      {liveUserText}
-                    </p>
-                  </div>
-                )}
-
-                {/* AI Live Speech Delta */}
-                {liveAiText && (
-                  <div className="flex flex-col p-2.5 rounded-xl bg-teal-950/40 border border-teal-500/40 mr-3 animate-pulse">
-                    <span className="text-[10px] font-bold text-teal-300 flex items-center gap-1 mb-0.5">
-                      <Bot className="w-3 h-3" /> Devbhoomi AI (Speaking...)
-                    </span>
-                    <p className="text-xs text-teal-100 font-medium">
-                      {liveAiText}
-                    </p>
-                  </div>
-                )}
-
-                {/* Empty State Prompt */}
-                {transcriptHistory.length === 0 && !liveUserText && !liveAiText && (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-6 px-3 text-stone-400">
-                    <Sparkles className="w-6 h-6 text-emerald-400/60 mb-1.5 animate-bounce" />
-                    <p className="text-xs font-medium text-stone-200">Speak into your microphone</p>
-                    <p className="text-[10px] text-stone-400 mt-0.5">Ask about mountain routes, treks, weather, or homestays.</p>
-                  </div>
-                )}
-
-                <div ref={captionsEndRef} />
-              </div>
-
-              {errorMessage && (
-                <div className="mt-1.5 p-2 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px] flex items-center gap-1.5 shrink-0">
-                  <span>⚠️ {errorMessage}</span>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Dynamic Center Status Pill (Matches Reference Image Screen 2) */}
+        <div className={`hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-2xl text-xs font-extrabold tracking-wide transition-all shadow-xl ${
+          status === 'speaking' 
+            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-[0_0_25px_rgba(16,185,129,0.35)] animate-pulse' 
+            : status === 'listening' 
+              ? (micVolume > 5 ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.4)]' : 'bg-teal-500/20 text-teal-300 border border-teal-400/40 shadow-[0_0_20px_rgba(20,184,166,0.3)]')
+              : status === 'processing'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-[0_0_25px_rgba(245,158,11,0.35)] animate-pulse'
+                : 'bg-white/[0.06] text-stone-300 border border-white/10'
+        }`}>
+          <span className="relative flex h-2.5 w-2.5">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+              status === 'speaking' ? 'bg-emerald-400' : status === 'listening' ? 'bg-cyan-400' : 'bg-amber-400'
+            }`}></span>
+            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+              status === 'speaking' ? 'bg-emerald-500' : status === 'listening' ? 'bg-cyan-500' : 'bg-amber-500'
+            }`}></span>
+          </span>
+          <span>
+            {status === 'speaking' ? 'Devbhoomi AI is Speaking 🔊' :
+             status === 'listening' ? (isMuted ? 'Microphone Muted 🔇' : (micVolume > 5 ? 'Hearing your voice 🎙️' : "Go ahead, I'm listening 🎙️")) :
+             status === 'processing' ? 'Connecting Telemetry... ⚡' :
+             status === 'error' ? '⚠️ Network Notice' : 'Ready'}
+          </span>
         </div>
 
-        {/* ── Bottom Call Action Controls Bar (Fixed at Bottom) ─────── */}
-        <div className="flex items-center justify-center gap-3 sm:gap-6 w-full pt-2.5 pb-1 border-t border-white/[0.08] shrink-0 mt-auto">
-          
-          {/* Mute Mic Button */}
-          <button
-            type="button"
-            onClick={toggleMute}
-            className={`flex flex-col items-center justify-center gap-0.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all shadow-md cursor-pointer select-none shrink-0 ${
-              isMuted
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
-                : 'bg-white/[0.05] hover:bg-white/[0.1] text-stone-200 border border-white/10'
-            }`}
-            title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
+        {/* Right Controls */}
+        <div className="flex items-center gap-2">
+          {/* Voice Selector Pill */}
+          <select
+            value={selectedVoice}
+            onChange={(e) => setSelectedVoice(e.target.value)}
+            className="bg-white/[0.06] hover:bg-white/[0.12] text-stone-200 text-xs font-bold px-3 py-1.5 rounded-full border border-white/10 hover:border-emerald-400/50 focus:outline-none cursor-pointer transition-all shrink-0 max-w-[130px] sm:max-w-none truncate backdrop-blur-md"
           >
-            {isMuted ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5 text-rose-400" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />}
-            <span className="text-[10px] font-semibold whitespace-nowrap">{isMuted ? 'Unmute' : 'Mute Mic'}</span>
-          </button>
+            {voices.map(v => (
+              <option key={v.id} value={v.id} className="bg-[#06120b] text-stone-200 font-semibold">
+                {v.name.split(' ')[0]} Voice
+              </option>
+            ))}
+          </select>
 
-          {/* End Call Main Action Button */}
+          {/* Close Button */}
           <button
-            type="button"
             onClick={onClose}
-            className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-2xl shadow-rose-950/80 transition-all hover:scale-105 active:scale-95 border border-rose-400/30 cursor-pointer shrink-0"
-            title="End Voice Session"
+            className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-stone-300 hover:text-white transition-colors border border-white/10 cursor-pointer shadow-md active:scale-95"
+            aria-label="Close studio"
           >
-            <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-
-          {/* Speaker Mute Button */}
-          <button
-            type="button"
-            onClick={toggleSpeaker}
-            className={`flex flex-col items-center justify-center gap-0.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all shadow-md cursor-pointer select-none shrink-0 ${
-              isSpeakerMuted
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                : 'bg-white/[0.05] hover:bg-white/[0.1] text-stone-200 border border-white/10'
-            }`}
-            title={isSpeakerMuted ? 'Unmute Speaker' : 'Mute Speaker'}
-          >
-            {isSpeakerMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />}
-            <span className="text-[10px] font-semibold whitespace-nowrap">{isSpeakerMuted ? 'Muted' : 'Speaker'}</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
+      </div>
+
+      {/* ── 2. Center Stage: Glowing 3D Fluid Orb Visualizer & Real-time Subtitles ─────── */}
+      <div className="w-full max-w-2xl flex flex-col items-center justify-center my-auto z-10 space-y-6 sm:space-y-8">
+        
+        {/* Mobile Status Pill (Visible on small screens) */}
+        <div className="sm:hidden flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-2xl text-xs font-extrabold tracking-wide bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 shadow-lg">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>
+            {status === 'speaking' ? 'Devbhoomi AI Speaking 🔊' :
+             status === 'listening' ? "I'm listening 🎙️" : 'Processing ⚡'}
+          </span>
+        </div>
+
+        {/* Glowing Orb Stage Container */}
+        <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-[380px] md:h-[380px] flex items-center justify-center shrink-0">
+          
+          {/* Concentric Pulsing Aura Rings */}
+          <div className={`absolute inset-0 rounded-full border transition-all duration-700 ${
+            status === 'speaking'
+              ? 'border-emerald-400/30 scale-105 animate-ping'
+              : status === 'listening' && micVolume > 5
+                ? 'border-cyan-400/30 scale-105 animate-ping'
+                : 'border-white/5 scale-100'
+          }`} />
+
+          <VoiceVisualizer
+            analyser={analyser}
+            outputAnalyser={outputAnalyser}
+            isActive={status !== 'idle' && status !== 'error'}
+            status={status}
+            mode={visualMode}
+          />
+        </div>
+
+        {/* Live Subtitle Transcript Banner (Centered Typography as in Reference Photo) */}
+        <div className="w-full px-4 sm:px-6 py-4 rounded-3xl bg-white/[0.04] border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col items-center text-center space-y-2 min-h-[100px] justify-center">
+          
+          {liveUserText ? (
+            <div className="animate-in fade-in duration-200">
+              <span className="text-[10px] font-black tracking-widest uppercase text-cyan-400 block mb-1">
+                You are saying:
+              </span>
+              <p className="text-base sm:text-xl md:text-2xl font-black text-white leading-relaxed tracking-tight">
+                "{liveUserText}"
+              </p>
+            </div>
+          ) : liveAiText ? (
+            <div className="animate-in fade-in duration-200">
+              <span className="text-[10px] font-black tracking-widest uppercase text-emerald-400 block mb-1">
+                Devbhoomi AI:
+              </span>
+              <p className="text-base sm:text-xl md:text-2xl font-black text-emerald-100 leading-relaxed tracking-tight">
+                {liveAiText}
+              </p>
+            </div>
+          ) : transcriptHistory.length > 0 ? (
+            <div>
+              <span className={`text-[10px] font-black tracking-widest uppercase block mb-1 ${
+                transcriptHistory[transcriptHistory.length - 1].role === 'user' ? 'text-cyan-400' : 'text-emerald-400'
+              }`}>
+                {transcriptHistory[transcriptHistory.length - 1].role === 'user' ? 'You said:' : 'Devbhoomi AI:'}
+              </span>
+              <p className="text-sm sm:text-lg font-bold text-stone-200 leading-relaxed line-clamp-2">
+                {transcriptHistory[transcriptHistory.length - 1].text}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-sm sm:text-lg font-bold text-stone-300 tracking-tight">
+                "What are some quick, effective mountain itineraries in Uttarakhand?"
+              </p>
+              <p className="text-xs text-emerald-400 font-medium">
+                Try asking about Kedarnath yatra, Auli skiing weather, or Rishikesh stay options.
+              </p>
+            </div>
+          )}
+
+          {callDuration > 0 && (
+            <div className="text-[10px] font-mono text-stone-400 pt-1 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-emerald-400 inline" />
+              <span>Session Duration: {formatTime(callDuration)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 3. Bottom Action Controls Area (Elevated Center Mic Button like Reference) ── */}
+      <div className="w-full max-w-md flex items-center justify-between px-6 py-4 z-10 shrink-0">
+        
+        {/* Left Control: Mute / Pause Button */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all shadow-xl border cursor-pointer active:scale-95 ${
+            isMuted
+              ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-rose-950/60'
+              : 'bg-white/[0.08] hover:bg-white/[0.16] text-stone-200 border-white/15'
+          }`}
+          title={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
+        >
+          {isMuted ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5 text-emerald-400" />}
+        </button>
+
+        {/* Center Control: ELEVATED GLOWING MIC BUTTON (Matches Vox AI / ChatGPT Voice) */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          className="relative group flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 text-white shadow-[0_0_50px_rgba(0,255,136,0.6)] hover:shadow-[0_0_70px_rgba(0,255,136,0.8)] border-4 border-white/30 transition-all transform active:scale-95 cursor-pointer"
+          title="Voice Command Active"
+        >
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40"></span>
+          <Mic className="w-7 h-7 sm:w-9 sm:h-9 text-white drop-shadow-md group-hover:scale-110 transition-transform" />
+        </button>
+
+        {/* Right Control: End Session / Close */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 shadow-xl transition-all active:scale-95 cursor-pointer"
+          title="End Voice Session"
+        >
+          <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6 text-rose-300" />
+        </button>
 
       </div>
+
     </div>
   );
 }

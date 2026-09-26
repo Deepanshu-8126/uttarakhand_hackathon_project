@@ -620,7 +620,7 @@ export default function Stays() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {paginatedStays.map((stay, idx) => {
                 const stayId = stay.id || stay._id;
-                const isFav = isFavorite ? isFavorite(stayId) : false;
+                const isFav = isFavorite ? isFavorite('stay', stayId) : false;
 
                 return (
                   <InteractiveStayCard
@@ -628,7 +628,7 @@ export default function Stays() {
                     stay={stay}
                     index={idx}
                     isFav={isFav}
-                    onToggleFav={(s) => toggleFavorite && toggleFavorite({ ...s, itemType: 'stay' })}
+                    onToggleFav={(s) => toggleFavorite && toggleFavorite('stay', s)}
                     onAddToTrip={(s, price, loc, img) => openAddToTripModal({
                       id: stayId,
                       _id: stayId,
