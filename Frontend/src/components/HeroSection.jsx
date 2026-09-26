@@ -150,6 +150,28 @@ const DYNAMIC_OCCASION_SLIDES = [
     fallbackSrc: '/assets/yatra_sarthi/chopta.jpg',
     slug: 'chopta',
     subtitle: 'High alpine snow ridges and historic stone shrines rising above cloud inversion layers.'
+  },
+  {
+    name: 'Kedarkantha Winter Bugyal',
+    location: 'Govind Wildlife Sanctuary, Uttarkashi',
+    altitude: '3,810m',
+    tag: 'Summit Camp Panorama',
+    occasion: 'White Winter Bugyal Expeditions',
+    src: '/assets/destinations/uttarakhand_bugyal_panoramic.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85',
+    slug: 'kedarkantha',
+    subtitle: 'Vibrant yellow tent campsites perched across snow-dusted ridgelines under majestic Himalayan ranges.'
+  },
+  {
+    name: 'Nanda Devi Alpine Realm',
+    location: 'Nanda Devi Biosphere, Chamoli',
+    altitude: '7,816m',
+    tag: 'Highest Indian Peak',
+    occasion: 'Dramatic Cloud Peak Ascents',
+    src: '/assets/destinations/nanda_devi_clouds.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=85',
+    slug: 'nanda-devi-national-park',
+    subtitle: 'Legendary sacred twin summits soaring high above sea of swirling Himalayan cloud cascades.'
   }
 ];
 

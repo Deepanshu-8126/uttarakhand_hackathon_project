@@ -75,7 +75,7 @@ export const DESTINATION_NAMED_IMAGES = {
   'rajaji national park': 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
   'binsar wildlife sanctuary': 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
   'govind pashu vihar': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-  'nanda devi national park': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80'
+  'nanda devi national park': '/assets/destinations/nanda_devi_clouds.jpg'
 };
 
 // ── 2. Distinct Thematic Keyword Photo Pools (Zero Repeating Links) ───────────
