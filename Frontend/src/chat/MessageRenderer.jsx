@@ -34,7 +34,7 @@ const PROMINENT_DESTINATIONS = [
   { name: 'Munsyari Panchachuli', slug: 'munsiyari', keywords: ['munsyari', 'munsiyari', 'panchachuli'], altitude: '2,200m', photo: '/assets/destinations/munsiyari/cover.jpg', tag: '5-Peak Alpenglow' },
   { name: 'Jim Corbett', slug: 'jim-corbett-national-park', keywords: ['corbett', 'jim corbett', 'dhikala'], altitude: '400m', photo: '/assets/yatra_sarthi/corbett.jpg', tag: 'Tiger Wilderness' },
   { name: 'Haridwar Har Ki Pauri', slug: 'haridwar', keywords: ['haridwar', 'har ki pauri'], altitude: '314m', photo: '/assets/yatra_sarthi/haridwar.jpg', tag: 'Ganga Gateway' },
-  { name: 'Adi Kailash & Om Parvat', slug: 'adi-kailash', keywords: ['adi kailash', 'om parvat'], altitude: '5,945m', photo: '/assets/destinations/adi_kailash.jpg', tag: 'Mystic Peak' },
+  { name: 'Adi Kailash & Om Parvat', slug: 'adi-kailash', keywords: ['adi kailash', 'om parvat'], altitude: '5,945m', photo: '/assets/yatra_sarthi/adi_kailash.jpg', tag: 'Mystic Peak' },
   { name: 'Jageshwar Dham', slug: 'jageshwar', keywords: ['jageshwar'], altitude: '1,870m', photo: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Jageshwar_Dham_Temple%2C_Almora_65.jpg/1920px-Jageshwar_Dham_Temple%2C_Almora_65.jpg', tag: 'Ancient Deodar Shrines' },
   { name: 'Mussoorie Queen of Hills', slug: 'mussoorie', keywords: ['mussoorie', 'kempty', 'gun hill'], altitude: '2,005m', photo: '/assets/yatra_sarthi/mussoorie.jpg', tag: 'Hill Station' },
   { name: 'Dhanaulti & Kanatal', slug: 'dhanaulti', keywords: ['dhanaulti', 'kanatal', 'eco park'], altitude: '2,286m', photo: '/assets/destinations/dhanaulti/cover.jpg', tag: 'Cedar Forest' },

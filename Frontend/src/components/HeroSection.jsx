@@ -125,7 +125,7 @@ const DYNAMIC_OCCASION_SLIDES = [
     altitude: '5,945m',
     tag: 'Sacred Alpenglow',
     occasion: 'Golden Sunrise Darshan',
-    src: '/assets/destinations/adi_kailash.jpg',
+    src: '/assets/yatra_sarthi/adi_kailash.jpg',
     fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85',
     slug: 'adi-kailash',
     subtitle: 'Golden sunrise illuminating the sacred Kumaon pinnacle above Parvati Sarovar.'
@@ -212,7 +212,7 @@ const CURATED_EXPERIENCES = [
     badgeBg: 'bg-emerald-700/90 text-white',
     subtitle: 'Ancient temples amidst dense deodar forests.',
     src: '/assets/jageshwar.jpg',
-    fallbackSrc: '/assets/destinations/adi_kailash.jpg',
+    fallbackSrc: '/assets/yatra_sarthi/adi_kailash.jpg',
     link: '/spiritual',
     featured: true
   },
@@ -259,7 +259,7 @@ const CURATED_EXPERIENCES = [
     badge: 'Spiritual',
     badgeBg: 'bg-emerald-700/90 text-white',
     subtitle: 'Golden sunrise illuminating sacred Kumaon pinnacles.',
-    src: '/assets/destinations/adi_kailash.jpg',
+    src: '/assets/yatra_sarthi/adi_kailash.jpg',
     fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=85',
     link: '/spiritual',
     featured: false
