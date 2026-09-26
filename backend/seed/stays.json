@@ -5066,5 +5066,725 @@
       "attribution": "Savoy Hotel — https://www.paperjewels.org/postcard/savoy-hotel-mussoorie",
       "alt": "Postcards were an important advertising tool for hotels from the mid-1890s, when Alpine hotels in Austria, Germany and Switzerland helped to popularize the medium. This card from the hillstation of Mussoorie is actually dated on the back 9/6/17, and "
     }
+  },
+  {
+    "id": "gmvn-tourist-rest-house-rishikesh",
+    "name": "GMVN Tourist Rest House Rishikesh",
+    "location": "Rishikesh",
+    "district": "Rishikesh",
+    "type": "government",
+    "band": "budget",
+    "pricePerNight": 1100,
+    "rating": 4.0,
+    "description": "State run, near Muni ki Reti, reliable in season",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": true,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/rishikesh.jpg"
+    ]
+  },
+  {
+    "id": "zostel-rishikesh",
+    "name": "Zostel Rishikesh",
+    "location": "Rishikesh",
+    "district": "Rishikesh",
+    "type": "hostel",
+    "band": "budget",
+    "pricePerNight": 700,
+    "rating": 4.5,
+    "description": "Dorms and privates, backpacker vibe, river view cafe",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/rishikesh.jpg"
+    ]
+  },
+  {
+    "id": "aloha-on-the-ganges",
+    "name": "Aloha on the Ganges",
+    "location": "Rishikesh",
+    "district": "Rishikesh",
+    "type": "resort",
+    "band": "comfort",
+    "pricePerNight": 6500,
+    "rating": 4.5,
+    "description": "Riverside pool resort near Laxman Jhula",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/rishikesh.jpg"
+    ]
+  },
+  {
+    "id": "shivpuri-adventure-camp",
+    "name": "Shivpuri Adventure Camp",
+    "location": "Rishikesh",
+    "district": "Rishikesh",
+    "type": "camp",
+    "band": "standard",
+    "pricePerNight": 1800,
+    "rating": 4.4,
+    "description": "Swiss tents with rafting combo packages",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/rishikesh.jpg"
+    ]
+  },
+  {
+    "id": "hotel-ganga-lahari",
+    "name": "Hotel Ganga Lahari",
+    "location": "Haridwar",
+    "district": "Haridwar",
+    "type": "hotel",
+    "band": "comfort",
+    "pricePerNight": 5200,
+    "rating": 4.6,
+    "description": "Right on the ghat, aarti view from terrace",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/haridwar.jpg"
+    ]
+  },
+  {
+    "id": "bhaj-govindam-dharamshala",
+    "name": "Bhaj Govindam Dharamshala",
+    "location": "Haridwar",
+    "district": "Haridwar",
+    "type": "dharamshala",
+    "band": "budget",
+    "pricePerNight": 600,
+    "rating": 4.2,
+    "description": "Clean rooms near Har Ki Pauri, family friendly",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/haridwar.jpg"
+    ]
+  },
+  {
+    "id": "hotel-alpina-haridwar",
+    "name": "Hotel Alpina Haridwar",
+    "location": "Haridwar",
+    "district": "Haridwar",
+    "type": "hotel",
+    "band": "standard",
+    "pricePerNight": 2200,
+    "rating": 4.1,
+    "description": "Mid range, walkable to ghats",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/haridwar.jpg"
+    ]
+  },
+  {
+    "id": "hotel-padmini-nilaya",
+    "name": "Hotel Padmini Nilaya",
+    "location": "Mussoorie",
+    "district": "Mussoorie",
+    "type": "hotel",
+    "band": "standard",
+    "pricePerNight": 2400,
+    "rating": 4.2,
+    "description": "Near Mall Road with valley view rooms",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/mussoorie.jpg"
+    ]
+  },
+  {
+    "id": "rokeby-manor",
+    "name": "Rokeby Manor",
+    "location": "Mussoorie",
+    "district": "Mussoorie",
+    "type": "heritage",
+    "band": "comfort",
+    "pricePerNight": 9000,
+    "rating": 4.7,
+    "description": "Landour colonial estate, forest walks",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/mussoorie.jpg"
+    ]
+  },
+  {
+    "id": "gmvn-gandhi-bhawan-mussoorie",
+    "name": "GMVN Gandhi Bhawan Mussoorie",
+    "location": "Mussoorie",
+    "district": "Mussoorie",
+    "type": "government",
+    "band": "budget",
+    "pricePerNight": 1300,
+    "rating": 3.9,
+    "description": "State run, Library end location",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": true,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/mussoorie.jpg"
+    ]
+  },
+  {
+    "id": "hotel-himalaya-nainital",
+    "name": "Hotel Himalaya Nainital",
+    "location": "Nainital",
+    "district": "Nainital",
+    "type": "hotel",
+    "band": "standard",
+    "pricePerNight": 2800,
+    "rating": 4.3,
+    "description": "Mall Road, lake facing options",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/nainital.jpg"
+    ]
+  },
+  {
+    "id": "the-naini-retreat",
+    "name": "The Naini Retreat",
+    "location": "Nainital",
+    "district": "Nainital",
+    "type": "heritage",
+    "band": "comfort",
+    "pricePerNight": 8500,
+    "rating": 4.6,
+    "description": "Maharaja era property above the lake",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/nainital.jpg"
+    ]
+  },
+  {
+    "id": "zostel-nainital",
+    "name": "Zostel Nainital",
+    "location": "Nainital",
+    "district": "Nainital",
+    "type": "hostel",
+    "band": "budget",
+    "pricePerNight": 650,
+    "rating": 4.4,
+    "description": "Hilltop hostel with lake view terrace",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/nainital.jpg"
+    ]
+  },
+  {
+    "id": "neelesh-inn-bhimtal",
+    "name": "Neelesh Inn Bhimtal",
+    "location": "Bhimtal",
+    "district": "Bhimtal",
+    "type": "hotel",
+    "band": "standard",
+    "pricePerNight": 3200,
+    "rating": 4.4,
+    "description": "Lake facing balconies, quiet location",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/bhimtal.jpg"
+    ]
+  },
+  {
+    "id": "mountain-trail-mukteshwar",
+    "name": "Mountain Trail Mukteshwar",
+    "location": "Mukteshwar",
+    "district": "Mukteshwar",
+    "type": "resort",
+    "band": "standard",
+    "pricePerNight": 3400,
+    "rating": 4.5,
+    "description": "Orchard resort near Chauli ki Jali",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/mukteshwar.jpg"
+    ]
+  },
+  {
+    "id": "frozen-woods-homestay",
+    "name": "Frozen Woods Homestay",
+    "location": "Mukteshwar",
+    "district": "Mukteshwar",
+    "type": "homestay",
+    "band": "budget",
+    "pricePerNight": 1500,
+    "rating": 4.6,
+    "description": "Family run, home cooked Kumaoni food",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/mukteshwar.jpg"
+    ]
+  },
+  {
+    "id": "corbett-machaan-resort",
+    "name": "Corbett Machaan Resort",
+    "location": "Ramnagar",
+    "district": "Ramnagar",
+    "type": "resort",
+    "band": "standard",
+    "pricePerNight": 3800,
+    "rating": 4.3,
+    "description": "Near Bijrani gate, safari desk in lobby",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/ramnagar.jpg"
+    ]
+  },
+  {
+    "id": "dhikala-forest-rest-house",
+    "name": "Dhikala Forest Rest House",
+    "location": "Ramnagar",
+    "district": "Ramnagar",
+    "type": "government",
+    "band": "standard",
+    "pricePerNight": 2500,
+    "rating": 4.7,
+    "description": "Inside core zone, book via forest department",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/ramnagar.jpg"
+    ]
+  },
+  {
+    "id": "chevron-rosemount-ranikhet",
+    "name": "Chevron Rosemount Ranikhet",
+    "location": "Ranikhet",
+    "district": "Ranikhet",
+    "type": "heritage",
+    "band": "standard",
+    "pricePerNight": 3000,
+    "rating": 4.4,
+    "description": "1899 colonial bungalow in pine woods",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/ranikhet.jpg"
+    ]
+  },
+  {
+    "id": "kasar-rainbow-resort",
+    "name": "Kasar Rainbow Resort",
+    "location": "Almora",
+    "district": "Almora",
+    "type": "homestay",
+    "band": "budget",
+    "pricePerNight": 1400,
+    "rating": 4.4,
+    "description": "Kasar Devi ridge, sunset point walkable",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/almora.jpg"
+    ]
+  },
+  {
+    "id": "krishna-mountview-kausani",
+    "name": "Krishna Mountview Kausani",
+    "location": "Kausani",
+    "district": "Kausani",
+    "type": "resort",
+    "band": "standard",
+    "pricePerNight": 3600,
+    "rating": 4.5,
+    "description": "Direct Trishul and Nanda Devi views",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/kausani.jpg"
+    ]
+  },
+  {
+    "id": "gmvn-tourist-bungalow-auli",
+    "name": "GMVN Tourist Bungalow Auli",
+    "location": "Auli",
+    "district": "Auli",
+    "type": "government",
+    "band": "standard",
+    "pricePerNight": 2600,
+    "rating": 4.1,
+    "description": "Next to the slopes, book early for Jan-Feb",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": true,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/auli.jpg"
+    ]
+  },
+  {
+    "id": "the-cliff-top-club-auli",
+    "name": "The Cliff Top Club Auli",
+    "location": "Auli",
+    "district": "Auli",
+    "type": "resort",
+    "band": "comfort",
+    "pricePerNight": 9500,
+    "rating": 4.5,
+    "description": "Ski in ski out, ropeway adjacent",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/auli.jpg"
+    ]
+  },
+  {
+    "id": "chopta-meadows-camp",
+    "name": "Chopta Meadows Camp",
+    "location": "Chopta",
+    "district": "Chopta",
+    "type": "camp",
+    "band": "budget",
+    "pricePerNight": 1400,
+    "rating": 4.4,
+    "description": "Alpine camps at Tungnath trek base",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/chopta.jpg"
+    ]
+  },
+  {
+    "id": "gmvn-rest-house-sonprayag",
+    "name": "GMVN Rest House Sonprayag",
+    "location": "Sonprayag",
+    "district": "Sonprayag",
+    "type": "government",
+    "band": "budget",
+    "pricePerNight": 1200,
+    "rating": 3.9,
+    "description": "Yatra season base before Kedarnath trek",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": true,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/sonprayag.jpg"
+    ]
+  },
+  {
+    "id": "punjab-sindh-awas-kedarnath",
+    "name": "Punjab Sindh Awas Kedarnath",
+    "location": "Kedarnath",
+    "district": "Kedarnath",
+    "type": "dharamshala",
+    "band": "budget",
+    "pricePerNight": 900,
+    "rating": 4.0,
+    "description": "Near temple, basic rooms for pilgrims",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/kedarnath.jpg"
+    ]
+  },
+  {
+    "id": "hotel-snow-crest-badrinath",
+    "name": "Hotel Snow Crest Badrinath",
+    "location": "Badrinath",
+    "district": "Badrinath",
+    "type": "hotel",
+    "band": "standard",
+    "pricePerNight": 3000,
+    "rating": 4.2,
+    "description": "Alaknanda view, walk to temple",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/badrinath.jpg"
+    ]
+  },
+  {
+    "id": "ghangaria-guest-house",
+    "name": "Ghangaria Guest House",
+    "location": "Govindghat",
+    "district": "Govindghat",
+    "type": "guesthouse",
+    "band": "budget",
+    "pricePerNight": 1300,
+    "rating": 4.0,
+    "description": "Base for Valley of Flowers and Hemkund",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/govindghat.jpg"
+    ]
+  },
+  {
+    "id": "harsil-village-homestay",
+    "name": "Harsil Village Homestay",
+    "location": "Harsil",
+    "district": "Harsil",
+    "type": "homestay",
+    "band": "budget",
+    "pricePerNight": 1600,
+    "rating": 4.6,
+    "description": "Apple orchard family stay by the Bhagirathi",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/harsil.jpg"
+    ]
+  },
+  {
+    "id": "milam-inn-munsiyari",
+    "name": "Milam Inn Munsiyari",
+    "location": "Munsiyari",
+    "district": "Munsiyari",
+    "type": "hotel",
+    "band": "standard",
+    "pricePerNight": 2400,
+    "rating": 4.3,
+    "description": "Panchachuli view rooms, trek arrangements",
+    "amenities": [
+      "Hot Water",
+      "Clean Linen",
+      "Mountain View",
+      "Meals on Request"
+    ],
+    "isGMVN": false,
+    "isKMVN": false,
+    "provenance": "STATIC_VERIFIED",
+    "verified": true,
+    "images": [
+      "/assets/yatra_sarthi/munsiyari.jpg"
+    ]
   }
 ]

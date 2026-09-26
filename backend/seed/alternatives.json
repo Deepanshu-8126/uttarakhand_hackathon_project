@@ -1,0 +1,242 @@
+[
+  {
+    "famous": "Nainital",
+    "alternative": "Naukuchiatal",
+    "district": "Nainital",
+    "distanceKm": 26,
+    "travelTime": "50 min",
+    "reason": "Same lake experience with barely a tenth of Nainital's footfall — nine-cornered lake, cleaner water, paragliding and quiet lakeside cafes.",
+    "bestFor": "boating and calm lakeside stay",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Nainital",
+    "alternative": "Sattal",
+    "district": "Nainital",
+    "distanceKm": 23,
+    "travelTime": "45 min",
+    "reason": "Chain of seven interconnected lakes inside oak forest. Kayaking and 250+ bird species instead of Mall Road traffic jams.",
+    "bestFor": "birding and nature walks",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Naini Lake Boating",
+    "alternative": "Bhimtal Lake",
+    "district": "Nainital",
+    "distanceKm": 22,
+    "travelTime": "45 min",
+    "reason": "A larger lake with an island aquarium; boat queues are minutes not hours, and parking is easy even on weekends.",
+    "bestFor": "family boating day",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Mall Road Mussoorie",
+    "alternative": "Landour",
+    "district": "Dehradun",
+    "distanceKm": 5,
+    "travelTime": "20 min",
+    "reason": "Colonial-era cantonment just above Mussoorie — Char Dukan cafes, silent deodar lanes and the same valley views without the Mall Road rush.",
+    "bestFor": "cafe walks and heritage",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Mussoorie",
+    "alternative": "Dhanaulti",
+    "district": "Tehri",
+    "distanceKm": 32,
+    "travelTime": "75 min",
+    "reason": "Quiet deodar ridge at higher altitude with eco park, zip lines and Surkanda Devi temple; hotel rates are ~40% lower in season.",
+    "bestFor": "couples and peaceful stay",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Kempty Falls",
+    "alternative": "Bhatta Falls",
+    "district": "Dehradun",
+    "distanceKm": 12,
+    "travelTime": "30 min",
+    "reason": "Locals' own waterfall with natural pools and a ropeway approach — no vendor crush, safer bathing pools for families.",
+    "bestFor": "waterfall picnic",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Kempty Falls",
+    "alternative": "Tiger Falls Chakrata",
+    "district": "Dehradun",
+    "distanceKm": 78,
+    "travelTime": "3 hr",
+    "reason": "One of the highest direct waterfalls of the state (98 m) inside forest — a half-day escape with almost no queue.",
+    "bestFor": "offbeat day trip",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Har Ki Pauri",
+    "alternative": "Sapt Rishi Ghat",
+    "district": "Haridwar",
+    "distanceKm": 5,
+    "travelTime": "15 min",
+    "reason": "Calmer Ganga ghat where the river splits into seven streams; you get an unhurried dip and aarti feel without the evening crush.",
+    "bestFor": "peaceful Ganga snan",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Laxman Jhula and Ram Jhula",
+    "alternative": "Vashishta Gufa",
+    "district": "Rishikesh",
+    "distanceKm": 25,
+    "travelTime": "50 min",
+    "reason": "Ancient meditation cave on a silent Ganga beach upstream — the spiritual Rishikesh experience minus the market crowd.",
+    "bestFor": "meditation and quiet river bank",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Ganga River Rafting",
+    "alternative": "Byasi Rafting Stretch",
+    "district": "Rishikesh",
+    "distanceKm": 30,
+    "travelTime": "55 min",
+    "reason": "Same Grade II-III rapids launched from Byasi with fewer operators on water — shorter waiting, cleaner beaches.",
+    "bestFor": "rafting on busy weekends",
+    "typicalCrowd": "medium"
+  },
+  {
+    "famous": "Snow View Point Ropeway",
+    "alternative": "Mukteshwar Dhar",
+    "district": "Nainital",
+    "distanceKm": 50,
+    "travelTime": "110 min",
+    "reason": "Wider Himalayan panorama from Chauli ki Jali cliff, apple orchards and rappelling — no ropeway queue at all.",
+    "bestFor": "Himalaya views and orchards",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Kedarnath Temple",
+    "alternative": "Chopta Tungnath Trek",
+    "district": "Rudraprayag",
+    "distanceKm": 45,
+    "travelTime": "90 min",
+    "reason": "Highest Shiva temple reached by a gentle 3.5 km trek — the Kedar-khand darshan experience when the main yatra is jammed or gate-restricted.",
+    "bestFor": "Shiva darshan with easy trek",
+    "typicalCrowd": "medium"
+  },
+  {
+    "famous": "Jim Corbett Safari Bijrani",
+    "alternative": "Sitabani Buffer Zone",
+    "district": "Nainital",
+    "distanceKm": 15,
+    "travelTime": "30 min",
+    "reason": "Open buffer forest with no zone-permit cap — same sal forest, elephants and 300+ birds when Bijrani/Dhikala permits are sold out.",
+    "bestFor": "safari when permits are full",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Auli Ropeway and Slopes",
+    "alternative": "Dayara Bugyal",
+    "district": "Uttarkashi",
+    "distanceKm": 175,
+    "travelTime": "6 hr",
+    "reason": "Vast high-altitude meadow with equally good skiing in winter and almost no commercial rush; best as an alternate 2-day plan.",
+    "bestFor": "meadow trek and quiet skiing",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Valley of Flowers Trek",
+    "alternative": "Chopta Meadows",
+    "district": "Rudraprayag",
+    "distanceKm": 190,
+    "travelTime": "6 hr",
+    "reason": "Alpine flower meadows around Tungnath bloom in the same monsoon window and need no permits or long approach trek.",
+    "bestFor": "alpine flowers without permits",
+    "typicalCrowd": "medium"
+  },
+  {
+    "famous": "Haridwar",
+    "alternative": "Rishikesh Triveni Ghat",
+    "district": "Rishikesh",
+    "distanceKm": 25,
+    "travelTime": "45 min",
+    "reason": "Evening Maha Aarti with a fraction of the Kanwar-season crush; easy parking and riverside seating.",
+    "bestFor": "Ganga aarti in peak season",
+    "typicalCrowd": "medium"
+  },
+  {
+    "famous": "Bhimtal Lake",
+    "alternative": "Khurpatal",
+    "district": "Nainital",
+    "distanceKm": 18,
+    "travelTime": "40 min",
+    "reason": "Emerald crater-like lake famous for changing colours, ringed by paddy terraces — barely known to tourists.",
+    "bestFor": "photography and picnics",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Mussoorie",
+    "alternative": "George Everest Peak",
+    "district": "Dehradun",
+    "distanceKm": 11,
+    "travelTime": "35 min",
+    "reason": "360° sunset point above Hathipaon forest — takes the sunset crowd pressure off Gun Hill and Camel's Back.",
+    "bestFor": "sunset without ropeway queue",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Badrinath Temple",
+    "alternative": "Jageshwar Dham",
+    "district": "Almora",
+    "distanceKm": 0,
+    "travelTime": "same-day from Almora",
+    "reason": "When the Badrinath highway is jammed or gate-controlled, this 124-temple ancient Shiva complex in a deodar grove offers a serene major-shrine darshan with no queue at all.",
+    "bestFor": "ancient temple darshan",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Badrinath Temple",
+    "alternative": "Harsil Valley",
+    "district": "Uttarkashi",
+    "distanceKm": 0,
+    "travelTime": "alternate 2-day route",
+    "reason": "Same high-Himalayan river-valley experience on the Bhagirathi with apple orchards and army-town calm — ideal when the Alaknanda yatra route is saturated.",
+    "bestFor": "Himalayan valley stay",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Yamunotri Temple",
+    "alternative": "Lakhamandal Temple",
+    "district": "Dehradun",
+    "distanceKm": 60,
+    "travelTime": "2.5 hr from Barkot",
+    "reason": "Ancient Mahabharata-linked Shiva complex on the same Yamuna valley road — a meaningful darshan stop when the Yamunotri trek queue crosses 3-4 hours.",
+    "bestFor": "valley-side darshan",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Gangotri Temple",
+    "alternative": "Harsil Valley",
+    "district": "Uttarkashi",
+    "distanceKm": 25,
+    "travelTime": "45 min",
+    "reason": "Just below Gangotri on the same highway — riverside deodar valley with Gartang Gali skywalk; stay here and do an early-morning darshan to skip the midday rush.",
+    "bestFor": "base stay to beat the rush",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Hemkund Sahib",
+    "alternative": "Deoria Tal",
+    "district": "Rudraprayag",
+    "distanceKm": 180,
+    "travelTime": "6 hr",
+    "reason": "When Govindghat is overloaded, this short 2.5 km trek to a Chaukhamba-reflection lake delivers the high-Himalayan lake experience with a fraction of the effort and crowd.",
+    "bestFor": "glacial-lake trek feel",
+    "typicalCrowd": "low"
+  },
+  {
+    "famous": "Har Ki Pauri",
+    "alternative": "Triveni Ghat Rishikesh",
+    "district": "Rishikesh",
+    "distanceKm": 25,
+    "travelTime": "45 min",
+    "reason": "Evening Maha Aarti on a wider ghat with easy parking — the go-to swap during Kanwar and Somvati Amavasya rushes at Haridwar.",
+    "bestFor": "Ganga aarti on peak days",
+    "typicalCrowd": "medium"
+  }
+]

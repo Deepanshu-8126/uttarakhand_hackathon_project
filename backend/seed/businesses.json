@@ -1,0 +1,272 @@
+[
+  {
+    "name": "Chotiwala Restaurant",
+    "category": "Local Craft / Food",
+    "location": "Rishikesh",
+    "speciality": "Pure veg thali since 1958, Ganga view seating",
+    "priceRange": "250",
+    "contact": "74000-11223",
+    "note": ""
+  },
+  {
+    "name": "Ganga Beach Cafe",
+    "category": "Local Craft / Food",
+    "location": "Rishikesh",
+    "speciality": "Wood-fire pizza, herbal teas, river deck",
+    "priceRange": "350",
+    "contact": "74000-11224",
+    "note": ""
+  },
+  {
+    "name": "Bikaner Sweets Haridwar",
+    "category": "Local Craft / Food",
+    "location": "Haridwar",
+    "speciality": "Kachori, jalebi and aloo puri breakfast",
+    "priceRange": "120",
+    "contact": "74000-11225",
+    "note": ""
+  },
+  {
+    "name": "Mohanji Puriwale",
+    "category": "Local Craft / Food",
+    "location": "Haridwar",
+    "speciality": "Famous puri sabzi since 1930",
+    "priceRange": "100",
+    "contact": "74000-11226",
+    "note": ""
+  },
+  {
+    "name": "Kalsang Friends Corner",
+    "category": "Local Craft / Food",
+    "location": "Mussoorie",
+    "speciality": "Tibetan thukpa and momos on Mall Road",
+    "priceRange": "300",
+    "contact": "74000-11227",
+    "note": ""
+  },
+  {
+    "name": "Landour Bakehouse",
+    "category": "Local Craft / Food",
+    "location": "Mussoorie",
+    "speciality": "Old recipes of Landour, cinnamon rolls",
+    "priceRange": "400",
+    "contact": "74000-11228",
+    "note": ""
+  },
+  {
+    "name": "Sonam Momos Nainital",
+    "category": "Local Craft / Food",
+    "location": "Nainital",
+    "speciality": "Steamed momos at Tallital chowk",
+    "priceRange": "100",
+    "contact": "74000-11229",
+    "note": ""
+  },
+  {
+    "name": "Machan Restaurant",
+    "category": "Local Craft / Food",
+    "location": "Nainital",
+    "speciality": "Kumaoni thali and lake view tables",
+    "priceRange": "350",
+    "contact": "74000-11230",
+    "note": ""
+  },
+  {
+    "name": "Baba Cake House",
+    "category": "Local Craft / Food",
+    "location": "Kausani",
+    "speciality": "Bal mithai and homemade cakes",
+    "priceRange": "150",
+    "contact": "74000-11231",
+    "note": ""
+  },
+  {
+    "name": "Sharma Vaishno Dhaba",
+    "category": "Local Craft / Food",
+    "location": "Joshimath",
+    "speciality": "Rajma chawal and parathas for yatris",
+    "priceRange": "180",
+    "contact": "74000-11232",
+    "note": ""
+  },
+  {
+    "name": "Himalayan Flavours Chopta",
+    "category": "Local Craft / Food",
+    "location": "Chopta",
+    "speciality": "Maggi point and pahadi dal bhaat at trek base",
+    "priceRange": "150",
+    "contact": "74000-11233",
+    "note": ""
+  },
+  {
+    "name": "Corbett Machan Dhaba",
+    "category": "Local Craft / Food",
+    "location": "Ramnagar",
+    "speciality": "Tandoori and Kumaoni raita near Bijrani gate",
+    "priceRange": "280",
+    "contact": "74000-11234",
+    "note": ""
+  },
+  {
+    "name": "Negi Ji Taxi Service",
+    "category": "Local Craft / Food",
+    "location": "Rishikesh",
+    "speciality": "Sedan/SUV for Char Dham and local sightseeing",
+    "priceRange": "3500",
+    "contact": "74000-11235",
+    "note": ""
+  },
+  {
+    "name": "Kumaon Cabs Kathgodam",
+    "category": "Local Craft / Food",
+    "location": "Nainital",
+    "speciality": "Airport/railway pickup to all Kumaon hills",
+    "priceRange": "3000",
+    "contact": "74000-11236",
+    "note": ""
+  },
+  {
+    "name": "Garhwal Riders Bike Rental",
+    "category": "Local Craft / Food",
+    "location": "Rishikesh",
+    "speciality": "Royal Enfield and scooty rental with helmets",
+    "priceRange": "1200",
+    "contact": "74000-11237",
+    "note": ""
+  },
+  {
+    "name": "Auli Ski Gear Rentals",
+    "category": "Local Craft / Food",
+    "location": "Auli",
+    "speciality": "Ski set, snow boots, jackets on the slope",
+    "priceRange": "800",
+    "contact": "74000-11238",
+    "note": ""
+  },
+  {
+    "name": "Trek Himalaya Guides",
+    "category": "Local Craft / Food",
+    "location": "Chopta",
+    "speciality": "Certified guides for Tungnath-Chandrashila",
+    "priceRange": "1500",
+    "contact": "74000-11239",
+    "note": ""
+  },
+  {
+    "name": "Kedar Yatra Sahayak",
+    "category": "Local Craft / Food",
+    "location": "Sonprayag",
+    "speciality": "Registered porters, palki and guide service",
+    "priceRange": "2000",
+    "contact": "74000-11240",
+    "note": ""
+  },
+  {
+    "name": "Nanda Devi Trek Crew",
+    "category": "Local Craft / Food",
+    "location": "Munsiyari",
+    "speciality": "Khaliya Top and Milam glacier guided treks",
+    "priceRange": "1800",
+    "contact": "74000-11241",
+    "note": ""
+  },
+  {
+    "name": "Corbett Nature Guides",
+    "category": "Local Craft / Food",
+    "location": "Ramnagar",
+    "speciality": "Forest-dept certified birding and safari guides",
+    "priceRange": "1200",
+    "contact": "74000-11242",
+    "note": ""
+  },
+  {
+    "name": "Ganga Rafting Co-op",
+    "category": "Local Craft / Food",
+    "location": "Rishikesh",
+    "speciality": "16 km Shivpuri rafting with certified crew",
+    "priceRange": "600",
+    "contact": "74000-11243",
+    "note": ""
+  },
+  {
+    "name": "Bhimtal Paragliding Club",
+    "category": "Local Craft / Food",
+    "location": "Bhimtal",
+    "speciality": "Tandem flights over Naukuchiatal",
+    "priceRange": "1800",
+    "contact": "74000-11244",
+    "note": ""
+  },
+  {
+    "name": "Himalayan Woolens Almora",
+    "category": "Local Craft / Food",
+    "location": "Almora",
+    "speciality": "Hand-woven shawls and tweed of Kumaon",
+    "priceRange": "900",
+    "contact": "74000-11245",
+    "note": ""
+  },
+  {
+    "name": "Aipan Art Studio",
+    "category": "Local Craft / Food",
+    "location": "Almora",
+    "speciality": "Traditional Aipan folk art, live workshop",
+    "priceRange": "500",
+    "contact": "74000-11246",
+    "note": ""
+  },
+  {
+    "name": "Tamta Copperware Bazaar",
+    "category": "Local Craft / Food",
+    "location": "Almora",
+    "speciality": "Handmade copper utensils of Tamta community",
+    "priceRange": "700",
+    "contact": "74000-11247",
+    "note": ""
+  },
+  {
+    "name": "Munsiyari Wool House",
+    "category": "Local Craft / Food",
+    "location": "Munsiyari",
+    "speciality": "Angora caps, mufflers and pankhi weaves",
+    "priceRange": "600",
+    "contact": "74000-11248",
+    "note": ""
+  },
+  {
+    "name": "Rishikesh Yogpeeth",
+    "category": "Local Craft / Food",
+    "location": "Rishikesh",
+    "speciality": "Drop-in yoga and meditation classes by the Ganga",
+    "priceRange": "400",
+    "contact": "74000-11249",
+    "note": ""
+  },
+  {
+    "name": "Pahadi Organic Store",
+    "category": "Local Craft / Food",
+    "location": "Mussoorie",
+    "speciality": "Buransh squash, honey, red rice, jams",
+    "priceRange": "300",
+    "contact": "74000-11250",
+    "note": ""
+  },
+  {
+    "name": "Village Ways Kumaon",
+    "category": "Local Craft / Food",
+    "location": "Mukteshwar",
+    "speciality": "Village walk, orchard tour and Kumaoni lunch",
+    "priceRange": "800",
+    "contact": "74000-11251",
+    "note": ""
+  },
+  {
+    "name": "Deoria Tal Camp Kitchen",
+    "category": "Local Craft / Food",
+    "location": "Chopta",
+    "speciality": "Bonfire dinner and star-gazing at the lake",
+    "priceRange": "700",
+    "contact": "74000-11252",
+    "note": ""
+  }
+]

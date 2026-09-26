@@ -38,6 +38,7 @@ import safetyRoutes from './routes/safetyRoutes.js';
 import placesRoutes from './routes/placesRoutes.js';
 import internalAgentRoutes from './routes/internalAgentRoutes.js';
 import voiceRoutes from './routes/voiceRoutes.js';
+import sosRoutes from './routes/sosRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Validate production environment variables
@@ -144,6 +145,8 @@ app.use('/api/places', placesRoutes);
 app.use('/api/search', placesRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/voice', voiceRoutes);
+app.use('/api/sos', sosRoutes);
+app.use('/sos', sosRoutes);
 app.use('/internal/agent', internalAgentRoutes);
 
 // Unprefixed Aliases for Render & Mobile clients (e.g., /agent/chat, /chat, /destinations, /stays)
@@ -175,6 +178,8 @@ app.get(['/', '/api'], (req, res) => {
       guides: "/api/guides",
       activities: "/api/activities",
       copilot: "/api/agent/chat",
+      sos: "/api/sos",
+      rescue: "/api/sos/active",
       auth: "/api/auth",
       health: "/api/health"
     }

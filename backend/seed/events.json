@@ -1,0 +1,114 @@
+[
+  {
+    "name": "Uttarayani Mela",
+    "place": "Bageshwar",
+    "month": 1,
+    "durationDays": 7,
+    "note": "Biggest winter fair of Kumaon at the Saryu-Gomti confluence"
+  },
+  {
+    "name": "Auli Winter Games Week",
+    "place": "Auli",
+    "month": 2,
+    "durationDays": 5,
+    "note": "Ski races and snowboarding demos on the main slope"
+  },
+  {
+    "name": "Phool Dei",
+    "place": "All Uttarakhand",
+    "month": 3,
+    "durationDays": 1,
+    "note": "Children place flowers and rice on doorsteps to welcome spring"
+  },
+  {
+    "name": "International Yoga Festival",
+    "place": "Rishikesh",
+    "month": 3,
+    "durationDays": 7,
+    "note": "Global yoga schools gather at Parmarth Niketan"
+  },
+  {
+    "name": "Purnagiri Mela",
+    "place": "Champawat",
+    "month": 3,
+    "durationDays": 30,
+    "note": "Pilgrimage fair at the Purnagiri Shakti Peeth above the Kali river"
+  },
+  {
+    "name": "Bikhauti Mela",
+    "place": "Dwarahat",
+    "month": 4,
+    "durationDays": 2,
+    "note": "Traditional Kumaoni fair marking the solar new year"
+  },
+  {
+    "name": "Char Dham Kapat Opening",
+    "place": "Kedarnath, Badrinath, Gangotri, Yamunotri",
+    "month": 5,
+    "durationDays": 3,
+    "note": "Portals of the four shrines open, yatra season begins"
+  },
+  {
+    "name": "Ganga Dussehra",
+    "place": "Haridwar",
+    "month": 6,
+    "durationDays": 1,
+    "note": "Grand bathing day at Har Ki Pauri with special aarti"
+  },
+  {
+    "name": "Harela",
+    "place": "All Kumaon",
+    "month": 7,
+    "durationDays": 1,
+    "note": "Green festival of sowing, saplings planted across villages"
+  },
+  {
+    "name": "Kanwar Yatra",
+    "place": "Haridwar",
+    "month": 7,
+    "durationDays": 15,
+    "note": "Millions carry Ganga water on foot, expect heavy traffic on NH 334"
+  },
+  {
+    "name": "Valley of Flowers Peak Bloom",
+    "place": "Chamoli",
+    "month": 8,
+    "durationDays": 31,
+    "note": "Alpine valley at full bloom, best photography window"
+  },
+  {
+    "name": "Nanda Devi Mahotsav",
+    "place": "Almora and Nainital",
+    "month": 9,
+    "durationDays": 5,
+    "note": "Processions and cultural nights honouring Nanda Devi"
+  },
+  {
+    "name": "Kedarnath Closing Ceremony",
+    "place": "Kedarnath",
+    "month": 11,
+    "durationDays": 1,
+    "note": "Kapat close for winter, deity moves to Ukhimath"
+  },
+  {
+    "name": "Igas Bagwal",
+    "place": "Garhwal villages",
+    "month": 11,
+    "durationDays": 1,
+    "note": "Mountain Diwali celebrated 11 days after Diwali with bhailo fire play"
+  },
+  {
+    "name": "Jauljibi Mela",
+    "place": "Pithoragarh",
+    "month": 11,
+    "durationDays": 7,
+    "note": "Historic trade fair at the India-Nepal confluence of Kali and Gori"
+  },
+  {
+    "name": "Auli Snow Carnival",
+    "place": "Auli",
+    "month": 12,
+    "durationDays": 3,
+    "note": "Snow sculptures, night skiing and local food stalls"
+  }
+]

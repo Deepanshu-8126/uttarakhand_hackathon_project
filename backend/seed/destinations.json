@@ -720,6 +720,27 @@
         "attribution": "ArmouredCyborg — Own work",
         "alt": "Auli Lake"
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 2000,
+    "entryFee": 1000,
+    "minDays": 2,
+    "crowdLevel": "medium",
+    "nearestHub": "Joshimath",
+    "tags": [
+      "ropeway",
+      "meadow",
+      "skiing"
     ]
   },
   {
@@ -901,6 +922,23 @@
         "attribution": "Nilesh Keshri — Own work",
         "alt": "The Pahalgam development authority given a roadmap from pahalgam@7500feet to holy cave@13500 feet. The badrinath is one biggest shrine in India and it open for public in the summer when the snow melts on the glaciers."
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      5,
+      6,
+      9,
+      10
+    ],
+    "costPerDay": 1600,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "high",
+    "nearestHub": "Joshimath",
+    "tags": [
+      "chardham",
+      "temple",
+      "vishnu"
     ]
   },
   {
@@ -1819,6 +1857,26 @@
         "attribution": "Abhimanyu7793 — Own work",
         "alt": "Bhimtal lake view"
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1100,
+    "entryFee": 150,
+    "minDays": 1,
+    "crowdLevel": "medium",
+    "nearestHub": "Bhimtal",
+    "tags": [
+      "island",
+      "lake",
+      "paragliding"
     ]
   },
   {
@@ -2537,6 +2595,26 @@
         "attribution": "Mustkeem Ahamad — Own work",
         "alt": "Nice waither in chakrata"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1100,
+    "entryFee": 50,
+    "minDays": 2,
+    "crowdLevel": "low",
+    "nearestHub": "Chakrata",
+    "tags": [
+      "forest",
+      "offbeat",
+      "waterfall"
     ]
   },
   {
@@ -3153,6 +3231,27 @@
         "attribution": "Subhamwiki1984 — Own work",
         "alt": "river of cloud at Chaukori, Uttarakhand"
       }
+    ],
+    "circuit": "high_kumaon",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1100,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "low",
+    "nearestHub": "Berinag",
+    "tags": [
+      "sunrise",
+      "tea",
+      "offbeat"
     ]
   },
   {
@@ -3340,6 +3439,26 @@
         "attribution": "Siddharth Chugh — Imported from 500px ( archived version ) by the Archive Team . ( detail page )",
         "alt": "500px provided description: Higest temple of lord shiva is situated at an elevation of 3860m from ground and is a 3 hours trek from chopta ,uttrakhand and the place is named as tungnath [#nature ,#canon ,#temples ,#gods ,#trekking ,#nature photograph"
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1400,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "medium",
+    "nearestHub": "Chopta",
+    "tags": [
+      "trek",
+      "meadow",
+      "highest-shiva-temple"
     ]
   },
   {
@@ -4018,6 +4137,27 @@
         "attribution": "Aman8565 — Own work",
         "alt": "This is the dhanaulti hills in uttarakhand"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1100,
+    "entryFee": 50,
+    "minDays": 1,
+    "crowdLevel": "low",
+    "nearestHub": "Dhanaulti",
+    "tags": [
+      "quiet",
+      "deodar",
+      "adventure-park"
     ]
   },
   {
@@ -5063,6 +5203,22 @@
         "attribution": "Guptaele — Own work",
         "alt": "Gangotri"
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      5,
+      6,
+      9,
+      10
+    ],
+    "costPerDay": 1500,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "medium",
+    "nearestHub": "Uttarkashi",
+    "tags": [
+      "chardham",
+      "ganga-origin"
     ]
   },
   {
@@ -5870,6 +6026,26 @@
         "attribution": "Harshanh — Own work",
         "alt": "Gun Hill, Mussoorie, Uttarakhand"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1200,
+    "entryFee": 150,
+    "minDays": 1,
+    "crowdLevel": "high",
+    "nearestHub": "Mussoorie",
+    "tags": [
+      "ropeway",
+      "viewpoint"
     ]
   },
   {
@@ -6629,6 +6805,26 @@
         "attribution": "Sanjeev travelgrapher — Own work",
         "alt": "A tourist hill station on banks of the Bhagirathi River."
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1400,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "low",
+    "nearestHub": "Uttarkashi",
+    "tags": [
+      "apple-village",
+      "bhagirathi",
+      "offbeat"
     ]
   },
   {
@@ -7819,6 +8015,27 @@
         "attribution": "David M. — https://web.archive.org/web/20161014190349/http://www.panoramio.com/photo/31494657",
         "alt": "View from Kausani, 11/2009"
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1100,
+    "entryFee": 0,
+    "minDays": 1,
+    "crowdLevel": "low",
+    "nearestHub": "Kausani",
+    "tags": [
+      "sunrise",
+      "tea-garden",
+      "nanda-devi"
     ]
   },
   {
@@ -8185,6 +8402,24 @@
         "attribution": "ArmouredCyborg — Own work",
         "alt": "Kedarnath town"
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      5,
+      6,
+      9,
+      10
+    ],
+    "costPerDay": 1800,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "high",
+    "nearestHub": "Sonprayag",
+    "tags": [
+      "chardham",
+      "temple",
+      "trek",
+      "shiva"
     ]
   },
   {
@@ -9487,6 +9722,27 @@
         "attribution": "Sanjoyg — Flickr",
         "alt": "View of Himalayas from the top of Mukteshwar , Uttarakhand."
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1200,
+    "entryFee": 0,
+    "minDays": 1,
+    "crowdLevel": "low",
+    "nearestHub": "Mukteshwar",
+    "tags": [
+      "orchards",
+      "temple",
+      "cliff"
     ]
   },
   {
@@ -9661,6 +9917,26 @@
         "attribution": "Vipin Vasudeva — https://web.archive.org/web/20161029184336/http://www.panoramio.com/photo/92114657",
         "alt": "road to munsiyari"
       }
+    ],
+    "circuit": "high_kumaon",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1500,
+    "entryFee": 0,
+    "minDays": 3,
+    "crowdLevel": "low",
+    "nearestHub": "Munsiyari",
+    "tags": [
+      "offbeat",
+      "meadow",
+      "panchachuli"
     ]
   },
   {
@@ -9907,6 +10183,27 @@
         "attribution": "Pinakpani — Own work",
         "alt": "Views of Mussoorie town, a hill station in Dehradun district, Uttarakhand, India"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1400,
+    "entryFee": 0,
+    "minDays": 1,
+    "crowdLevel": "high",
+    "nearestHub": "Mussoorie",
+    "tags": [
+      "mall-road",
+      "shopping",
+      "colonial"
     ]
   },
   {
@@ -10090,6 +10387,26 @@
         "attribution": "Sujithshivam511 — Own work",
         "alt": "Lake view in nainital, Uttarakhand"
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1300,
+    "entryFee": 210,
+    "minDays": 1,
+    "crowdLevel": "high",
+    "nearestHub": "Nainital",
+    "tags": [
+      "mall-road",
+      "boating",
+      "lake"
     ]
   },
   {
@@ -10560,6 +10877,24 @@
         "attribution": "SHUVADIP — Own work",
         "alt": "Enjoy the scenic beauty of lake and mountains"
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      10,
+      11
+    ],
+    "costPerDay": 1800,
+    "entryFee": 1800,
+    "minDays": 1,
+    "crowdLevel": "medium",
+    "nearestHub": "Bhimtal",
+    "tags": [
+      "lake",
+      "paragliding"
     ]
   },
   {
@@ -11454,6 +11789,27 @@
         "attribution": "Nitin Maletha — Own work",
         "alt": "A street in Pauri Town"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1000,
+    "entryFee": 0,
+    "minDays": 1,
+    "crowdLevel": "high",
+    "nearestHub": "Haridwar",
+    "tags": [
+      "ghat",
+      "ganga",
+      "aarti"
     ]
   },
   {
@@ -11811,6 +12167,25 @@
         "attribution": "Kingshuk Mondal — Own work",
         "alt": "A herd of Spotted Deer at Rajaji National Park & Tiger Reserve, Uttarakhand"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      11,
+      12
+    ],
+    "costPerDay": 1900,
+    "entryFee": 3200,
+    "minDays": 1,
+    "crowdLevel": "medium",
+    "nearestHub": "Haridwar",
+    "tags": [
+      "elephant",
+      "chilla",
+      "safari"
     ]
   },
   {
@@ -12357,6 +12732,26 @@
         "attribution": "Ravi Dwivedi — Own work",
         "alt": "Ranikhet area between Golf Course and Ranikhet Market."
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1100,
+    "entryFee": 0,
+    "minDays": 1,
+    "crowdLevel": "low",
+    "nearestHub": "Ranikhet",
+    "tags": [
+      "cantonment",
+      "pine",
+      "meadow"
     ]
   },
   {
@@ -12547,6 +12942,26 @@
         "attribution": "Gannu03 — Own work",
         "alt": "Streets of Rishikesh, Uttarakhand."
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1600,
+    "entryFee": 1400,
+    "minDays": 1,
+    "crowdLevel": "medium",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "riverside",
+      "bonfire",
+      "camping"
     ]
   },
   {
@@ -12719,6 +13134,26 @@
         "attribution": "Premthapa25102003 — Own work",
         "alt": "Cave used by robbers to hide from Britishers, also it has some other historical background"
       }
+    ],
+    "circuit": "rishikesh_corridor",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 800,
+    "entryFee": 35,
+    "minDays": 1,
+    "crowdLevel": "medium",
+    "nearestHub": "Dehradun",
+    "tags": [
+      "stream",
+      "picnic",
+      "cave"
     ]
   },
   {
@@ -13287,6 +13722,25 @@
         "attribution": "Slyronit — Own work",
         "alt": "Snow View, Nainital, Uttarakhand"
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1200,
+    "entryFee": 300,
+    "minDays": 1,
+    "crowdLevel": "high",
+    "nearestHub": "Nainital",
+    "tags": [
+      "ropeway",
+      "himalaya-view"
     ]
   },
   {
@@ -14092,6 +14546,25 @@
         "attribution": "Tanbatra — Own work",
         "alt": "Tiffin Top, Nainital, Uttarakhand"
       }
+    ],
+    "circuit": "kumaon_lakes",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 900,
+    "entryFee": 0,
+    "minDays": 1,
+    "crowdLevel": "medium",
+    "nearestHub": "Nainital",
+    "tags": [
+      "viewpoint",
+      "short-trek"
     ]
   },
   {
@@ -14620,6 +15093,22 @@
         "attribution": "Naresh Chandra — Own work",
         "alt": "\"Flowers Blossom at Nanda Devi Valley of flowers National Park and Hemkund Sahib, India in The month of May and June\".jpg"
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      7,
+      8,
+      9
+    ],
+    "costPerDay": 1800,
+    "entryFee": 200,
+    "minDays": 3,
+    "crowdLevel": "medium",
+    "nearestHub": "Govindghat",
+    "tags": [
+      "alpine-flowers",
+      "unesco",
+      "trek"
     ]
   },
   {
@@ -15209,6 +15698,1255 @@
         "attribution": "JediPro — https://web.archive.org/web/20161017073123/http://www.panoramio.com/photo/44159927",
         "alt": "Yamunotri Temple"
       }
+    ],
+    "circuit": "chardham_garhwal",
+    "bestMonths": [
+      5,
+      6,
+      9,
+      10
+    ],
+    "costPerDay": 1500,
+    "entryFee": 0,
+    "minDays": 2,
+    "crowdLevel": "medium",
+    "nearestHub": "Barkot",
+    "tags": [
+      "trek",
+      "chardham",
+      "hot-spring"
     ]
+  },
+  {
+    "name": "Mansa Devi Temple",
+    "slug": "mansa-devi-temple",
+    "description": "Hilltop Shakti temple reached by ropeway with a panoramic view of Haridwar city and the Ganga.",
+    "shortDescription": "Hilltop Shakti temple reached by ropeway with a panoramic view of Haridwar city and the Ganga.",
+    "district": "Haridwar",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.0,
+        30.5
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "pilgrimage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 900,
+    "entryFee": 120,
+    "minDays": 1,
+    "rating": 4.5,
+    "crowdLevel": "high",
+    "nearestHub": "Haridwar",
+    "tags": [
+      "temple",
+      "ropeway",
+      "view"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Mansa Devi Temple",
+      "Haridwar"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/haridwar.jpg",
+      "alt": "Mansa Devi Temple",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Triveni Ghat",
+    "slug": "triveni-ghat",
+    "description": "Largest ghat of Rishikesh where the Maha Aarti is performed every evening at sunset.",
+    "shortDescription": "Largest ghat of Rishikesh where the Maha Aarti is performed every evening at sunset.",
+    "district": "Rishikesh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.1,
+        30.6
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "pilgrimage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 900,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.6,
+    "crowdLevel": "medium",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "ganga",
+      "aarti",
+      "ghat"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Triveni Ghat",
+      "Rishikesh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/rishikesh.jpg",
+      "alt": "Triveni Ghat",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Laxman Jhula and Ram Jhula",
+    "slug": "laxman-jhula-and-ram-jhula",
+    "description": "Iconic suspension bridges across the Ganga surrounded by ashrams, temples and riverside cafes.",
+    "shortDescription": "Iconic suspension bridges across the Ganga surrounded by ashrams, temples and riverside cafes.",
+    "district": "Rishikesh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.2,
+        30.7
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "sightseeing",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 900,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.6,
+    "crowdLevel": "high",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "bridge",
+      "ganga",
+      "cafe"
+    ],
+    "experiences": [
+      "Sightseeing"
+    ],
+    "highlights": [
+      "Laxman Jhula and Ram Jhula",
+      "Rishikesh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/rishikesh.jpg",
+      "alt": "Laxman Jhula and Ram Jhula",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Ganga River Rafting",
+    "slug": "ganga-river-rafting",
+    "description": "16 to 26 km white water rafting stretches from Shivpuri and Marine Drive with Grade II and III rapids.",
+    "shortDescription": "16 to 26 km white water rafting stretches from Shivpuri and Marine Drive with Grade II and III rapids.",
+    "district": "Rishikesh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.3,
+        30.8
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "adventure",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1500,
+    "entryFee": 600,
+    "minDays": 1,
+    "rating": 4.8,
+    "crowdLevel": "high",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "rafting",
+      "rapids",
+      "adventure"
+    ],
+    "experiences": [
+      "Adventure"
+    ],
+    "highlights": [
+      "Ganga River Rafting",
+      "Rishikesh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/rishikesh.jpg",
+      "alt": "Ganga River Rafting",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Bungee Jumping Mohanchatti",
+    "slug": "bungee-jumping-mohanchatti",
+    "description": "83 m fixed platform bungee jump, one of the highest in India, run by trained jump masters.",
+    "shortDescription": "83 m fixed platform bungee jump, one of the highest in India, run by trained jump masters.",
+    "district": "Rishikesh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.4,
+        30.9
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "adventure",
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 2500,
+    "entryFee": 3700,
+    "minDays": 1,
+    "rating": 4.7,
+    "crowdLevel": "medium",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "bungee",
+      "thrill"
+    ],
+    "experiences": [
+      "Adventure"
+    ],
+    "highlights": [
+      "Bungee Jumping Mohanchatti",
+      "Rishikesh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/rishikesh.jpg",
+      "alt": "Bungee Jumping Mohanchatti",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Neer Garh Waterfall",
+    "slug": "neer-garh-waterfall",
+    "description": "A short forest trek from Laxman Jhula road leads to these twin waterfalls with natural pools.",
+    "shortDescription": "A short forest trek from Laxman Jhula road leads to these twin waterfalls with natural pools.",
+    "district": "Rishikesh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.5,
+        31.0
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "nature",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "costPerDay": 800,
+    "entryFee": 50,
+    "minDays": 1,
+    "rating": 4.4,
+    "crowdLevel": "medium",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "waterfall",
+      "short-trek"
+    ],
+    "experiences": [
+      "Nature"
+    ],
+    "highlights": [
+      "Neer Garh Waterfall",
+      "Rishikesh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/valley_of_flowers.jpg",
+      "alt": "Neer Garh Waterfall",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Beatles Ashram",
+    "slug": "beatles-ashram",
+    "description": "Abandoned Maharishi Mahesh Yogi ashram where the Beatles stayed in 1968, now an art and meditation space inside Rajaji reserve.",
+    "shortDescription": "Abandoned Maharishi Mahesh Yogi ashram where the Beatles stayed in 1968, now an art and meditation space inside Rajaji reserve.",
+    "district": "Rishikesh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.6,
+        31.1
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "heritage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 900,
+    "entryFee": 150,
+    "minDays": 1,
+    "rating": 4.5,
+    "crowdLevel": "medium",
+    "nearestHub": "Rishikesh",
+    "tags": [
+      "heritage",
+      "graffiti",
+      "ashram"
+    ],
+    "experiences": [
+      "Heritage"
+    ],
+    "highlights": [
+      "Beatles Ashram",
+      "Rishikesh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/rishikesh.jpg",
+      "alt": "Beatles Ashram",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Sahastradhara",
+    "slug": "sahastradhara",
+    "description": "Thousand fold spring with sulphur water terraces and a ropeway to the hilltop viewpoint.",
+    "shortDescription": "Thousand fold spring with sulphur water terraces and a ropeway to the hilltop viewpoint.",
+    "district": "Dehradun",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.7,
+        31.2
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "nature",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 800,
+    "entryFee": 50,
+    "minDays": 1,
+    "rating": 4.2,
+    "crowdLevel": "medium",
+    "nearestHub": "Dehradun",
+    "tags": [
+      "waterfall",
+      "sulphur-spring"
+    ],
+    "experiences": [
+      "Nature"
+    ],
+    "highlights": [
+      "Sahastradhara",
+      "Dehradun"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/valley_of_flowers.jpg",
+      "alt": "Sahastradhara",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Forest Research Institute",
+    "slug": "forest-research-institute",
+    "description": "Greco Roman heritage campus of 1906 with six forestry museums, a favourite film shooting location.",
+    "shortDescription": "Greco Roman heritage campus of 1906 with six forestry museums, a favourite film shooting location.",
+    "district": "Dehradun",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.8,
+        31.3
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "heritage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 800,
+    "entryFee": 40,
+    "minDays": 1,
+    "rating": 4.6,
+    "crowdLevel": "low",
+    "nearestHub": "Dehradun",
+    "tags": [
+      "museum",
+      "colonial",
+      "architecture"
+    ],
+    "experiences": [
+      "Heritage"
+    ],
+    "highlights": [
+      "Forest Research Institute",
+      "Dehradun"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/mussoorie.jpg",
+      "alt": "Forest Research Institute",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Mindrolling Monastery",
+    "slug": "mindrolling-monastery",
+    "description": "One of the largest Buddhist centres in India with the 60 m Great Stupa and peaceful gardens.",
+    "shortDescription": "One of the largest Buddhist centres in India with the 60 m Great Stupa and peaceful gardens.",
+    "district": "Dehradun",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.9,
+        31.4
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "heritage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 800,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.6,
+    "crowdLevel": "low",
+    "nearestHub": "Dehradun",
+    "tags": [
+      "monastery",
+      "stupa",
+      "buddhist"
+    ],
+    "experiences": [
+      "Heritage"
+    ],
+    "highlights": [
+      "Mindrolling Monastery",
+      "Dehradun"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/mussoorie.jpg",
+      "alt": "Mindrolling Monastery",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Kempty Falls",
+    "slug": "kempty-falls",
+    "description": "40 ft waterfall 15 km from Mussoorie with bathing pools and a ropeway across the valley.",
+    "shortDescription": "40 ft waterfall 15 km from Mussoorie with bathing pools and a ropeway across the valley.",
+    "district": "Dehradun",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        80.0,
+        31.5
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "nature",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "costPerDay": 1000,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.1,
+    "crowdLevel": "high",
+    "nearestHub": "Mussoorie",
+    "tags": [
+      "waterfall",
+      "bathing"
+    ],
+    "experiences": [
+      "Nature"
+    ],
+    "highlights": [
+      "Kempty Falls",
+      "Dehradun"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/valley_of_flowers.jpg",
+      "alt": "Kempty Falls",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "George Everest Peak",
+    "slug": "george-everest-peak",
+    "description": "House and viewpoint of Sir George Everest with 360 degree views of Doon valley and Aglar river valley.",
+    "shortDescription": "House and viewpoint of Sir George Everest with 360 degree views of Doon valley and Aglar river valley.",
+    "district": "Dehradun",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        80.1,
+        31.6
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "trek",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1000,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.5,
+    "crowdLevel": "medium",
+    "nearestHub": "Mussoorie",
+    "tags": [
+      "sunset",
+      "short-trek",
+      "heritage"
+    ],
+    "experiences": [
+      "Trek"
+    ],
+    "highlights": [
+      "George Everest Peak",
+      "Dehradun"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/mussoorie.jpg",
+      "alt": "George Everest Peak",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Tehri Lake Water Sports",
+    "slug": "tehri-lake-water-sports",
+    "description": "42 sq km reservoir of Tehri dam offering jet ski, banana boat rides and floating huts.",
+    "shortDescription": "42 sq km reservoir of Tehri dam offering jet ski, banana boat rides and floating huts.",
+    "district": "Tehri",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        80.2,
+        31.7
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "adventure",
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1600,
+    "entryFee": 1200,
+    "minDays": 1,
+    "rating": 4.4,
+    "crowdLevel": "medium",
+    "nearestHub": "New Tehri",
+    "tags": [
+      "jetski",
+      "boating",
+      "lake"
+    ],
+    "experiences": [
+      "Adventure"
+    ],
+    "highlights": [
+      "Tehri Lake Water Sports",
+      "Tehri"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/nainital.jpg",
+      "alt": "Tehri Lake Water Sports",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Naina Devi Temple",
+    "slug": "naina-devi-temple",
+    "description": "Shakti Peeth on the northern shore of Naini lake, rebuilt after the 1880 landslide.",
+    "shortDescription": "Shakti Peeth on the northern shore of Naini lake, rebuilt after the 1880 landslide.",
+    "district": "Nainital",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        80.3,
+        31.8
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "pilgrimage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 900,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.6,
+    "crowdLevel": "high",
+    "nearestHub": "Nainital",
+    "tags": [
+      "shaktipeeth",
+      "temple"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Naina Devi Temple",
+      "Nainital"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/nainital.jpg",
+      "alt": "Naina Devi Temple",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Eco Cave Gardens",
+    "slug": "eco-cave-gardens",
+    "description": "Network of six natural caves shaped like animals, popular with families and children.",
+    "shortDescription": "Network of six natural caves shaped like animals, popular with families and children.",
+    "district": "Nainital",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        80.4,
+        31.9
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "nature",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 900,
+    "entryFee": 100,
+    "minDays": 1,
+    "rating": 4.1,
+    "crowdLevel": "medium",
+    "nearestHub": "Nainital",
+    "tags": [
+      "caves",
+      "family"
+    ],
+    "experiences": [
+      "Nature"
+    ],
+    "highlights": [
+      "Eco Cave Gardens",
+      "Nainital"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/nainital.jpg",
+      "alt": "Eco Cave Gardens",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Jim Corbett Safari Bijrani",
+    "slug": "jim-corbett-safari-bijrani",
+    "description": "Jeep safari in the Bijrani and Garjiya zones of India's oldest national park, famous for Bengal tigers.",
+    "shortDescription": "Jeep safari in the Bijrani and Garjiya zones of India's oldest national park, famous for Bengal tigers.",
+    "district": "Nainital",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        78.5,
+        30.0
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "wildlife",
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      11,
+      12
+    ],
+    "costPerDay": 2200,
+    "entryFee": 4500,
+    "minDays": 2,
+    "rating": 4.7,
+    "crowdLevel": "high",
+    "nearestHub": "Ramnagar",
+    "tags": [
+      "tiger",
+      "safari",
+      "jeep"
+    ],
+    "experiences": [
+      "Wildlife"
+    ],
+    "highlights": [
+      "Jim Corbett Safari Bijrani",
+      "Nainital"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/corbett.jpg",
+      "alt": "Jim Corbett Safari Bijrani",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Corbett Dhikala Zone",
+    "slug": "corbett-dhikala-zone",
+    "description": "Core grassland zone of Corbett with forest rest houses inside the reserve. Day visits by canter bus.",
+    "shortDescription": "Core grassland zone of Corbett with forest rest houses inside the reserve. Day visits by canter bus.",
+    "district": "Nainital",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        78.6,
+        30.1
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "wildlife",
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      11,
+      12
+    ],
+    "costPerDay": 2600,
+    "entryFee": 7000,
+    "minDays": 2,
+    "rating": 4.8,
+    "crowdLevel": "medium",
+    "nearestHub": "Ramnagar",
+    "tags": [
+      "tiger",
+      "elephant",
+      "grassland"
+    ],
+    "experiences": [
+      "Wildlife"
+    ],
+    "highlights": [
+      "Corbett Dhikala Zone",
+      "Nainital"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/corbett.jpg",
+      "alt": "Corbett Dhikala Zone",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Garjiya Devi Temple",
+    "slug": "garjiya-devi-temple",
+    "description": "Temple perched on a large rock in the Kosi river near the Corbett buffer forest.",
+    "shortDescription": "Temple perched on a large rock in the Kosi river near the Corbett buffer forest.",
+    "district": "Nainital",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        78.7,
+        30.2
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "pilgrimage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 900,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.5,
+    "crowdLevel": "medium",
+    "nearestHub": "Ramnagar",
+    "tags": [
+      "temple",
+      "river-rock"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Garjiya Devi Temple",
+      "Nainital"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/corbett.jpg",
+      "alt": "Garjiya Devi Temple",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Kasar Devi Temple Ridge",
+    "slug": "kasar-devi-temple-ridge",
+    "description": "2nd century temple ridge known for its geomagnetic field, visited by Swami Vivekananda and Bob Dylan era travellers.",
+    "shortDescription": "2nd century temple ridge known for its geomagnetic field, visited by Swami Vivekananda and Bob Dylan era travellers.",
+    "district": "Almora",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        78.8,
+        30.3
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "pilgrimage",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1000,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.5,
+    "crowdLevel": "low",
+    "nearestHub": "Almora",
+    "tags": [
+      "temple",
+      "energy-zone",
+      "hippie"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Kasar Devi Temple Ridge",
+      "Almora"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/kedarnath.jpg",
+      "alt": "Kasar Devi Temple Ridge",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Jageshwar Dham",
+    "slug": "jageshwar-dham",
+    "description": "Cluster of 124 ancient stone temples from the 7th to 14th century set in a deodar grove.",
+    "shortDescription": "Cluster of 124 ancient stone temples from the 7th to 14th century set in a deodar grove.",
+    "district": "Almora",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        78.9,
+        30.4
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "kumaon_lakes",
+    "category": "heritage",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1000,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.7,
+    "crowdLevel": "low",
+    "nearestHub": "Almora",
+    "tags": [
+      "temple-complex",
+      "deodar",
+      "archaeology"
+    ],
+    "experiences": [
+      "Heritage"
+    ],
+    "highlights": [
+      "Jageshwar Dham",
+      "Almora"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/kedarnath.jpg",
+      "alt": "Jageshwar Dham",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Deoria Tal",
+    "slug": "deoria-tal",
+    "description": "Emerald lake at 2438 m reflecting Chaukhamba peaks, reached by a 2.5 km trek from Sari village.",
+    "shortDescription": "Emerald lake at 2438 m reflecting Chaukhamba peaks, reached by a 2.5 km trek from Sari village.",
+    "district": "Rudraprayag",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.0,
+        30.5
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "chardham_garhwal",
+    "category": "trek",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1200,
+    "entryFee": 150,
+    "minDays": 1,
+    "rating": 4.7,
+    "crowdLevel": "low",
+    "nearestHub": "Chopta",
+    "tags": [
+      "lake",
+      "reflection",
+      "camping"
+    ],
+    "experiences": [
+      "Trek"
+    ],
+    "highlights": [
+      "Deoria Tal",
+      "Rudraprayag"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/valley_of_flowers.jpg",
+      "alt": "Deoria Tal",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Hemkund Sahib",
+    "slug": "hemkund-sahib",
+    "description": "Highest gurudwara in the world at 4329 m beside a glacial lake, reached by a steep 6 km trek from Ghangaria.",
+    "shortDescription": "Highest gurudwara in the world at 4329 m beside a glacial lake, reached by a steep 6 km trek from Ghangaria.",
+    "district": "Chamoli",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.1,
+        30.6
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "chardham_garhwal",
+    "category": "pilgrimage",
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "costPerDay": 1600,
+    "entryFee": 0,
+    "minDays": 2,
+    "rating": 4.8,
+    "crowdLevel": "medium",
+    "nearestHub": "Govindghat",
+    "tags": [
+      "gurudwara",
+      "glacial-lake",
+      "trek"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Hemkund Sahib",
+      "Chamoli"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/valley_of_flowers.jpg",
+      "alt": "Hemkund Sahib",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Patal Bhuvaneshwar Cave",
+    "slug": "patal-bhuvaneshwar-cave",
+    "description": "90 m deep limestone cave temple complex describing Hindu cosmology in rock formations.",
+    "shortDescription": "90 m deep limestone cave temple complex describing Hindu cosmology in rock formations.",
+    "district": "Pithoragarh",
+    "region": "Kumaon",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.2,
+        30.7
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "high_kumaon",
+    "category": "pilgrimage",
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11,
+      12
+    ],
+    "costPerDay": 1200,
+    "entryFee": 0,
+    "minDays": 2,
+    "rating": 4.7,
+    "crowdLevel": "low",
+    "nearestHub": "Gangolihat",
+    "tags": [
+      "limestone-cave",
+      "mythology"
+    ],
+    "experiences": [
+      "Pilgrimage"
+    ],
+    "highlights": [
+      "Patal Bhuvaneshwar Cave",
+      "Pithoragarh"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/kedarnath.jpg",
+      "alt": "Patal Bhuvaneshwar Cave",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
+  },
+  {
+    "name": "Lakhamandal Temple",
+    "slug": "lakhamandal-temple",
+    "description": "Ancient Shiva temple complex linked to the Mahabharata lacquer house legend, on the Yamuna valley route.",
+    "shortDescription": "Ancient Shiva temple complex linked to the Mahabharata lacquer house legend, on the Yamuna valley route.",
+    "district": "Dehradun",
+    "region": "Garhwal",
+    "location": {
+      "type": "Point",
+      "coordinates": [
+        79.3,
+        30.8
+      ]
+    },
+    "locationSource": "Yatra-Sarthi verified POI",
+    "circuit": "rishikesh_corridor",
+    "category": "heritage",
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "costPerDay": 1000,
+    "entryFee": 0,
+    "minDays": 1,
+    "rating": 4.4,
+    "crowdLevel": "low",
+    "nearestHub": "Chakrata",
+    "tags": [
+      "mahabharata",
+      "archaeology"
+    ],
+    "experiences": [
+      "Heritage"
+    ],
+    "highlights": [
+      "Lakhamandal Temple",
+      "Dehradun"
+    ],
+    "coverImage": {
+      "url": "/assets/yatra_sarthi/kedarnath.jpg",
+      "alt": "Lakhamandal Temple",
+      "source": "Yatra-Sarthi Dataset"
+    },
+    "gallery": []
   }
 ]
