@@ -47,21 +47,44 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     en: "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand."
   };
 
-  // Browser Web Speech TTS — production fallback when Gemini Live audio unavailable
-  const speakWithBrowser = useCallback((text, onDone) => {
-    if (!text || isMuted) { onDone?.(); return; }
+  // Play HD Google Neural Voice Stream (Zero robotic OS browser TTS!)
+  const playGoogleNeuralTts = useCallback((text, onDone) => {
+    if (!text || isMuted) {
+      updateVoiceStatus('listening');
+      onDone?.();
+      return;
+    }
+    const cleanText = text.replace(/[*#_~`]/g, '').slice(0, 300);
+    const targetLang = (lang && lang.startsWith('hi')) ? 'hi' : 'en';
+    const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=${targetLang}&client=tw-ob`;
+
     try {
-      window.speechSynthesis?.cancel();
-      const utt = new SpeechSynthesisUtterance(text.replace(/[*#_~`]/g, '').slice(0, 500));
-      utt.lang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
-      utt.rate = 0.95;
-      utt.pitch = 1.05;
-      utt.volume = 1;
-      utt.onend = () => { updateVoiceStatus('listening'); onDone?.(); };
-      utt.onerror = () => { updateVoiceStatus('listening'); onDone?.(); };
+      if (audioPlayerRef.current) {
+        try { audioPlayerRef.current.pause(); } catch (e) {}
+        audioPlayerRef.current = null;
+      }
       updateVoiceStatus('speaking');
-      window.speechSynthesis.speak(utt);
-    } catch (e) { updateVoiceStatus('listening'); onDone?.(); }
+      const audio = new Audio(googleTtsUrl);
+      audioPlayerRef.current = audio;
+      audio.onended = () => {
+        audioPlayerRef.current = null;
+        updateVoiceStatus('listening');
+        onDone?.();
+      };
+      audio.onerror = () => {
+        audioPlayerRef.current = null;
+        updateVoiceStatus('listening');
+        onDone?.();
+      };
+      audio.play().catch(() => {
+        audioPlayerRef.current = null;
+        updateVoiceStatus('listening');
+        onDone?.();
+      });
+    } catch (e) {
+      updateVoiceStatus('listening');
+      onDone?.();
+    }
   }, [isMuted, lang]);
 
   // Play real-time 24kHz raw PCM chunks from Gemini Live with zero latency
@@ -341,7 +364,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
             const reply = (data.data?.message || data.response?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
             if (reply) {
               setLastAgentReply(reply);
-              speakWithBrowser(reply, () => startListening());
+              playGoogleNeuralTts(reply, () => startListening());
               return;
             }
           }
@@ -517,7 +540,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
         const reply = (data.data?.message || data.response?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
         if (reply) {
           setLastAgentReply(reply);
-          speakWithBrowser(reply, () => startListening());
+          playGoogleNeuralTts(reply, () => startListening());
           return;
         }
       }
@@ -530,7 +553,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       ? 'देवभूमि में आपका स्वागत है। आप नैनीताल, केदारनाथ, मसूरी, चोपता या ऋषिकेश के लिए राइड्स और होमस्टे बुक कर सकते हैं।'
       : 'Welcome to Devbhoomi Uttarakhand. You can explore Nainital, Kedarnath, Mussoorie, Chopta, or Rishikesh with verified stays and 4x4 rentals.';
     setLastAgentReply(offlineReply);
-    speakWithBrowser(offlineReply, () => startListening());
+    playGoogleNeuralTts(offlineReply, () => startListening());
   };
 
   const initVoiceConnection = useCallback(async () => {
