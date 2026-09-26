@@ -1,20 +1,244 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  MapPin, 
-  Star, 
-  Compass, 
-  Navigation, 
-  Coffee, 
-  Mountain, 
-  ExternalLink, 
-  Sparkles, 
-  Camera, 
-  CheckCircle2, 
-  Layers,
-  ChevronRight,
-  Info
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  MapPin, Star, Compass, Navigation, Coffee,
+  Mountain, ExternalLink, Sparkles, Camera,
+  CheckCircle2, Layers, Info,
+  ArrowLeft, ArrowRight, X, Eye, Clock, TrendingUp
 } from 'lucide-react';
 import { placesApi } from '../api/placesApi';
+
+// Premium Himalayan real photo fallbacks – no AI/generic stock
+const HIMALAYAN_FALLBACKS = [
+  'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=900&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1594818898109-44d17d5a15bd?w=900&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=900&q=85&auto=format&fit=crop',
+];
+
+const TABS = [
+  { id: 'all',        label: 'All Radar',    icon: Compass  },
+  { id: 'viewpoints', label: 'Hidden Spots', icon: Mountain },
+  { id: 'food',       label: 'Dhabas & Chai',icon: Coffee   },
+  { id: 'lodging',    label: 'Campsites',    icon: Camera   },
+];
+
+function PlaceCard({ place, index, onSelect }) {
+  const [imgErr, setImgErr] = useState(false);
+  const src = !imgErr && place.photo_urls?.[0]
+    ? place.photo_urls[0]
+    : HIMALAYAN_FALLBACKS[index % HIMALAYAN_FALLBACKS.length];
+
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.vicinity}`)}`;
+
+  return (
+    <div
+      className="group relative flex-none w-72 sm:w-80 rounded-2xl overflow-hidden border border-white/10 bg-[#0d1f15] shadow-xl cursor-pointer hover:-translate-y-1.5 hover:shadow-emerald-900/30 hover:shadow-2xl transition-all duration-300"
+      onClick={() => onSelect(place)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && onSelect(place)}
+    >
+      {/* Hero Image */}
+      <div className="relative h-48 overflow-hidden bg-stone-900">
+        <img
+          src={src}
+          alt={place.name}
+          loading="lazy"
+          onError={() => setImgErr(true)}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0d1f15] via-black/20 to-transparent" />
+
+        {/* Top badges */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+          {place.is_hidden_gem && (
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/90 backdrop-blur-md text-stone-900 shadow">
+              <Sparkles className="w-2.5 h-2.5" /> Hidden Gem
+            </span>
+          )}
+          {place.open_now && (
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/90 backdrop-blur-md text-white shadow">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" /> Open
+            </span>
+          )}
+        </div>
+
+        {/* Bottom image bar */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-bold text-amber-300">{place.rating || '4.8'}</span>
+            <span className="text-[10px] text-stone-400 font-normal">({place.user_ratings_total || 45})</span>
+          </div>
+          {place.distance_approx_km && (
+            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 text-[11px] text-stone-200">
+              <Navigation className="w-2.5 h-2.5 text-emerald-400" />
+              {place.distance_approx_km} km
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="p-4 space-y-2">
+        <h4 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors leading-tight line-clamp-1">
+          {place.name}
+        </h4>
+        <p className="text-xs text-stone-400 flex items-start gap-1 line-clamp-1">
+          <MapPin className="w-3 h-3 mt-0.5 shrink-0 text-emerald-500" />
+          {place.vicinity}
+        </p>
+        {place.highlight && (
+          <p className="text-[11px] text-emerald-300/70 italic line-clamp-2 border-l-2 border-emerald-700 pl-2">
+            "{place.highlight}"
+          </p>
+        )}
+
+        {/* Action Row */}
+        <div className="flex items-center justify-between pt-2 border-t border-stone-800">
+          <button
+            onClick={e => { e.stopPropagation(); onSelect(place); }}
+            className="flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+          >
+            <Eye className="w-3.5 h-3.5" /> View Photos
+          </button>
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold transition-colors shadow-sm"
+          >
+            <Navigation className="w-3 h-3" /> Navigate
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlaceModal({ place, onClose }) {
+  const [imgErr, setImgErr] = useState(false);
+
+  useEffect(() => {
+    const esc = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [onClose]);
+
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.vicinity}`)}`;
+  const photos = place.photo_urls?.filter(Boolean).slice(0, 6) || [];
+
+  return (
+    <div
+      className="fixed inset-0 z-[99] flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-[#0f1f16] border border-emerald-900/60 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Hero */}
+        <div className="relative h-52 overflow-hidden rounded-t-2xl bg-stone-900">
+          <img
+            src={!imgErr && photos[0] ? photos[0] : HIMALAYAN_FALLBACKS[0]}
+            alt={place.name}
+            onError={() => setImgErr(true)}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f1f16] to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4">
+            <div className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase tracking-widest mb-1">
+              <Sparkles className="w-3 h-3" /> Verified on Google Maps
+            </div>
+            <h3 className="text-xl font-black text-white leading-tight">{place.name}</h3>
+            <p className="text-xs text-stone-400 flex items-center gap-1 mt-1">
+              <MapPin className="w-3 h-3 text-emerald-500" /> {place.vicinity}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-stone-900 rounded-xl p-3 text-center border border-stone-800">
+              <Star className="w-4 h-4 text-amber-400 mx-auto mb-1" />
+              <div className="text-base font-black text-amber-400">{place.rating || '4.8'}</div>
+              <div className="text-[10px] text-stone-500">Rating</div>
+            </div>
+            <div className="bg-stone-900 rounded-xl p-3 text-center border border-stone-800">
+              <TrendingUp className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
+              <div className="text-base font-black text-emerald-400">{place.user_ratings_total || '45'}+</div>
+              <div className="text-[10px] text-stone-500">Reviews</div>
+            </div>
+            <div className="bg-stone-900 rounded-xl p-3 text-center border border-stone-800">
+              <Clock className="w-4 h-4 text-sky-400 mx-auto mb-1" />
+              <div className={`text-sm font-black ${place.open_now ? 'text-emerald-400' : 'text-stone-500'}`}>
+                {place.open_now ? 'Open' : 'Closed'}
+              </div>
+              <div className="text-[10px] text-stone-500">Status</div>
+            </div>
+          </div>
+
+          {/* Photo Grid */}
+          {photos.length > 1 && (
+            <div>
+              <h5 className="text-[11px] font-bold uppercase tracking-wider text-stone-500 mb-2">Location Photos</h5>
+              <div className="grid grid-cols-3 gap-1.5">
+                {photos.slice(1).map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`${place.name} ${i + 2}`}
+                    className="w-full h-20 object-cover rounded-lg border border-stone-800"
+                    loading="lazy"
+                    onError={e => { e.currentTarget.src = HIMALAYAN_FALLBACKS[i % HIMALAYAN_FALLBACKS.length]; }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reviews */}
+          {place.reviews?.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-[11px] font-bold uppercase tracking-wider text-stone-500">Traveler Feedback</h5>
+              {place.reviews.slice(0, 2).map((rev, i) => (
+                <div key={i} className="bg-stone-900 border border-stone-800 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-stone-200">{rev.author_name}</span>
+                    <span className="flex items-center gap-0.5 text-amber-400 text-xs font-bold">
+                      <Star className="w-3 h-3 fill-amber-400" /> {rev.rating}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-400 italic line-clamp-3">"{rev.text}"</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* CTA */}
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold text-sm shadow-lg transition-all"
+          >
+            <Navigation className="w-4 h-4" />
+            Open in Google Maps
+            <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function GooglePlacesRadarWidget({ 
   locationName = 'Uttarakhand', 
@@ -57,13 +281,17 @@ export default function GooglePlacesRadarWidget({
     return () => { isMounted = false; };
   }, [coordinates?.lat, coordinates?.lng, activeTab]);
 
-  const filteredPlaces = places.filter(place => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'viewpoints') return place.is_hidden_gem || (place.types || []).includes('natural_feature');
-    if (activeTab === 'food') return (place.types || []).some(t => ['restaurant', 'food', 'cafe'].includes(t));
-    if (activeTab === 'lodging') return (place.types || []).some(t => ['lodging', 'campground'].includes(t));
-    return true;
-  });
+  const filteredPlaces = places
+    .filter(place => {
+      const name = (place.name || '').trim();
+      if (name.length <= 3 || name === 'GD' || name === 'KCP' || name === '?' || name.toLowerCase().includes('unknown')) return false;
+      if (activeTab === 'all') return true;
+      if (activeTab === 'viewpoints') return place.is_hidden_gem || (place.types || []).includes('natural_feature');
+      if (activeTab === 'food') return (place.types || []).some(t => ['restaurant', 'food', 'cafe'].includes(t));
+      if (activeTab === 'lodging') return (place.types || []).some(t => ['lodging', 'campground'].includes(t));
+      return true;
+    })
+    .slice(0, 6);
 
   return (
     <div className={`bg-white dark:bg-[#121c16] rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-sm p-6 overflow-hidden ${customClass}`}>

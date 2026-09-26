@@ -5,7 +5,7 @@
  */
 
 import axios from 'axios';
-import { redisClient } from '../config/redis.js';
+import { redisClient, cacheGet, cacheSet } from '../config/redis.js';
 
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY || '';
 const CACHE_TTL_SECONDS = 86400; // 24 hours
@@ -32,13 +32,11 @@ export async function searchRealHimalayanPhotos(query = 'Uttarakhand Himalayas',
   const normalizedQuery = query.toLowerCase().trim();
   const cacheKey = `photo:search:${encodeURIComponent(normalizedQuery)}:${perPage}`;
 
-  // 1. Check Redis Cache
+  // 1. Check Redis Cache (dual-layer: memory + Upstash)
   try {
-    if (redisClient) {
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        return typeof cached === 'string' ? JSON.parse(cached) : cached;
-      }
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return typeof cached === 'string' ? JSON.parse(cached) : cached;
     }
   } catch (err) {
     console.warn('[PhotoService] Cache lookup failed:', err.message);
@@ -61,17 +59,15 @@ export async function searchRealHimalayanPhotos(query = 'Uttarakhand Himalayas',
 
       if (response.data && Array.isArray(response.data.photos) && response.data.photos.length > 0) {
         const results = response.data.photos.map((p) => ({
-          url: p.src?.large2x || p.src?.large || p.src?.original,
+          url: p.src?.original || p.src?.large2x || p.src?.large,
           photographer: p.photographer || 'Pexels Verified Photographer',
           alt: p.alt || query,
           source: 'Pexels',
         }));
 
-        // Cache results
+        // Cache results in both memory + Upstash layers
         try {
-          if (redisClient) {
-            await redisClient.set(cacheKey, JSON.stringify(results), { ex: CACHE_TTL_SECONDS });
-          }
+          await cacheSet(cacheKey, JSON.stringify(results), CACHE_TTL_SECONDS);
         } catch (_) {}
 
         return results;
