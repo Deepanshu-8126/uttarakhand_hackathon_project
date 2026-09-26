@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand Color Palette matching Discovery Uttarakhand
-  static const Color forestGreen = Color(0xFF1A4331);
-  static const Color darkGreen = Color(0xFF122A1F);
-  static const Color cream = Color(0xFFFDFBF7);
+  // Master Signature 2-Color Palette (GEMINI.md Constitution)
+  static const Color forestGreen = Color(0xFF0F3D2E); // Deep Himalayan Emerald
+  static const Color forestGreenHover = Color(0xFF144C3A);
+  static const Color darkGreen = Color(0xFF09261C);
+  static const Color radiantEmerald = Color(0xFF00FF88); // Radiant Mountain Emerald/Teal Glow
+  static const Color emeraldSafe = Color(0xFF059669);
+  static const Color emeraldLight = Color(0xFF34D399);
+
+  // Surfaces
+  static const Color cream = Color(0xFFFDFBF7); // Clean Alpine Light
+  static const Color creamAlt = Color(0xFFFCFAF6);
   static const Color warmWhite = Color(0xFFFFFFFF);
   static const Color beige = Color(0xFFF3EFE6);
-  static const Color earthBrown = Color(0xFFC08457);
-  static const Color textDark = Color(0xFF1C1917);
-  static const Color mutedText = Color(0xFF57534E);
-  static const Color borderLight = Color(0xFFE7E5E4);
+  static const Color slateDark = Color(0xFF080D0A);
+
+  // Accents & Texts
   static const Color amberWarning = Color(0xFFD97706);
-  static const Color emeraldSafe = Color(0xFF059669);
+  static const Color textDark = Color(0xFF0F172A);
+  static const Color mutedText = Color(0xFF475569);
+  static const Color borderLight = Color(0xFFE2E8F0);
 
   static ThemeData get lightTheme {
     return ThemeData(
