@@ -80,13 +80,13 @@ jobs:
             APK_PATH=$(find mobile_app/build -name "*.apk" -type f | head -1)
           fi
           echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.0.7.apk
+          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.0.8.apk
           ls -lh dist-apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Discover-Uttarakhand-Android-APK-v1.0.7
+          name: Discover-Uttarakhand-Android-APK-v1.0.8
           path: dist-apk/*.apk
           if-no-files-found: error
           retention-days: 30
@@ -96,8 +96,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push --delete origin v1.0.7-apk 2>/dev/null || true
-          git tag -d v1.0.7-apk 2>/dev/null || true
+          git push --delete origin v1.0.8-apk 2>/dev/null || true
+          git tag -d v1.0.8-apk 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -105,34 +105,33 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v1.0.7-apk
-          name: "🏔️ Discover Uttarakhand Android APK v1.0.7"
+          tag_name: v1.0.8-apk
+          name: "🏔️ Discover Uttarakhand Android APK v1.0.8 (Latest Live Build)"
           body: |
-            ## 🏔️ Discovery Uttarakhand Android Mobile App — v1.0.7
+            ## 🏔️ Discovery Uttarakhand Android Mobile App — v1.0.8 (Current Live Build)
 
             ### 📲 Direct APK Download:
-            - **[Discover-Uttarakhand-v1.0.7.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.7-apk/Discover-Uttarakhand-v1.0.7.apk)**
+            - **[Discover-Uttarakhand-v1.0.8.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.8-apk/Discover-Uttarakhand-v1.0.8.apk)**
 
-            ### ✅ What's New in v1.0.7:
-            - Real authentic photography for 129+ Uttarakhand destinations
-            - Universal Android APK compatibility (ARM, ARM64, x86_64)
-            - Fixed installation conflicts & Play Protect bypass instructions
-            - Dual-layer Redis/RAM cache for 0ms photo loads
-            - Emergency Mountain SOS with 1-tap rescue broadcast
+            ### ✅ What's Included in v1.0.8:
+            - Fully synced with latest commits on `main` branch
+            - Real-time WebSocket AI Copilot engine with zero latency
+            - Universal Android APK compatibility (ARM64, ARMv7, x86_64)
+            - Clean Alpine White & Deep Himalayan Emerald theme matching Web 1:1
+            - Spatial GIS Interactive map with live altitude radar & SOS mesh
+            - Real photography for 129+ Uttarakhand destinations (Pexels + Unsplash engine)
 
-            ### ⚙️ Install Instructions on Android Phone:
-            1. Agar pehle se koi purani version phone me installed hai, toh **usse pehle Uninstall karein**.
-            2. Nayi APK download karein: **[Discover-Uttarakhand-v1.0.7.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.7-apk/Discover-Uttarakhand-v1.0.7.apk)**
-            3. File Manager / Downloads me jaakar APK tap karein.
-            4. Agar **"Blocked by Play Protect"** ya **"Unsafe App Blocked"** pop-up aaye:
-               - **"More details"** par click karein.
-               - **"Install anyway"** tap karein.
-            5. App install ho jayegi aur bina kisi issue ke chalegi.
-
-            ---
-            *Build: Universal Multi-Architecture | Flutter 3.27.4 Stable | Android SDK 35*
+            ### ⚙️ Install Instructions:
+            1. Purani version installed ho toh pehle **Uninstall** karein.
+            2. Nayi APK download karein: **[Discover-Uttarakhand-v1.0.8.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.8-apk/Discover-Uttarakhand-v1.0.8.apk)**
+            3. File tap karke install karein (Play Protect pop-up aaye to *More details -> Install anyway* tap karein).
           files: dist-apk/*.apk
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "### 🚀 Discover Uttarakhand APK v1.0.8 Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "Direct Download: [Discover-Uttarakhand-v1.0.8.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.8-apk/Discover-Uttarakhand-v1.0.8.apk)" >> $GITHUB_STEP_SUMMARY
