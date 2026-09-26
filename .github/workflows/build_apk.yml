@@ -3,6 +3,8 @@ name: Build Discovery Uttarakhand Android APK
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -70,60 +72,58 @@ jobs:
             APK_PATH=$(find mobile_app/build -name "*.apk" -type f | head -1)
           fi
           echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.1.0.apk
+          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.1.0-Release.apk
           ls -lh dist-apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Discover-Uttarakhand-Android-APK-v1.1.0
-          path: dist-apk/*.apk
+          path: dist-apk/Discover-Uttarakhand-v1.1.0-Release.apk
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish Official Global GitHub Release v1.1.0
         uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
           tag_name: v1.1.0
-          name: "🏔️ Discovery Uttarakhand Mobile App v1.1.0 (Official Production Release)"
+          name: "📱 Direct APK Download — Discovery Uttarakhand Mobile App v1.1.0 (Latest Official Release)"
           body: |
-            # 🏔️ Discovery Uttarakhand — Official Android Mobile App (v1.1.0)
+            # 🏔️ Discovery Uttarakhand — Android Mobile App (Official v1.1.0)
 
-            ### 📲 Direct 1-Click APK Download:
-            - **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)**
+            ### 📲 DIRECT 1-CLICK APK DOWNLOAD (NO ZIP REQUIRED):
+            👇 **Click the direct APK file link below to download & install directly on your Android phone:**
 
-            ---
+            👉 **[Download Discover-Uttarakhand-v1.1.0-Release.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0-Release.apk)** 👈
 
-            ### 🌟 Key Features & Capabilities:
-            1. **Full 1:1 Web Parity**:
-               - Spiritual shrines, Cultural heritage, Adventures & Rafting, Verified Mountain Homestays, and 3-Layer Fleet Rentals.
-            2. **Real-Time WebSocket AI Copilot**:
-               - Sub-second streaming mountain assistance with ground-verified routing and zero-latency WebSocket communication.
-            3. **Emergency Mountain SOS & SDRF Mesh**:
-               - 1-second press-and-hold panic trigger, satellite telemetry coordinates, direct 1070/112 helplines, and WhatsApp broadcast.
-            4. **Spatial GIS Mountain Map**:
-               - Interactive elevation contours, corridor statuses, and 1-tap smart contract escrow booking.
-            5. **100% Real Photography Pipeline**:
-               - Multi-source photographic engine (Pexels + Unsplash verified records) — zero generic AI art.
-            6. **Clean Alpine Theme System**:
-               - Unified 2-color brand palette (`#0f3d2e` Deep Himalayan Emerald + `#00FF88` Glow) with clean white surfaces.
+            *(Direct Android Package File `.apk` — Size: ~57 MB)*
 
             ---
 
-            ### ⚙️ Quick Installation Guide:
-            1. If you have an older development version installed, uninstall it first.
-            2. Download **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)**.
-            3. Tap the downloaded APK in your Downloads folder to install.
-            4. If Google Play Protect shows a prompt, select **"More details"** -> **"Install anyway"**.
-          files: dist-apk/*.apk
+            ### ⚡ 30-Second Quick Install Guide:
+            1. **Download APK**: Tap the blue link above (**Discover-Uttarakhand-v1.1.0-Release.apk**).
+            2. **Uninstall Old Build**: If an older version is already installed on your phone, uninstall it first.
+            3. **Open & Install**: Open your phone's *Downloads* folder and tap on `Discover-Uttarakhand-v1.1.0-Release.apk`.
+            4. **Play Protect Prompt**: If you see *"Blocked by Play Protect"* / *"Unrecognized Developer"*:
+               - Tap **"More details"** (या 'अधिक विवरण').
+               - Tap **"Install anyway"** (या 'फिर भी इंस्टॉल करें').
+            5. **Done!** Launch Discovery Uttarakhand and enjoy full Himalayan Ground Intelligence.
+
+            ---
+
+            ### 🌟 Included Features in v1.1.0:
+            - **1:1 Full Web Parity**: Spiritual Dham corridors, Cultural trails, Alpine adventures, Verified stays, and 3-Layer vehicle rentals.
+            - **Real-Time WebSocket AI Copilot**: Sub-second streaming conversational assistant with ground-verified data.
+            - **Emergency Mountain SOS**: 1-second press-and-hold panic trigger, SDRF satellite coordinates broadcast, and 1-tap WhatsApp alert.
+            - **Spatial GIS Interactive Map**: Topographic relief contours, corridor safety status, and 1-tap smart contract escrow booking.
+            - **100% Real Photography Pipeline**: Multi-source photographic engine (Pexels + Unsplash verified captures) — zero AI art.
+            - **Clean Alpine Theme**: Unified 2-color brand palette (`#0f3d2e` Deep Himalayan Emerald + `#00FF88` Glow) with clean white surfaces.
+
+            ---
+            *Universal Architecture (ARM64 / ARMv7 / x86_64) | Flutter 3.27.4 Stable | Android SDK 35*
+          files: dist-apk/Discover-Uttarakhand-v1.1.0-Release.apk
           draft: false
           prerelease: false
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Summary
-        run: |
-          echo "### 🚀 Discover Uttarakhand APK v1.1.0 Released Globally!" >> $GITHUB_STEP_SUMMARY
-          echo "Direct Download: [Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)" >> $GITHUB_STEP_SUMMARY

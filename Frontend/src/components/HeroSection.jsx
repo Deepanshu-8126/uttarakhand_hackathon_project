@@ -152,6 +152,17 @@ const DYNAMIC_OCCASION_SLIDES = [
     subtitle: 'High alpine snow ridges and historic stone shrines rising above cloud inversion layers.'
   },
   {
+    name: 'Kedarkantha 360° Summit',
+    location: 'Govind Pashu Vihar, Uttarkashi',
+    altitude: '3,810m',
+    tag: 'Classic Winter Summit',
+    occasion: 'Golden Peak Horizon & Snow Slopes',
+    src: '/assets/destinations/kedarkantha_summit_view.jpg',
+    fallbackSrc: '/assets/destinations/uttarakhand_bugyal_panoramic.jpg',
+    slug: 'kedarkantha',
+    subtitle: 'Dramatic 360-degree snow-clad panoramic views of Swargarohini, Bandarpoonch & Black Peak.'
+  },
+  {
     name: 'Kedarkantha Winter Bugyal',
     location: 'Govind Wildlife Sanctuary, Uttarkashi',
     altitude: '3,810m',

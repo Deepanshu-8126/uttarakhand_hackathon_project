@@ -18,8 +18,11 @@ export default function DestinationCard({ destination }) {
   const isSelected = selectedDestination?.id === destination.id;
   const isAdded = tripDestinations.some((d) => d.id === destination.id);
   const images = getCardImages(destination);
-  const baseFallback = images[0] || getHimalayanFallbackImage(destination);
-  const displayImage = useFreshImage(destination.slug || destination.name, baseFallback);
+  const rawDbImage = (typeof destination.coverImage === 'string' && destination.coverImage) 
+    ? destination.coverImage 
+    : (destination.coverImage?.url || destination.image || destination.imageUrl || images[0]);
+  const baseFallback = rawDbImage || getHimalayanFallbackImage(destination);
+  const displayImage = rawDbImage || useFreshImage(destination.slug || destination.name, baseFallback);
 
   return (
     <div

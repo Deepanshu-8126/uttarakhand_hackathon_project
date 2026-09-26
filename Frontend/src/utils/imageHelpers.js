@@ -35,14 +35,15 @@ export const DESTINATION_NAMED_IMAGES = {
   // High-Altitude Meadows & Treks
   'valley of flowers': '/assets/yatra_sarthi/valley_of_flowers.jpg',
   'auli': '/assets/yatra_sarthi/auli.jpg',
-  'chopta': '/assets/yatra_sarthi/chopta.jpg',
+  'chopta': '/assets/destinations/chopta_snow_camp.jpg',
+  'tungnath': '/assets/destinations/tungnath_summit.jpg',
   'dayara bugyal': '/assets/destinations/uttarakhand_bugyal_panoramic.jpg',
   'kuari pass': '/assets/destinations/chandrashila_sunset_snow.jpg',
   'roopkund': '/assets/destinations/brahmatal_snow_trek.jpg',
-  'kedarkantha': '/assets/destinations/brahmatal_snow_trek.jpg',
+  'kedarkantha': '/assets/destinations/kedarkantha_summit_view.jpg',
   'har ki dun': '/assets/destinations/himalayan_basecamp_village.jpg',
-  'adi kailash': '/assets/destinations/pithoragarh/gallery-1.jpg',
-  'om parvat': '/assets/destinations/pithoragarh/gallery-1.jpg',
+  'adi kailash': '/assets/destinations/adi_kailash.jpg',
+  'om parvat': '/assets/destinations/om_parvat.jpg',
   'gaumukh': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
   'milam': '/assets/destinations/himalayan_basecamp_village.jpg',
   'munsiyari': '/assets/destinations/munsiyari/cover.jpg',
@@ -250,11 +251,35 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
   const images = [];
   const name = (item.name || item.title || '').toLowerCase().trim();
 
-  // 1. Direct verified named destination
-  for (const [key, photoUrl] of Object.entries(DESTINATION_NAMED_IMAGES)) {
-    if (name === key || name.startsWith(key) || (item.slug && item.slug.toLowerCase().includes(key.replace(/\s+/g, '-')))) {
-      images.push(photoUrl);
-      break;
+  const addUrl = (val) => {
+    if (!val) return;
+    let url = null;
+    if (typeof val === 'string' && val.trim() !== '') {
+      url = val.trim();
+    } else if (typeof val === 'object' && val !== null) {
+      url = val.url || val.src || val.secure_url || val.path || null;
+    }
+    if (url && typeof url === 'string' && url.length > 5 && !url.includes('placeholder') && !images.includes(url)) {
+      images.push(url);
+    }
+  };
+
+  // 1. PRIORITY 1: Direct Database Asset from item (MongoDB / Local seed)
+  addUrl(item.coverImage);
+  addUrl(item.image);
+  addUrl(item.imageUrl);
+  addUrl(item.photo);
+  if (Array.isArray(item.gallery)) item.gallery.forEach(addUrl);
+  if (Array.isArray(item.images)) item.images.forEach(addUrl);
+  if (Array.isArray(item.photos)) item.photos.forEach(addUrl);
+
+  // 2. PRIORITY 2: Direct verified named local destination asset
+  if (images.length === 0) {
+    for (const [key, photoUrl] of Object.entries(DESTINATION_NAMED_IMAGES)) {
+      if (name === key || name.startsWith(key) || (item.slug && item.slug.toLowerCase().includes(key.replace(/\s+/g, '-')))) {
+        images.push(photoUrl);
+        break;
+      }
     }
   }
 
@@ -277,31 +302,7 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
                     item.type?.toLowerCase()?.includes('car') || 
                     item.pricePerDay;
 
-  const addUrl = (val) => {
-    if (!val) return;
-    let url = null;
-    if (typeof val === 'string' && val.trim() !== '') {
-      url = val.trim();
-    } else if (typeof val === 'object' && val !== null) {
-      url = val.url || val.src || val.secure_url || val.path || null;
-    }
-    if (url && typeof url === 'string' && url.length > 5 && !url.includes('placeholder') && !url.includes('wikimedia') && !images.includes(url)) {
-      images.push(url);
-    }
-  };
-
-  // Add primary coverImage
-  addUrl(item.coverImage);
-  addUrl(item.image);
-  addUrl(item.imageUrl);
-  addUrl(item.photo);
-
-  // Add gallery images
-  if (Array.isArray(item.gallery)) item.gallery.forEach(addUrl);
-  if (Array.isArray(item.images)) item.images.forEach(addUrl);
-  if (Array.isArray(item.photos)) item.photos.forEach(addUrl);
-
-  // Specialized fallbacks with deterministic indexing (zero duplicates)
+  // 3. PRIORITY 3: Specialized fallbacks with deterministic indexing
   if (images.length === 0) {
     if (isVehicle) {
       images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category));
