@@ -450,7 +450,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
         const recordedBlob = new Blob(chunks, { type: mimeType || 'audio/webm' });
         audioChunksRef.current = [];
 
-        if (recordedBlob.size > 1200) {
+        if (recordedBlob.size > 300) {
           sendAudioBlobToBridge(recordedBlob);
         } else {
           if (voiceStatusRef.current === 'listening') {
@@ -462,7 +462,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       recorder.start();
       updateVoiceStatus('listening');
 
-      // Snappy 120ms VAD timer (1.0 second silence trigger for instant answers!)
+      // Snappy 100ms VAD timer with ultra-sensitive threshold (avg > 1.5)
       const dataArr = new Uint8Array(analyser.frequencyBinCount);
       let silenceSince = null;
 
@@ -474,18 +474,18 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
         for (let i = 0; i < dataArr.length; i++) sum += dataArr[i];
         const avg = sum / dataArr.length;
 
-        // When user speaks
-        if (avg > 8) {
+        // When user speaks (sensitive threshold 1.5 for all mic hardware)
+        if (avg > 1.5) {
           hasSpokenRef.current = true;
           silenceSince = null;
         } else if (hasSpokenRef.current) {
           if (!silenceSince) silenceSince = Date.now();
-          // After 750ms of silence post-speech, submit immediately!
-          if (Date.now() - silenceSince > 750) {
+          // After 700ms of silence post-speech, submit immediately!
+          if (Date.now() - silenceSince > 700) {
             stopRecordingAndSend();
           }
         }
-      }, 120);
+      }, 100);
 
     } catch (err) {
       console.warn('[VoiceOverlay] Mic stream failed:', err);
