@@ -689,79 +689,8 @@ export default function HeroSection() {
 
       </div>
 
-      {/* ── 2. Unified Intelligent Trip Search Bar ── */}
-      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-5xl mx-auto -mt-6 sm:-mt-9 relative z-20">
-        <form 
-          onSubmit={handleAiSubmit}
-          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-2xl border border-stone-200/80 hover:border-emerald-500/40 transition-all duration-200"
-        >
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-            
-            {/* Input with Sparkle Indicator */}
-            <div className="flex-1 flex items-center gap-3 px-3 py-2 w-full">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                <Sparkles size={16} />
-              </div>
-              <input
-                type="text"
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Where to? e.g. '3-day Kedarnath trek from Rishikesh under ₹8,000'"
-                className="w-full bg-transparent text-xs sm:text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
-              />
-            </div>
-
-            {/* Voice & Submit Actions */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pr-1">
-              <button
-                type="button"
-                onClick={toggleVoiceSearch}
-                title="Voice Search"
-                className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl transition-all cursor-pointer ${
-                  isListeningVoice 
-                    ? 'bg-red-500 text-white animate-pulse' 
-                    : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
-                }`}
-              >
-                <Mic size={16} />
-              </button>
-
-              <button
-                type="submit"
-                className="px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-98"
-              >
-                <span>Plan Trip</span>
-                <ArrowRight size={15} />
-              </button>
-            </div>
-
-          </div>
-
-          {/* Quick Filter Prompt Chips */}
-          <div className="flex items-center gap-1.5 pt-2.5 sm:pt-3 px-2 overflow-x-auto no-scrollbar text-[11px] text-stone-500 border-t border-stone-100 mt-2">
-            <span className="font-semibold text-stone-400 shrink-0">Popular:</span>
-            {[
-              "Valley of Flowers 4 Days",
-              "Kedarnath Budget Yatra",
-              "Auli Ski & Snow",
-              "Rishikesh Weekend Stays",
-              "Chopta Tungnath Trek"
-            ].map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => handleChipClick(chip)}
-                className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-200 border border-transparent text-stone-600 font-medium transition-colors shrink-0 cursor-pointer"
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        </form>
-      </div>
-
-      {/* ── 3. Curated Experiences Section (Matches Reference Screenshot) ── */}
-      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-14 sm:mt-20">
+      {/* ── 2. Curated Experiences Section (Matches Reference Screenshot) ── */}
+      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-10 sm:mt-14">
         
         {/* Header & Category Filter Pills */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8 px-1">

@@ -1255,82 +1255,57 @@ export default function MapPage() {
               </span>
             </button>
 
-            {/* ── TOOLS dropdown: Google Places + Himalayan Routes ── */}
-            <div className="relative shrink-0" ref={moreDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setMoreDropdownOpen(o => !o)}
-                className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer ${
-                  moreDropdownOpen
-                    ? 'bg-[#0f3d2e] text-white border-[#0f3d2e]'
-                    : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
-                }`}
-                title="More map tools"
-              >
-                <Zap size={12} className={moreDropdownOpen ? 'text-emerald-300' : 'text-stone-500'} />
-                <span>Tools</span>
-                <ChevronDown size={12} className={`transition-transform duration-200 ${moreDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+            {/* Category Filter Chip: Google Places Radar */}
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(selectedCategory === 'radar' ? 'All' : 'radar')}
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                selectedCategory === 'radar'
+                  ? 'bg-[#0f3d2e] text-white shadow-xs ring-2 ring-emerald-400/50'
+                  : 'bg-amber-50/80 hover:bg-amber-100 text-amber-900 border border-amber-200'
+              }`}
+            >
+              <Sparkles size={13} className={selectedCategory === 'radar' ? 'text-emerald-300' : 'text-amber-600'} />
+              <span>Google Places Radar</span>
+              <span className={`text-[11px] font-semibold ${selectedCategory === 'radar' ? 'text-emerald-200' : 'text-amber-700'}`}>
+                {categoryCounts.radar || 0}
+              </span>
+            </button>
 
-              {moreDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="px-3 py-2 border-b border-stone-100">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Map Tools</p>
-                  </div>
-
-                  {/* Google Places Finder */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory(selectedCategory === 'radar' ? 'All' : 'radar');
-                      setMoreDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left cursor-pointer ${
-                      selectedCategory === 'radar'
-                        ? 'bg-emerald-50 text-[#0f3d2e]'
-                        : 'hover:bg-stone-50 text-stone-700'
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                      selectedCategory === 'radar' ? 'bg-[#0f3d2e]' : 'bg-stone-100'
-                    }`}>
-                      <Sparkles size={14} className={selectedCategory === 'radar' ? 'text-emerald-300' : 'text-emerald-600'} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold">Google Places Finder</p>
-                      <p className="text-[10px] text-stone-500">Live satellite search across Uttarakhand</p>
-                    </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                      selectedCategory === 'radar' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-500'
-                    }`}>{categoryCounts.radar || 0}</span>
-                  </button>
-
-                  {/* Himalayan Routes Finder */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTransitDrawerOpen(true);
-                      setMoreDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors text-left cursor-pointer group border-t border-stone-100"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-[#0f3d2e] flex items-center justify-center shrink-0">
-                      <Navigation size={14} className="text-emerald-300 group-hover:rotate-12 transition-transform" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[#0f3d2e]">Himalayan Routes Finder</p>
-                      <p className="text-[10px] text-stone-500">Corridors, transit, altitude waypoints</p>
-                    </div>
-                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Open →</span>
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Category Filter Chip: Himalayan Transit Routes Drawer */}
+            <button
+              type="button"
+              onClick={() => setTransitDrawerOpen((o) => !o)}
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shadow-xs ${
+                transitDrawerOpen
+                  ? 'bg-[#0f3d2e] text-emerald-300 ring-2 ring-emerald-400'
+                  : 'bg-[#0f3d2e] hover:bg-[#144d3b] text-white'
+              }`}
+              title="Open Himalayan Transit Routes Navigator Drawer"
+            >
+              <Navigation size={13} className="text-emerald-400" />
+              <span>Transit Routes</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+            </button>
 
           </div>
 
-          {/* Right Count Indicator & Sidebar Toggle */}
+          {/* Right Count Indicator & Sidebar / Drawer Controls */}
           <div className="flex items-center gap-2.5 text-xs font-medium text-stone-500 shrink-0">
+
+            <button
+              type="button"
+              onClick={() => setTransitDrawerOpen((o) => !o)}
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-2xs ${
+                transitDrawerOpen
+                  ? 'bg-[#0f3d2e] text-emerald-300 ring-2 ring-emerald-400/50'
+                  : 'bg-[#0f3d2e] hover:bg-[#144d3b] text-white'
+              }`}
+              title="Toggle Himalayan Transit Panel Drawer"
+            >
+              <Navigation size={13} className="text-emerald-400" />
+              <span>Transit Panel</span>
+            </button>
 
             <span className="hidden xl:inline-block text-stone-400 font-medium">
               {filteredLocations.length} of {locations.length} places

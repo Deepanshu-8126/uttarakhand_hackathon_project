@@ -28,8 +28,8 @@ const Home = () => {
       <Navbar />
       <main className="flex-grow flex flex-col pb-28 md:pb-36">
         <HeroSection />
-        <ProblemStatement />
         <ExploreSection />
+        <ProblemStatement />
         <ThankYouSection />
         <ReviewSection targetId="general" targetType="site" />
       </main>
