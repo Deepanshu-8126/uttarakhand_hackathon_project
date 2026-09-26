@@ -419,109 +419,73 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     cleanupAudioNodes();
   };
 
-  // Start listening using Web Speech API — browser-native, no server needed
-  const startListening = () => {
+  // Start hardware microphone recording with fast VAD (Voice Activity Detection)
+  const startListening = async () => {
     if (audioPlayerRef.current) {
       try { audioPlayerRef.current.pause(); } catch (e) {}
       audioPlayerRef.current = null;
     }
     setTranscript('');
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      // Fallback: MediaRecorder + Render API with generic prompt
-      startListeningLegacy();
-      return;
-    }
-
-    // Stop any previous recognition
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-    recognitionActiveRef.current = false;
-
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
-    recognition.maxAlternatives = 1;
-
-    let finalText = '';
-
-    recognition.onstart = () => {
-      recognitionActiveRef.current = true;
-      updateVoiceStatus('listening');
-    };
-
-    recognition.onresult = (event) => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalText += t;
-        else interim += t;
-      }
-      setTranscript(finalText || interim);
-    };
-
-    recognition.onend = () => {
-      recognitionActiveRef.current = false;
-      const query = finalText.trim();
-      if (query && voiceStatusRef.current !== 'idle') {
-        handleVoiceQuerySubmit(query);
-      } else if (voiceStatusRef.current === 'listening') {
-        // Nothing heard — restart loop
-        setTimeout(() => startListening(), 300);
-      }
-    };
-
-    recognition.onerror = (e) => {
-      recognitionActiveRef.current = false;
-      console.warn('[VoiceOverlay] SpeechRecognition error:', e.error);
-      if (e.error === 'not-allowed') {
-        updateVoiceStatus('idle');
-      } else if (voiceStatusRef.current === 'listening') {
-        setTimeout(() => startListening(), 500);
-      }
-    };
-
-    try {
-      recognition.start();
-    } catch (e) {
-      console.warn('[VoiceOverlay] Recognition start failed, using legacy:', e);
-      startListeningLegacy();
-    }
-  };
-
-  // Legacy MediaRecorder fallback (for browsers without SpeechRecognition)
-  const startListeningLegacy = async () => {
-    setTranscript('');
     hasSpokenRef.current = false;
     audioChunksRef.current = [];
+
+    connectBridgeWS();
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       mediaStreamRef.current = stream;
+
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       const ctx = new AudioCtx();
       recordingContextRef.current = ctx;
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.5;
       source.connect(analyser);
       analyserRef.current = analyser;
-      const recorder = new MediaRecorder(stream);
+
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      }
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
-      recorder.ondataavailable = (e) => { if (e.data?.size > 0) audioChunksRef.current.push(e.data); };
-      recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        audioChunksRef.current = [];
-        if (blob.size > 300) sendAudioBlobToBridge(blob);
-        else if (voiceStatusRef.current === 'listening') startListening();
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
       };
+
+      recorder.onstop = () => {
+        const chunks = audioChunksRef.current;
+        if (chunks.length === 0) return;
+        const recordedBlob = new Blob(chunks, { type: mimeType || 'audio/webm' });
+        audioChunksRef.current = [];
+
+        if (recordedBlob.size > 300) {
+          sendAudioBlobToBridge(recordedBlob);
+        } else {
+          if (voiceStatusRef.current === 'listening') {
+            startListening();
+          }
+        }
+      };
+
       recorder.start();
       updateVoiceStatus('listening');
+
+      // Snappy 100ms VAD timer with ultra-sensitive threshold (avg > 1.2)
       const dataArr = new Uint8Array(analyser.frequencyBinCount);
       let silenceSince = null;
+
       if (vadIntervalRef.current) clearInterval(vadIntervalRef.current);
       vadIntervalRef.current = setInterval(() => {
         if (voiceStatusRef.current !== 'listening' || !analyserRef.current) return;
@@ -529,14 +493,22 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
         let sum = 0;
         for (let i = 0; i < dataArr.length; i++) sum += dataArr[i];
         const avg = sum / dataArr.length;
-        if (avg > 1.5) { hasSpokenRef.current = true; silenceSince = null; }
-        else if (hasSpokenRef.current) {
+
+        // User speaking threshold (1.2 sensitivity for all mic hardware)
+        if (avg > 1.2) {
+          hasSpokenRef.current = true;
+          silenceSince = null;
+        } else if (hasSpokenRef.current) {
           if (!silenceSince) silenceSince = Date.now();
-          if (Date.now() - silenceSince > 700) stopRecordingAndSend();
+          // After 600ms of silence post-speech, submit immediately!
+          if (Date.now() - silenceSince > 600) {
+            stopRecordingAndSend();
+          }
         }
       }, 100);
+
     } catch (err) {
-      console.warn('[VoiceOverlay] Legacy mic failed:', err);
+      console.warn('[VoiceOverlay] Mic stream failed:', err);
       updateVoiceStatus('idle');
     }
   };

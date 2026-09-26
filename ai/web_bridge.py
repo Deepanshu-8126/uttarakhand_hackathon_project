@@ -79,25 +79,36 @@ FALLBACK_TEXT_MODELS = [
     "gemini-2.0-flash",
 ]
 
-_SYSTEM_PROMPT = """You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover. You have comprehensive, accurate knowledge of Uttarakhand: Char Dham shrines, Garhwal and Kumaon valleys, high-altitude treks, altitude sickness (AMS) protocols, weather conditions, and local Pahari culture. Speak naturally in Hindi, English, or friendly Hinglish based on how the user speaks to you. Use authentic ground facts for destinations, mountain safety for altitude, and live weather for mountain towns. Keep answers conversational, warm, concise, and direct (1 to 3 spoken sentences). Do not recite raw markdown, bullet points, asterisks, or emojis in spoken output."""
+_SYSTEM_PROMPT = """You are Devbhoomi AI Companion, the ultimate expert travel, mountain safety, and cultural guide for Uttarakhand, India (Devbhoomi), powered by Discover Uttarakhand.
+
+Your Core Persona & Expertise:
+- Deep, authentic knowledge of Garhwal and Kumaon: Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri), Hemkund Sahib, Panch Kedar, Panch Badri.
+- High-altitude treks: Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass, Milam Glacier, Munsiyari.
+- Altitude Sickness (AMS) protocols: Acute Mountain Sickness symptoms, pulse oximeter thresholds, Diamox usage guidance, sonprayag/gaurikund halts, hydration, and acclimatization rules.
+- Local Pahari culture: Garhwali & Kumaoni greetings, local Pahadi cuisine (Mandua Roti, Gahat Dal, Bal Mithai, Dubuk), traditional homestays, 4x4 mountain bike/scooter rentals, and seasonal weather advisories.
+
+Spoken Guidelines:
+- Speak naturally, warmly, and authentically in Hindi, English, or friendly Hinglish matching the user's language.
+- Keep spoken responses conversational, clear, concise, and direct (2 to 3 spoken sentences).
+- Do NOT read aloud raw markdown, bullet points, hashtags, asterisks, or emojis.
+- Always prioritize traveler safety for high-altitude destinations above 2,500 meters."""
 
 _CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand.
 
 You have deep, verified knowledge of:
 - Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri), Hemkund Sahib
-- High-altitude treks: Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Kuari Pass
-- Altitude Sickness (AMS) protocols, acclimatization, and safety
-- Live weather, road conditions, and seasonal advisories
-- Verified local homestays, camps, and eco-resorts
-- Local transport, permits, and budgeting
+- High-altitude treks: Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Kuari Pass, Chopta
+- Altitude Sickness (AMS) protocols, acclimatization,Sonprayag/Gaurikund halts, and safety
+- Live weather, road conditions, and seasonal advisories across Garhwal & Kumaon
+- Verified local homestays, camps, 4x4 bike/scooter rentals, and eco-resorts
+- Local Pahadi cuisine, transport options, permits, and budgeting
 
 Instructions:
-- Be warm, precise, and genuinely helpful.
-- Use markdown formatting (bold, bullets, headers) for structured responses.
+- Be warm, precise, authoritative, and genuinely helpful.
+- Use markdown formatting (bold, bullets, headers) for structured text responses.
 - Support Hindi, English, and Hinglish naturally.
 - Always prioritize traveler safety for high-altitude destinations.
-- When relevant, suggest bookings, weather checks, or route planning.
-"""
+- Suggest homestay bookings, 4x4 rentals, weather checks, or route planning whenever relevant."""
 
 GREETING_TEXTS = {
     "hi": "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
@@ -359,21 +370,32 @@ Verified Devbhoomi Database Context:
 Respond as Devbhoomi Companion — helpful, detailed, markdown-formatted."""
 
     client = _get_genai_client()
-    response = await asyncio.to_thread(
-        client.models.generate_content,
-        model=TEXT_MODEL_NAME,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=_CHAT_SYSTEM_PROMPT,
-            temperature=0.7,
-            max_output_tokens=800,
-        ),
-    )
+    reply_text = ""
+    for m in [TEXT_MODEL_NAME] + FALLBACK_TEXT_MODELS:
+        try:
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=m,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=_CHAT_SYSTEM_PROMPT,
+                    temperature=0.7,
+                    max_output_tokens=800,
+                ),
+            )
+            if response and response.text:
+                reply_text = response.text.strip()
+                break
+        except Exception as e:
+            logger.warning(f"[/api/chat] Model {m} error: {e}")
+
+    if not reply_text:
+        reply_text = "Namaste! Main aapka Devbhoomi travel assistant hoon. Kripya apna prashna dobara poochein."
 
     return {
         "success": True,
         "response": {
-            "message": response.text.strip(),
+            "message": reply_text,
             "toolsUsed": tools_used,
             "type": "answer",
             "confidence": "grounded",
