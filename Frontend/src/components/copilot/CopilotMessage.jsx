@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import StructuredTravelCards from "./StructuredTravelCards";
 import AgenticToolCallTimeline from "./AgenticToolCallTimeline";
-import { Sparkles, Check, ArrowRight, Shield, Volume2, VolumeX } from "lucide-react";
+import { Sparkles, Volume2, VolumeX } from "lucide-react";
 import { executeAgentAction } from "../../utils/agentActionExecutor";
 import { speakText, stopSpeaking, isSpeechSynthesisSupported } from "../../utils/speechSynthesis";
 
@@ -40,35 +40,6 @@ const TOOL_LABELS = {
   exploreDestination: "Finding activities..."
 };
 
-function ProvenanceBadge({ freshness }) {
-  const b = BADGE[freshness] || BADGE.VERIFIED;
-  return (
-    <span className="copilot-badge" style={{ borderColor: b.color, color: b.color }}>
-      <span className="copilot-badge__dot" style={{ background: b.color }} />
-      {b.label}
-    </span>
-  );
-}
-
-function ConfirmCard({ payload, onConfirm, onCancel }) {
-  return (
-    <div className="copilot-confirm-card">
-      <p className="copilot-confirm-card__title">Confirm Change</p>
-      <p className="copilot-confirm-card__detail">
-        {payload?.operation} - Day {payload?.day}
-      </p>
-      <div className="copilot-confirm-card__actions">
-        <button className="copilot-btn copilot-btn--confirm" onClick={onConfirm}>
-          Yes, proceed
-        </button>
-        <button className="copilot-btn copilot-btn--cancel" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function ToolActivity({ tools }) {
   if (!tools || !tools.length) return null;
   return (
@@ -83,9 +54,8 @@ function ToolActivity({ tools }) {
   );
 }
 
-export default function CopilotMessage({ msg, onConfirm, onCancel, onSelectAction, isLatest }) {
+export default function CopilotMessage({ msg, onConfirm, onCancel, onSelectAction, isLatest: _isLatest = false }) {
   const isUser = msg.role === "user";
-  const [showTrace, setShowTrace] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
