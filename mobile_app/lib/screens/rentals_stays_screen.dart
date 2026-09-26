@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../models/stay.dart';
 import '../services/api_service.dart';
 import 'verification_proof_screen.dart';
+import 'sos_safety_screen.dart';
 
 class RentalsStaysScreen extends StatefulWidget {
   const RentalsStaysScreen({super.key});
@@ -49,6 +50,14 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
       backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Rentals & Stays', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.textDark)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
+            tooltip: 'Emergency SOS',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
+          ),
+          const SizedBox(width: 4),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.forestGreen,

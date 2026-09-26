@@ -5,6 +5,7 @@ import '../models/destination.dart';
 import '../services/api_service.dart';
 import 'destination_detail_screen.dart';
 import 'checkout_screen.dart';
+import 'sos_safety_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -117,6 +118,12 @@ class _MapScreenState extends State<MapScreen> {
             tooltip: 'Toggle SDRF Safety Radar',
             onPressed: () => setState(() => showSafetyRadar = !showSafetyRadar),
           ),
+          IconButton(
+            icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
+            tooltip: 'Emergency SOS',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: isLoading

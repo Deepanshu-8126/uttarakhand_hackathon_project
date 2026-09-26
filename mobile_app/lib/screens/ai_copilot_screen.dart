@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../services/api_service.dart';
+import 'sos_safety_screen.dart';
 
 class AiCopilotScreen extends StatefulWidget {
   const AiCopilotScreen({super.key});
@@ -124,6 +125,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
+            tooltip: 'Emergency SOS',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: Column(
         children: [
