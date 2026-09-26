@@ -83,16 +83,17 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish Official Global GitHub Release v1.1.0
+      - name: Publish Official Global GitHub Release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.1.0
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.1.0' }}
           name: "📱 Direct APK Download — Discovery Uttarakhand Mobile App v1.1.0 (Latest Official Release)"
           body: |
-            # 🏔️ Discovery Uttarakhand — Android Mobile App (Official v1.1.0)
+            # 🏔️ Discovery Uttarakhand — Android Mobile App (Official Release)
 
-            ### 📲 DIRECT 1-CLICK APK DOWNLOAD (NO ZIP REQUIRED):
-            👇 **Click the direct APK file link below to download & install directly on your Android phone:**
+            ### 📲 DIRECT 1-CLICK APK DOWNLOAD (NO ZIP):
+            👇 **Directly tap the raw `.apk` file below on your phone to install without unzipping:**
 
             👉 **[Download Discover-Uttarakhand-v1.1.0-Release.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0-Release.apk)** 👈
 
@@ -100,8 +101,8 @@ jobs:
 
             ---
 
-            ### ⚡ 30-Second Quick Install Guide:
-            1. **Download APK**: Tap the blue link above (**Discover-Uttarakhand-v1.1.0-Release.apk**).
+            ### ⚡ Quick Install Guide:
+            1. **Download APK**: Tap the direct `.apk` link above.
             2. **Uninstall Old Build**: If an older version is already installed on your phone, uninstall it first.
             3. **Open & Install**: Open your phone's *Downloads* folder and tap on `Discover-Uttarakhand-v1.1.0-Release.apk`.
             4. **Play Protect Prompt**: If you see *"Blocked by Play Protect"* / *"Unrecognized Developer"*:
@@ -111,12 +112,12 @@ jobs:
 
             ---
 
-            ### 🌟 Included Features in v1.1.0:
+            ### 🌟 Included Features:
             - **1:1 Full Web Parity**: Spiritual Dham corridors, Cultural trails, Alpine adventures, Verified stays, and 3-Layer vehicle rentals.
             - **Real-Time WebSocket AI Copilot**: Sub-second streaming conversational assistant with ground-verified data.
             - **Emergency Mountain SOS**: 1-second press-and-hold panic trigger, SDRF satellite coordinates broadcast, and 1-tap WhatsApp alert.
             - **Spatial GIS Interactive Map**: Topographic relief contours, corridor safety status, and 1-tap smart contract escrow booking.
-            - **100% Real Photography Pipeline**: Multi-source photographic engine (Pexels + Unsplash verified captures) — zero AI art.
+            - **100% Real Photography Pipeline**: Multi-source photographic engine — zero AI art.
             - **Clean Alpine Theme**: Unified 2-color brand palette (`#0f3d2e` Deep Himalayan Emerald + `#00FF88` Glow) with clean white surfaces.
 
             ---
@@ -127,3 +128,4 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
