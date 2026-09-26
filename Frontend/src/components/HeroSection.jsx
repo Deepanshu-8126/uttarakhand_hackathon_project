@@ -1,82 +1,149 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Search, MapPin, Calendar, Users, ArrowRight, Sparkles, 
-  ChevronLeft, ChevronRight, Compass, Mic, MicOff
+  MapPin, ArrowRight, Sparkles, 
+  ChevronLeft, ChevronRight, Mic
 } from 'lucide-react';
 import { getDestinations } from '../api/destinationApi';
 
-// Clean, authentic travel destinations with guaranteed 1MB+ real photo assets
-const INITIAL_SLIDES = [
+// Rich, authentic Uttarakhand destinations & occasion-based spotlights
+const DYNAMIC_OCCASION_SLIDES = [
   {
-    name: 'Nainital',
-    location: 'Naini Lake, Kumaon',
+    name: 'Kedarnath Temple',
+    location: 'Mandakini Valley, Rudraprayag',
+    altitude: '3,583m',
+    tag: 'Sacred Yatra',
+    occasion: 'Char Dham Pilgrimage Spotlight',
+    src: '/assets/yatra_sarthi/kedarnath.jpg',
+    fallbackSrc: '/assets/kedarnath.jpg',
+    slug: 'kedarnath',
+    subtitle: 'Ancient Himalayan sanctity at 11,755 ft along sacred river trails.'
+  },
+  {
+    name: 'Valley of Flowers',
+    location: 'Bhyundar Valley, Chamoli',
+    altitude: '3,658m',
+    tag: 'UNESCO Biosphere',
+    occasion: 'Alpine Meadow Bloom Season',
+    src: '/assets/yatra_sarthi/valley_of_flowers.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1600&q=85',
+    slug: 'valley-of-flowers',
+    subtitle: 'Vibrant endemic alpine flora surrounded by towering snow-clad peaks.'
+  },
+  {
+    name: 'Auli Ski Meadows',
+    location: 'Joshimath, Chamoli',
+    altitude: '2,800m',
+    tag: 'Panoramic Bugyal',
+    occasion: 'Nanda Devi 360° Panorama',
+    src: '/assets/yatra_sarthi/auli.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=85',
+    slug: 'auli',
+    subtitle: 'Asia’s highest ropeway, alpine meadows & pristine snow horizons.'
+  },
+  {
+    name: 'Rishikesh Ganga Ghats',
+    location: 'Triveni Ghat, Dehradun',
+    altitude: '340m',
+    tag: 'Yoga & River Aarti',
+    occasion: 'Evening Maha Aarti & Rapids',
+    src: '/assets/yatra_sarthi/rishikesh.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=1600&q=85',
+    slug: 'rishikesh',
+    subtitle: 'Golden river reflections, meditative chanting & world-class rapids.'
+  },
+  {
+    name: 'Chopta & Tungnath',
+    location: 'Kedarnath Wildlife Sanctuary, Rudraprayag',
+    altitude: '3,680m',
+    tag: 'Highest Shiva Shrine',
+    occasion: 'Mini Switzerland & Chandrashila',
+    src: '/assets/yatra_sarthi/chopta.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85',
+    slug: 'chopta',
+    subtitle: 'Dense rhododendron forests, lush bugyals & 360° summit views.'
+  },
+  {
+    name: 'Nainital Lake City',
+    location: 'Naini Lake, Kumaon Hills',
     altitude: '2,084m',
-    tag: 'Lake City',
-    src: '/assets/nainital.jpg',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-mountain-stream-flowing-down-a-valley-41549-large.mp4',
-    type: 'video',
+    tag: 'Emerald Lake',
+    occasion: 'Kumaoni Lake Promenade',
+    src: '/assets/yatra_sarthi/nainital.jpg',
+    fallbackSrc: '/assets/nainital.jpg',
     slug: 'nainital',
     subtitle: 'Emerald lake reflections, pine ridges & colonial mountain charm.'
   },
   {
-    name: 'Adi Kailash',
-    location: 'Pithoragarh Border Valley',
-    altitude: '5,945m',
-    tag: 'Sacred Peak',
-    src: '/assets/destinations/pithoragarh/gallery-1.jpg',
-    videoSrc: null,
-    type: 'image',
-    slug: 'adi-kailash',
-    subtitle: 'Divine Om Parvat peaks & sacred high-altitude Shiva pilgrimage trails.'
+    name: 'Badrinath Dham',
+    location: 'Alaknanda Valley, Chamoli',
+    altitude: '3,133m',
+    tag: 'Maha Vishnu Shrine',
+    occasion: 'Neelkanth Peak Darshan',
+    src: '/assets/yatra_sarthi/badrinath.jpg',
+    fallbackSrc: '/assets/badrinath.jpg',
+    slug: 'badrinath',
+    subtitle: 'Sacred hot water Tapt Kund springs below dramatic Neelkanth pyramid.'
   },
   {
-    name: 'Munsyari',
+    name: 'Munsyari Panchachuli',
     location: 'Johar Valley, Pithoragarh',
     altitude: '2,200m',
-    tag: 'Alpine Meadow',
+    tag: 'Alpenglow Peaks',
+    occasion: 'Golden Hour 5-Peak Sunset',
     src: '/assets/destinations/munsiyari/cover.jpg',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-fog-over-the-mountain-forest-41551-large.mp4',
-    type: 'video',
+    fallbackSrc: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=85',
     slug: 'munsiyari',
-    subtitle: 'Panoramic Panchachuli summits & virgin Himalayan bugyals.'
+    subtitle: 'Panoramic Panchachuli summits, tribal looms & virgin Himalayan trails.'
   },
   {
-    name: 'Kedarnath',
-    location: 'Mandakini Valley, Rudraprayag',
-    altitude: '3,583m',
-    tag: 'Sacred Yatra',
-    src: '/assets/kedarnath.jpg',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-over-mountain-peaks-41548-large.mp4',
-    type: 'video',
-    slug: 'kedarnath',
-    subtitle: 'Ancient Himalayan sanctity at 11,755 ft along sacred river trails.'
+    name: 'Jim Corbett National Park',
+    location: 'Ramnagar, Nainital',
+    altitude: '400m',
+    tag: 'Tiger Wilderness',
+    occasion: 'Wild Tiger Safari & Sal Forests',
+    src: '/assets/yatra_sarthi/corbett.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=85',
+    slug: 'jim-corbett-national-park',
+    subtitle: 'India’s oldest tiger sanctuary along the scenic Ramganga river.'
+  },
+  {
+    name: 'Haridwar Har Ki Pauri',
+    location: 'Haridwar Ghats',
+    altitude: '314m',
+    tag: 'Spiritual Gateway',
+    occasion: 'Ganga Snan & Sacred Heritage',
+    src: '/assets/yatra_sarthi/haridwar.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1600&q=85',
+    slug: 'haridwar',
+    subtitle: 'Ancient Vedic gateway where the holy Ganges touches the plains.'
+  },
+  {
+    name: 'Adi Kailash & Om Parvat',
+    location: 'Vyás Valley, Pithoragarh',
+    altitude: '5,945m',
+    tag: 'Mystic Mountain',
+    occasion: 'Sacred High-Altitude Circuit',
+    src: '/assets/destinations/pithoragarh/gallery-1.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85',
+    slug: 'adi-kailash',
+    subtitle: 'Naturally formed snow Om on rock faces & holy Parvati Sarovar.'
   }
 ];
 
-const POPULAR_DESTINATIONS = [
-  { name: 'Nainital', district: 'Nainital', tag: 'Lake City', slug: 'nainital' },
-  { name: 'Adi Kailash & Om Parvat', district: 'Pithoragarh', tag: 'High-Altitude Trek', slug: 'adi-kailash' },
-  { name: 'Munsyari', district: 'Pithoragarh', tag: 'Alpine Meadow', slug: 'munsiyari' },
-  { name: 'Kedarnath Temple', district: 'Rudraprayag', tag: 'Sacred Yatra', slug: 'kedarnath' },
-  { name: 'Auli Ski Meadow', district: 'Chamoli', tag: 'Winter & Panoramic', slug: 'auli' },
-  { name: 'Valley of Flowers', district: 'Chamoli', tag: 'UNESCO Biosphere', slug: 'valley-of-flowers' },
-];
-
-// Curated 4 Category Pillars with 100% distinct, verified real high-resolution photos
+// Curated 4 Category Pillars with distinct verified photos
 const CURATED_PILLARS = [
   {
     title: 'Spiritual Yatras',
     subtitle: 'Char Dham, Panch Kedar & ancient Vedic shrines',
     tag: 'Sacred Shrines',
     images: [
-      '/assets/kedarnath.jpg',
-      '/assets/badrinath.jpg',
-      '/assets/jageshwar.jpg',
-      'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=85'
+      '/assets/yatra_sarthi/kedarnath.jpg',
+      '/assets/yatra_sarthi/badrinath.jpg',
+      '/assets/yatra_sarthi/haridwar.jpg',
+      '/assets/jageshwar.jpg'
     ],
-    fallbackImg: '/assets/kedarnath.jpg',
+    fallbackImg: '/assets/yatra_sarthi/kedarnath.jpg',
     link: '/spiritual',
     count: '50+ Shrines',
     places: ['Kedarnath', 'Badrinath', 'Tungnath', 'Jageshwar']
@@ -86,12 +153,12 @@ const CURATED_PILLARS = [
     subtitle: 'Glacial passes, alpine bugyals & peak expeditions',
     tag: 'Alpine Trails',
     images: [
-      'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=85'
+      '/assets/yatra_sarthi/valley_of_flowers.jpg',
+      '/assets/yatra_sarthi/chopta.jpg',
+      '/assets/yatra_sarthi/auli.jpg',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85'
     ],
-    fallbackImg: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=85',
+    fallbackImg: '/assets/yatra_sarthi/valley_of_flowers.jpg',
     link: '/activities',
     count: '50+ Trails',
     places: ['Valley of Flowers', 'Kuari Pass', 'Dayara Bugyal', 'Chopta']
@@ -116,28 +183,27 @@ const CURATED_PILLARS = [
     subtitle: 'Aipan crafts, folklore festivals & ancient high valleys',
     tag: 'Pahadi Heritage',
     images: [
+      '/assets/yatra_sarthi/nainital.jpg',
+      '/assets/yatra_sarthi/corbett.jpg',
       'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1584905066893-7d5c142ba4e1?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=85'
     ],
-    fallbackImg: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=85',
+    fallbackImg: '/assets/yatra_sarthi/nainital.jpg',
     link: '/culture',
     count: '50+ Traditions',
     places: ['Chholiya Dance', 'Pahadi Architecture', 'Aipan Art', 'Mana Village']
   }
 ];
 
-// Interactive Category Card with Story-Style (- - -) Photo Transition
+// Interactive Category Card with Story-Style Photo Transition
 function CategoryCard({ pillar, index }) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const images = pillar.images && pillar.images.length > 0 ? pillar.images : [pillar.fallbackImg];
 
-  // Auto-advance photos inside the card with offset delay
   useEffect(() => {
     const timer = setInterval(() => {
       setPhotoIndex((prev) => (prev + 1) % images.length);
-    }, 3200 + (index % 4) * 400);
+    }, 3800 + (index % 4) * 400);
 
     return () => clearInterval(timer);
   }, [images.length, index]);
@@ -176,12 +242,11 @@ function CategoryCard({ pillar, index }) {
         />
       ))}
 
-      {/* Strong Multi-tier Cinematic Gradient Overlay for 100% Crisp White Text Contrast */}
+      {/* Cinematic Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/20 pointer-events-none" />
 
-      {/* Top Header: Story-style Dash Indicators (- - -) & Badges */}
+      {/* Top Header */}
       <div className="relative z-10 space-y-2.5">
-        {/* Story Dash Indicators (- - - -) */}
         <div className="flex items-center gap-1.5 w-full">
           {images.map((_, idx) => (
             <button
@@ -212,7 +277,7 @@ function CategoryCard({ pillar, index }) {
         </div>
       </div>
 
-      {/* Hover Chevrons for Manual Photo Switching */}
+      {/* Hover Chevrons */}
       <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
         <button
           type="button"
@@ -232,7 +297,7 @@ function CategoryCard({ pillar, index }) {
         </button>
       </div>
 
-      {/* Bottom Details & Real Destination Chips */}
+      {/* Bottom Details */}
       <div className="relative z-10 text-white">
         <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-1.5 text-white drop-shadow-md flex items-center justify-between">
           <span className="text-white">{pillar.title}</span>
@@ -242,7 +307,6 @@ function CategoryCard({ pillar, index }) {
           {pillar.subtitle}
         </p>
 
-        {/* Authentic Place Chips */}
         {pillar.places && (
           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/20">
             {pillar.places.map((place) => (
@@ -263,17 +327,88 @@ function CategoryCard({ pillar, index }) {
 export default function HeroSection() {
   const navigate = useNavigate();
 
-  // Dynamic slides
-  const [slides, setSlides] = useState(INITIAL_SLIDES);
+  // Dynamic slides with occasion intelligence
+  const [slides, setSlides] = useState(DYNAMIC_OCCASION_SLIDES);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [videoErrors, setVideoErrors] = useState({});
+  const [isPaused, setIsPaused] = useState(false);
 
   // AI Trip Concierge State
   const [aiPrompt, setAiPrompt] = useState('');
   const [isListeningVoice, setIsListeningVoice] = useState(false);
-
-  const videoRefs = useRef([]);
   const voiceRecognitionRef = useRef(null);
+
+  // Determine current occasion / time of day banner
+  const timeBasedOccasion = useMemo(() => {
+    const currentHour = new Date().getHours();
+    if (currentHour >= 5 && currentHour < 11) {
+      return { title: 'Morning Darshan & Sunrise Aarti', tag: 'Dawn in Devbhoomi' };
+    }
+    if (currentHour >= 11 && currentHour < 16) {
+      return { title: 'Alpine Bugyals & Glacial Treks', tag: 'Daylight Expeditions' };
+    }
+    if (currentHour >= 16 && currentHour < 20) {
+      return { title: 'Golden Hour Alpenglow & Lake Ghats', tag: 'Sunset Spotlight' };
+    }
+    return { title: 'Himalayan Stargazing & Sacred Shrines', tag: 'Night Sky Panorama' };
+  }, []);
+
+  // Fetch real images from database on mount and merge with occasion slides
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDbImages = async () => {
+      try {
+        const res = await getDestinations();
+        const data = res?.data || (Array.isArray(res) ? res : []);
+        if (data && data.length > 0 && isMounted) {
+          const extractImg = (dest, fallback) => {
+            if (!dest) return fallback;
+            const img = dest.coverImage?.url || dest.coverImage || dest.gallery?.[0]?.url || dest.gallery?.[0] || dest.images?.[0]?.url || dest.images?.[0];
+            return typeof img === 'string' && img.length > 5 && !img.includes('placeholder') ? img : fallback;
+          };
+
+          const merged = DYNAMIC_OCCASION_SLIDES.map(slide => {
+            const found = data.find(d => 
+              d.slug === slide.slug || 
+              d.name?.toLowerCase().includes(slide.slug.replace(/-/g, ' ')) ||
+              d.slug?.includes(slide.slug)
+            );
+            return {
+              ...slide,
+              src: extractImg(found, slide.src),
+              altitude: found?.altitude ? `${found.altitude}m` : slide.altitude
+            };
+          });
+
+          setSlides(merged);
+        }
+      } catch (e) {
+        console.warn('Using authentic verified local assets for hero slideshow', e);
+      }
+    };
+
+    fetchDbImages();
+    return () => { isMounted = false; };
+  }, []);
+
+  // 4.5-Second smooth auto-rotation
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 4500);
+
+    return () => clearTimeout(timer);
+  }, [currentIndex, slides.length, isPaused]);
+
+  const handlePrevSlide = (e) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const handleNextSlide = (e) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
+  };
 
   // Toggle Voice Search for AI Concierge
   const toggleVoiceSearch = (e) => {
@@ -295,29 +430,17 @@ export default function HeroSection() {
 
     try {
       const rec = new SpeechRecognition();
-      rec.lang = 'hi-IN'; // Works for Hinglish & English
+      rec.lang = 'hi-IN';
       rec.interimResults = true;
       rec.continuous = false;
 
-      rec.onstart = () => {
-        setIsListeningVoice(true);
-      };
-
+      rec.onstart = () => setIsListeningVoice(true);
       rec.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(r => r[0].transcript)
-          .join('');
+        const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
         setAiPrompt(transcript);
       };
-
-      rec.onerror = (event) => {
-        console.warn("[VoiceAI] Error:", event.error);
-        setIsListeningVoice(false);
-      };
-
-      rec.onend = () => {
-        setIsListeningVoice(false);
-      };
+      rec.onerror = () => setIsListeningVoice(false);
+      rec.onend = () => setIsListeningVoice(false);
 
       voiceRecognitionRef.current = rec;
       rec.start();
@@ -325,94 +448,6 @@ export default function HeroSection() {
       console.error("[VoiceAI] Failed to start:", err);
       setIsListeningVoice(false);
     }
-  };
-
-  // Fetch real images from database on mount with rock-solid fallbacks
-  useEffect(() => {
-    let isMounted = true;
-    const fetchDbImages = async () => {
-      try {
-        const res = await getDestinations();
-        const data = res?.data || (Array.isArray(res) ? res : []);
-        if (data && data.length > 0 && isMounted) {
-          const extractImg = (dest, fallback) => {
-            if (!dest) return fallback;
-            const img = dest.coverImage?.url || dest.coverImage || dest.gallery?.[0]?.url || dest.gallery?.[0] || dest.images?.[0]?.url || dest.images?.[0];
-            return typeof img === 'string' && img.length > 5 && !img.includes('placeholder') ? img : fallback;
-          };
-
-          const dbNainital = data.find(d => d.slug?.includes('nainital') || d.name?.toLowerCase().includes('nainital'));
-          const dbAdiKailash = data.find(d => d.slug?.includes('adi-kailash') || d.name?.toLowerCase().includes('kailash') || d.slug?.includes('pithoragarh'));
-          const dbMunsyari = data.find(d => d.slug?.includes('muns') || d.name?.toLowerCase().includes('muns'));
-          const dbKedarnath = data.find(d => d.slug?.includes('kedarnath') || d.name?.toLowerCase().includes('kedarnath'));
-
-          setSlides([
-            {
-              name: 'Nainital',
-              location: 'Naini Lake, Kumaon',
-              altitude: '2,084m',
-              tag: 'Lake City',
-              src: extractImg(dbNainital, '/assets/nainital.jpg'),
-              videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-mountain-stream-flowing-down-a-valley-41549-large.mp4',
-              type: 'video',
-              slug: dbNainital?.slug || 'nainital',
-              subtitle: 'Emerald lake reflections, pine ridges & colonial mountain charm.'
-            },
-            {
-              name: 'Adi Kailash',
-              location: 'Pithoragarh Border Valley',
-              altitude: '5,945m',
-              tag: 'Sacred Peak',
-              src: extractImg(dbAdiKailash, '/assets/destinations/pithoragarh/gallery-1.jpg'),
-              videoSrc: null,
-              type: 'image',
-              slug: dbAdiKailash?.slug || 'adi-kailash',
-              subtitle: 'Divine Om Parvat peaks & sacred high-altitude Shiva pilgrimage trails.'
-            },
-            {
-              name: 'Munsyari',
-              location: 'Johar Valley, Pithoragarh',
-              altitude: '2,200m',
-              tag: 'Alpine Meadow',
-              src: extractImg(dbMunsyari, '/assets/destinations/munsiyari/cover.jpg'),
-              videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-fog-over-the-mountain-forest-41551-large.mp4',
-              type: 'video',
-              slug: dbMunsyari?.slug || 'munsiyari',
-              subtitle: 'Panoramic Panchachuli summits & virgin Himalayan bugyals.'
-            },
-            {
-              name: 'Kedarnath',
-              location: 'Mandakini Valley, Rudraprayag',
-              altitude: '3,583m',
-              tag: 'Sacred Yatra',
-              src: extractImg(dbKedarnath, '/assets/kedarnath.jpg'),
-              videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-over-mountain-peaks-41548-large.mp4',
-              type: 'video',
-              slug: dbKedarnath?.slug || 'kedarnath',
-              subtitle: 'Ancient Himalayan sanctity at 11,755 ft along sacred river trails.'
-            }
-          ]);
-        }
-      } catch (e) {
-        console.warn('Using authentic local asset fallback for hero slideshow', e);
-      }
-    };
-
-    fetchDbImages();
-    return () => { isMounted = false; };
-  }, []);
-
-  // 3.5-Second interval auto-advance slideshow
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
-    }, 3500);
-
-    return () => clearTimeout(timer);
-  }, [currentIndex, slides.length]);
-
-  const handleVideoError = (index) => {
-    setVideoErrors((prev) => ({ ...prev, [index]: true }));
   };
 
   const handleAiSubmit = (e) => {
@@ -435,12 +470,15 @@ export default function HeroSection() {
     <section className="w-full font-sans pt-3 sm:pt-5 pb-16">
       
       {/* ── 1. Hero Visual Cinematic Slideshow Banner ── */}
-      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto h-[390px] sm:h-[480px] md:h-[530px] rounded-2xl sm:rounded-4xl overflow-hidden relative shadow-2xl bg-stone-900 flex flex-col justify-between p-4 sm:p-10 md:p-14 text-white group">
+      <div 
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto h-[390px] sm:h-[480px] md:h-[530px] rounded-2xl sm:rounded-4xl overflow-hidden relative shadow-2xl bg-stone-900 flex flex-col justify-between p-4 sm:p-10 md:p-14 text-white group"
+      >
         
-        {/* Layered Background Media with Seamless Crossfade */}
+        {/* Layered Background Media with Seamless Crossfade & Ken Burns */}
         {slides.map((media, idx) => {
           const isActive = idx === currentIndex;
-          const hasError = videoErrors[idx];
 
           return (
             <div
@@ -449,25 +487,18 @@ export default function HeroSection() {
                 isActive ? 'opacity-100 z-0' : 'opacity-0 -z-10'
               }`}
             >
-              {media.type === 'video' && media.videoSrc && !hasError ? (
-                <video
-                  ref={(el) => (videoRefs.current[idx] = el)}
-                  src={media.videoSrc}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  onError={() => handleVideoError(idx)}
-                  className="w-full h-full object-cover object-center scale-102"
-                />
-              ) : (
-                <img
-                  src={media.src}
-                  alt={media.name}
-                  onError={(e) => { e.currentTarget.src = '/assets/nainital.jpg'; }}
-                  className="w-full h-full object-cover object-center ken-burns-hero"
-                />
-              )}
+              <img
+                src={media.src}
+                alt={media.name}
+                onError={(e) => { 
+                  if (media.fallbackSrc && e.currentTarget.src !== media.fallbackSrc) {
+                    e.currentTarget.src = media.fallbackSrc;
+                  } else {
+                    e.currentTarget.src = '/assets/yatra_sarthi/nainital.jpg';
+                  }
+                }}
+                className="w-full h-full object-cover object-center ken-burns-hero"
+              />
             </div>
           );
         })}
@@ -475,10 +506,22 @@ export default function HeroSection() {
         {/* Clean, balanced cinematic gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/55 z-1" />
 
-        {/* Top Spacer */}
-        <div className="relative z-10" />
+        {/* Top Header: Occasion & Live Time-of-day Badge */}
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 backdrop-blur-md border border-emerald-400/30 text-xs font-semibold text-emerald-300 shadow-md">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="truncate max-w-[200px] sm:max-w-none">{currentMedia.occasion || timeBasedOccasion.title}</span>
+          </div>
 
-        {/* ── Main Hero Typography & Dynamic Destination (Clickable) ── */}
+          {/* Slide Indicator Dots / Count */}
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-xs text-white/80 font-mono">
+            <span>{currentIndex + 1}</span>
+            <span className="text-white/40">/</span>
+            <span>{slides.length}</span>
+          </div>
+        </div>
+
+        {/* ── Main Hero Typography & Dynamic Destination ── */}
         <div className="relative z-10 max-w-2xl mb-2 sm:mb-6">
           
           {/* Location & Altitude Pill */}
@@ -487,7 +530,7 @@ export default function HeroSection() {
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-medium text-white/95 mb-2 sm:mb-3.5 shadow-xs transition-colors group/pill"
           >
             <MapPin size={12} className="text-emerald-300" />
-            <span className="truncate max-w-[140px] sm:max-w-none">{typeof currentMedia.location === 'string' ? currentMedia.location : (currentMedia.location?.name || currentMedia.district || 'Uttarakhand')}</span>
+            <span className="truncate max-w-[140px] sm:max-w-none">{currentMedia.location}</span>
             <span className="text-white/40">•</span>
             <span className="text-emerald-200 font-semibold">{currentMedia.altitude}</span>
             <ArrowRight size={11} className="text-emerald-300 opacity-0 group-hover/pill:opacity-100 group-hover/pill:translate-x-0.5 transition-all" />
@@ -497,227 +540,150 @@ export default function HeroSection() {
           <Link to={`/destinations/${currentMedia.slug}`} className="block group/head">
             <h1 className="text-2xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] mb-2 sm:mb-3 text-white drop-shadow-md">
               Experience Sacred{' '}
-              <span 
-                key={currentMedia.name}
-                className="text-emerald-300 group-hover/head:underline decoration-emerald-400 underline-offset-8 transition-colors duration-500 inline-block hero-content-animate"
-              >
-                {currentMedia.name}.
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white underline decoration-emerald-400/40 decoration-wavy decoration-1 underline-offset-4 group-hover/head:decoration-emerald-300 transition-colors">
+                {currentMedia.name}
               </span>
             </h1>
           </Link>
 
-          {/* Clean 1-Line Subtitle */}
-          <p 
-            key={currentMedia.subtitle}
-            className="text-xs sm:text-base text-white/90 font-medium leading-relaxed max-w-lg drop-shadow-xs hero-content-animate mb-2.5 sm:mb-3.5 line-clamp-2 sm:line-clamp-none"
-          >
+          {/* Direct, high-signal description */}
+          <p className="text-xs sm:text-base text-white/90 font-medium max-w-xl leading-relaxed drop-shadow-sm line-clamp-2">
             {currentMedia.subtitle}
           </p>
-
-          {/* Direct Explore Destination Action Pill */}
-          <Link
-            to={`/destinations/${currentMedia.slug}`}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-slate-950 font-bold text-[11px] sm:text-xs normal-case tracking-normal backdrop-blur-md shadow-md transition-all active:scale-95"
-          >
-            <span>Explore {currentMedia.name}</span>
-            <ArrowRight size={12} />
-          </Link>
         </div>
 
-        {/* ── Slideshow Indicator Dots ── */}
-        <div className="relative z-10 flex items-center gap-2">
-          {slides.map((media, idx) => (
+        {/* ── Interactive Manual Arrows on Hover ── */}
+        <button
+          type="button"
+          onClick={handlePrevSlide}
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 cursor-pointer shadow-lg"
+          aria-label="Previous destination"
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleNextSlide}
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 cursor-pointer shadow-lg"
+          aria-label="Next destination"
+        >
+          <ChevronRight size={18} />
+        </button>
+
+        {/* ── Bottom Carousel Indicator Bars ── */}
+        <div className="relative z-10 flex items-center gap-1.5 w-full max-w-sm pt-2">
+          {slides.map((_, idx) => (
             <button
               key={idx}
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setCurrentIndex(idx);
-              }}
+              onClick={() => setCurrentIndex(idx)}
               className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
                 idx === currentIndex
-                  ? 'w-8 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]'
-                  : 'w-2 bg-white/40 hover:bg-white/75'
+                  ? 'bg-emerald-400 flex-2 shadow-xs'
+                  : 'bg-white/30 hover:bg-white/60 flex-1'
               }`}
-              title={media.name}
+              title={`Jump to slide ${idx + 1}`}
             />
           ))}
         </div>
 
       </div>
 
-      {/* ── 2. AI TRIP PLANNER CARD ── */}
-      <div className="relative z-20 w-[calc(100%-1.5rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-4 sm:mt-6">
+      {/* ── 2. Unified Intelligent Trip Search Bar ── */}
+      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-5xl mx-auto -mt-6 sm:-mt-9 relative z-20">
         <form 
           onSubmit={handleAiSubmit}
-          className="bg-white rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl border border-stone-200/90 p-4 sm:p-6 transition-all"
+          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-2xl border border-stone-200/80 hover:border-emerald-500/40 transition-all duration-200"
         >
-          {/* Top Label */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#0F2B1F] border border-emerald-200/80 text-[11px] font-bold tracking-wider uppercase">
-              <Sparkles size={13} className="text-[#0F2B1F]" />
-              <span>AI Trip Planner</span>
-            </div>
-            <span className="text-[11px] text-stone-500 font-medium hidden sm:inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Autonomous Itinerary Engine · Instant Mountain Route
-            </span>
-          </div>
-
-          {/* Large Input Field with Mic */}
-          <div className="relative flex items-center bg-stone-50/90 hover:bg-stone-50 focus-within:bg-white border-2 border-stone-200 focus-within:border-[#0F2B1F] rounded-xl sm:rounded-2xl p-1.5 sm:p-2 transition-all shadow-inner mb-3.5">
-            <input
-              type="text"
-              placeholder={isListeningVoice ? "Listening... speak your destination or trip plan" : "Describe your dream journey... e.g. '3-day peaceful mountain retreat in Kumaon with local homestay'"}
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              className="w-full bg-transparent text-sm sm:text-base font-semibold text-slate-900 placeholder:text-stone-400 outline-none px-3 py-1.5"
-            />
-            {/* Mic Icon for Voice */}
-            <button
-              type="button"
-              onClick={toggleVoiceSearch}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${
-                isListeningVoice
-                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse ring-4 ring-rose-200'
-                  : 'bg-white hover:bg-[#E8F5E9] text-slate-600 hover:text-[#0F2B1F] border-stone-200 shadow-xs'
-              }`}
-              title={isListeningVoice ? "Listening... click to stop" : "Voice Input (Speak your trip idea)"}
-              aria-label="Voice search"
-            >
-              {isListeningVoice ? <MicOff size={18} /> : <Mic size={18} />}
-            </button>
-          </div>
-
-          {/* Bottom Row: 3 Quick Chips + Big Action Button */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            {/* 3 Quick Chips */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 sm:inline hidden mr-0.5">
-                Suggestions:
-              </span>
-              {[
-                { label: 'Snow Trek', icon: '❄️', query: '3-day snow trek near Chopta Tungnath' },
-                { label: 'Char Dham', icon: '🛕', query: 'Char Dham sacred pilgrimage itinerary' },
-                { label: 'Budget Retreat', icon: '💰', query: 'Affordable mountain homestay trip under 5000' }
-              ].map((chip) => {
-                const isSelected = aiPrompt === chip.query || (aiPrompt && chip.query.includes(aiPrompt));
-                return (
-                  <button
-                    key={chip.label}
-                    type="button"
-                    onClick={() => handleChipClick(chip.query)}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
-                      isSelected
-                        ? 'bg-[#0F2B1F] text-white border-[#0F2B1F] shadow-sm'
-                        : 'bg-stone-100 hover:bg-[#E8F5E9] text-stone-700 hover:text-[#0F2B1F] border-stone-200 hover:border-emerald-300'
-                    }`}
-                  >
-                    <span>{chip.icon}</span>
-                    <span>{chip.label}</span>
-                  </button>
-                );
-              })}
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            
+            {/* Input with Sparkle Indicator */}
+            <div className="flex-1 flex items-center gap-3 px-3 py-2 w-full">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <Sparkles size={16} />
+              </div>
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="Where to? e.g. '3-day Kedarnath trek from Rishikesh under ₹8,000'"
+                className="w-full bg-transparent text-xs sm:text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
+              />
             </div>
 
-            {/* Clean Professional Action Button */}
-            <button
-              type="submit"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm text-white bg-[#0F2B1F] hover:bg-[#163f2e] shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98 shrink-0"
-            >
-              <Sparkles size={15} className="text-emerald-300" />
-              <span>Generate Itinerary →</span>
-            </button>
+            {/* Voice & Submit Actions */}
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pr-1">
+              <button
+                type="button"
+                onClick={toggleVoiceSearch}
+                title="Voice Search"
+                className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl transition-all cursor-pointer ${
+                  isListeningVoice 
+                    ? 'bg-red-500 text-white animate-pulse' 
+                    : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
+                }`}
+              >
+                <Mic size={16} />
+              </button>
+
+              <button
+                type="submit"
+                className="px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-98"
+              >
+                <span>Plan Trip</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+
+          </div>
+
+          {/* Quick Filter Prompt Chips */}
+          <div className="flex items-center gap-1.5 pt-2.5 sm:pt-3 px-2 overflow-x-auto no-scrollbar text-[11px] text-stone-500 border-t border-stone-100 mt-2">
+            <span className="font-semibold text-stone-400 shrink-0">Popular:</span>
+            {[
+              "Valley of Flowers 4 Days",
+              "Kedarnath Budget Yatra",
+              "Auli Ski & Snow",
+              "Rishikesh Weekend Stays",
+              "Chopta Tungnath Trek"
+            ].map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => handleChipClick(chip)}
+                className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-200 border border-transparent text-stone-600 font-medium transition-colors shrink-0 cursor-pointer"
+              >
+                {chip}
+              </button>
+            ))}
           </div>
         </form>
       </div>
 
-      {/* ── 3. Live Safety Strip (Real Safety & Trust Network USP) ── */}
-      <div className="relative z-20 w-[calc(100%-1.5rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-3 sm:mt-4">
-        <div className="bg-[#0F2B1F] border border-emerald-800/40 rounded-2xl px-4 py-3 sm:py-3.5 shadow-lg flex items-center justify-between overflow-x-auto no-scrollbar gap-4 text-xs font-semibold text-emerald-100">
-          {/* Item 1: Live Trekkers */}
-          <Link
-            to="/rescue-ops"
-            className="flex items-center gap-2.5 shrink-0 hover:text-white transition-colors group"
-            title="View Live SDRF Trekker Ops"
-          >
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-            </span>
-            <span className="font-bold text-white">28 Active Trekkers</span>
-            <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
-              Active Trails
-            </span>
-          </Link>
-
-          <span className="text-emerald-700/60 shrink-0 font-bold">•</span>
-
-          {/* Item 2: SOS Ready */}
-          <Link
-            to="/rescue-ops"
-            className="flex items-center gap-2.5 shrink-0 hover:text-white transition-colors group"
-            title="SDRF Uttarakhand Emergency Operations"
-          >
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_#f43f5e]"></span>
-            </span>
-            <span className="font-bold text-rose-200 group-hover:text-white transition-colors">SOS Mesh Ready</span>
-            <span className="text-[10px] font-medium text-rose-200/80 bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-800/40 hidden md:inline">
-              SDRF Standby
-            </span>
-          </Link>
-
-          <span className="text-emerald-700/60 shrink-0 font-bold">•</span>
-
-          {/* Item 3: Offline Maps */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm">🛰️</span>
-            <span className="font-bold text-white">Offline Maps</span>
-            <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
-              Zero Signal Cache
-            </span>
-          </div>
-
-          <span className="text-emerald-700/60 shrink-0 font-bold">•</span>
-
-          {/* Item 4: Escrow Safe */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm">🔒</span>
-            <span className="font-bold text-white">Escrow Safe</span>
-            <span className="text-[10px] font-medium text-emerald-300/80 bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-700/40 hidden md:inline">
-              Smart Payouts
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3. Below Hero: Curated Categories Strip ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-2">
+      {/* ── 3. Four Core Experience Pillars (Story Style Rotating Photos) ── */}
+      <div className="w-[calc(100%-1.25rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-7xl mx-auto mt-12 sm:mt-16">
+        <div className="flex items-center justify-between mb-6 px-1">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#0f3d2e] block mb-1">
-              Curated Himalayan Experiences
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Start Your Journey by Category
+            <h2 className="text-xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Explore Uttarakhand By Experience
             </h2>
+            <p className="text-xs sm:text-sm text-stone-500 font-medium mt-0.5">
+              Curated Himalayan journeys, high-altitude expeditions & sacred shrines
+            </p>
           </div>
           <Link
-            to="/trip-planner"
-            className="text-xs font-bold text-[#0f3d2e] hover:underline flex items-center gap-1"
+            to="/explore"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-900 hover:translate-x-0.5 transition-all"
           >
-            <span>Custom AI Trip Planner</span>
+            <span>View All Destinations</span>
             <ArrowRight size={13} />
           </Link>
         </div>
 
-        {/* Categories: Horizontal Swipeable Carousel on Mobile, 4-Column Grid on Tablet/Desktop */}
-        <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 snap-x">
           {CURATED_PILLARS.map((pillar, idx) => (
-            <CategoryCard key={pillar.title} pillar={pillar} index={idx} />
+            <CategoryCard key={idx} pillar={pillar} index={idx} />
           ))}
         </div>
       </div>

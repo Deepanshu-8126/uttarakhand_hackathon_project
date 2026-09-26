@@ -75,29 +75,29 @@ export default function ChatWindow({
       <div className="absolute bottom-16 left-0 w-60 sm:w-80 h-60 sm:h-80 bg-teal-500/5 rounded-full blur-[80px] pointer-events-none -ml-20" />
 
       {/* ── Top Header ── */}
-      <div className="shrink-0 px-3.5 sm:px-6 py-3 border-b border-stone-200/80 bg-white/95 backdrop-blur-xl flex items-center justify-between z-10 shadow-2xs">
-        <div className="flex items-center gap-3 min-w-0 pr-2">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-800 via-emerald-700 to-teal-600 p-[1px] shadow-sm shrink-0">
+      <div className="shrink-0 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-stone-200/80 bg-white/95 backdrop-blur-xl flex items-center justify-between z-10 shadow-2xs gap-2">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-emerald-800 via-emerald-700 to-teal-600 p-[1px] shadow-sm shrink-0">
             <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center">
-              <Compass size={18} className="text-emerald-800 animate-spin-slow" />
+              <Compass size={17} className="text-emerald-800 animate-spin-slow" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
           </div>
 
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs sm:text-sm font-bold text-[#0f3d2e] truncate">
-                Devbhoomi AI Travel Copilot
+          <div className="flex flex-col justify-center min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h2 className="text-xs sm:text-sm font-black text-[#0f3d2e] whitespace-nowrap shrink-0 tracking-tight">
+                Devbhoomi AI
               </h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] sm:text-[10px] font-bold text-emerald-800 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
-                <span className="truncate max-w-[80px] sm:max-w-none">{activeAgent}</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/90 text-[9px] sm:text-[10px] font-bold text-emerald-800 whitespace-nowrap shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping shrink-0" />
+                <span className="truncate max-w-[110px] sm:max-w-none">{activeAgent || 'Copilot'}</span>
               </span>
             </div>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 truncate flex items-center gap-1">
-              <span>Himalayan terrain intelligence</span>
-              <span className="text-emerald-600/60">•</span>
-              <span className="text-emerald-700 font-semibold">100% Grounded</span>
+            <p className="text-[10px] sm:text-[11px] text-stone-500 flex items-center gap-1 whitespace-nowrap mt-0.5">
+              <span className="hidden xs:inline">Himalayan terrain intelligence</span>
+              <span className="hidden xs:inline text-emerald-600/60">•</span>
+              <span className="text-emerald-700 font-bold">100% Grounded</span>
             </p>
           </div>
         </div>
@@ -108,17 +108,17 @@ export default function ChatWindow({
             type="button"
             onClick={() => setIsVoiceOpen(true)}
             title="Open Live Voice Companion"
-            className="group relative px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-900 transition-all duration-200 active:scale-95 flex items-center gap-1.5 text-xs font-bold shadow-2xs cursor-pointer"
+            className="group relative px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 text-emerald-900 transition-all duration-200 active:scale-95 flex items-center gap-1.5 text-xs font-bold shadow-2xs cursor-pointer shrink-0"
           >
-            <Mic size={14} className="text-emerald-700 group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:inline">Voice Mode</span>
+            <Mic size={13} className="text-emerald-700 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="whitespace-nowrap">Voice Mode</span>
           </button>
 
           <button
             type="button"
             onClick={clearChat}
             title="Reset conversation"
-            className="p-2 rounded-xl hover:bg-stone-100 text-stone-500 hover:text-rose-600 border border-transparent hover:border-stone-200 transition-all cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 text-stone-400 hover:text-rose-600 border border-transparent hover:border-stone-200 transition-all cursor-pointer shrink-0"
           >
             <Trash2 size={15} />
           </button>
@@ -128,7 +128,7 @@ export default function ChatWindow({
               type="button"
               onClick={onClose}
               title="Close chat"
-              className="p-2 rounded-xl hover:bg-stone-100 text-stone-500 hover:text-slate-900 border border-transparent hover:border-stone-200 transition-all cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl hover:bg-stone-100 text-stone-400 hover:text-slate-900 border border-transparent hover:border-stone-200 transition-all cursor-pointer shrink-0"
             >
               <X size={16} />
             </button>

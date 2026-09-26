@@ -94,7 +94,8 @@ const POPULAR_DESTINATIONS = [
 export default function TripPlanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const queryParam = searchParams.get('query') || searchParams.get('destination') || '';
+  const destinationParam = searchParams.get('destination') || searchParams.get('dest') || '';
+  const queryParam = searchParams.get('query') || destinationParam || '';
   const rentalNameParam = searchParams.get('rental_name') || searchParams.get('rentalName');
   const rentalLocationParam = searchParams.get('location') || searchParams.get('city');
   const rentalPriceParam = searchParams.get('price');
