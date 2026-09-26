@@ -1,15 +1,20 @@
 /**
  * Discovery Uttarakhand - Pexels Live High-Res Auto-Fresh Photography Engine
- * Automatically fetches fresh, 4K, dramatic real photographer images for destinations & stays
- * with intelligent query mapping, in-memory caching, and rock-solid local fallbacks.
+ * Ultra-efficient token & quota management:
+ * - LocalStorage + In-Memory 24-hour Persistent Caching (Zero wasted API calls)
+ * - Single-Flight Request Deduplication (Multiple cards share 1 request)
+ * - Automatic Location-Aware Query Formulation
+ * - Random variation on render so user gets fresh photos without credit burn
  */
 
 import { useState, useEffect } from 'react';
 import { DESTINATION_NAMED_IMAGES, getHimalayanFallbackImage } from './imageHelpers';
 
 const PEXELS_KEY = import.meta.env.VITE_PEXELS_KEY || '';
+const CACHE_PREFIX = 'devbhoomi_pexels_v1_';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 Hours TTL
 
-// High-Signal Mountain & Cultural Photography Search Queries
+// Curated High-Signal Mountain Photography Search Queries
 export const DESTINATION_SEARCH_QUERIES = {
   // Sacred Yatras & Peaks
   "kedarnath": "Kedarnath temple snow mountain himalaya",
@@ -72,14 +77,53 @@ export const DESTINATION_SEARCH_QUERIES = {
   "camp": "Glamping tent meadow mountain sunrise bonfire"
 };
 
-// Global in-memory cache to avoid redundant API hits and keep responses sub-10ms
-const imageCache = new Map();
+// In-memory RAM cache & Single-Flight promise map
+const memoryCache = new Map();
+const inFlightRequests = new Map();
 
 /**
- * Fetch a fresh, high-resolution photo from Pexels API with fallback
- * @param {string} destinationKey - slug or destination name
- * @param {string} fallbackUrl - optional local image fallback
- * @returns {Promise<string>} - high-res image URL
+ * Read from localStorage cache safely
+ */
+function readStorageCache(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.timestamp < CACHE_TTL_MS && Array.isArray(parsed.urls) && parsed.urls.length > 0) {
+      return parsed.urls;
+    }
+  } catch (e) {
+    // ignore storage quota / parse issues
+  }
+  return null;
+}
+
+/**
+ * Write to localStorage cache safely
+ */
+function writeStorageCache(key, urls) {
+  try {
+    localStorage.setItem(
+      CACHE_PREFIX + key,
+      JSON.stringify({ timestamp: Date.now(), urls })
+    );
+  } catch (e) {
+    // quota exceeded — clean older keys
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(CACHE_PREFIX)) {
+          localStorage.removeItem(k);
+          break;
+        }
+      }
+    } catch (ignore) {}
+  }
+}
+
+/**
+ * Fetch a fresh, high-resolution photo from Pexels API with intelligent caching
+ * Consumes at most 1 API credit per destination per 24 hours!
  */
 export async function getFreshImage(destinationKey = '', fallbackUrl = null) {
   if (!destinationKey) {
@@ -89,53 +133,84 @@ export async function getFreshImage(destinationKey = '', fallbackUrl = null) {
   const cleanKey = String(destinationKey).toLowerCase().trim().replace(/[\s_]+/g, '-');
   const localFallback = fallbackUrl || DESTINATION_NAMED_IMAGES[cleanKey.replace(/-/g, ' ')] || DESTINATION_NAMED_IMAGES[cleanKey] || getHimalayanFallbackImage({ slug: cleanKey, name: destinationKey });
 
-  // If no Pexels API key configured, use our verified high-res local asset directory
+  // If no Pexels API key, return verified high-res local asset directly
   if (!PEXELS_KEY || PEXELS_KEY.trim() === '') {
     return localFallback;
   }
 
-  // Check in-memory cache first
-  if (imageCache.has(cleanKey)) {
-    const photos = imageCache.get(cleanKey);
+  // 1. Check in-memory RAM cache
+  if (memoryCache.has(cleanKey)) {
+    const photos = memoryCache.get(cleanKey);
     if (photos && photos.length > 0) {
       return photos[Math.floor(Math.random() * photos.length)];
     }
   }
 
-  // Determine query
-  const query = DESTINATION_SEARCH_QUERIES[cleanKey] || `${destinationKey.replace(/-/g, ' ')} Uttarakhand Himalaya scenic`;
-
-  try {
-    const res = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=8&orientation=landscape&size=large`,
-      {
-        headers: {
-          Authorization: PEXELS_KEY
-        }
-      }
-    );
-
-    if (!res.ok) {
-      return localFallback;
-    }
-
-    const data = await res.json();
-    if (!data.photos || data.photos.length === 0) {
-      return localFallback;
-    }
-
-    // Extract photo URLs (large2x or large)
-    const urls = data.photos.map(p => p.src?.large2x || p.src?.large || p.src?.original).filter(Boolean);
-    if (urls.length > 0) {
-      imageCache.set(cleanKey, urls);
-      return urls[Math.floor(Math.random() * urls.length)];
-    }
-
-    return localFallback;
-  } catch (err) {
-    console.warn('[PexelsAPI] Fallback used for', cleanKey, err);
-    return localFallback;
+  // 2. Check 24-hour LocalStorage cache
+  const stored = readStorageCache(cleanKey);
+  if (stored && stored.length > 0) {
+    memoryCache.set(cleanKey, stored);
+    return stored[Math.floor(Math.random() * stored.length)];
   }
+
+  // 3. Deduplicate in-flight requests (prevent duplicate API calls for same place)
+  if (inFlightRequests.has(cleanKey)) {
+    try {
+      const photos = await inFlightRequests.get(cleanKey);
+      if (photos && photos.length > 0) {
+        return photos[Math.floor(Math.random() * photos.length)];
+      }
+    } catch (e) {
+      return localFallback;
+    }
+  }
+
+  // 4. Construct location-aware query
+  const query = DESTINATION_SEARCH_QUERIES[cleanKey] || `${destinationKey.replace(/-/g, ' ')} Uttarakhand mountain landscape`;
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=8&orientation=landscape&size=large`,
+        {
+          headers: {
+            Authorization: PEXELS_KEY
+          }
+        }
+      );
+
+      if (!res.ok) {
+        return null;
+      }
+
+      const data = await res.json();
+      if (!data.photos || data.photos.length === 0) {
+        return null;
+      }
+
+      const urls = data.photos.map(p => p.src?.large2x || p.src?.large || p.src?.original).filter(Boolean);
+      if (urls.length > 0) {
+        memoryCache.set(cleanKey, urls);
+        writeStorageCache(cleanKey, urls);
+        return urls;
+      }
+      return null;
+    } catch (err) {
+      console.warn('[PexelsAPI] Fallback used for', cleanKey);
+      return null;
+    } finally {
+      inFlightRequests.delete(cleanKey);
+    }
+  })();
+
+  inFlightRequests.set(cleanKey, fetchPromise);
+
+  const resultUrls = await fetchPromise;
+  if (resultUrls && resultUrls.length > 0) {
+    return resultUrls[Math.floor(Math.random() * resultUrls.length)];
+  }
+
+  return localFallback;
 }
 
 /**

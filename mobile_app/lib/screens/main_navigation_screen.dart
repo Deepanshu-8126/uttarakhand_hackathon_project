@@ -168,13 +168,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen()));
-        },
-        backgroundColor: const Color(0xFFDC2626),
-        child: const Icon(Icons.sos, color: Colors.white, size: 28),
-      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,

@@ -153,19 +153,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
-                          _buildQuickActionButton('Spiritual', Icons.temple_hindu_outlined, const Color(0xFFFEF3C7), const Color(0xFF92400E), () {
+                          _buildQuickActionButton('Spiritual', Icons.temple_hindu_outlined, () {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const SpiritualScreen()));
                           }),
                           const SizedBox(width: 8),
-                          _buildQuickActionButton('Culture', Icons.palette_outlined, const Color(0xFFE0E7FF), const Color(0xFF3730A3), () {
+                          _buildQuickActionButton('Culture', Icons.palette_outlined, () {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const CultureScreen()));
                           }),
                           const SizedBox(width: 8),
-                          _buildQuickActionButton('Adventures', Icons.kayaking_outlined, const Color(0xFFDCFCE7), const Color(0xFF166534), () {
+                          _buildQuickActionButton('Adventures', Icons.kayaking_outlined, () {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivitiesScreen()));
                           }),
                           const SizedBox(width: 8),
-                          _buildQuickActionButton('Guides', Icons.person_pin_outlined, const Color(0xFFF3E8FF), const Color(0xFF6B21A8), () {
+                          _buildQuickActionButton('Guides', Icons.person_pin_outlined, () {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const GuidesScreen()));
                           }),
                         ],
@@ -296,23 +296,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildQuickActionButton(String label, IconData icon, Color bgColor, Color fgColor, VoidCallback onTap) {
+  Widget _buildQuickActionButton(String label, IconData icon, VoidCallback onTap) {
     return Expanded(
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
-            color: bgColor,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: fgColor.withOpacity(0.2)),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: fgColor, size: 20),
-              const SizedBox(height: 4),
-              Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: fgColor)),
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFECFDF5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: const Color(0xFF0F3D2E), size: 18),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
+              ),
             ],
           ),
         ),
@@ -326,8 +351,29 @@ class _HomeScreenState extends State<HomeScreen> {
         'title': 'DISCOVER UTTARAKHAND',
         'subtitle': 'Where Sacred Himalayas Meet The Sky',
         'tag': 'GPS VERIFIED • LIVE CORRIDOR',
-        'image': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+        'image': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6f/Nainital_metro.jpg/1920px-Nainital_metro.jpg',
         'dest': 'Nainital & Kumaon Lakes',
+      },
+      {
+        'title': 'KEDARNATH DHAM',
+        'subtitle': 'Sacred High-Altitude Sanctuary at 3,583m',
+        'tag': 'WEATHER CLEAR • PILGRIMAGE ACTIVE',
+        'image': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Kedarnath_view_.jpg/1920px-Kedarnath_view_.jpg',
+        'dest': 'Mandakini Valley, Garhwal',
+      },
+      {
+        'title': 'AULI SNOW PEAKS',
+        'subtitle': 'Panoramic Vistas of Nanda Devi & Trishul',
+        'tag': 'SKI TRAILS • 2,800M ALTITUDE',
+        'image': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/43/Auli_Lake_in_Feburary_2015.jpg/1920px-Auli_Lake_in_Feburary_2015.jpg',
+        'dest': 'Chamoli, Garhwal',
+      },
+      {
+        'title': 'RISHIKESH & GANGA',
+        'subtitle': 'Emerald Rapids & Sacred Evening Aarti',
+        'tag': 'VERIFIED FLEET • ACTIVE CORRIDOR',
+        'image': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/Trayambakeshwar_Temple_VK.jpg/1920px-Trayambakeshwar_Temple_VK.jpg',
+        'dest': 'Gateway to Devbhoomi',
       },
     ];
 
