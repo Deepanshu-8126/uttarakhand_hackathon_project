@@ -88,7 +88,6 @@ export default function Navbar() {
     { label: t('nav_stays') || 'Stays', path: '/stays', icon: Bed },
     { label: t('nav_rentals') || 'Rentals', path: '/rentals', icon: Car },
     { label: t('nav_map') || 'Map', path: '/map', icon: Map },
-    { label: 'AI Copilot', path: '/copilot', icon: Sparkles, badge: 'AI' },
     { label: 'Web3 & Tech', path: '/innovations', icon: ShieldCheck, badge: 'Web3' },
   ];
 

@@ -4,7 +4,8 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { Sparkles, Trash2, Mic, X, Compass, Shield, Mountain, Hotel, Route, ArrowRight, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles, Trash2, Mic, X, Compass, Shield, Mountain, Hotel, Route, ArrowRight, Check, Maximize2 } from 'lucide-react';
 import { useChatState } from './ChatState.js';
 import MessageRenderer from './MessageRenderer.jsx';
 import ChatInput from './ChatInput.jsx';
@@ -17,6 +18,7 @@ export default function ChatWindow({
   initialQuery = '',
   embedded = false
 }) {
+  const navigate = useNavigate();
   const {
     messages,
     isLoading,
@@ -119,14 +121,28 @@ export default function ChatWindow({
           </button>
 
           {!embedded && (
-            <button
-              type="button"
-              onClick={onClose}
-              title="Close chat"
-              className="p-2 rounded-xl text-stone-400 hover:text-stone-800 hover:bg-stone-50 transition-colors cursor-pointer shrink-0"
-            >
-              <X size={16} />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate('/copilot');
+                }}
+                title="Open Fullscreen Copilot Page"
+                className="p-2 rounded-xl text-stone-400 hover:text-emerald-800 hover:bg-emerald-50 transition-colors cursor-pointer shrink-0"
+              >
+                <Maximize2 size={16} />
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                title="Close chat"
+                className="p-2 rounded-xl text-stone-400 hover:text-stone-800 hover:bg-stone-50 transition-colors cursor-pointer shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </>
           )}
         </div>
       </div>
