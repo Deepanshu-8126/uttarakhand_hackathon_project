@@ -1,7 +1,7 @@
 /* =========================================================
    Discovery Uttarakhand - Master Copilot Workspace CSS
-   Deep Himalayan Emerald (#040e09 / #06140c) + Radiant Glow (#00FF88)
-   Glassmorphism, Zero Squish, Flawless Multi-Column & Mobile Overlays
+   Clean Alpine White (#ffffff / #fcfbfa) + Deep Himalayan Emerald (#0f3d2e)
+   Zero Squish, Fluid Multi-Column & Clean Overlays
    ========================================================= */
 
 .copilot-page-wrapper {
@@ -10,8 +10,8 @@
   height: 100vh;
   height: 100dvh;
   padding-top: 0;
-  background: #040e09;
-  color: #f1f5f9;
+  background: #fcfbfa;
+  color: #0f172a;
   overflow: hidden;
 }
 
@@ -21,14 +21,14 @@
   min-height: 0;
   overflow: hidden;
   position: relative;
-  background: #040d08;
+  background: #fcfbfa;
 }
 
 /* LEFT COLUMN: SIDEBAR */
 .copilot-col-left {
   width: 280px;
-  background: #06140c;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #fdfbf7;
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -43,14 +43,14 @@
   min-width: 0;
   height: 100%;
   position: relative;
-  background: #040d08;
+  background: #fcfbfa;
 }
 
 /* RIGHT COLUMN: TRIP CONTEXT */
 .copilot-col-right {
   width: 320px;
-  background: #06140c;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: #fdfbf7;
+  border-left: 1px solid rgba(226, 232, 240, 0.9);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -66,7 +66,7 @@
     bottom: 0;
     z-index: 40;
     transform: translateX(100%);
-    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.7);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
   }
   .copilot-col-right.open {
     transform: translateX(0);
@@ -81,14 +81,14 @@
     bottom: 0;
     z-index: 40;
     transform: translateX(-100%);
-    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.7);
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.08);
   }
   .copilot-col-left.open {
     transform: translateX(0);
   }
 }
 
-/* Custom Scrollbars for Copilot Workspace */
+/* Custom Scrollbars for Copilot Workspace (Clean subtle, never harsh) */
 .copilot-sidebar ::-webkit-scrollbar,
 .copilot-context-panel::-webkit-scrollbar,
 .custom-copilot-scrollbar::-webkit-scrollbar {
@@ -104,12 +104,12 @@
 .copilot-sidebar ::-webkit-scrollbar-thumb,
 .copilot-context-panel::-webkit-scrollbar-thumb,
 .custom-copilot-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.25);
+  background: rgba(15, 61, 46, 0.15);
   border-radius: 9999px;
 }
 
 .copilot-sidebar ::-webkit-scrollbar-thumb:hover,
 .copilot-context-panel::-webkit-scrollbar-thumb:hover,
 .custom-copilot-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.5);
+  background: rgba(15, 61, 46, 0.3);
 }

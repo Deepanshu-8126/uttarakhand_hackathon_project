@@ -49,7 +49,7 @@ class AppTheme {
         centerTitle: false,
         iconTheme: IconThemeData(color: forestGreen),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: warmWhite,
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.06),

@@ -1,10 +1,10 @@
 /**
  * Devbhoomi Conversational AI - ChatWindow
- * Master conversational container with rich Himalayan glassmorphism and real-time state
+ * Master conversational container with Clean Alpine White & Himalayan Emerald theme
  */
 
 import React, { useRef, useEffect } from 'react';
-import { Trash2, Mic, X, Compass, Shield, Mountain, Hotel, Route, ArrowRight } from 'lucide-react';
+import { Sparkles, Trash2, Mic, X, Compass, Shield, MapPin, Mountain, Hotel, Route, ArrowRight } from 'lucide-react';
 import { useChatState } from './ChatState.js';
 import MessageRenderer from './MessageRenderer.jsx';
 import ChatInput from './ChatInput.jsx';
@@ -12,7 +12,7 @@ import SuggestedActions from './SuggestedActions.jsx';
 import VoiceControls from './VoiceControls.jsx';
 
 export default function ChatWindow({
-  isOpen: _isOpen = true,
+  isOpen = true,
   onClose = () => {},
   initialQuery = '',
   embedded = false
@@ -22,6 +22,7 @@ export default function ChatWindow({
     isLoading,
     isStreaming,
     activeAgent,
+    thinkingSteps,
     isVoiceOpen,
     setIsVoiceOpen,
     sendMessage,
@@ -67,36 +68,36 @@ export default function ChatWindow({
   ];
 
   return (
-    <div className={`flex flex-col h-full bg-[#040d08] text-white overflow-hidden relative selection:bg-emerald-500/30 ${embedded ? 'rounded-2xl border border-white/10' : ''}`}>
+    <div className={`flex flex-col h-full bg-[#fcfbfa] text-slate-800 overflow-hidden relative selection:bg-emerald-100 ${embedded ? 'border-t sm:border-t-0 sm:border-l border-stone-200/80' : ''}`}>
       
-      {/* ── Ambient Background Glows ── */}
-      <div className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none -mr-20 -mt-20" />
-      <div className="absolute bottom-16 left-0 w-60 sm:w-80 h-60 sm:h-80 bg-teal-500/5 rounded-full blur-[90px] pointer-events-none -ml-20" />
+      {/* ── Ambient Alpine Glows ── */}
+      <div className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/5 rounded-full blur-[90px] pointer-events-none -mr-20 -mt-20" />
+      <div className="absolute bottom-16 left-0 w-60 sm:w-80 h-60 sm:h-80 bg-teal-500/5 rounded-full blur-[80px] pointer-events-none -ml-20" />
 
       {/* ── Top Header ── */}
-      <div className="shrink-0 px-3.5 sm:px-6 py-3 border-b border-white/[0.08] bg-[#06120b]/80 backdrop-blur-2xl flex items-center justify-between z-10">
+      <div className="shrink-0 px-3.5 sm:px-6 py-3 border-b border-stone-200/80 bg-white/95 backdrop-blur-xl flex items-center justify-between z-10 shadow-2xs">
         <div className="flex items-center gap-3 min-w-0 pr-2">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-400 p-[1px] shadow-lg shadow-emerald-950/60 shrink-0">
-            <div className="w-full h-full bg-[#040e09] rounded-[15px] flex items-center justify-center">
-              <Compass size={18} className="text-emerald-300 animate-spin-slow" />
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-800 via-emerald-700 to-teal-600 p-[1px] shadow-sm shrink-0">
+            <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center">
+              <Compass size={18} className="text-emerald-800 animate-spin-slow" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#040e09] animate-pulse" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-100 via-white to-teal-200 bg-clip-text text-transparent truncate">
+              <h2 className="text-xs sm:text-sm font-bold text-[#0f3d2e] truncate">
                 Devbhoomi AI Travel Copilot
               </h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/25 text-[9px] sm:text-[10px] font-bold text-emerald-300 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] sm:text-[10px] font-bold text-emerald-800 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
                 <span className="truncate max-w-[80px] sm:max-w-none">{activeAgent}</span>
               </span>
             </div>
-            <p className="text-[10px] sm:text-[11px] text-stone-400 truncate flex items-center gap-1">
+            <p className="text-[10px] sm:text-[11px] text-stone-500 truncate flex items-center gap-1">
               <span>Himalayan terrain intelligence</span>
-              <span className="text-emerald-500/60">•</span>
-              <span className="text-emerald-400/90 font-medium">100% Grounded</span>
+              <span className="text-emerald-600/60">•</span>
+              <span className="text-emerald-700 font-semibold">100% Grounded</span>
             </p>
           </div>
         </div>
@@ -107,9 +108,9 @@ export default function ChatWindow({
             type="button"
             onClick={() => setIsVoiceOpen(true)}
             title="Open Live Voice Companion"
-            className="group relative px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/10 hover:from-emerald-500/30 hover:to-teal-500/20 border border-emerald-400/30 text-emerald-200 hover:text-white transition-all duration-200 active:scale-95 flex items-center gap-1.5 text-xs font-semibold shadow-sm cursor-pointer"
+            className="group relative px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-900 transition-all duration-200 active:scale-95 flex items-center gap-1.5 text-xs font-bold shadow-2xs cursor-pointer"
           >
-            <Mic size={14} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+            <Mic size={14} className="text-emerald-700 group-hover:scale-110 transition-transform" />
             <span className="hidden sm:inline">Voice Mode</span>
           </button>
 
@@ -117,7 +118,7 @@ export default function ChatWindow({
             type="button"
             onClick={clearChat}
             title="Reset conversation"
-            className="p-2 rounded-xl hover:bg-white/[0.06] text-stone-400 hover:text-rose-300 border border-transparent hover:border-white/10 transition-all cursor-pointer"
+            className="p-2 rounded-xl hover:bg-stone-100 text-stone-500 hover:text-rose-600 border border-transparent hover:border-stone-200 transition-all cursor-pointer"
           >
             <Trash2 size={15} />
           </button>
@@ -127,7 +128,7 @@ export default function ChatWindow({
               type="button"
               onClick={onClose}
               title="Close chat"
-              className="p-2 rounded-xl hover:bg-white/[0.06] text-stone-400 hover:text-white border border-transparent hover:border-white/10 transition-all cursor-pointer"
+              className="p-2 rounded-xl hover:bg-stone-100 text-stone-500 hover:text-slate-900 border border-transparent hover:border-stone-200 transition-all cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -141,15 +142,15 @@ export default function ChatWindow({
         {/* Welcome Empty State if only 0 or 1 message */}
         {messages.length <= 1 && (
           <div className="py-4 sm:py-6 px-2 max-w-xl mx-auto text-center space-y-5">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-tr from-emerald-600/30 via-teal-500/20 to-emerald-400/10 border border-emerald-500/30 shadow-xl shadow-emerald-950/60 text-emerald-300">
-              <Mountain size={28} className="text-emerald-400 animate-pulse" />
+            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-emerald-50 border border-emerald-200/80 shadow-sm text-emerald-700">
+              <Mountain size={28} className="text-emerald-700 animate-pulse" />
             </div>
 
             <div className="space-y-1.5">
-              <h3 className="text-base sm:text-lg font-bold text-emerald-100">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#0f3d2e] tracking-tight">
                 Welcome to Devbhoomi AI
               </h3>
-              <p className="text-xs sm:text-sm text-stone-300/90 leading-relaxed max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto">
                 Ask anything about mountain routes, high-altitude acclimatization, live road safety alerts, or verified local homestays.
               </p>
             </div>
@@ -164,17 +165,17 @@ export default function ChatWindow({
                     type="button"
                     onClick={() => sendMessage(card.prompt)}
                     disabled={isLoading}
-                    className="group p-3 sm:p-3.5 rounded-2xl bg-white/[0.02] hover:bg-emerald-950/40 border border-white/[0.07] hover:border-emerald-500/30 transition-all duration-200 active:scale-[0.98] text-left flex items-start gap-2.5 cursor-pointer shadow-sm"
+                    className="group p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-emerald-50/70 border border-stone-200/80 hover:border-emerald-400 transition-all duration-200 active:scale-[0.98] text-left flex items-start gap-2.5 cursor-pointer shadow-xs"
                   >
-                    <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-400/20 group-hover:bg-emerald-500/25 shrink-0 transition-colors">
+                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 group-hover:bg-emerald-100 shrink-0 transition-colors">
                       <IconComponent size={14} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-emerald-200 group-hover:text-white flex items-center justify-between">
+                      <div className="text-xs font-bold text-slate-800 group-hover:text-[#0f3d2e] flex items-center justify-between">
                         <span className="truncate">{card.title}</span>
-                        <ArrowRight size={12} className="text-stone-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
+                        <ArrowRight size={12} className="text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
                       </div>
-                      <div className="text-[11px] text-stone-400 line-clamp-2 mt-0.5 leading-snug">
+                      <div className="text-[11px] text-stone-500 line-clamp-2 mt-0.5 leading-snug">
                         {card.desc}
                       </div>
                     </div>
@@ -193,7 +194,7 @@ export default function ChatWindow({
 
       {/* ── Suggested Prompts & Actions ── */}
       {latestSuggestions.length > 0 && !isStreaming && (
-        <div className="shrink-0 px-3 sm:px-6 pt-1 pb-0.5 bg-gradient-to-t from-black/60 to-transparent z-10">
+        <div className="shrink-0 px-3 sm:px-6 pt-1 pb-1 bg-gradient-to-t from-white to-transparent z-10">
           <SuggestedActions
             suggestions={latestSuggestions}
             onSelect={(prompt) => sendMessage(prompt)}
@@ -203,7 +204,7 @@ export default function ChatWindow({
       )}
 
       {/* ── Bottom Input Bar ── */}
-      <div className="shrink-0 bg-[#06120b]/90 border-t border-white/[0.08] backdrop-blur-2xl z-10">
+      <div className="shrink-0 bg-white/95 border-t border-stone-200/80 backdrop-blur-xl z-10">
         <ChatInput
           onSend={(text) => sendMessage(text)}
           onOpenVoice={() => setIsVoiceOpen(true)}

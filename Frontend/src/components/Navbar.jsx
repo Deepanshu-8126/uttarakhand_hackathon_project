@@ -109,7 +109,7 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   };
 
-  const isDark = location.pathname === '/copilot' || location.pathname.startsWith('/copilot') || location.pathname.startsWith('/audit');
+  const isDark = false;
 
   return (
     <>

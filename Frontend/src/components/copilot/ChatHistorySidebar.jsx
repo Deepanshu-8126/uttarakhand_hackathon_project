@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Trash2, MessageSquare, Search, Edit2, Check, Sparkles } from 'lucide-react';
+import { Plus, X, Trash2, MessageSquare, Search, Edit2, Check } from 'lucide-react';
 import useChatStore from '../../store/chatStore';
 
 const isToday = (date) => {
@@ -67,13 +67,13 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
   const groupOrder = ['Today', 'Yesterday', 'Last 7 days', 'Older'];
 
   return (
-    <div className={`copilot-sidebar ${isOpen ? 'open' : ''} flex flex-col h-full bg-[#06140c] border-r border-white/[0.08] text-stone-200 select-none`}>
+    <div className={`copilot-sidebar ${isOpen ? 'open' : ''} flex flex-col h-full bg-[#fdfbf7] border-r border-stone-200/80 text-slate-800 select-none`}>
       {/* Header & New Chat */}
-      <div className="flex flex-col gap-2.5 p-3.5 border-b border-white/[0.08] bg-[#07190f]/70">
+      <div className="flex flex-col gap-2.5 p-3.5 border-b border-stone-200/80 bg-white">
         <div className="flex items-center justify-between gap-2">
           <button 
             type="button"
-            className="flex-1 inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:brightness-110 text-white font-bold text-xs shadow-md shadow-emerald-950/60 border border-emerald-400/30 transition-all active:scale-95 cursor-pointer"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#0f3d2e] hover:bg-[#185340] text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
             onClick={onNewChat}
           >
             <Plus size={15} />
@@ -82,7 +82,7 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
           {onClose && (
             <button 
               type="button"
-              className="lg:hidden p-2 rounded-xl text-stone-400 hover:text-white hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer" 
+              className="lg:hidden p-2 rounded-xl text-stone-500 hover:text-slate-900 hover:bg-stone-100 transition-colors flex items-center justify-center cursor-pointer" 
               onClick={onClose} 
               aria-label="Close sidebar"
             >
@@ -99,13 +99,13 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white/[0.04] border border-white/[0.08] focus:outline-none focus:border-emerald-400 focus:bg-white/[0.06] text-white placeholder:text-stone-500 transition-all"
+            className="w-full pl-8 pr-7 py-2 text-xs rounded-xl bg-stone-50 border border-stone-200 focus:outline-none focus:border-emerald-600 focus:bg-white text-slate-800 placeholder:text-stone-400 transition-all"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-slate-800 cursor-pointer"
             >
               <X size={12} />
             </button>
@@ -116,8 +116,8 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
       {/* History List */}
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4 text-xs">
         {filteredChats.length === 0 ? (
-          <div className="text-center py-8 px-4 text-stone-500 space-y-2">
-            <MessageSquare size={20} className="mx-auto text-stone-600" />
+          <div className="text-center py-8 px-4 text-stone-400 space-y-2">
+            <MessageSquare size={20} className="mx-auto text-stone-300" />
             <p className="text-xs">{searchTerm ? 'No matching conversations' : 'No past conversations'}</p>
           </div>
         ) : (
@@ -125,7 +125,7 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
             if (!groupedChats[group] || groupedChats[group].length === 0) return null;
             return (
               <div key={group} className="space-y-1">
-                <h4 className="px-2 text-[10px] font-bold uppercase tracking-wider text-emerald-400/80">
+                <h4 className="px-2 text-[10px] font-bold uppercase tracking-wider text-stone-400">
                   {group}
                 </h4>
                 <div className="space-y-0.5">
@@ -136,14 +136,14 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
                         key={chat._id}
                         className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all duration-150 ${
                           isActive
-                            ? 'bg-emerald-950/70 text-emerald-200 border border-emerald-500/30 shadow-sm font-semibold'
-                            : 'text-stone-300 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                            ? 'bg-emerald-50 text-[#0f3d2e] border border-emerald-200 shadow-2xs font-bold'
+                            : 'text-stone-700 hover:text-slate-900 hover:bg-white border border-transparent'
                         }`}
                         onClick={() => onSelectChat(chat._id)}
                       >
                         <MessageSquare 
                           size={14} 
-                          className={`shrink-0 ${isActive ? 'text-emerald-400' : 'text-stone-500 group-hover:text-emerald-400/80 transition-colors'}`} 
+                          className={`shrink-0 ${isActive ? 'text-[#0f3d2e]' : 'text-stone-400 group-hover:text-emerald-700 transition-colors'}`} 
                         />
                         
                         <div className="flex-1 min-w-0">
@@ -158,12 +158,12 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
                                   if (e.key === 'Escape') setEditingChatId(null);
                                 }}
                                 autoFocus
-                                className="w-full text-xs px-2 py-0.5 rounded bg-black/60 border border-emerald-400 text-white focus:outline-none"
+                                className="w-full text-xs px-2 py-0.5 rounded bg-white border border-emerald-600 text-slate-900 focus:outline-none"
                               />
                               <button
                                 type="button"
                                 onClick={(e) => handleSaveRename(chat._id, e)}
-                                className="p-1 text-emerald-400 hover:text-emerald-200 cursor-pointer"
+                                className="p-1 text-emerald-700 hover:text-emerald-900 cursor-pointer"
                                 title="Save"
                               >
                                 <Check size={12} />
@@ -181,7 +181,7 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
                           {editingChatId !== chat._id && (
                             <button
                               type="button"
-                              className="p-1 rounded text-stone-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                              className="p-1 rounded text-stone-400 hover:text-emerald-800 transition-colors cursor-pointer"
                               onClick={(e) => handleStartRename(chat, e)}
                               title="Rename Chat"
                             >
@@ -191,7 +191,7 @@ export default function ChatHistorySidebar({ chats, activeChatId, onSelectChat, 
                           {onDeleteChat && (
                             <button 
                               type="button"
-                              className="p-1 rounded text-stone-400 hover:text-rose-400 transition-colors cursor-pointer" 
+                              className="p-1 rounded text-stone-400 hover:text-rose-600 transition-colors cursor-pointer" 
                               onClick={(e) => { e.stopPropagation(); onDeleteChat(chat._id); }}
                               title="Delete Chat"
                             >

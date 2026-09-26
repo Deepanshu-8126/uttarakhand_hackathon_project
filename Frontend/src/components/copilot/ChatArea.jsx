@@ -4,30 +4,30 @@ import ChatWindow from '../../chat/ChatWindow.jsx';
 
 export default function ChatArea({ activeChat, tripIdContext, onToggleSidebar, onToggleContext }) {
   return (
-    <div className="relative w-full h-full flex flex-col bg-[#040e09] overflow-hidden">
+    <div className="relative w-full h-full flex flex-col bg-[#fcfbfa] overflow-hidden">
       {/* Top Mobile/Auxiliary Action Bar */}
-      <div className="md:hidden flex items-center justify-between px-3.5 py-2.5 bg-[#06140c]/90 backdrop-blur-xl border-b border-white/[0.08] z-20 shrink-0">
+      <div className="md:hidden flex items-center justify-between px-3.5 py-2.5 bg-white border-b border-stone-200/80 z-20 shrink-0 shadow-2xs">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-stone-300 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 hover:text-slate-900 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
           title="Open Conversation History"
         >
-          <Menu size={15} className="text-emerald-400" />
+          <Menu size={15} className="text-[#0f3d2e]" />
           <span>History</span>
         </button>
         
-        <span className="text-xs font-bold bg-gradient-to-r from-emerald-100 via-white to-teal-200 bg-clip-text text-transparent">
+        <span className="text-xs font-extrabold text-[#0f3d2e]">
           Devbhoomi AI
         </span>
 
         <button
           type="button"
           onClick={onToggleContext}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-stone-300 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 hover:text-slate-900 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
           title="Open Trip Radar"
         >
-          <Info size={15} className="text-emerald-400" />
+          <Info size={15} className="text-[#0f3d2e]" />
           <span>Trip Radar</span>
         </button>
       </div>
