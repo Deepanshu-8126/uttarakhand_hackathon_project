@@ -1,5 +1,6 @@
 import express from 'express';
 import { AgentRouter } from '../ai/workflows/agentRouter.js';
+import { cacheGet, cacheSet } from '../config/redis.js';
 
 const router = express.Router();
 
@@ -51,6 +52,13 @@ router.post('/ask', async (req, res) => {
       });
     }
 
+    // 1. Check Redis Cache to save LLM tokens & API credits
+    const cacheKey = `voice:ask:${encodeURIComponent(userQuery.toLowerCase())}:${lang || 'en'}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const result = await AgentRouter.processChatStream({
       message: userQuery,
       sessionId: req.headers['x-session-id'] || 'voice_session',
@@ -60,15 +68,21 @@ router.post('/ask', async (req, res) => {
 
     const replyText = result.message || (result.data && result.data.message) || 'Namaste! Main aapka Devbhoomi voice companion hoon.';
 
-    return res.status(200).json({
+    const responsePayload = {
       success: true,
       response: replyText.replace(/[*#_~`]/g, '').trim(),
       message: replyText,
       toolsUsed: result.toolsUsed || ['searchDestinations', 'getWeather'],
       suggestions: result.suggestions || [],
       engine: 'devbhoomi_voice_copilot',
-      audio_base64: ''
-    });
+      audio_base64: '',
+      cached: false
+    };
+
+    // Cache for 12 hours (43200s) to save LLM tokens
+    await cacheSet(cacheKey, { ...responsePayload, cached: true }, 43200);
+
+    return res.status(200).json(responsePayload);
   } catch (error) {
     console.error('[VoiceAsk Error]', error);
     res.status(200).json({
@@ -86,7 +100,13 @@ router.post('/ask', async (req, res) => {
 router.post('/audio_query', async (req, res) => {
   try {
     const { audio_base64, lang, message, query } = req.body;
-    const userQuery = message || query || (lang?.startsWith('hi') ? 'उत्तराखंड यात्रा के बारे में बताओ' : 'Tell me about places to visit in Uttarakhand');
+    const userQuery = (message || query || (lang?.startsWith('hi') ? 'उत्तराखंड यात्रा के बारे में बताओ' : 'Tell me about places to visit in Uttarakhand')).trim();
+
+    const cacheKey = `voice:audio_query:${encodeURIComponent(userQuery.toLowerCase())}:${lang || 'en'}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
 
     const result = await AgentRouter.processChatStream({
       message: userQuery,
@@ -97,14 +117,18 @@ router.post('/audio_query', async (req, res) => {
 
     const replyText = result.message || 'Namaste! Main aapka Devbhoomi voice companion hoon.';
 
-    return res.status(200).json({
+    const responsePayload = {
       success: true,
       user_transcript: userQuery,
       response: replyText.replace(/[*#_~`]/g, '').trim(),
       tools_used: result.toolsUsed || [],
       engine: 'devbhoomi_voice_copilot',
       audio_base64: ''
-    });
+    };
+
+    await cacheSet(cacheKey, responsePayload, 43200);
+
+    return res.status(200).json(responsePayload);
   } catch (error) {
     console.error('[VoiceAudioQuery Error]', error);
     res.status(200).json({

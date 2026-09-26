@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Navigation,
   Mountain,
@@ -26,6 +27,8 @@ import {
   Sun,
   Share2,
   ExternalLink,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { Polyline, CircleMarker, Tooltip } from 'react-leaflet';
 
@@ -394,12 +397,27 @@ export default function TransitRouteDrawer({
   onFlyToCorridor,
   routeTarget,
 }) {
+  const navigate = useNavigate();
   const [fromLocation, setFromLocation] = useState('haridwar');
   const [toLocation, setToLocation] = useState('kedarnath');
   const [selectedTab, setSelectedTab] = useState('route'); // 'route' | 'stops' | 'lines'
   const [transportMode, setTransportMode] = useState('bus'); // 'bus' | 'cab' | 'heli' | 'trek'
   const [copiedToast, setCopiedToast] = useState(false);
   const [customDestinationNotice, setCustomDestinationNotice] = useState(null);
+
+  const handleJumpToTripPlanner = () => {
+    const destName = destStation.name;
+    const originName = originStation.name;
+    navigate(`/trip-planner?dest=${encodeURIComponent(destName)}&origin=${encodeURIComponent(originName)}`, {
+      state: {
+        destination: destName,
+        origin: originName,
+        corridor: activeCorridor.name,
+        distance: routeAnalysis.distance,
+        duration: routeAnalysis.duration,
+      }
+    });
+  };
 
   // Sync routeTarget when user clicks Route from any map popup or location card
   useEffect(() => {
@@ -896,8 +914,25 @@ Generated via Discovery Uttarakhand GIS.`;
                 </div>
               </div>
 
-              {/* ─── Primary Route Actions: Start Here + Real Google Maps + Fit Corridor ─── */}
+              {/* ─── Primary Route Actions: Ja Trip Planner + Start Here + Real Google Maps + Fit Corridor ─── */}
               <div className="space-y-2">
+                {/* 1-Click Action: Transfer to Trip Planner */}
+                <button
+                  type="button"
+                  onClick={handleJumpToTripPlanner}
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-800 via-[#0f3d2e] to-emerald-950 hover:from-emerald-700 hover:to-emerald-900 text-white font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-between gap-2 cursor-pointer group active:scale-[0.98] border border-emerald-500/30"
+                  title={`Auto-generate tailored multi-day itinerary from ${originStation.name} to ${destStation.name}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={15} className="text-emerald-300 animate-pulse shrink-0" />
+                    <span>Ja Trip Planner → Auto-Generate Itinerary</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-emerald-200 font-bold">
+                    <span>{originStation.name.split(' ')[0]} → {destStation.name.split(' ')[0]}</span>
+                    <ArrowRight size={13} className="text-emerald-300 group-hover:translate-x-1 transition-transform shrink-0" />
+                  </div>
+                </button>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {/* Action 1: Start Navigation / Journey from Here */}
                   <button
@@ -1103,11 +1138,21 @@ Generated via Discovery Uttarakhand GIS.`;
                   <span>{copiedToast ? 'Copied to Clipboard!' : 'Copy Route Plan'}</span>
                 </button>
 
+                <button
+                  type="button"
+                  onClick={handleJumpToTripPlanner}
+                  className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] border border-emerald-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs shrink-0"
+                  title="Plan in AI Trip Planner"
+                >
+                  <Sparkles size={13} className="text-emerald-700" />
+                  <span>Ja Trip Planner</span>
+                </button>
+
                 <a
                   href={googleMapsDirectionsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] border border-emerald-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs shrink-0"
+                  className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs shrink-0"
                   title="Open live directions in Google Maps"
                 >
                   <ExternalLink size={13} />

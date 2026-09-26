@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useMapStore } from '../store/mapStore';
 import { getDestinations } from '../api/destinationApi';
@@ -93,8 +93,12 @@ const POPULAR_DESTINATIONS = [
 
 export default function TripPlanner() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const destinationParam = searchParams.get('destination') || searchParams.get('dest') || '';
+  const stateOrigin = location?.state?.origin;
+  const stateDest = location?.state?.destination;
+  const destinationParam = searchParams.get('destination') || searchParams.get('dest') || stateDest || '';
+  const originParam = searchParams.get('origin') || searchParams.get('start') || stateOrigin || '';
   const queryParam = searchParams.get('query') || destinationParam || '';
   const rentalNameParam = searchParams.get('rental_name') || searchParams.get('rentalName');
   const rentalLocationParam = searchParams.get('location') || searchParams.get('city');
@@ -217,7 +221,7 @@ export default function TripPlanner() {
       .slice(0, 8);
   }, [searchableDestinations, destSearchQuery]);
 
-  // Context-Aware synchronization: auto-fill destination if passed via URL
+  // Context-Aware synchronization: auto-fill destination if passed via URL or state
   useEffect(() => {
     if (destinationParam) {
       setDestSearchQuery(destinationParam);
@@ -238,6 +242,27 @@ export default function TripPlanner() {
       }
     }
   }, [destinationParam, searchableDestinations]);
+
+  // Context-Aware synchronization: auto-fill starting hub if passed via URL or state
+  useEffect(() => {
+    if (originParam) {
+      const clean = originParam.toLowerCase().trim();
+      const matchedHub = POPULAR_START_HUBS.find(
+        (h) => clean.includes(h.name.toLowerCase()) || clean.includes(h.city.toLowerCase()) || h.name.toLowerCase().includes(clean)
+      );
+      if (matchedHub) {
+        setStartingLocation({
+          name: `${matchedHub.name}, ${matchedHub.state}`,
+          coordinates: matchedHub.coordinates,
+        });
+      } else {
+        setStartingLocation({
+          name: originParam,
+          coordinates: [30.3165, 78.0322],
+        });
+      }
+    }
+  }, [originParam]);
 
   // Toggle Vibe Chips
   const toggleVibe = (id) => {
