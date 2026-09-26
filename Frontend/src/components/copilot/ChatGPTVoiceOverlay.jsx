@@ -122,7 +122,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
 
       const now = ctx.currentTime;
       if (nextPlayTimeRef.current < now) {
-        nextPlayTimeRef.current = now + 0.03; // tiny 30ms jitter buffer
+        nextPlayTimeRef.current = now + 0.12; // 120ms adaptive jitter cushion for smooth mobile playback
       }
       source.start(nextPlayTimeRef.current);
       nextPlayTimeRef.current += buffer.duration;
@@ -649,8 +649,12 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden select-none"
-      style={{ background: 'linear-gradient(160deg, #020c07 0%, #040e09 40%, #071a0f 100%)' }}>
+    <div className="fixed inset-0 h-[100dvh] w-full z-[9999] flex flex-col overflow-hidden select-none"
+      style={{
+        background: 'linear-gradient(160deg, #020c07 0%, #040e09 40%, #071a0f 100%)',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}>
 
       {/* ── Ambient Radial Glow (status-reactive) ── */}
       <div className="absolute inset-0 pointer-events-none transition-all duration-1000"
@@ -671,67 +675,67 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       />
 
       {/* ── Top Header ── */}
-      <div className="relative z-10 flex items-center justify-between px-4 sm:px-6 pt-4 pb-3 border-b border-white/[0.06] backdrop-blur-sm bg-black/20 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="relative z-10 flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-white/[0.06] backdrop-blur-sm bg-black/25 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
           {/* Logo pill */}
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/25 to-teal-500/15 border border-emerald-400/25 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.25)] shrink-0">
-            <Sparkles size={18} className="text-emerald-300" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/25 to-teal-500/15 border border-emerald-400/25 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.25)] shrink-0">
+            <Sparkles size={16} className="text-emerald-300 sm:w-[18px] sm:h-[18px]" />
           </div>
           <div className="min-w-0">
-            <p className="font-extrabold text-sm sm:text-base text-white tracking-tight leading-none truncate">
-              Devbhoomi AI Voice Companion
+            <p className="font-extrabold text-xs sm:text-base text-white tracking-tight leading-tight truncate">
+              Devbhoomi AI Voice
             </p>
-            <div className="flex items-center gap-1.5 mt-1">
+            <div className="flex items-center gap-1.5 mt-0.5">
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors duration-500 ${
                 voiceDemoOnline ? 'bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]' : 'bg-emerald-700'
               }`} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 truncate">
-                {voiceDemoOnline ? 'GEMINI LIVE STUDIO VOICE (AOEDE)' : 'CONNECTING LIVE ENGINE…'}
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-emerald-400/80 truncate">
+                {voiceDemoOnline ? 'LIVE AOEDE VOICE' : 'CONNECTING…'}
               </span>
             </div>
           </div>
         </div>
 
         {/* Right controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button type="button" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-emerald-500/15 border border-white/[0.1] hover:border-emerald-400/30 text-[11px] font-semibold text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md">
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-emerald-500/15 border border-white/[0.1] hover:border-emerald-400/30 text-[11px] font-semibold text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md">
             <Languages size={12} className="text-emerald-400 shrink-0" />
-            <span className="hidden xs:inline">{lang === 'en' ? '🇮🇳 हिन्दी (Hindi)' : '🇬🇧 English'}</span>
-            <span className="xs:hidden">{lang === 'en' ? 'हि' : 'EN'}</span>
+            <span className="text-[11px]">{lang === 'en' ? 'हि' : 'EN'}</span>
+            <span className="hidden sm:inline text-[11px]">{lang === 'en' ? '(Hindi)' : '(English)'}</span>
           </button>
 
           <button type="button" title={isMuted ? 'Unmute' : 'Mute'}
             onClick={() => { if (!isMuted && audioPlayerRef.current) try { audioPlayerRef.current.pause(); } catch(e){} setIsMuted(!isMuted); }}
-            className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] transition-all active:scale-95 cursor-pointer">
+            className="p-1.5 sm:p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] transition-all active:scale-95 cursor-pointer">
             {isMuted ? <VolumeX size={15} className="text-rose-400" /> : <Volume2 size={15} className="text-emerald-400" />}
           </button>
 
           <button type="button" title="Close voice mode"
             onClick={() => { stopVoiceLoop(); onClose(); }}
-            className="p-2 rounded-xl bg-white/[0.06] hover:bg-rose-500/15 border border-white/[0.1] hover:border-rose-400/30 text-stone-400 hover:text-rose-300 transition-all active:scale-95 cursor-pointer">
+            className="p-1.5 sm:p-2 rounded-xl bg-white/[0.06] hover:bg-rose-500/15 border border-white/[0.1] hover:border-rose-400/30 text-stone-400 hover:text-rose-300 transition-all active:scale-95 cursor-pointer">
             <X size={16} />
           </button>
         </div>
       </div>
 
-      {/* ── Central Stage ── */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-4 px-4 py-2 min-h-0">
+      {/* ── Central Stage (Optimized for small mobile viewports) ── */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 px-3 sm:px-6 py-2 min-h-0 overflow-y-auto">
 
         {/* Orb + Ripple rings */}
-        <div className="relative flex items-center justify-center shrink-0">
+        <div className="relative flex items-center justify-center shrink-0 my-1 sm:my-2">
           {/* Ripple rings */}
           {voiceStatus === 'listening' && (<>
-            <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full border border-emerald-400/20 animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="absolute w-44 h-44 sm:w-52 sm:h-52 rounded-full border border-emerald-400/15 animate-ping" style={{ animationDuration: '2.6s' }} />
-            <div className="absolute w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-emerald-500/[0.06] animate-pulse" />
+            <div className="absolute w-44 h-44 sm:w-60 sm:h-60 rounded-full border border-emerald-400/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute w-36 h-36 sm:w-52 sm:h-52 rounded-full border border-emerald-400/15 animate-ping" style={{ animationDuration: '2.6s' }} />
+            <div className="absolute w-52 h-52 sm:w-72 sm:h-72 rounded-full bg-emerald-500/[0.06] animate-pulse" />
           </>)}
           {voiceStatus === 'speaking' && (<>
-            <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full border border-teal-400/25 animate-ping" style={{ animationDuration: '1.6s' }} />
-            <div className="absolute w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-teal-400/[0.07] animate-pulse" />
+            <div className="absolute w-44 h-44 sm:w-60 sm:h-60 rounded-full border border-teal-400/25 animate-ping" style={{ animationDuration: '1.6s' }} />
+            <div className="absolute w-52 h-52 sm:w-72 sm:h-72 rounded-full bg-teal-400/[0.07] animate-pulse" />
           </>)}
           {voiceStatus === 'processing' && (
-            <div className="absolute w-40 h-40 sm:w-44 sm:h-44 rounded-full border-2 border-dashed border-emerald-500/40 animate-spin" style={{ animationDuration: '3s' }} />
+            <div className="absolute w-36 h-36 sm:w-44 sm:h-44 rounded-full border-2 border-dashed border-emerald-500/40 animate-spin" style={{ animationDuration: '3s' }} />
           )}
 
           {/* Core orb button */}
@@ -743,30 +747,30 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
               else { startListening(); }
             }}
             className={`
-              w-32 h-32 sm:w-36 sm:h-36 rounded-full
+              w-28 h-28 xs:w-32 xs:h-32 sm:w-36 sm:h-36 rounded-full
               bg-gradient-to-br ${statusColor}
               shadow-2xl flex items-center justify-center
               transition-all duration-500 active:scale-95 cursor-pointer relative z-20
-              ${voiceStatus === 'listening' ? 'shadow-[0_0_60px_rgba(16,185,129,0.5)] ring-4 ring-emerald-400/25' : ''}
-              ${voiceStatus === 'speaking'  ? 'shadow-[0_0_60px_rgba(20,184,166,0.5)] ring-4 ring-teal-400/25' : ''}
+              ${voiceStatus === 'listening' ? 'shadow-[0_0_50px_rgba(16,185,129,0.5)] ring-4 ring-emerald-400/30' : ''}
+              ${voiceStatus === 'speaking'  ? 'shadow-[0_0_50px_rgba(20,184,166,0.5)] ring-4 ring-teal-400/30' : ''}
               ${voiceStatus === 'idle'      ? 'hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] border border-emerald-500/30' : ''}
             `}
           >
             {voiceStatus === 'processing'
-              ? <Loader2 size={44} className="animate-spin text-emerald-300" />
+              ? <Loader2 size={36} className="animate-spin text-emerald-300 sm:w-11 sm:h-11" />
               : voiceStatus === 'speaking'
-              ? <Volume2 size={44} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.7)] animate-pulse" />
-              : <Mic size={44} className={voiceStatus === 'listening' ? 'text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]' : 'text-emerald-200'} />
+              ? <Volume2 size={36} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.7)] animate-pulse sm:w-11 sm:h-11" />
+              : <Mic size={36} className={`sm:w-11 sm:h-11 ${voiceStatus === 'listening' ? 'text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]' : 'text-emerald-200'}`} />
             }
           </button>
         </div>
 
         {/* Waveform bars */}
-        <div className="flex items-end justify-center gap-[3px] h-8 shrink-0">
+        <div className="flex items-end justify-center gap-[2.5px] sm:gap-[3px] h-6 sm:h-8 shrink-0">
           {[25,55,38,75,50,90,65,85,45,72,30,62,48,80,35].map((h, i) => (
             <span key={i}
               style={{ height: (voiceStatus === 'speaking' || voiceStatus === 'listening') ? `${h}%` : '15%', animationDelay: `${i * 0.07}s`, transition: 'height 0.3s ease' }}
-              className={`w-[3px] rounded-full ${
+              className={`w-[2.5px] sm:w-[3px] rounded-full ${
                 voiceStatus === 'speaking'   ? 'bg-gradient-to-t from-teal-600 to-cyan-300 animate-pulse'
                 : voiceStatus === 'listening'? 'bg-gradient-to-t from-emerald-700 via-emerald-400 to-teal-200 animate-pulse'
                 : voiceStatus === 'processing'? 'bg-amber-500/50 animate-pulse'
@@ -778,44 +782,44 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
 
         {/* Status pill */}
         <div className="shrink-0">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl shadow-lg">
-            <Radio size={12} className={`shrink-0 ${voiceStatus !== 'idle' ? 'text-emerald-400 animate-pulse' : 'text-stone-500'}`} />
-            <span className="text-xs font-semibold tracking-wide text-emerald-200">{statusLabel}</span>
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl shadow-lg">
+            <Radio size={11} className={`shrink-0 ${voiceStatus !== 'idle' ? 'text-emerald-400 animate-pulse' : 'text-stone-500'}`} />
+            <span className="text-[11px] sm:text-xs font-semibold tracking-wide text-emerald-200">{statusLabel}</span>
           </div>
         </div>
 
         {/* Subtitle / reply card */}
-        <div className="w-full max-w-sm sm:max-w-lg shrink-0">
-          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] backdrop-blur-xl px-5 py-4 min-h-[60px] max-h-[120px] overflow-y-auto flex items-center justify-center text-center shadow-inner shadow-black/20">
+        <div className="w-full max-w-sm sm:max-w-lg shrink-0 px-1">
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] backdrop-blur-xl px-4 sm:px-5 py-3 sm:py-4 min-h-[50px] max-h-[22dvh] sm:max-h-[120px] overflow-y-auto flex items-center justify-center text-center shadow-inner shadow-black/20">
             {transcript ? (
-              <p className="text-sm sm:text-base font-semibold text-emerald-200 leading-relaxed">"{transcript}"</p>
+              <p className="text-xs sm:text-base font-semibold text-emerald-200 leading-relaxed break-words">"{transcript}"</p>
             ) : lastAgentReply ? (
-              <p className="text-xs sm:text-sm text-white/85 leading-relaxed">{lastAgentReply}</p>
+              <p className="text-xs sm:text-sm text-white/90 leading-relaxed break-words">{lastAgentReply}</p>
             ) : (
-              <p className="text-xs text-stone-500 font-medium italic leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-stone-500 font-medium italic leading-relaxed">
                 {lang === 'hi'
-                  ? '"केदारनाथ का मौसम कैसा है?" या "मुनस्यारी के लिए 3 दिन का प्लान बनाओ"'
-                  : '"Best time to visit Valley of Flowers?" or "Plan a 4-day Kedarnath trek"'}
+                  ? '"केदारनाथ का मौसम कैसा है?" या "मुनस्यारी 3 दिन का प्लान"'
+                  : '"Best time to visit Valley of Flowers?" or "Plan Kedarnath trek"'}
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Bottom: Topic chips + footer ── */}
-      <div className="relative z-10 shrink-0 px-4 pb-4 pt-3 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-3 max-w-2xl mx-auto">
+      {/* ── Bottom: Topic chips carousel + footer ── */}
+      <div className="relative z-10 shrink-0 px-3 sm:px-4 pb-3 sm:pb-4 pt-2.5 sm:pt-3 border-t border-white/[0.05] bg-black/30 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-2.5 max-w-2xl mx-auto overflow-x-auto no-scrollbar py-1 px-1 sm:flex-wrap sm:justify-center touch-pan-x">
           {topics.map((topic, idx) => (
             <button key={idx} type="button"
               onClick={() => { setTranscript(topic); handleVoiceQuerySubmit(topic); }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-950/60 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-400/50 text-[11px] sm:text-xs font-medium text-emerald-300/90 hover:text-emerald-100 transition-all active:scale-95 cursor-pointer backdrop-blur-md shadow-sm hover:shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+              className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-950/70 hover:bg-emerald-500/20 border border-emerald-500/25 hover:border-emerald-400/50 text-[11px] sm:text-xs font-medium text-emerald-300/90 hover:text-emerald-100 transition-all active:scale-95 cursor-pointer backdrop-blur-md shadow-sm whitespace-nowrap">
               {topic}
             </button>
           ))}
         </div>
 
-        <p className="text-center text-[10px] text-stone-600 font-medium tracking-wide">
-          Powered by Google Gemini Live · Devbhoomi Knowledge Engine
+        <p className="text-center text-[9px] sm:text-[10px] text-stone-500 font-medium tracking-wide">
+          Powered by Gemini Live &amp; Devbhoomi Himalayan Engine
         </p>
       </div>
 

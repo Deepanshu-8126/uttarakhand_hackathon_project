@@ -87,82 +87,81 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
       if (abortControllerRef.current) abortControllerRef.current.abort();
       abortControllerRef.current = new AbortController();
 
-      // Primary: /api/agent/chat — confirmed working on Render
-      const response = await fetch(`${API_BASE}/agent/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-session-id': sessionId },
-        body: JSON.stringify({ message: cleanText, sessionId }),
-        signal: abortControllerRef.current.signal
-      });
+      // Tiered endpoint list: Local Node -> Local Python Bridge -> Cloud Render
+      const candidateEndpoints = [
+        { url: `${API_BASE}/agent/chat`, format: 'standard' },
+        { url: `http://localhost:8765/api/chat`, format: 'bridge' },
+        { url: `https://uttarakhand-hackathon-project.onrender.com/api/agent/chat`, format: 'standard' },
+        { url: `${API_BASE}/chat/query`, format: 'legacy' },
+      ];
 
-      if (response.ok) {
-        const resData = await response.json();
-        const agentResp = resData.response || resData;
-        const replyText = agentResp.message || agentResp.data?.message || '';
-        const suggestions = (agentResp.suggestedActions || []).map(a => a.label || a).filter(Boolean);
-        const agentName = agentResp.agent || agentResp.meta?.provider || 'Devbhoomi Companion';
-        if (agentResp.tripContext) setEntities(agentResp.tripContext);
+      let lastError = null;
+      for (const endpoint of candidateEndpoints) {
+        try {
+          const res = await fetch(endpoint.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-session-id': sessionId },
+            body: JSON.stringify(
+              endpoint.format === 'bridge'
+                ? { message: cleanText, lang: 'en', history: messages.slice(-4) }
+                : { message: cleanText, sessionId }
+            ),
+            signal: abortControllerRef.current.signal,
+          });
 
-        // Simulate streaming word-by-word for premium feel
-        const words = replyText.split(/(?<=\s)/);
-        let built = '';
-        for (const word of words) {
-          built += word;
-          const snap = built;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId ? { ...m, content: snap, agent: agentName } : m
-            )
-          );
-          await new Promise((r) => setTimeout(r, 18));
+          if (res.ok) {
+            const resData = await res.json();
+            const agentResp = resData.response || resData.data || resData;
+            const replyText = agentResp.message || (typeof agentResp === 'string' ? agentResp : '');
+            if (replyText) {
+              const suggestions = (agentResp.suggestedActions || []).map(a => a.label || a).filter(Boolean);
+              const agentName = agentResp.agent || agentResp.meta?.provider || (endpoint.format === 'bridge' ? 'Devbhoomi AI' : 'Devbhoomi Companion');
+              if (agentResp.tripContext) setEntities(agentResp.tripContext);
+
+              // Smooth word-by-word streaming animation
+              const words = replyText.split(/(?<=\s)/);
+              let built = '';
+              for (const word of words) {
+                built += word;
+                const snap = built;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantMsgId ? { ...m, content: snap, agent: agentName } : m
+                  )
+                );
+                await new Promise((r) => setTimeout(r, 16));
+              }
+
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId
+                    ? { ...m, content: replyText, agent: agentName, suggestions, data: agentResp.data || null }
+                    : m
+                )
+              );
+              return;
+            }
+          }
+        } catch (fetchErr) {
+          if (fetchErr.name === 'AbortError') return;
+          lastError = fetchErr;
         }
-
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMsgId
-              ? { ...m, content: replyText, agent: agentName, suggestions, data: agentResp.data || null }
-              : m
-          )
-        );
-        return;
       }
 
-      throw new Error(`Agent API returned ${response.status}`);
-
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-
-      // Hard fallback: /api/chat/query (legacy route, may work on older deploy)
-      try {
-        const fallbackRes = await fetch(`${API_BASE}/chat/query`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-session-id': sessionId },
-          body: JSON.stringify({ message: cleanText, sessionId })
-        });
-        if (fallbackRes.ok) {
-          const resData = await fallbackRes.json();
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId
-                ? {
-                    ...m,
-                    content: resData.message || resData.data?.message || 'How else can I assist your Uttarakhand travel?',
-                    agent: resData.agent || 'DestinationAgent',
-                    suggestions: resData.suggestions || [],
-                    data: resData.data?.data || null
-                  }
-                : m
-            )
-          );
-          return;
-        }
-      } catch (_) {}
-
-      // All failed
+      // If all tiers were unreachable
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
             ? { ...m, content: 'Apologies, I am temporarily having trouble accessing the network. Please tap to retry.', agent: 'System', isError: true }
+            : m
+        )
+      );
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? { ...m, content: 'Network connection issue. Please check your connection or try again.', agent: 'System', isError: true }
             : m
         )
       );
