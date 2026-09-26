@@ -67,6 +67,21 @@ const useChatStore = create((set, get) => ({
   fetchChats: async () => {
     set({ loading: true, error: null });
     const localChats = getLocalSessions();
+    const token = localStorage.getItem('token');
+
+    // If user is not logged in, rely solely on local guest sessions without triggering 401 error
+    if (!token) {
+      set({ chats: localChats, loading: false });
+      const activeId = sessionStorage.getItem("du_active_session_id");
+      if (activeId && !get().activeChat) {
+        const found = localChats.find(c => c._id === activeId);
+        if (found) {
+          set({ activeChat: found });
+        }
+      }
+      return;
+    }
+
     try {
       const res = await chatApi.getChats();
       const apiChats = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
@@ -105,6 +120,19 @@ const useChatStore = create((set, get) => ({
         set({ activeChat: found, loading: false });
         return;
       }
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const localChats = getLocalSessions();
+      const found = localChats.find(c => c._id === id);
+      if (found) {
+        sessionStorage.setItem("du_active_session_id", id);
+        set({ activeChat: found, loading: false });
+      } else {
+        set({ loading: false });
+      }
+      return;
     }
 
     try {
