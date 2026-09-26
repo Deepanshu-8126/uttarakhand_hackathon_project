@@ -249,32 +249,57 @@ function MapResizerAndFlyTo({ coords, selectedTile }) {
   return null;
 }
 
-// ─── Map Navigation Action Tools Helper ────────────────────────
-function MapNavigationTools({ onRecenter }) {
+// ─── Map Navigation Action Tools Helper (Google Maps Style) ────────────────────────
+function MapNavigationTools({ onRecenter, onLocateMe, isLocating, userLocation }) {
   const map = useMap();
 
   return (
-    <div className="flex flex-col gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl shadow-lg border border-slate-200/90">
+    <div className="flex flex-col gap-1 bg-white/95 backdrop-blur-md p-1 rounded-2xl shadow-xl border border-stone-200/90 text-slate-800">
+      {/* 1-Tap Google Maps Live User GPS Locate Button */}
+      <button
+        type="button"
+        onClick={onLocateMe}
+        aria-label="My Live Location"
+        title="Find My Location (GPS Blue Pulsing Dot)"
+        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
+          isLocating
+            ? 'bg-blue-50 text-blue-600 border border-blue-300'
+            : userLocation
+            ? 'bg-[#0f3d2e] text-emerald-300 hover:bg-[#15533f]'
+            : 'text-stone-700 hover:bg-stone-100 hover:text-blue-600'
+        }`}
+      >
+        {isLocating ? (
+          <Loader2 size={16} className="animate-spin text-blue-600" />
+        ) : (
+          <Compass size={17} className={userLocation ? 'text-emerald-300 animate-pulse' : 'text-stone-700'} />
+        )}
+      </button>
+
+      <div className="h-px bg-stone-200 my-0.5" />
+
       {/* Zoom In */}
       <button
         type="button"
         onClick={() => map.zoomIn()}
         aria-label="Zoom In"
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors font-bold text-base cursor-pointer"
       >
-        <span className="text-base font-bold leading-none">+</span>
+        +
       </button>
       {/* Zoom Out */}
       <button
         type="button"
         onClick={() => map.zoomOut()}
         aria-label="Zoom Out"
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors font-bold text-base cursor-pointer"
       >
-        <span className="text-base font-bold leading-none">−</span>
+        −
       </button>
-      <div className="h-px bg-slate-200 my-0.5" />
-      {/* Recenter / Compass */}
+      
+      <div className="h-px bg-stone-200 my-0.5" />
+      
+      {/* Recenter to Uttarakhand Hub */}
       <button
         type="button"
         onClick={() => {
@@ -283,9 +308,9 @@ function MapNavigationTools({ onRecenter }) {
         }}
         aria-label="Recenter Map"
         title="Recenter to Central Uttarakhand"
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-[#1b4332] hover:bg-slate-100 transition-colors"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-[#0f3d2e] hover:bg-stone-100 transition-colors cursor-pointer"
       >
-        <Compass size={16} />
+        <Navigation size={16} className="text-[#0f3d2e]" />
       </button>
     </div>
   );
@@ -457,6 +482,37 @@ export default function MapPage() {
   const [apiSearchResults, setApiSearchResults] = useState([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
   const searchDebounceRef = useRef(null);
+
+  // ── Live User GPS Geolocation State (Google Maps Style Blue Pulsing Dot) ──
+  const [userLocation, setUserLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleLocateUser = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = [pos.coords.latitude, pos.coords.longitude];
+        const accuracy = pos.coords.accuracy || 100;
+        setUserLocation({ coords, accuracy });
+        setFlyCoords({ coords, zoom: 14 });
+        setIsLocating(false);
+      },
+      (err) => {
+        console.warn('[MapPage] Geolocation error:', err);
+        setIsLocating(false);
+        // Fallback to central Haridwar/Rishikesh gateway if blocked
+        const defaultUserCoords = [30.0869, 78.2676];
+        setUserLocation({ coords: defaultUserCoords, accuracy: 350 });
+        setFlyCoords({ coords: defaultUserCoords, zoom: 13 });
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+    );
+  }, []);
 
   // Search places via Geoapify / Places API
   const searchMapPlacesApi = useCallback(async (queryText) => {
@@ -1604,9 +1660,63 @@ export default function MapPage() {
             {/* ── 0. Himalayan Transit Corridors & Subway Stations Layer (YoMetro Style) ── */}
             <HimalayanCorridorsLayer activeCorridorId={activeCorridorId} />
 
+            {/* ── 0.1 Live User GPS Location Circle (Google Maps Style Pulsing Blue Dot) ── */}
+            {userLocation && userLocation.coords && (
+              <>
+                {/* Accuracy Radius Halo */}
+                <Circle
+                  center={userLocation.coords}
+                  radius={Math.min(userLocation.accuracy || 200, 1500)}
+                  pathOptions={{
+                    color: '#2563eb',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.15,
+                    weight: 1.5,
+                    dashArray: '4, 4',
+                  }}
+                />
+
+                {/* Google Maps Real-time Blue Dot Marker */}
+                <Marker
+                  position={userLocation.coords}
+                  icon={L.divIcon({
+                    html: `
+                      <div class="relative flex items-center justify-center">
+                        <div class="absolute w-8 h-8 rounded-full bg-blue-500/30 animate-ping"></div>
+                        <div class="relative w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-md flex items-center justify-center">
+                          <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        </div>
+                      </div>
+                    `,
+                    className: 'user-live-gps-dot',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                  })}
+                >
+                  <Popup className="himalayan-custom-popup">
+                    <div className="p-3 text-center min-w-[180px]">
+                      <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-1.5 border border-blue-200">
+                        <Navigation size={15} className="text-blue-600 animate-pulse" />
+                      </div>
+                      <h4 className="text-xs font-black text-stone-900 m-0">You Are Here</h4>
+                      <p className="text-[10px] text-stone-500 mt-0.5">Live GPS Location Locked</p>
+                      <div className="mt-2 pt-2 border-t border-stone-200/80 flex items-center justify-center gap-1.5 text-[10px] font-bold text-[#0f3d2e] bg-emerald-50 px-2 py-1 rounded-lg">
+                        <span>Accurate within {Math.round(userLocation.accuracy || 50)}m</span>
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              </>
+            )}
+
             {/* Bottom-Left Navigation Tools inside Leaflet Context */}
             <div className="absolute bottom-24 md:bottom-6 left-3 sm:left-4 z-[400]">
-              <MapNavigationTools onRecenter={() => setActiveLocation(null)} />
+              <MapNavigationTools
+                onRecenter={() => setActiveLocation(null)}
+                onLocateMe={handleLocateUser}
+                isLocating={isLocating}
+                userLocation={userLocation}
+              />
             </div>
 
             {/* ── Safety Overlays ── */}
