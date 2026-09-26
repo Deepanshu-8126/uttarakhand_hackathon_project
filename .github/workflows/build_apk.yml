@@ -81,39 +81,29 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Delete old release tag if exists
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push --delete origin v1.1.0 2>/dev/null || true
-          git tag -d v1.1.0 2>/dev/null || true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Official GitHub Release v1.1.0
+      - name: Publish Official Global GitHub Release v1.1.0
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
           tag_name: v1.1.0
           name: "🏔️ Discovery Uttarakhand Mobile App v1.1.0 (Official Production Release)"
           body: |
-            # 🏔️ Discovery Uttarakhand — Official Android App Release (v1.1.0)
+            # 🏔️ Discovery Uttarakhand — Official Android Mobile App (v1.1.0)
 
-            **Direct 1-Click APK Download**:
-            - 📲 **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)**
+            ### 📲 Direct 1-Click APK Download:
+            - **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)**
 
             ---
 
-            ### 🚀 Highlights & Features in this Release:
-            1. **1:1 Full Web Parity Architecture**:
-               - Spiritual, Culture, Activities, Mountain Stays, 3-Layer Verified Bike Rentals, and Local Guides.
+            ### 🌟 Key Features & Capabilities:
+            1. **Full 1:1 Web Parity**:
+               - Spiritual shrines, Cultural heritage, Adventures & Rafting, Verified Mountain Homestays, and 3-Layer Fleet Rentals.
             2. **Real-Time WebSocket AI Copilot**:
-               - Instant conversational mountain intelligence with sub-second streaming responses and fallback redundancy.
+               - Sub-second streaming mountain assistance with ground-verified routing and zero-latency WebSocket communication.
             3. **Emergency Mountain SOS & SDRF Mesh**:
-               - 1-second press-and-hold panic button, offline telemetry, GPS coordinates broadcast, and instant WhatsApp emergency dispatch.
-            4. **Interactive Spatial GIS Map**:
-               - Topographic elevation contours, corridor statuses, and 1-tap smart contract escrow booking.
+               - 1-second press-and-hold panic trigger, satellite telemetry coordinates, direct 1070/112 helplines, and WhatsApp broadcast.
+            4. **Spatial GIS Mountain Map**:
+               - Interactive elevation contours, corridor statuses, and 1-tap smart contract escrow booking.
             5. **100% Real Photography Pipeline**:
                - Multi-source photographic engine (Pexels + Unsplash verified records) — zero generic AI art.
             6. **Clean Alpine Theme System**:
@@ -121,18 +111,19 @@ jobs:
 
             ---
 
-            ### ⚙️ Quick Installation Guide on Android:
-            1. Uninstall any older development build if already installed.
-            2. Tap **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)** to download.
-            3. Open Downloads and install.
+            ### ⚙️ Quick Installation Guide:
+            1. If you have an older development version installed, uninstall it first.
+            2. Download **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)**.
+            3. Tap the downloaded APK in your Downloads folder to install.
             4. If Google Play Protect shows a prompt, select **"More details"** -> **"Install anyway"**.
           files: dist-apk/*.apk
           draft: false
           prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         run: |
-          echo "### 🚀 Discover Uttarakhand APK v1.1.0 Released Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Discover Uttarakhand APK v1.1.0 Released Globally!" >> $GITHUB_STEP_SUMMARY
           echo "Direct Download: [Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)" >> $GITHUB_STEP_SUMMARY
