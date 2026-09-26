@@ -14,14 +14,12 @@ import {
   Car,
   Map,
   Languages,
-  MapPin,
-  Smartphone
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
 import { useLanguage } from '../context/LanguageContext';
 import GlobalLocationModal from './GlobalLocationModal';
-import DownloadAppModal from './common/DownloadAppModal';
 import { getStoredUserLocation } from '../utils/geoHelpers';
 import TopNavWeatherBadge from './widgets/TopNavWeatherBadge';
 
@@ -36,7 +34,6 @@ export default function Navbar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [userLocation, setUserLocation] = useState(getStoredUserLocation());
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [showDownloadAppModal, setShowDownloadAppModal] = useState(false);
 
   const userRef = useRef(null);
 
@@ -210,17 +207,6 @@ export default function Navbar() {
 
             {/* ── 4. Right Controls: Auth Profile + Plan Trip CTA + Hamburger Button ── */}
             <div className="flex items-center gap-2 shrink-0">
-              
-              {/* Download App (APK) Button */}
-              <button
-                type="button"
-                onClick={() => setShowDownloadAppModal(true)}
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] border border-emerald-300 text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
-                title="Download Android App APK"
-              >
-                <Smartphone size={13} className="text-emerald-700 shrink-0" />
-                <span>Get App (APK)</span>
-              </button>
 
               {/* Language Switcher */}
               <button
@@ -424,19 +410,6 @@ export default function Navbar() {
                 🛡️ Web3 Verification
               </Link>
 
-              {/* Download App (APK) Button in Mobile Menu */}
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setShowDownloadAppModal(true);
-                }}
-                className="w-full mt-2 py-3 px-5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95"
-              >
-                <Smartphone size={16} />
-                <span>Download Android App (APK)</span>
-              </button>
-
               {/* Language Switcher in Overlay */}
               <button
                 type="button"
@@ -463,12 +436,6 @@ export default function Navbar() {
       <GlobalLocationModal
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
-      />
-
-      {/* Direct Download Android APK Modal */}
-      <DownloadAppModal
-        isOpen={showDownloadAppModal}
-        onClose={() => setShowDownloadAppModal(false)}
       />
     </>
   );
