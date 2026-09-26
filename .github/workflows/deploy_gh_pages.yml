@@ -43,7 +43,7 @@ jobs:
           VITE_GEOAPIFY_API_KEY: 2c3a7f1f2e184822a7631d30dfac330c
           VITE_RAZORPAY_KEY_ID: rzp_test_Tfve5JcWu17bY6
           VITE_PEXELS_KEY: Ng530LMnrpm85zReE4lMhjCD7wm5Pc6h8rTE8NfSsuS7be57Qe7C1AGT
-        run: npm run build
+        run: npm run build -- --base=/uttarakhand_hackathon_project/
 
       - name: Setup GitHub Pages SPA Redirect Script
         working-directory: Frontend/dist
