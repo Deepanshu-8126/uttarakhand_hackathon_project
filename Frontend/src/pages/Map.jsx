@@ -442,7 +442,12 @@ export default function MapPage() {
   const [activeLocation, setActiveLocation] = useState(null);
   const [flyCoords, setFlyCoords] = useState(null);
   const [activeTile, setActiveTile] = useState('geoapify'); // Default to Geoapify HD
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return false;
+  });
   const [searchFocused, setSearchFocused] = useState(false);
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'altitude'
   const searchContainerRef = useRef(null);
@@ -1840,9 +1845,19 @@ export default function MapPage() {
             </MarkerClusterGroup>
           </MapContainer>
 
-          {/* ── Floating Bottom Toolbar (Corridor Radar, Plan Trip, AI Copilot) ── */}
-          <div className="absolute bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[calc(100vw-20px)] overflow-x-auto no-scrollbar" data-purpose="floating-quick-actions">
-            <nav className="flex items-center gap-1 bg-[#0d281e]/95 backdrop-blur-xl px-2 py-1.5 rounded-full shadow-2xl border border-emerald-900/60 text-xs font-semibold text-white shrink-0">
+          {/* ── Floating Bottom Toolbar (Corridor Radar, Plan Trip, AI Copilot, List Toggle) ── */}
+          <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[calc(100vw-20px)] overflow-x-auto no-scrollbar" data-purpose="floating-quick-actions">
+            <nav className="flex items-center gap-1.5 bg-[#0d281e]/95 backdrop-blur-xl px-2.5 py-1.5 rounded-full shadow-2xl border border-emerald-900/60 text-xs font-semibold text-white shrink-0">
+              {/* Action 0: Mobile List Toggle */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((prev) => !prev)}
+                className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
+              >
+                <Layers size={13} />
+                <span>{sidebarOpen ? 'Map View' : 'Places List'}</span>
+              </button>
+
               {/* Action 1: Corridor Radar */}
               <button
                 type="button"
@@ -1894,8 +1909,8 @@ export default function MapPage() {
         {/* ── Right Location List / Mobile Bottom Sheet (Mobile: rounded-t-[24px], Desktop: w-[360px]-410px sidebar) ───── */}
         <aside
           className={`${
-            sidebarOpen ? 'flex' : 'hidden'
-          } fixed inset-x-0 bottom-0 top-[38%] md:relative md:inset-auto md:top-auto md:w-[360px] lg:w-[410px] bg-stone-50 border-t md:border-t-0 md:border-l border-stone-200 flex flex-col h-[62%] md:h-full z-40 rounded-t-[24px] md:rounded-none shadow-2xl md:shadow-none shrink-0 transition-transform duration-300`}
+            sidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full md:translate-y-0 opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto'
+          } fixed inset-x-0 bottom-0 top-[42%] md:relative md:inset-auto md:top-auto md:w-[360px] lg:w-[410px] bg-stone-50 border-t md:border-t-0 md:border-l border-stone-200 flex flex-col h-[58%] md:h-full z-40 rounded-t-[24px] md:rounded-none shadow-2xl md:shadow-none shrink-0 transition-all duration-300 ease-in-out`}
           data-purpose="locations-sidebar"
         >
           {/* Mobile Grab Handle */}
