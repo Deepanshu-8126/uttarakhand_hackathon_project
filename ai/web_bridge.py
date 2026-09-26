@@ -771,7 +771,7 @@ async def websocket_voice_endpoint(websocket: WebSocket):
             )
         ),
         system_instruction=types.Content(parts=[types.Part.from_text(text=_SYSTEM_PROMPT)]),
-        tools=DEVBHOOMI_TOOLS,
+        tools=[DEVBHOOMI_TOOLS],
     )
 
     try:
