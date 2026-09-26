@@ -157,7 +157,7 @@ async def synthesize_gemini_live_voice(
         text_chunks: list[str] = []
         transcription_chunks: list[str] = []
 
-        async with asyncio.timeout(12.0):
+        async with asyncio.timeout(28.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                 await session.send_client_content(
                     turns=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
@@ -549,7 +549,7 @@ async def stream_gemini_live_to_ws(
 
     if not SKIP_LIVE_VOICE:
         try:
-            async with asyncio.timeout(12.0):
+            async with asyncio.timeout(28.0):
                 async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                     await session.send_client_content(
                         turns=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
