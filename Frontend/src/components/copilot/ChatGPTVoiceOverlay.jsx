@@ -577,230 +577,195 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9999] bg-[#040e09] flex flex-col justify-between p-4 sm:p-8 text-white animate-in fade-in duration-200 overflow-hidden select-none">
+  const statusColor = {
+    listening: 'from-emerald-600 via-emerald-500 to-teal-400',
+    speaking:  'from-teal-500 via-cyan-500 to-emerald-400',
+    processing:'from-stone-900 via-emerald-950 to-stone-900',
+    idle:      'from-emerald-950 via-[#0f3d2e] to-emerald-900',
+  }[voiceStatus] || 'from-emerald-950 via-[#0f3d2e] to-emerald-900';
 
-      {/* Ambient Radial Aura Background Glow */}
-      <div
-        className="absolute inset-0 pointer-events-none transition-all duration-700"
+  const statusLabel = {
+    listening:  lang === 'hi' ? '🎙 बोलिए, मैं सुन रहा हूँ…'       : '🎙 Listening… Speak now',
+    speaking:   lang === 'hi' ? '🔊 AI बोल रहा है — Tap to stop' : '🔊 AI Speaking — Tap to stop',
+    processing: lang === 'hi' ? '✦ सोच रहे हैं…'                   : '✦ Thinking…',
+    idle:       lang === 'hi' ? 'ऑर्ब दबाएं'                        : 'Tap orb to speak',
+  }[voiceStatus] || '';
+
+  const topics = [
+    lang === 'hi' ? 'केदारनाथ ट्रेक एल्टीट्यूड व सुरक्षा' : 'Kedarnath trek altitude & safety',
+    lang === 'hi' ? 'बद्रीनाथ का मौसम कैसा है?'            : 'Weather in Badrinath',
+    lang === 'hi' ? 'वैली ऑफ फ्लावर्स ट्रेक गाइड'          : 'Plan Valley of Flowers trek',
+    lang === 'hi' ? 'चोपता में बेस्ट होमस्टे'               : 'Find best stays in Chopta',
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden select-none"
+      style={{ background: 'linear-gradient(160deg, #020c07 0%, #040e09 40%, #071a0f 100%)' }}>
+
+      {/* ── Ambient Radial Glow (status-reactive) ── */}
+      <div className="absolute inset-0 pointer-events-none transition-all duration-1000"
         style={{
           background: voiceStatus === 'speaking'
-            ? 'radial-gradient(circle at 50% 45%, rgba(6, 182, 212, 0.16) 0%, rgba(4, 14, 9, 0) 70%)'
+            ? 'radial-gradient(ellipse 70% 55% at 50% 40%, rgba(20,184,166,0.22) 0%, transparent 70%)'
             : voiceStatus === 'listening'
-            ? 'radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.18) 0%, rgba(4, 14, 9, 0) 70%)'
-            : 'radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.08) 0%, rgba(4, 14, 9, 0) 70%)',
+            ? 'radial-gradient(ellipse 70% 55% at 50% 40%, rgba(16,185,129,0.20) 0%, transparent 70%)'
+            : voiceStatus === 'processing'
+            ? 'radial-gradient(ellipse 60% 45% at 50% 40%, rgba(52,211,153,0.10) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse 60% 45% at 50% 40%, rgba(15,61,46,0.35) 0%, transparent 70%)',
         }}
       />
 
-      {/* ── Top Header Controls ── */}
-      <div className="relative z-10 flex items-center justify-between max-w-4xl mx-auto w-full shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-            <Sparkles size={19} />
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        style={{ backgroundImage: 'linear-gradient(#10b98133 1px, transparent 1px), linear-gradient(90deg, #10b98133 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+      />
+
+      {/* ── Top Header ── */}
+      <div className="relative z-10 flex items-center justify-between px-4 sm:px-6 pt-4 pb-3 border-b border-white/[0.06] backdrop-blur-sm bg-black/20 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Logo pill */}
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/25 to-teal-500/15 border border-emerald-400/25 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.25)] shrink-0">
+            <Sparkles size={18} className="text-emerald-300" />
           </div>
-          <div>
-            <span className="font-extrabold text-sm sm:text-base tracking-tight block text-white drop-shadow-sm">
+          <div className="min-w-0">
+            <p className="font-extrabold text-sm sm:text-base text-white tracking-tight leading-none truncate">
               Devbhoomi AI Voice Companion
-            </span>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={`w-2 h-2 rounded-full ${voiceDemoOnline ? 'bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse' : 'bg-emerald-600'}`} />
-              <span className="text-[10px] text-emerald-300/80 font-bold uppercase tracking-wider">
-                {voiceDemoOnline ? 'GEMINI LIVE STREAM (AOEDE)' : 'CONNECTING LIVE ENGINE…'}
+            </p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors duration-500 ${
+                voiceDemoOnline ? 'bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]' : 'bg-emerald-700'
+              }`} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 truncate">
+                {voiceDemoOnline ? 'GEMINI LIVE STUDIO VOICE (AOEDE)' : 'CONNECTING LIVE ENGINE…'}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Language Switcher */}
-          <button
-            type="button"
-            onClick={() => {
-              setLang(lang === 'en' ? 'hi' : 'en');
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-          >
-            <Languages size={13} className="text-emerald-400" />
-            <span>{lang === 'en' ? '🇮🇳 हिन्दी' : '🇬🇧 English'}</span>
+        {/* Right controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button type="button" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-emerald-500/15 border border-white/[0.1] hover:border-emerald-400/30 text-[11px] font-semibold text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md">
+            <Languages size={12} className="text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">{lang === 'en' ? '🇮🇳 हिन्दी (Hindi)' : '🇬🇧 English'}</span>
+            <span className="xs:hidden">{lang === 'en' ? 'हि' : 'EN'}</span>
           </button>
 
-          {/* Mute Toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              if (!isMuted && audioPlayerRef.current) {
-                try { audioPlayerRef.current.pause(); } catch (e) {}
-              }
-              setIsMuted(!isMuted);
-            }}
-            className="p-2 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-            title={isMuted ? "Unmute Voice Output" : "Mute Voice Output"}
-          >
-            {isMuted ? <VolumeX size={16} className="text-rose-400" /> : <Volume2 size={16} className="text-emerald-400" />}
+          <button type="button" title={isMuted ? 'Unmute' : 'Mute'}
+            onClick={() => { if (!isMuted && audioPlayerRef.current) try { audioPlayerRef.current.pause(); } catch(e){} setIsMuted(!isMuted); }}
+            className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] transition-all active:scale-95 cursor-pointer">
+            {isMuted ? <VolumeX size={15} className="text-rose-400" /> : <Volume2 size={15} className="text-emerald-400" />}
           </button>
 
-          {/* Close Voice Overlay */}
-          <button
-            type="button"
-            onClick={() => {
-              stopVoiceLoop();
-              onClose();
-            }}
-            className="p-2 rounded-full bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-            title="Exit Voice Mode"
-          >
-            <X size={18} />
+          <button type="button" title="Close voice mode"
+            onClick={() => { stopVoiceLoop(); onClose(); }}
+            className="p-2 rounded-xl bg-white/[0.06] hover:bg-rose-500/15 border border-white/[0.1] hover:border-rose-400/30 text-stone-400 hover:text-rose-300 transition-all active:scale-95 cursor-pointer">
+            <X size={16} />
           </button>
         </div>
       </div>
 
-      {/* ── Central Animated Wave Visualizer / Hero Orb ── */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full text-center my-auto min-h-0">
+      {/* ── Central Stage ── */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-4 px-4 py-2 min-h-0">
 
-        {/* Multi-layered Hero Glowing Orb */}
-        <div className="relative my-6 flex items-center justify-center shrink-0">
-
-          {/* Outer Ripple Rings */}
-          {voiceStatus === 'listening' && (
-            <>
-              <div className="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-emerald-500/15 animate-ping opacity-60 pointer-events-none" />
-              <div className="absolute w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-emerald-400/[0.08] animate-pulse pointer-events-none" />
-            </>
-          )}
-
-          {voiceStatus === 'speaking' && (
-            <>
-              <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full bg-cyan-400/20 animate-ping opacity-70 pointer-events-none" />
-              <div className="absolute w-68 h-68 sm:w-76 sm:h-76 rounded-full bg-teal-400/[0.1] animate-pulse pointer-events-none" />
-            </>
-          )}
-
-          {/* Rotating celestial border for processing */}
+        {/* Orb + Ripple rings */}
+        <div className="relative flex items-center justify-center shrink-0">
+          {/* Ripple rings */}
+          {voiceStatus === 'listening' && (<>
+            <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full border border-emerald-400/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute w-44 h-44 sm:w-52 sm:h-52 rounded-full border border-emerald-400/15 animate-ping" style={{ animationDuration: '2.6s' }} />
+            <div className="absolute w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-emerald-500/[0.06] animate-pulse" />
+          </>)}
+          {voiceStatus === 'speaking' && (<>
+            <div className="absolute w-52 h-52 sm:w-60 sm:h-60 rounded-full border border-teal-400/25 animate-ping" style={{ animationDuration: '1.6s' }} />
+            <div className="absolute w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-teal-400/[0.07] animate-pulse" />
+          </>)}
           {voiceStatus === 'processing' && (
-            <div className="absolute w-36 h-36 sm:w-40 sm:h-40 rounded-full border-2 border-dashed border-emerald-400/50 animate-spin pointer-events-none" />
+            <div className="absolute w-40 h-40 sm:w-44 sm:h-44 rounded-full border-2 border-dashed border-emerald-500/40 animate-spin" style={{ animationDuration: '3s' }} />
           )}
 
-          {/* The Hero Core Orb Button */}
+          {/* Core orb button */}
           <button
             type="button"
             onClick={() => {
-              if (voiceStatus === 'speaking') {
-                stopVoiceLoop();
-                updateVoiceStatus('listening');
-                startListening();
-              } else if (voiceStatus === 'listening') {
-                // Instantly stop and send the recorded voice!
-                stopRecordingAndSend();
-              } else {
-                startListening();
-              }
+              if (voiceStatus === 'speaking') { stopVoiceLoop(); updateVoiceStatus('listening'); startListening(); }
+              else if (voiceStatus === 'listening') { stopRecordingAndSend(); }
+              else { startListening(); }
             }}
-            className={`w-32 h-32 sm:w-36 sm:h-36 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer relative z-20 ${
-              voiceStatus === 'listening'
-                ? 'bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white voice-orb-breathe ring-4 ring-emerald-400/30'
-                : voiceStatus === 'speaking'
-                ? 'bg-gradient-to-tr from-cyan-600 via-teal-500 to-emerald-400 text-white voice-orb-speaking ring-4 ring-cyan-400/30'
-                : voiceStatus === 'processing'
-                ? 'bg-gradient-to-tr from-stone-900 via-emerald-950 to-stone-900 text-emerald-300 ring-2 ring-emerald-500/20'
-                : 'bg-gradient-to-tr from-emerald-900/90 via-teal-900/80 to-emerald-800/90 hover:from-emerald-800 hover:to-teal-800 text-emerald-100 border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)]'
-            }`}
+            className={`
+              w-32 h-32 sm:w-36 sm:h-36 rounded-full
+              bg-gradient-to-br ${statusColor}
+              shadow-2xl flex items-center justify-center
+              transition-all duration-500 active:scale-95 cursor-pointer relative z-20
+              ${voiceStatus === 'listening' ? 'shadow-[0_0_60px_rgba(16,185,129,0.5)] ring-4 ring-emerald-400/25' : ''}
+              ${voiceStatus === 'speaking'  ? 'shadow-[0_0_60px_rgba(20,184,166,0.5)] ring-4 ring-teal-400/25' : ''}
+              ${voiceStatus === 'idle'      ? 'hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] border border-emerald-500/30' : ''}
+            `}
           >
-            {voiceStatus === 'processing' ? (
-              <Loader2 size={42} className="animate-spin text-emerald-300" />
-            ) : voiceStatus === 'speaking' ? (
-              <Volume2 size={42} className="animate-pulse text-cyan-100 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-            ) : (
-              <Mic size={42} className={voiceStatus === 'listening' ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" : "text-emerald-200/90"} />
-            )}
+            {voiceStatus === 'processing'
+              ? <Loader2 size={44} className="animate-spin text-emerald-300" />
+              : voiceStatus === 'speaking'
+              ? <Volume2 size={44} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.7)] animate-pulse" />
+              : <Mic size={44} className={voiceStatus === 'listening' ? 'text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]' : 'text-emerald-200'} />
+            }
           </button>
         </div>
 
-        {/* Harmonic Dynamic Sound Wave Bars */}
-        <div className="flex items-center justify-center gap-1.5 h-9 my-3">
-          {[30, 65, 45, 85, 60, 95, 75, 90, 50, 80, 40, 70, 35, 60].map((h, i) => (
-            <span
-              key={i}
-              style={{
-                height: voiceStatus === 'speaking' || voiceStatus === 'listening' ? `${h}%` : '20%',
-                animationDelay: `${i * 0.08}s`
-              }}
-              className={`w-1 rounded-full transition-all duration-300 ${
-                voiceStatus === 'speaking'
-                  ? 'bg-gradient-to-t from-cyan-500 to-teal-200 animate-pulse'
-                  : voiceStatus === 'listening'
-                  ? 'bg-gradient-to-t from-emerald-600 via-emerald-400 to-teal-200 animate-pulse'
-                  : voiceStatus === 'processing'
-                  ? 'bg-amber-400/60 animate-pulse'
-                  : 'bg-emerald-950/60'
+        {/* Waveform bars */}
+        <div className="flex items-end justify-center gap-[3px] h-8 shrink-0">
+          {[25,55,38,75,50,90,65,85,45,72,30,62,48,80,35].map((h, i) => (
+            <span key={i}
+              style={{ height: (voiceStatus === 'speaking' || voiceStatus === 'listening') ? `${h}%` : '15%', animationDelay: `${i * 0.07}s`, transition: 'height 0.3s ease' }}
+              className={`w-[3px] rounded-full ${
+                voiceStatus === 'speaking'   ? 'bg-gradient-to-t from-teal-600 to-cyan-300 animate-pulse'
+                : voiceStatus === 'listening'? 'bg-gradient-to-t from-emerald-700 via-emerald-400 to-teal-200 animate-pulse'
+                : voiceStatus === 'processing'? 'bg-amber-500/50 animate-pulse'
+                : 'bg-emerald-900/70'
               }`}
             />
           ))}
         </div>
 
-        {/* Status Indicator Pill */}
-        <div className="my-2 shrink-0">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs font-bold uppercase tracking-widest text-emerald-300 backdrop-blur-md shadow-sm">
-            <Radio size={13} className={voiceStatus === 'listening' || voiceStatus === 'speaking' ? 'animate-pulse text-emerald-400' : 'text-stone-400'} />
-            <span>
-              {voiceStatus === 'listening'
-                ? (lang === 'hi' ? 'बोलिए, मैं सुन रहा हूँ…' : 'Listening... Speak now')
-                : voiceStatus === 'processing'
-                ? (lang === 'hi' ? 'सोच रहे हैं…' : 'Thinking…')
-                : voiceStatus === 'speaking'
-                ? (lang === 'hi' ? 'AI गाइड बोल रहा है (Tap to interrupt)' : 'AI Speaking (Tap to interrupt)')
-                : (lang === 'hi' ? 'बोलने के लिए ऑर्ब दबाएं' : 'Tap Orb to Speak')}
-            </span>
-          </span>
+        {/* Status pill */}
+        <div className="shrink-0">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl shadow-lg">
+            <Radio size={12} className={`shrink-0 ${voiceStatus !== 'idle' ? 'text-emerald-400 animate-pulse' : 'text-stone-500'}`} />
+            <span className="text-xs font-semibold tracking-wide text-emerald-200">{statusLabel}</span>
+          </div>
         </div>
 
-        {/* Live Conversational Subtitles Card */}
-        <div className="w-full max-w-lg mt-3 px-4">
-          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl p-4 min-h-[64px] max-h-36 overflow-y-auto flex items-center justify-center text-center shadow-inner">
+        {/* Subtitle / reply card */}
+        <div className="w-full max-w-sm sm:max-w-lg shrink-0">
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] backdrop-blur-xl px-5 py-4 min-h-[60px] max-h-[120px] overflow-y-auto flex items-center justify-center text-center shadow-inner shadow-black/20">
             {transcript ? (
-              <p className="text-sm sm:text-base font-semibold text-emerald-200 leading-relaxed animate-in fade-in">
-                “{transcript}”
-              </p>
+              <p className="text-sm sm:text-base font-semibold text-emerald-200 leading-relaxed">"{transcript}"</p>
             ) : lastAgentReply ? (
-              <p className="text-xs sm:text-sm text-emerald-50/95 leading-relaxed font-normal">
-                {lastAgentReply}
-              </p>
+              <p className="text-xs sm:text-sm text-white/85 leading-relaxed">{lastAgentReply}</p>
             ) : (
-              <p className="text-xs text-stone-400/90 font-medium">
+              <p className="text-xs text-stone-500 font-medium italic leading-relaxed">
                 {lang === 'hi'
-                  ? '“केदारनाथ जाने का सबसे अच्छा समय क्या है?” या “मुनस्यारी के लिए 3 दिन का प्लान बताओ”'
-                  : '“What is the best route to Kedarnath?” or “Suggest a 4-day trek in Munsyari”'}
+                  ? '"केदारनाथ का मौसम कैसा है?" या "मुनस्यारी के लिए 3 दिन का प्लान बनाओ"'
+                  : '"Best time to visit Valley of Flowers?" or "Plan a 4-day Kedarnath trek"'}
               </p>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* ── Bottom Controls & Prompts ── */}
-      <div className="relative z-10 max-w-2xl mx-auto w-full text-center shrink-0 mt-2">
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-          {[
-            lang === 'hi' ? 'केदारनाथ ट्रेक एल्टीट्यूड व सुरक्षा' : 'Kedarnath trek altitude & safety',
-            lang === 'hi' ? 'बद्रीनाथ का मौसम कैसा है?' : 'Weather in Badrinath',
-            lang === 'hi' ? 'वैली ऑफ फ्लावर्स ट्रेक गाइड' : 'Plan Valley of Flowers trek',
-            lang === 'hi' ? 'चोपता में बेस्ट होमस्टे' : 'Find best stays in Chopta'
-          ].map((sample, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setTranscript(sample);
-                handleVoiceQuerySubmit(sample);
-              }}
-              className="px-3.5 py-1.5 rounded-full bg-white/[0.05] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-400/30 text-[11px] font-medium text-emerald-200/90 hover:text-white transition-all active:scale-95 cursor-pointer backdrop-blur-sm"
-            >
-              {sample}
+      {/* ── Bottom: Topic chips + footer ── */}
+      <div className="relative z-10 shrink-0 px-4 pb-4 pt-3 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-3 max-w-2xl mx-auto">
+          {topics.map((topic, idx) => (
+            <button key={idx} type="button"
+              onClick={() => { setTranscript(topic); handleVoiceQuerySubmit(topic); }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-950/60 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-400/50 text-[11px] sm:text-xs font-medium text-emerald-300/90 hover:text-emerald-100 transition-all active:scale-95 cursor-pointer backdrop-blur-md shadow-sm hover:shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+              {topic}
             </button>
           ))}
         </div>
 
-        <p className="text-[11px] text-stone-500 font-medium tracking-wide">
-          Powered by langchain-ai/voice-demo &copy; Google Gemini Live &amp; Devbhoomi Engine
+        <p className="text-center text-[10px] text-stone-600 font-medium tracking-wide">
+          Powered by Google Gemini Live · Devbhoomi Knowledge Engine
         </p>
       </div>
 
