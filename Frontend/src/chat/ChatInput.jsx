@@ -49,6 +49,8 @@ export default function ChatInput({
       <div className="relative rounded-2xl bg-white border border-stone-200/90 focus-within:border-emerald-600 focus-within:ring-3 focus-within:ring-emerald-500/15 shadow-md shadow-stone-200/50 transition-all duration-200">
         <textarea
           ref={textareaRef}
+          id="du-ai-copilot-input"
+          name="copilotMessage"
           rows={1}
           value={text}
           onChange={(e) => setText(e.target.value)}

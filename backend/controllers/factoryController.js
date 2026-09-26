@@ -72,14 +72,19 @@ export const createController = (Model, isTextIndexed = false) => {
 
     getBySlug: async (req, res) => {
       try {
-        const cacheKey = `${modelName}:slug:${req.params.slug}`;
+        const identifier = req.params.slug;
+        const cacheKey = `${modelName}:slug:${identifier}`;
         
         const cached = await cacheGet(cacheKey);
         if (cached) {
           return res.status(200).json({ ...cached, fromCache: true });
         }
 
-        const doc = await Model.findOne({ slug: req.params.slug });
+        let doc = await Model.findOne({ slug: identifier });
+        if (!doc && identifier && identifier.match(/^[0-9a-fA-F]{24}$/)) {
+          doc = await Model.findById(identifier);
+        }
+
         if (!doc) return res.status(404).json({ success: false, message: 'Not found' });
         
         const responseData = { success: true, data: doc };
