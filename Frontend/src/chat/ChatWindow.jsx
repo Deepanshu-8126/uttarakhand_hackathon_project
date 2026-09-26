@@ -136,7 +136,7 @@ export default function ChatWindow({
       </div>
 
       {/* ── Scrollable Messages Timeline ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-5 space-y-3.5 scroll-smooth z-0">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-5 space-y-3.5 scroll-smooth z-0 custom-copilot-scrollbar">
         
         {/* Welcome Empty State if only 0 or 1 message */}
         {messages.length <= 1 && (

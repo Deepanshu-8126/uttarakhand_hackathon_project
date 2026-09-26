@@ -90,22 +90,26 @@
 
 /* Custom Scrollbars for Copilot Workspace */
 .copilot-sidebar ::-webkit-scrollbar,
-.copilot-context-panel::-webkit-scrollbar {
+.copilot-context-panel::-webkit-scrollbar,
+.custom-copilot-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
 
 .copilot-sidebar ::-webkit-scrollbar-track,
-.copilot-context-panel::-webkit-scrollbar-track {
+.copilot-context-panel::-webkit-scrollbar-track,
+.custom-copilot-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .copilot-sidebar ::-webkit-scrollbar-thumb,
-.copilot-context-panel::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.2);
+.copilot-context-panel::-webkit-scrollbar-thumb,
+.custom-copilot-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.25);
   border-radius: 9999px;
 }
 
 .copilot-sidebar ::-webkit-scrollbar-thumb:hover,
-.copilot-context-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.4);
+.copilot-context-panel::-webkit-scrollbar-thumb:hover,
+.custom-copilot-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
 }

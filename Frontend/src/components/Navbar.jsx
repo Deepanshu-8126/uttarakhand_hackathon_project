@@ -109,9 +109,15 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   };
 
+  const isDark = location.pathname === '/copilot' || location.pathname.startsWith('/copilot') || location.pathname.startsWith('/audit');
+
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-stone-200/80 shadow-xs">
+      <header className={`sticky top-0 z-50 w-full backdrop-blur-xl transition-colors duration-200 ${
+        isDark 
+          ? 'bg-[#040e09]/95 border-b border-white/[0.08] shadow-md text-white' 
+          : 'bg-white/90 border-b border-stone-200/80 shadow-xs text-stone-900'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
 
@@ -120,13 +126,19 @@ export default function Navbar() {
               <img
                 src="/logo.png"
                 alt="Discovery Uttarakhand"
-                className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform shrink-0 border border-emerald-900/10 bg-white"
+                className={`w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform shrink-0 ${
+                  isDark ? 'border border-emerald-500/30 bg-[#06140c]' : 'border border-emerald-900/10 bg-white'
+                }`}
               />
               <div className="shrink-0">
-                <span className="text-sm sm:text-base lg:text-lg font-black tracking-tight block text-[#0f3d2e] leading-none whitespace-nowrap">
+                <span className={`text-sm sm:text-base lg:text-lg font-black tracking-tight block leading-none whitespace-nowrap ${
+                  isDark ? 'text-white' : 'text-[#0f3d2e]'
+                }`}>
                   Discovery
                 </span>
-                <span className="text-[8px] sm:text-[10px] font-bold tracking-widest uppercase text-emerald-700 block whitespace-nowrap">
+                <span className={`text-[8px] sm:text-[10px] font-bold tracking-widest uppercase block whitespace-nowrap ${
+                  isDark ? 'text-emerald-400' : 'text-emerald-700'
+                }`}>
                   {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}
                 </span>
               </div>
@@ -143,10 +155,12 @@ export default function Navbar() {
                     to={link.path}
                     onClick={(e) => handleNavClick(link, e)}
                     className={`whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                      isCurrent ? 'bg-emerald-50 text-[#0f3d2e]' : 'text-stone-700 hover:text-[#0f3d2e]'
+                      isCurrent 
+                        ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-emerald-50 text-[#0f3d2e]') 
+                        : (isDark ? 'text-stone-300 hover:text-white' : 'text-stone-700 hover:text-[#0f3d2e]')
                     }`}
                   >
-                    <Icon size={13} className="text-emerald-700 shrink-0" />
+                    <Icon size={13} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-700 shrink-0"} />
                     <span>{link.label}</span>
                   </Link>
                 );
@@ -155,7 +169,11 @@ export default function Navbar() {
 
             {/* ── 3. Desktop Navigation Links (> 1024px): All items row ─── */}
             <div className="hidden lg:flex items-center gap-6">
-              <nav className="flex items-center gap-1 p-1.5 rounded-full bg-stone-100/80 border border-stone-200/70 backdrop-blur-md">
+              <nav className={`flex items-center gap-1 p-1.5 rounded-full backdrop-blur-md transition-colors ${
+                isDark 
+                  ? 'bg-white/[0.04] border border-white/10' 
+                  : 'bg-stone-100/80 border border-stone-200/70'
+              }`}>
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   const isCurrent = link.path === '/' 
@@ -171,14 +189,18 @@ export default function Navbar() {
                       onClick={(e) => handleNavClick(link, e)}
                       className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all duration-200 ${
                         isCurrent 
-                          ? 'bg-white text-[#0f3d2e] shadow-xs border border-emerald-900/10' 
-                          : 'text-stone-600 hover:text-[#0f3d2e] hover:bg-white/70'
+                          ? (isDark ? 'bg-emerald-950/80 text-emerald-300 shadow-xs border border-emerald-500/40' : 'bg-white text-[#0f3d2e] shadow-xs border border-emerald-900/10') 
+                          : (isDark ? 'text-stone-300 hover:text-white hover:bg-white/[0.06]' : 'text-stone-600 hover:text-[#0f3d2e] hover:bg-white/70')
                       }`}
                     >
-                      <Icon size={13} className={isCurrent ? 'text-emerald-700 shrink-0' : 'text-stone-400 shrink-0'} />
+                      <Icon size={13} className={isCurrent ? (isDark ? 'text-emerald-400 shrink-0' : 'text-emerald-700 shrink-0') : 'text-stone-400 shrink-0'} />
                       <span>{link.label}</span>
                       {link.badge && (
-                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0f3d2e] border border-emerald-300/80 shadow-2xs shrink-0">
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full shadow-2xs shrink-0 ${
+                          isDark 
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
+                            : 'bg-emerald-100 text-[#0f3d2e] border border-emerald-300/80'
+                        }`}>
                           {link.badge}
                         </span>
                       )}
@@ -189,16 +211,20 @@ export default function Navbar() {
 
               {/* Weather + Location Pill */}
               <div className="flex items-center gap-2 shrink-0">
-                <TopNavWeatherBadge />
+                <TopNavWeatherBadge isDark={isDark} />
 
                 <button
                   type="button"
                   onClick={() => setShowLocationModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-200 bg-white hover:bg-emerald-50 text-xs font-bold text-stone-800 transition cursor-pointer shrink-0"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
+                    isDark 
+                      ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200' 
+                      : 'border border-stone-200 bg-white hover:bg-emerald-50 text-stone-800'
+                  }`}
                   title="Change location"
                 >
-                  <MapPin size={12} className="text-emerald-800 shrink-0" />
-                  <span className="whitespace-nowrap max-w-[90px] truncate text-stone-700">
+                  <MapPin size={12} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-800 shrink-0"} />
+                  <span className={`whitespace-nowrap max-w-[90px] truncate ${isDark ? 'text-stone-300' : 'text-stone-700'}`}>
                     {userLocation?.city || 'Location'}
                   </span>
                 </button>
@@ -212,10 +238,14 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-stone-200 bg-stone-50 hover:bg-emerald-50 text-xs font-bold text-stone-700 transition cursor-pointer shrink-0"
+                className={`hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
+                  isDark 
+                    ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200' 
+                    : 'border border-stone-200 bg-stone-50 hover:bg-emerald-50 text-stone-700'
+                }`}
                 title={lang === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}
               >
-                <Languages size={13} className="text-emerald-700 shrink-0" />
+                <Languages size={13} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-700 shrink-0"} />
                 <span className="whitespace-nowrap">{lang === 'en' ? 'हिन्दी' : 'EN'}</span>
               </button>
 
@@ -225,10 +255,12 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-1.5 p-1 rounded-full border border-stone-200 bg-white hover:bg-stone-50 transition cursor-pointer shadow-2xs"
+                    className={`flex items-center gap-1.5 p-1 rounded-full transition cursor-pointer shadow-2xs ${
+                      isDark ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08]' : 'border border-stone-200 bg-white hover:bg-stone-50'
+                    }`}
                     aria-label="User Menu"
                   >
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0f3d2e] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0">
                       {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={13} />}
                     </div>
                     <ChevronDown size={13} className="text-stone-400 pr-1 hidden sm:block shrink-0" />
@@ -237,36 +269,46 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => navigate('/login')}
-                    className="whitespace-nowrap inline-flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
+                    className={`whitespace-nowrap inline-flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95 ${
+                      isDark 
+                        ? 'bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-stone-200' 
+                        : 'bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800'
+                    }`}
                   >
-                    <User size={13} className="text-[#0f3d2e] shrink-0" />
+                    <User size={13} className={isDark ? "text-emerald-400 shrink-0" : "text-[#0f3d2e] shrink-0"} />
                     <span>{t('nav_signin') || 'Sign In'}</span>
                   </button>
                 )}
 
                 {/* User Dropdown */}
                 {userDropdownOpen && isAuthenticated && (
-                  <div className="absolute top-11 right-0 w-52 bg-white rounded-2xl shadow-xl border border-stone-200 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-3 py-2 border-b border-stone-100">
-                      <div className="text-xs font-bold text-slate-900 truncate">{currentUser?.name}</div>
-                      <div className="text-[10px] text-slate-500 truncate">{currentUser?.email}</div>
+                  <div className={`absolute top-11 right-0 w-52 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 ${
+                    isDark ? 'bg-[#06140c] border border-emerald-500/30 text-white shadow-emerald-950/80' : 'bg-white border border-stone-200'
+                  }`}>
+                    <div className={`px-3 py-2 border-b ${isDark ? 'border-white/10' : 'border-stone-100'}`}>
+                      <div className={`text-xs font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentUser?.name}</div>
+                      <div className={`text-[10px] truncate ${isDark ? 'text-stone-400' : 'text-slate-500'}`}>{currentUser?.email}</div>
                     </div>
 
-                    <div className="py-1 space-y-0.5 text-xs font-medium text-slate-700">
+                    <div className="py-1 space-y-0.5 text-xs font-medium">
                       {currentUser?.role === 'partner' ? (
                         <Link
                           to="/partner"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e] font-bold"
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold ${
+                            isDark ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300' : 'bg-emerald-50 hover:bg-emerald-100 text-[#0f3d2e]'
+                          }`}
                         >
-                          <Briefcase size={14} className="text-emerald-700 shrink-0" />
+                          <Briefcase size={14} className={isDark ? "text-emerald-400" : "text-emerald-700"} />
                           <span className="whitespace-nowrap">Partner Hub</span>
                         </Link>
                       ) : currentUser?.role === 'admin' ? (
                         <Link
                           to="/admin"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 text-[#0f3d2e] font-bold"
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold ${
+                            isDark ? 'hover:bg-white/[0.06] text-emerald-300' : 'hover:bg-slate-50 text-[#0f3d2e]'
+                          }`}
                         >
                           <ShieldCheck size={14} className="shrink-0" />
                           <span className="whitespace-nowrap">Admin Dashboard</span>
@@ -276,7 +318,9 @@ export default function Navbar() {
                           <Link
                             to="/my-trip"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 text-emerald-800 font-semibold"
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl font-semibold ${
+                              isDark ? 'hover:bg-white/[0.06] text-emerald-300' : 'hover:bg-slate-50 text-emerald-800'
+                            }`}
                           >
                             <Compass size={14} className="shrink-0" />
                             <span className="whitespace-nowrap">My Trips &amp; SOS</span>
@@ -284,9 +328,11 @@ export default function Navbar() {
                           <Link
                             to="/profile"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-semibold"
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl font-semibold ${
+                              isDark ? 'hover:bg-white/[0.06] text-stone-300' : 'hover:bg-slate-50 text-slate-700'
+                            }`}
                           >
-                            <User size={14} className="text-slate-400 shrink-0" />
+                            <User size={14} className={isDark ? "text-stone-400" : "text-slate-400"} />
                             <span className="whitespace-nowrap">{t('nav_profile') || 'Profile'}</span>
                           </Link>
                         </>
@@ -298,7 +344,9 @@ export default function Navbar() {
                           setUserDropdownOpen(false);
                           logout();
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 font-semibold cursor-pointer"
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl font-semibold cursor-pointer ${
+                          isDark ? 'hover:bg-rose-950/40 text-rose-400' : 'hover:bg-red-50 text-red-600'
+                        }`}
                       >
                         <LogOut size={14} className="shrink-0" />
                         <span className="whitespace-nowrap">{t('nav_signout') || 'Sign Out'}</span>
@@ -312,9 +360,13 @@ export default function Navbar() {
               <div className="hidden lg:block">
                 <Link
                   to="/trip-planner"
-                  className="whitespace-nowrap inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0f3d2e] hover:bg-[#185340] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md active:scale-95 cursor-pointer"
+                  className={`whitespace-nowrap inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer active:scale-95 ${
+                    isDark 
+                      ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:brightness-110 shadow-md shadow-emerald-950/60 border border-emerald-400/30' 
+                      : 'bg-[#0f3d2e] hover:bg-[#185340] shadow-xs hover:shadow-md'
+                  }`}
                 >
-                  <Sparkles size={13} className="text-emerald-300 shrink-0" />
+                  <Sparkles size={13} className={isDark ? "text-amber-300" : "text-emerald-300"} />
                   <span>{t('nav_plantrip') || 'Plan Trip'}</span>
                 </Link>
               </div>
@@ -323,7 +375,9 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-stone-100 text-stone-700 transition cursor-pointer shrink-0"
+                className={`lg:hidden w-10 h-10 flex items-center justify-center rounded-lg transition cursor-pointer shrink-0 ${
+                  isDark ? 'hover:bg-white/[0.06] text-stone-200' : 'hover:bg-stone-100 text-stone-700'
+                }`}
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
