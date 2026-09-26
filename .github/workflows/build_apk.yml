@@ -4,15 +4,6 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build Type (release or debug)'
-        required: true
-        default: 'release'
-        type: choice
-        options:
-          - release
-          - debug
 
 permissions:
   contents: write
@@ -34,7 +25,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # Explicitly install Android SDK 35 (compileSdkVersion 35 in build.gradle)
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -80,13 +70,13 @@ jobs:
             APK_PATH=$(find mobile_app/build -name "*.apk" -type f | head -1)
           fi
           echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.0.8.apk
+          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.1.0.apk
           ls -lh dist-apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Discover-Uttarakhand-Android-APK-v1.0.8
+          name: Discover-Uttarakhand-Android-APK-v1.1.0
           path: dist-apk/*.apk
           if-no-files-found: error
           retention-days: 30
@@ -96,35 +86,46 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push --delete origin v1.0.8-apk 2>/dev/null || true
-          git tag -d v1.0.8-apk 2>/dev/null || true
+          git push --delete origin v1.1.0 2>/dev/null || true
+          git tag -d v1.1.0 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Release
+      - name: Create Official GitHub Release v1.1.0
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v1.0.8-apk
-          name: "🏔️ Discover Uttarakhand Android APK v1.0.8 (Latest Live Build)"
+          tag_name: v1.1.0
+          name: "🏔️ Discovery Uttarakhand Mobile App v1.1.0 (Official Production Release)"
           body: |
-            ## 🏔️ Discovery Uttarakhand Android Mobile App — v1.0.8 (Current Live Build)
+            # 🏔️ Discovery Uttarakhand — Official Android App Release (v1.1.0)
 
-            ### 📲 Direct APK Download:
-            - **[Discover-Uttarakhand-v1.0.8.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.8-apk/Discover-Uttarakhand-v1.0.8.apk)**
+            **Direct 1-Click APK Download**:
+            - 📲 **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)**
 
-            ### ✅ What's Included in v1.0.8:
-            - Fully synced with latest commits on `main` branch
-            - Real-time WebSocket AI Copilot engine with zero latency
-            - Universal Android APK compatibility (ARM64, ARMv7, x86_64)
-            - Clean Alpine White & Deep Himalayan Emerald theme matching Web 1:1
-            - Spatial GIS Interactive map with live altitude radar & SOS mesh
-            - Real photography for 129+ Uttarakhand destinations (Pexels + Unsplash engine)
+            ---
 
-            ### ⚙️ Install Instructions:
-            1. Purani version installed ho toh pehle **Uninstall** karein.
-            2. Nayi APK download karein: **[Discover-Uttarakhand-v1.0.8.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.8-apk/Discover-Uttarakhand-v1.0.8.apk)**
-            3. File tap karke install karein (Play Protect pop-up aaye to *More details -> Install anyway* tap karein).
+            ### 🚀 Highlights & Features in this Release:
+            1. **1:1 Full Web Parity Architecture**:
+               - Spiritual, Culture, Activities, Mountain Stays, 3-Layer Verified Bike Rentals, and Local Guides.
+            2. **Real-Time WebSocket AI Copilot**:
+               - Instant conversational mountain intelligence with sub-second streaming responses and fallback redundancy.
+            3. **Emergency Mountain SOS & SDRF Mesh**:
+               - 1-second press-and-hold panic button, offline telemetry, GPS coordinates broadcast, and instant WhatsApp emergency dispatch.
+            4. **Interactive Spatial GIS Map**:
+               - Topographic elevation contours, corridor statuses, and 1-tap smart contract escrow booking.
+            5. **100% Real Photography Pipeline**:
+               - Multi-source photographic engine (Pexels + Unsplash verified records) — zero generic AI art.
+            6. **Clean Alpine Theme System**:
+               - Unified 2-color brand palette (`#0f3d2e` Deep Himalayan Emerald + `#00FF88` Glow) with clean white surfaces.
+
+            ---
+
+            ### ⚙️ Quick Installation Guide on Android:
+            1. Uninstall any older development build if already installed.
+            2. Tap **[Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)** to download.
+            3. Open Downloads and install.
+            4. If Google Play Protect shows a prompt, select **"More details"** -> **"Install anyway"**.
           files: dist-apk/*.apk
           draft: false
           prerelease: false
@@ -133,5 +134,5 @@ jobs:
 
       - name: Summary
         run: |
-          echo "### 🚀 Discover Uttarakhand APK v1.0.8 Built Successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "Direct Download: [Discover-Uttarakhand-v1.0.8.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.8-apk/Discover-Uttarakhand-v1.0.8.apk)" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Discover Uttarakhand APK v1.1.0 Released Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "Direct Download: [Discover-Uttarakhand-v1.1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Discover-Uttarakhand-v1.1.0.apk)" >> $GITHUB_STEP_SUMMARY
