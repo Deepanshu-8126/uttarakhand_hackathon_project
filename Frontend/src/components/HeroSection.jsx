@@ -119,15 +119,37 @@ const DYNAMIC_OCCASION_SLIDES = [
     subtitle: 'Ancient Vedic gateway where the holy Ganges touches the plains.'
   },
   {
-    name: 'Adi Kailash & Om Parvat',
+    name: 'Adi Kailash Sacred Peak',
     location: 'Vyás Valley, Pithoragarh',
     altitude: '5,945m',
-    tag: 'Mystic Mountain',
-    occasion: 'Sacred High-Altitude Circuit',
-    src: '/assets/destinations/pithoragarh/gallery-1.jpg',
+    tag: 'Sacred Alpenglow',
+    occasion: 'Golden Sunrise Darshan',
+    src: '/assets/destinations/adi_kailash.jpg',
     fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85',
     slug: 'adi-kailash',
-    subtitle: 'Naturally formed snow Om on rock faces & holy Parvati Sarovar.'
+    subtitle: 'Golden sunrise illuminating the sacred Kumaon pinnacle above Parvati Sarovar.'
+  },
+  {
+    name: 'Om Parvat & Lipulekh Pass',
+    location: 'Indo-Tibetan Border, Pithoragarh',
+    altitude: '5,590m',
+    tag: 'Ancient High Pass',
+    occasion: 'Himalayan Ridge & Sacred Trails',
+    src: '/assets/destinations/om_parvat.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85',
+    slug: 'om-parvat',
+    subtitle: 'Breathtaking high-altitude pass adorned with sacred flags overlooking ancient border valleys.'
+  },
+  {
+    name: 'Tungnath Summit & Meadows',
+    location: 'Chopta Ridge, Rudraprayag',
+    altitude: '3,680m',
+    tag: 'Highest Shiva Temple',
+    occasion: 'Snow Line & Chandrashila',
+    src: '/assets/destinations/tungnath_summit.jpg',
+    fallbackSrc: '/assets/yatra_sarthi/chopta.jpg',
+    slug: 'chopta',
+    subtitle: 'High alpine snow ridges and historic stone shrines rising above cloud inversion layers.'
   }
 ];
 
@@ -138,40 +160,40 @@ const CURATED_PILLARS = [
     subtitle: 'Char Dham, Panch Kedar & ancient Vedic shrines',
     tag: 'Sacred Shrines',
     images: [
+      '/assets/destinations/adi_kailash.jpg',
       '/assets/yatra_sarthi/kedarnath.jpg',
       '/assets/yatra_sarthi/badrinath.jpg',
-      '/assets/yatra_sarthi/haridwar.jpg',
-      '/assets/jageshwar.jpg'
+      '/assets/yatra_sarthi/haridwar.jpg'
     ],
-    fallbackImg: '/assets/yatra_sarthi/kedarnath.jpg',
+    fallbackImg: '/assets/destinations/adi_kailash.jpg',
     link: '/spiritual',
     count: '50+ Shrines',
-    places: ['Kedarnath', 'Badrinath', 'Tungnath', 'Jageshwar']
+    places: ['Adi Kailash', 'Kedarnath', 'Badrinath', 'Tungnath']
   },
   {
     title: 'High-Altitude Treks',
     subtitle: 'Glacial passes, alpine bugyals & peak expeditions',
     tag: 'Alpine Trails',
     images: [
-      '/assets/yatra_sarthi/valley_of_flowers.jpg',
-      '/assets/yatra_sarthi/chopta.jpg',
-      '/assets/yatra_sarthi/auli.jpg',
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85'
+      '/assets/destinations/om_parvat.jpg',
+      '/assets/destinations/tungnath_summit.jpg',
+      '/assets/destinations/chopta_snow_camp.jpg',
+      '/assets/yatra_sarthi/valley_of_flowers.jpg'
     ],
-    fallbackImg: '/assets/yatra_sarthi/valley_of_flowers.jpg',
+    fallbackImg: '/assets/destinations/om_parvat.jpg',
     link: '/activities',
     count: '50+ Trails',
-    places: ['Valley of Flowers', 'Kuari Pass', 'Dayara Bugyal', 'Chopta']
+    places: ['Om Parvat Pass', 'Kuari Pass', 'Valley of Flowers', 'Chopta']
   },
   {
     title: 'Alpine Stays & KMVN',
     subtitle: 'Authentic stone homestays, pine cottages & TRH lodges',
     tag: 'Mountain Stays',
     images: [
+      '/assets/destinations/chopta_snow_camp.jpg',
       'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=85'
     ],
     fallbackImg: 'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1200&q=85',
     link: '/stays',
@@ -183,12 +205,12 @@ const CURATED_PILLARS = [
     subtitle: 'Aipan crafts, folklore festivals & ancient high valleys',
     tag: 'Pahadi Heritage',
     images: [
+      '/assets/destinations/om_parvat.jpg',
       '/assets/yatra_sarthi/nainital.jpg',
       '/assets/yatra_sarthi/corbett.jpg',
-      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=85'
     ],
-    fallbackImg: '/assets/yatra_sarthi/nainital.jpg',
+    fallbackImg: '/assets/destinations/om_parvat.jpg',
     link: '/culture',
     count: '50+ Traditions',
     places: ['Chholiya Dance', 'Pahadi Architecture', 'Aipan Art', 'Mana Village']
