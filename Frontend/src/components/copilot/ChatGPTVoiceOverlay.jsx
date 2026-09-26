@@ -60,6 +60,7 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
   const voiceStatusRef = useRef('idle');
   const wsRef = useRef(null);
   const audioPlayerRef = useRef(null);
+  const pingIntervalRef = useRef(null);
 
   // Real-time 24kHz PCM audio playback refs
   const playbackContextRef = useRef(null);
@@ -217,6 +218,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
     });
     chunkSourcesRef.current = [];
 
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
+    }
     if (audioPlayerRef.current) {
       try { audioPlayerRef.current.pause(); } catch (e) {}
       audioPlayerRef.current = null;
@@ -236,11 +241,20 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       ws.onopen = () => {
         setVoiceDemoOnline(true);
         console.log(`[VoiceWS] Connected to Gemini Live stream at ${WS_BRIDGE_URL}`);
+        
+        // 25-second keep-alive ping to prevent Render WebSocket sleep
+        if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 25000);
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          if (msg.type === 'pong') return;
 
           // 1. Instant Real-time PCM audio chunk arrived! Play immediately!
           if (msg.type === 'audio_chunk' && msg.chunk) {
@@ -284,6 +298,10 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
         setVoiceDemoOnline(false);
       };
       ws.onclose = () => {
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
+        }
         wsRef.current = null;
       };
     } catch (e) {

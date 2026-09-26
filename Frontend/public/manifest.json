@@ -1,0 +1,21 @@
+{
+  "name": "Discovery Uttarakhand — Pahadi AI Companion & Tourism",
+  "short_name": "Devbhoomi AI",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#059669",
+  "background_color": "#040e09",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
