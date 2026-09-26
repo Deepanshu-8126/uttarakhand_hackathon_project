@@ -74,9 +74,8 @@ TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 SKIP_LIVE_VOICE = False
 
 FALLBACK_TEXT_MODELS = [
-    os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
-    "gemini-1.5-flash",
 ]
 
 async def safe_send(ws: WebSocket, payload: dict) -> bool:
