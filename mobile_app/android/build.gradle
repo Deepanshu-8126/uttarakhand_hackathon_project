@@ -3,6 +3,20 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.browser:browser:1.8.0'
+            force 'androidx.core:core:1.15.0'
+            force 'androidx.core:core-ktx:1.15.0'
+            force 'androidx.activity:activity:1.9.3'
+            force 'androidx.activity:activity-ktx:1.9.3'
+            force 'androidx.fragment:fragment:1.8.5'
+            force 'androidx.fragment:fragment-ktx:1.8.5'
+            force 'androidx.lifecycle:lifecycle-runtime:2.8.7'
+            force 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
+            force 'androidx.annotation:annotation:1.9.1'
+        }
+    }
 }
 
 rootProject.buildDir = '../build'
@@ -11,6 +25,13 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(':app')
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileSdkVersion 36
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {

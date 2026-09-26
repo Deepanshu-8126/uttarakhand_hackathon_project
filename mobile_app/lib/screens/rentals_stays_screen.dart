@@ -254,19 +254,19 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
 
   List<String> _getVehicleSpecChips(String name) {
     final n = name.toLowerCase();
-    if (n.includes('himalayan') || n.includes('scram') || n.includes('xpulse')) {
+    if (n.contains('himalayan') || n.contains('scram') || n.contains('xpulse')) {
       return ['⚡ 411cc High Torque', '🧳 Luggage Panniers', '🛡️ Dual ABS', '🪖 2 Helmets'];
     }
-    if (n.includes('classic') || n.includes('bullet') || n.includes('meteor')) {
+    if (n.contains('classic') || n.contains('bullet') || n.contains('meteor')) {
       return ['⚡ 349cc Engine', '⚙️ Hill Cruise Gear', '🛡️ Backrest', '🪖 Helmet Included'];
     }
-    if (n.includes('thar') || n.includes('gurkha') || n.includes('4x4')) {
+    if (n.contains('thar') || n.contains('gurkha') || n.contains('4x4')) {
       return ['🏔️ 4x4 High-Low', '⚡ 2.2L mHawk Diesel', '📐 226mm Clearance', '🛡️ Hill Descent'];
     }
-    if (n.includes('scorpio') || n.includes('innova') || n.includes('fortuner')) {
+    if (n.contains('scorpio') || n.contains('innova') || n.contains('fortuner')) {
       return ['👥 7-Seater SUV', '⚡ Turbo Diesel', '🛞 All-Terrain Tires', '❄️ Roof Rack'];
     }
-    if (n.includes('activa') || n.includes('jupiter') || n.includes('ntorq') || n.includes('scooter')) {
+    if (n.contains('activa') || n.contains('jupiter') || n.contains('ntorq') || n.contains('scooter')) {
       return ['⚡ 110cc Auto', '⛽ 50 km/l Avg', '📦 Boot Storage', '🪖 Helmet Included'];
     }
     return ['🏔️ Hill Tested', '📜 Full Insurance', '📡 GPS Live Beacon', '💳 Zero Deposit'];

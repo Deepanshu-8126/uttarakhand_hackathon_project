@@ -18,6 +18,7 @@ class AppTheme {
 
   // Accents & Texts
   static const Color amberWarning = Color(0xFFD97706);
+  static const Color earthBrown = Color(0xFF8B5A2B); // Rich Himalayan Teak / Earth
   static const Color textDark = Color(0xFF0F172A);
   static const Color mutedText = Color(0xFF475569);
   static const Color borderLight = Color(0xFFE2E8F0);

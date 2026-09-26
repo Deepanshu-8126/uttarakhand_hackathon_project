@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.discovery.uttarakhand"
-    compileSdkVersion 35
+    compileSdkVersion 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -51,6 +51,20 @@ android {
             minifyEnabled false
             shrinkResources false
         }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.core:core:1.15.0'
+        force 'androidx.core:core-ktx:1.15.0'
+        force 'androidx.activity:activity:1.9.3'
+        force 'androidx.activity:activity-ktx:1.9.3'
+        force 'androidx.fragment:fragment:1.8.5'
+        force 'androidx.fragment:fragment-ktx:1.8.5'
+        force 'androidx.lifecycle:lifecycle-runtime:2.8.7'
+        force 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
+        force 'androidx.annotation:annotation:1.9.1'
     }
 }
 

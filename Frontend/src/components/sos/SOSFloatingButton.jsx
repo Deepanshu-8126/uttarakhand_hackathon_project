@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import SOSModal from './SOSModal';
 import useSOS from '../../hooks/useSOS';
 
 export default function SOSFloatingButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
   const { activeAlert } = useSOS();
   const isAlertActive = activeAlert && activeAlert.status !== 'RESOLVED' && activeAlert.status !== 'CANCELLED';
+
+  // Do not overlay on full-screen AI Copilot workspace
+  if (location.pathname === '/copilot' || location.pathname.startsWith('/copilot')) {
+    return null;
+  }
 
   return (
     <>

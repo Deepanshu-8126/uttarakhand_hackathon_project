@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useLiveLocationWeather } from '../../hooks/useLiveLocationWeather';
 
-export default function TopNavWeatherBadge() {
+export default function TopNavWeatherBadge({ isDark = false }) {
   const { weather, loading, locationName, refreshWeather } = useLiveLocationWeather();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -31,10 +31,11 @@ export default function TopNavWeatherBadge() {
 
   // Weather icon selector
   const getWeatherIcon = (code) => {
-    if (code >= 71) return <Snowflake size={14} className="text-[#0F2B1F]" />;
-    if (code >= 51) return <CloudRain size={14} className="text-[#0F2B1F]" />;
-    if (code >= 1 && code <= 3) return <CloudSun size={14} className="text-[#0F2B1F]" />;
-    return <Sun size={14} className="text-[#0F2B1F]" />;
+    const iconColor = isDark ? "text-emerald-300" : "text-[#0F2B1F]";
+    if (code >= 71) return <Snowflake size={14} className={iconColor} />;
+    if (code >= 51) return <CloudRain size={14} className={iconColor} />;
+    if (code >= 1 && code <= 3) return <CloudSun size={14} className={iconColor} />;
+    return <Sun size={14} className={iconColor} />;
   };
 
   const temp = weather?.temperature !== undefined ? `${weather.temperature}°C` : '--';
@@ -47,39 +48,47 @@ export default function TopNavWeatherBadge() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-stone-200/90 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-[10px] sm:text-[11px] font-bold text-slate-800 transition cursor-pointer shadow-2xs group shrink-0"
+        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold transition cursor-pointer shadow-2xs group shrink-0 ${
+          isDark
+            ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200'
+            : 'border border-stone-200/90 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800'
+        }`}
         title="Live Weather for your location"
       >
-        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0">
+        <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9] text-[#0F2B1F]'}`}>
           {loading ? (
-            <RefreshCw size={10} className="text-[#0F2B1F] animate-spin" />
+            <RefreshCw size={10} className={`${isDark ? 'text-emerald-300' : 'text-[#0F2B1F]'} animate-spin`} />
           ) : (
             getWeatherIcon(weather?.wmoCode)
           )}
         </span>
-        <span className="text-[#0F2B1F] font-black">{temp}</span>
-        <span className="hidden md:inline text-stone-500 font-semibold max-w-[70px] truncate">
+        <span className={isDark ? "text-emerald-300 font-black" : "text-[#0F2B1F] font-black"}>{temp}</span>
+        <span className={`hidden md:inline font-semibold max-w-[70px] truncate ${isDark ? 'text-stone-300' : 'text-stone-500'}`}>
           {displayCity}
         </span>
-        <ChevronDown size={11} className={`text-stone-400 transition-transform hidden sm:inline-block ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={11} className={`${isDark ? 'text-stone-400' : 'text-stone-400'} transition-transform hidden sm:inline-block ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* ── 2. Weather Details Popup Card (Global Design System Card) ── */}
       {isOpen && (
         <div 
-          className="absolute right-0 mt-2 w-72 sm:w-80 rounded-[20px] bg-white border border-[#F0F0F0] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 z-50 text-left animate-in fade-in zoom-in-95 duration-150"
+          className={`absolute right-0 mt-2 w-72 sm:w-80 rounded-[20px] p-4 z-50 text-left animate-in fade-in zoom-in-95 duration-150 ${
+            isDark 
+              ? 'bg-[#06140c] border border-emerald-500/30 text-white shadow-2xl shadow-emerald-950/80' 
+              : 'bg-white border border-[#F0F0F0] shadow-[0_4px_20px_rgba(0,0,0,0.06)]'
+          }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-stone-100 pb-3 mb-3">
+          <div className={`flex items-center justify-between border-b pb-3 mb-3 ${isDark ? 'border-white/10' : 'border-stone-100'}`}>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#E8F5E9] flex items-center justify-center">
-                <MapPin size={16} className="text-[#0F2B1F]" />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9]'}`}>
+                <MapPin size={16} className={isDark ? "text-emerald-300" : "text-[#0F2B1F]"} />
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                <div className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
                   Your Location
                 </div>
-                <div className="text-sm font-black text-[#0F172A]">
+                <div className={`text-sm font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>
                   {displayCity}
                 </div>
               </div>
