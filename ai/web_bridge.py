@@ -733,137 +733,166 @@ async def stream_gemini_live_to_ws(
 
 
 
+@app.websocket("/ws/live")
 @app.websocket("/ws/voice")
-async def websocket_voice_endpoint(websocket: WebSocket):
+async def websocket_voice_endpoint(
+    websocket: WebSocket,
+    apiKey: str | None = None,
+    model: str | None = None,
+    voice: str | None = None,
+    system_prompt: str | None = None
+):
     """Real-time bidirectional WebSocket stream for Web & Mobile voice clients.
     Supports:
-    - 16kHz PCM streaming (type: 'pcm_chunk') directly to Gemini Live (Aoede voice).
+    - 16kHz PCM streaming (type: 'audio' or 'pcm_chunk') directly to Gemini Live.
+    - Real-time 24kHz Little-Endian PCM audio return.
+    - Live dual-sided transcription (userText + text delta).
     - Structured queries (type: 'query' or 'text') with Devbhoomi DB tool grounding.
-    - WebM/WAV audio blob fallback (type: 'audio').
     """
     await websocket.accept()
-    logger.info("[ws] Client connected to Devbhoomi Voice WebSocket")
+    logger.info("[ws/live] Client connected to Devbhoomi Voice WebSocket")
 
-    await websocket.send_json({
-        "type": "ready",
-        "engine": "gemini_live_aoede",
-        "model": LIVE_VOICE_MODEL,
-        "voice": LIVE_VOICE_NAME,
+    active_key = apiKey or GOOGLE_API_KEY
+    active_voice = voice or LIVE_VOICE_NAME or "Aoede"
+    active_model = model or LIVE_VOICE_MODEL or "gemini-2.5-flash-native-audio-latest"
+    active_system_prompt = system_prompt or _SYSTEM_PROMPT
+
+    await safe_send(websocket, {
+        "type": "connected",
+        "ready": True,
+        "engine": "gemini_live",
+        "model": active_model,
+        "voice": active_voice,
+        "message": "Connected to Devbhoomi Live Voice Companion",
     })
 
-    client = _get_genai_client()
-    config = types.LiveConnectConfig(
+    if not active_key:
+        logger.warning("[ws/live] Missing Google API key, running local audio fallback mode")
+        await safe_send(websocket, {"type": "info", "message": "Running in local synthesizer mode"})
+
+    client = genai.Client(api_key=active_key) if active_key else None
+    
+    live_config = types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
         input_audio_transcription=types.AudioTranscriptionConfig(),
         output_audio_transcription=types.AudioTranscriptionConfig(),
         speech_config=types.SpeechConfig(
             voice_config=types.VoiceConfig(
-                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=LIVE_VOICE_NAME)
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=active_voice)
             )
         ),
         realtime_input_config=types.RealtimeInputConfig(
             automatic_activity_detection=types.AutomaticActivityDetection(
                 start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_HIGH,
                 end_of_speech_sensitivity=types.EndSensitivity.END_SENSITIVITY_LOW,
-                prefix_padding_ms=200,
-                silence_duration_ms=800,
+                prefix_padding_ms=150,
+                silence_duration_ms=600,
             )
         ),
-        system_instruction=types.Content(parts=[types.Part.from_text(text=_SYSTEM_PROMPT)]),
+        system_instruction=types.Content(parts=[types.Part.from_text(text=active_system_prompt)]),
         tools=[DEVBHOOMI_TOOLS],
     )
 
     try:
-        async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
-            logger.info("[ws] Connected to Gemini Live backend session for client")
+        if client:
+            async with client.aio.live.connect(model=active_model, config=live_config) as session:
+                logger.info("[ws/live] Connected to Gemini Live backend session for client")
 
-            async def pump_client_to_session():
-                try:
-                    while True:
-                        data = await websocket.receive_text()
-                        msg = json.loads(data)
-                        msg_type = msg.get("type", "pcm_chunk")
+                async def pump_client_to_session():
+                    try:
+                        while True:
+                            data = await websocket.receive_text()
+                            msg = json.loads(data)
+                            msg_type = msg.get("type", "audio")
 
-                        if msg_type == "pcm_chunk":
-                            raw_b64 = msg.get("chunk")
-                            if raw_b64:
-                                pcm_data = base64.b64decode(raw_b64)
-                                await session.send_realtime_input(
-                                    audio=types.Blob(
-                                        data=pcm_data,
-                                        mime_type="audio/pcm;rate=16000",
+                            if msg_type in ("audio", "pcm_chunk"):
+                                raw_b64 = msg.get("data") or msg.get("chunk")
+                                if raw_b64:
+                                    pcm_data = base64.b64decode(raw_b64)
+                                    await session.send_realtime_input(
+                                        audio=types.Blob(
+                                            data=pcm_data,
+                                            mime_type="audio/pcm;rate=16000",
+                                        )
                                     )
-                                )
-                        elif msg_type in ("query", "text"):
-                            query_text = (msg.get("query") or msg.get("text", "")).strip()
-                            if query_text:
-                                await session.send_client_content(
-                                    turns=[types.Content(role="user", parts=[types.Part.from_text(text=query_text)])]
-                                )
-                        elif msg_type == "ping":
-                            await websocket.send_json({"type": "pong"})
-                except WebSocketDisconnect:
-                    pass
-                except Exception as exc:
-                    logger.warning(f"[ws/in] Pump error: {exc}")
+                            elif msg_type in ("query", "text"):
+                                query_text = (msg.get("query") or msg.get("text", "")).strip()
+                                if query_text:
+                                    await session.send_client_content(
+                                        turns=[types.Content(role="user", parts=[types.Part.from_text(text=query_text)])]
+                                    )
+                            elif msg_type == "ping":
+                                await safe_send(websocket, {"type": "pong"})
+                    except WebSocketDisconnect:
+                        pass
+                    except Exception as exc:
+                        logger.warning(f"[ws/in] Pump error: {exc}")
 
-            async def pump_session_to_client():
-                try:
-                    async for response in session.receive():
-                        # Handle autonomous Devbhoomi tool execution
-                        tool_call = getattr(response, "tool_call", None)
-                        if tool_call and getattr(tool_call, "function_calls", None):
-                            logger.info(f"[ws/live] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
-                            responses = []
-                            for fc in tool_call.function_calls:
-                                res = await execute_tool(fc.name, fc.args)
-                                responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
-                            await session.send_tool_response(function_responses=responses)
+                async def pump_session_to_client():
+                    try:
+                        async for response in session.receive():
+                            # Handle autonomous Devbhoomi tool execution
+                            tool_call = getattr(response, "tool_call", None)
+                            if tool_call and getattr(tool_call, "function_calls", None):
+                                logger.info(f"[ws/live] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
+                                responses = []
+                                for fc in tool_call.function_calls:
+                                    res = await execute_tool(fc.name, fc.args)
+                                    responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
+                                await session.send_tool_response(function_responses=responses)
 
-                        sc = response.server_content
-                        if sc:
-                            # Stream input transcription (what user spoke)
-                            if getattr(sc, "input_transcription", None) and getattr(sc.input_transcription, "text", None):
-                                await safe_send(websocket, {
-                                    "type": "user_transcript",
-                                    "text": sc.input_transcription.text,
-                                })
+                            sc = response.server_content
+                            if sc:
+                                # Stream input transcription (what user spoke)
+                                in_tx = getattr(sc, "input_transcription", None)
+                                if in_tx and getattr(in_tx, "text", None):
+                                    await safe_send(websocket, {
+                                        "type": "userText",
+                                        "text": in_tx.text,
+                                    })
 
-                            # Stream agent text delta
-                            if getattr(sc, "output_transcription", None) and getattr(sc.output_transcription, "text", None):
-                                await safe_send(websocket, {
-                                    "type": "transcript_delta",
-                                    "delta": sc.output_transcription.text,
-                                })
+                                # Stream agent text delta
+                                out_tx = getattr(sc, "output_transcription", None)
+                                if out_tx and getattr(out_tx, "text", None):
+                                    await safe_send(websocket, {
+                                        "type": "text",
+                                        "delta": out_tx.text,
+                                        "text": out_tx.text,
+                                    })
 
-                            # Stream 24kHz raw PCM chunks (Aoede voice)
-                            if sc.model_turn:
-                                for part in sc.model_turn.parts:
-                                    if part.inline_data and part.inline_data.data:
-                                        chunk_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
-                                        await safe_send(websocket, {
-                                            "type": "audio_chunk",
-                                            "chunk": chunk_b64,
-                                        })
+                                # Stream 24kHz raw PCM chunks (Aoede/selected voice)
+                                if sc.model_turn:
+                                    for part in sc.model_turn.parts:
+                                        if part.inline_data and part.inline_data.data:
+                                            chunk_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
+                                            await safe_send(websocket, {
+                                                "type": "audio",
+                                                "data": chunk_b64,
+                                                "chunk": chunk_b64,
+                                                "rate": 24000,
+                                            })
 
-                            if sc.turn_complete:
-                                await safe_send(websocket, {"type": "turn_complete"})
+                                if sc.turn_complete:
+                                    await safe_send(websocket, {"type": "turnComplete"})
+                                
+                                if getattr(sc, "interrupted", False):
+                                    await safe_send(websocket, {"type": "interrupted"})
 
-                except Exception as exc:
-                    logger.warning(f"[ws/out] Session receive error: {exc}")
+                    except Exception as exc:
+                        logger.warning(f"[ws/out] Session receive error: {exc}")
 
-            in_task = asyncio.create_task(pump_client_to_session())
-            out_task = asyncio.create_task(pump_session_to_client())
-            done, pending = await asyncio.wait(
-                [in_task, out_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-            for t in pending:
-                t.cancel()
-                try:
-                    await t
-                except (asyncio.CancelledError, Exception):
-                    pass
+                in_task = asyncio.create_task(pump_client_to_session())
+                out_task = asyncio.create_task(pump_session_to_client())
+                done, pending = await asyncio.wait(
+                    [in_task, out_task],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for t in pending:
+                    t.cancel()
+                    try:
+                        await t
+                    except (asyncio.CancelledError, Exception):
+                        pass
 
     except Exception as e:
         logger.warning(f"[ws] Gemini Live direct session error: {e}. Running fallback message loop...")
@@ -878,7 +907,7 @@ async def websocket_voice_endpoint(websocket: WebSocket):
                     if q:
                         await stream_gemini_live_to_ws(websocket, q, [], lang)
                 elif mtype == "ping":
-                    await websocket.send_json({"type": "pong"})
+                    await safe_send(websocket, {"type": "pong"})
         except WebSocketDisconnect:
             pass
         except Exception as ex:

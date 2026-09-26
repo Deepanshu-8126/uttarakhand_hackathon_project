@@ -1,20 +1,26 @@
 /**
  * Devbhoomi Conversational AI - Voice Controls
- * Connects directly to the Gemini Live Aoede studio voice session
+ * Connects directly to the Gemini Live Aoede / Multi-voice Studio session
  */
 
-import React, { useState } from 'react';
-import { Mic, MicOff, Radio, Volume2, Sparkles, X } from 'lucide-react';
-import ChatGPTVoiceOverlay from '../components/copilot/ChatGPTVoiceOverlay.jsx';
+import React from 'react';
+import DevbhoomiVoiceStudioModal from '../components/copilot/DevbhoomiVoiceStudioModal.jsx';
 
-export default function VoiceControls({ isOpen = false, onClose = () => {}, lang = 'hi', onSpeechTranscript = null }) {
+export default function VoiceControls({ 
+  isOpen = false, 
+  onClose = () => {}, 
+  lang = 'hi', 
+  initialVoice = 'Aoede',
+  onTranscriptReceived = () => {} 
+}) {
   if (!isOpen) return null;
 
   return (
-    <ChatGPTVoiceOverlay
+    <DevbhoomiVoiceStudioModal
       isOpen={isOpen}
       onClose={onClose}
-      initialLang={lang}
+      initialVoice={initialVoice}
+      onTranscriptReceived={onTranscriptReceived}
     />
   );
 }
