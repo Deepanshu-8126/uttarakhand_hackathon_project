@@ -234,7 +234,17 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log('Discovery Uttarakhand API');
   console.log(`Server running on port ${PORT}`);
 });
+
+process.on('unhandledRejection', (err) => {
+  console.error('[Process] Unhandled Promise Rejection (non-fatal):', err?.message || err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Process] Uncaught Exception (non-fatal):', err?.message || err);
+});
+
+export default app;

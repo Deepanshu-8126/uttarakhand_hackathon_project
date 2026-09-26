@@ -32,6 +32,12 @@ import uvicorn
 
 # Load environment
 _HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.insert(0, str(_HERE))
+for _p in (_HERE / "app", _HERE.parent / "voice_try" / "voice-demo" / "src"):
+    if _p.exists() and str(_p) not in sys.path:
+        sys.path.append(str(_p))
+
 for _candidate in (
     _HERE.parent / "voice_try" / "voice-demo" / ".env",
     _HERE / ".env",
@@ -730,158 +736,148 @@ async def stream_gemini_live_to_ws(
 
 @app.websocket("/ws/voice")
 async def websocket_voice_endpoint(websocket: WebSocket):
-    """Real-time bidirectional WebSocket stream for Web & Mobile voice clients."""
+    """Real-time bidirectional WebSocket stream for Web & Mobile voice clients.
+    Supports:
+    - 16kHz PCM streaming (type: 'pcm_chunk') directly to Gemini Live (Aoede voice).
+    - Structured queries (type: 'query' or 'text') with Devbhoomi DB tool grounding.
+    - WebM/WAV audio blob fallback (type: 'audio').
+    """
     await websocket.accept()
-    logger.info("[ws] Client connected to Devbhoomi Voice-Demo WebSocket")
-
-    # Send pre-cached Gemini Live greeting
-    greeting_text = GREETING_TEXTS["en"]
-    greeting_audio = _GREETING_CACHE.get("en", "")
-    if not greeting_audio:
-        _, greeting_audio = await synthesize_gemini_live_voice(f"Say warmly: {greeting_text}", lang="en")
+    logger.info("[ws] Client connected to Devbhoomi Voice WebSocket")
 
     await websocket.send_json({
         "type": "ready",
         "engine": "gemini_live_aoede",
-        "greeting": greeting_text,
-        "audio_base64": greeting_audio,
+        "model": LIVE_VOICE_MODEL,
+        "voice": LIVE_VOICE_NAME,
     })
 
+    client = _get_genai_client()
+    config = types.LiveConnectConfig(
+        response_modalities=[types.Modality.AUDIO],
+        input_audio_transcription=types.AudioTranscriptionConfig(),
+        output_audio_transcription=types.AudioTranscriptionConfig(),
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=LIVE_VOICE_NAME)
+            )
+        ),
+        realtime_input_config=types.RealtimeInputConfig(
+            automatic_activity_detection=types.AutomaticActivityDetection(
+                start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_HIGH,
+                end_of_speech_sensitivity=types.EndSensitivity.END_SENSITIVITY_LOW,
+                prefix_padding_ms=200,
+                silence_duration_ms=800,
+            )
+        ),
+        system_instruction=types.Content(parts=[types.Part.from_text(text=_SYSTEM_PROMPT)]),
+        tools=DEVBHOOMI_TOOLS,
+    )
+
     try:
-        while True:
-            data = await websocket.receive_text()
-            msg = json.loads(data)
-            msg_type = msg.get("type", "query")
+        async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
+            logger.info("[ws] Connected to Gemini Live backend session for client")
 
-            if msg_type in ("query", "text"):
-                query_text = (msg.get("query") or msg.get("text", "")).strip()
-                lang = msg.get("lang", "en")
+            async def pump_client_to_session():
+                try:
+                    while True:
+                        data = await websocket.receive_text()
+                        msg = json.loads(data)
+                        msg_type = msg.get("type", "pcm_chunk")
 
-                await websocket.send_json({"type": "status", "status": "processing"})
+                        if msg_type == "pcm_chunk":
+                            raw_b64 = msg.get("chunk")
+                            if raw_b64:
+                                pcm_data = base64.b64decode(raw_b64)
+                                await session.send_realtime_input(
+                                    audio=types.Blob(
+                                        data=pcm_data,
+                                        mime_type="audio/pcm;rate=16000",
+                                    )
+                                )
+                        elif msg_type in ("query", "text"):
+                            query_text = (msg.get("query") or msg.get("text", "")).strip()
+                            if query_text:
+                                await session.send_client_content(
+                                    turns=[types.Content(role="user", parts=[types.Part.from_text(text=query_text)])]
+                                )
+                        elif msg_type == "ping":
+                            await websocket.send_json({"type": "pong"})
+                except WebSocketDisconnect:
+                    pass
+                except Exception as exc:
+                    logger.warning(f"[ws/in] Pump error: {exc}")
 
-                # Instant sub-5ms cache check
-                cached = cache_get_response(query_text)
-                if cached:
-                    logger.info(f"[ws] <5ms instant cache hit for '{query_text}'")
-                    await safe_send(websocket, {
-                        "type": "turn_complete",
-                        "text": cached[0],
-                        "audio_base64": cached[1],
-                    })
-                    await websocket.send_json({"type": "status", "status": "idle"})
-                    continue
+            async def pump_session_to_client():
+                try:
+                    async for response in session.receive():
+                        # Handle autonomous Devbhoomi tool execution
+                        tool_call = getattr(response, "tool_call", None)
+                        if tool_call and getattr(tool_call, "function_calls", None):
+                            logger.info(f"[ws/live] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
+                            responses = []
+                            for fc in tool_call.function_calls:
+                                res = await execute_tool(fc.name, fc.args)
+                                responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
+                            await session.send_tool_response(function_responses=responses)
 
-                # Ground with Devbhoomi database tools
-                enriched_facts = []
-                q_lower = query_text.lower()
-                place_info = search_destination_info(query_text)
-                if place_info.get("found"):
-                    enriched_facts.append(f"Place Details: {json.dumps(place_info)}")
+                        sc = response.server_content
+                        if sc:
+                            # Stream input transcription (what user spoke)
+                            if getattr(sc, "input_transcription", None) and getattr(sc.input_transcription, "text", None):
+                                await safe_send(websocket, {
+                                    "type": "user_transcript",
+                                    "text": sc.input_transcription.text,
+                                })
 
-                if any(k in q_lower for k in ["trek", "altitude", "height", "safe", "ams", "oxygen", "sickness", "climb", "high", "breathe", "kedarnath", "tungnath", "hemkund"]):
-                    safety_info = get_altitude_safety_advice(query_text)
-                    enriched_facts.append(f"Safety/Altitude Guide: {json.dumps(safety_info)}")
+                            # Stream agent text delta
+                            if getattr(sc, "output_transcription", None) and getattr(sc.output_transcription, "text", None):
+                                await safe_send(websocket, {
+                                    "type": "transcript_delta",
+                                    "delta": sc.output_transcription.text,
+                                })
 
-                if any(k in q_lower for k in ["stay", "hotel", "homestay", "resort", "room", "camp"]):
-                    stays_info = get_homestays(query_text)
-                    enriched_facts.append(f"Stays: {json.dumps(stays_info)}")
+                            # Stream 24kHz raw PCM chunks (Aoede voice)
+                            if sc.model_turn:
+                                for part in sc.model_turn.parts:
+                                    if part.inline_data and part.inline_data.data:
+                                        chunk_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
+                                        await safe_send(websocket, {
+                                            "type": "audio_chunk",
+                                            "chunk": chunk_b64,
+                                        })
 
-                if any(k in q_lower for k in ["weather", "temperature", "rain", "snow", "mausam"]):
-                    try:
-                        w = await fetch_weather(query_text)
-                        enriched_facts.append(f"Live Weather: {json.dumps(w)}")
-                    except Exception:
-                        pass
+                            if sc.turn_complete:
+                                await safe_send(websocket, {"type": "turn_complete"})
 
-                # Stream audio chunks directly!
-                await stream_gemini_live_to_ws(websocket, query_text, enriched_facts, lang)
-                await websocket.send_json({"type": "status", "status": "idle"})
+                except Exception as exc:
+                    logger.warning(f"[ws/out] Session receive error: {exc}")
 
-            elif msg_type == "audio":
-                audio_b64 = msg.get("audio_base64", "")
-                mime_type = msg.get("mime_type", "audio/webm")
-                lang = msg.get("lang", "en")
+            in_task = asyncio.create_task(pump_client_to_session())
+            out_task = asyncio.create_task(pump_session_to_client())
+            await asyncio.gather(in_task, out_task, return_exceptions=True)
 
-                if audio_b64:
-                    await websocket.send_json({"type": "status", "status": "processing"})
-                    audio_bytes = base64.b64decode(audio_b64)
-                    gemini_mime = "audio/webm" if "webm" in mime_type else "audio/wav"
-
-                    client = _get_genai_client()
-                    try:
-                        trans_res = await asyncio.to_thread(
-                            client.models.generate_content,
-                            model=TEXT_MODEL_NAME,
-                            contents=[
-                                types.Part.from_bytes(data=audio_bytes, mime_type=gemini_mime),
-                                "Transcribe what the speaker is saying in this audio clip. Support Hindi, English, and Hinglish. If silent or unintelligible noise, reply exactly with 'SILENT'. Return only spoken text."
-                            ]
-                        )
-                        user_query = trans_res.text.strip().replace('"', '').replace("'", "")
-                    except Exception as e:
-                        logger.error(f"[ws/audio] Transcribe error: {e}")
-                        user_query = ""
-
-                    if user_query and "SILENT" not in user_query.upper():
-                        # Immediately send user transcript so UI shows it in 300ms!
-                        await websocket.send_json({"type": "user_transcript", "text": user_query})
-
-                        # Instant sub-5ms cache check on user transcript
-                        cached = cache_get_response(user_query)
-                        if cached:
-                            logger.info(f"[ws/audio] <5ms instant cache hit for transcribed '{user_query}'")
-                            await safe_send(websocket, {
-                                "type": "turn_complete",
-                                "text": cached[0],
-                                "audio_base64": cached[1],
-                            })
-                            await websocket.send_json({"type": "status", "status": "idle"})
-                            continue
-
-                        # Ground with Devbhoomi DB
-                        enriched_facts = []
-                        q_lower = user_query.lower()
-                        place_info = search_destination_info(user_query)
-                        if place_info.get("found"):
-                            enriched_facts.append(f"Place Details: {json.dumps(place_info)}")
-
-                        if any(k in q_lower for k in ["trek", "altitude", "height", "safe", "ams", "oxygen", "sickness", "climb", "high", "breathe", "kedarnath", "tungnath", "hemkund"]):
-                            safety_info = get_altitude_safety_advice(user_query)
-                            enriched_facts.append(f"Safety/Altitude Guide: {json.dumps(safety_info)}")
-
-                        if any(k in q_lower for k in ["stay", "hotel", "homestay", "resort", "room", "camp"]):
-                            stays_info = get_homestays(user_query)
-                            enriched_facts.append(f"Stays: {json.dumps(stays_info)}")
-
-                        if any(k in q_lower for k in ["weather", "temperature", "rain", "snow", "mausam"]):
-                            try:
-                                w = await fetch_weather(user_query)
-                                enriched_facts.append(f"Live Weather: {json.dumps(w)}")
-                            except Exception:
-                                pass
-
-                        # Stream real-time Gemini Live audio chunks to WebSocket!
-                        await stream_gemini_live_to_ws(websocket, user_query, enriched_facts, lang)
-                    else:
-                        await websocket.send_json({
-                            "type": "turn_complete",
-                            "text": "I didn't catch that clearly. Please tap the orb and speak again.",
-                            "audio_base64": "",
-                        })
-
-                    await websocket.send_json({"type": "status", "status": "idle"})
-
-            elif msg_type == "ping":
-                await websocket.send_json({"type": "pong"})
-
-    except WebSocketDisconnect:
-        logger.info("[ws] Client disconnected")
     except Exception as e:
-        logger.error(f"[ws] Error: {e}")
+        logger.warning(f"[ws] Gemini Live direct session error: {e}. Running fallback message loop...")
         try:
-            await websocket.send_json({"type": "error", "message": str(e)})
-        except Exception:
+            while True:
+                data = await websocket.receive_text()
+                msg = json.loads(data)
+                mtype = msg.get("type")
+                if mtype in ("query", "text"):
+                    q = (msg.get("query") or msg.get("text", "")).strip()
+                    lang = msg.get("lang", "en")
+                    if q:
+                        await stream_gemini_live_to_ws(websocket, q, [], lang)
+                elif mtype == "ping":
+                    await websocket.send_json({"type": "pong"})
+        except WebSocketDisconnect:
             pass
+        except Exception as ex:
+            logger.error(f"[ws/fallback] Error: {ex}")
+    finally:
+        logger.info("[ws] Client disconnected")
+
 
 
 if __name__ == "__main__":
