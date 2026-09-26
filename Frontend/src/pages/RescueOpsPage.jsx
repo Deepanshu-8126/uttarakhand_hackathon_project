@@ -8,6 +8,7 @@ import {
   HeartHandshake, RadioTower
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { sosApi } from '../api/sosApi';
 
 // ─── Initial Base Treks ────────────────────────────────────────────────────────
 const BASE_TREKS = [
@@ -152,15 +153,30 @@ export default function RescueOpsPage() {
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [alertSuccessToast, setAlertSuccessToast] = useState(false);
 
-  // Live state synchronized with local mesh storage
+  // Live state synchronized with backend MongoDB & local mesh storage
   const [liveSos, setLiveSos] = useState(null);
   const [liveTrekPos, setLiveTrekPos] = useState(null);
   const [rescueDispatchInfo, setRescueDispatchInfo] = useState(null);
+  const [dbSosAlerts, setDbSosAlerts] = useState([]);
 
   useEffect(() => {
+    const fetchDbAlerts = async () => {
+      try {
+        const res = await sosApi.getActiveAlerts();
+        if (res.success && Array.isArray(res.data)) {
+          setDbSosAlerts(res.data);
+        }
+      } catch (e) {
+        // Fallback gracefully
+      }
+    };
+
+    fetchDbAlerts();
+    const dbInterval = setInterval(fetchDbAlerts, 4000);
+
     const syncGrid = () => {
       try {
-        const storedSos = localStorage.getItem('sosActive');
+        const storedSos = localStorage.getItem('devbhoomi_active_sos_v1') || localStorage.getItem('sosActive');
         if (storedSos) {
           setLiveSos(JSON.parse(storedSos));
         } else {
@@ -187,13 +203,40 @@ export default function RescueOpsPage() {
     return () => {
       window.removeEventListener('storage', syncGrid);
       clearInterval(interval);
+      clearInterval(dbInterval);
     };
   }, []);
 
-  // Construct dynamic trek list with live telemetry
-  const treks = BASE_TREKS.map((trek) => {
+  // Format real DB alerts into trek telemetry objects
+  const convertedDbAlerts = dbSosAlerts.map((alert) => ({
+    id: alert.alertCode,
+    name: `${alert.incidentType.replace(/_/g, ' ')} (${alert.location?.nearestLandmark || 'Mountain Trail'})`,
+    district: alert.location?.district || 'Uttarakhand',
+    trekkerName: alert.travelerName || 'Tourist in Distress',
+    groupSize: 'Distress Beacon',
+    lastPing: 'LIVE SIGNAL',
+    battery: alert.deviceTelemetry?.batteryLevel ?? 50,
+    batteryLabel: `${alert.deviceTelemetry?.batteryLevel ?? 50}%`,
+    signal: alert.deviceTelemetry?.networkStatus || 'Online',
+    signalLevel: 3,
+    temp: '4°C',
+    altitude: `${alert.location?.altitude || 3200}m`,
+    status: alert.status === 'DISPATCHED' ? 'Warning' : 'SOS',
+    statusBadge: alert.status === 'DISPATCHED' ? 'DISPATCHED' : 'CRITICAL SOS',
+    borderColor: '#FF2E2E',
+    statusBg: 'bg-[#FF2E2E]/15 text-[#FF2E2E] border-[#FF2E2E]/40',
+    dotColor: '#FF2E2E',
+    lat: alert.location?.lat || 30.7346,
+    lng: alert.location?.lng || 79.0669,
+    alertMessage: `${alert.message} · Assigned: ${alert.rescueDetails?.assignedTeam || 'SDRF Rapid Team'}`
+  }));
+
+  // Construct dynamic trek list with live telemetry + real database alerts
+  const treks = [
+    ...convertedDbAlerts,
+    ...BASE_TREKS.map((trek) => {
     if (trek.id === 'TRK-82341') {
-      const isSos = Boolean(liveSos);
+      const isSos = Boolean(liveSos) && !convertedDbAlerts.some(a => a.id === liveSos.alertCode);
       return {
         ...trek,
         status: isSos ? 'SOS' : 'Active',
@@ -203,17 +246,17 @@ export default function RescueOpsPage() {
           ? 'bg-[#FF2E2E]/15 text-[#FF2E2E] border-[#FF2E2E]/40'
           : 'bg-[#00FF88]/15 text-[#00FF88] border-[#00FF88]/40',
         dotColor: isSos ? '#FF2E2E' : '#00FF88',
-        lat: liveSos?.lat || liveTrekPos?.lat || 30.7346,
-        lng: liveSos?.lng || liveTrekPos?.lng || 79.0669,
-        battery: liveSos?.battery || liveTrekPos?.battery || 27,
-        lastPing: liveSos?.time || liveTrekPos?.lastPing || '14:30 IST',
+        lat: liveSos?.location?.lat || liveSos?.lat || liveTrekPos?.lat || 30.7346,
+        lng: liveSos?.location?.lng || liveSos?.lng || liveTrekPos?.lng || 79.0669,
+        battery: liveSos?.deviceTelemetry?.batteryLevel || liveSos?.battery || liveTrekPos?.battery || 27,
+        lastPing: liveSos?.createdAt ? new Date(liveSos.createdAt).toLocaleTimeString() : (liveSos?.time || liveTrekPos?.lastPing || '14:30 IST'),
         alertMessage: isSos
           ? (liveSos?.message || 'SOS distress beacon active. No heartbeat ping received for 42 minutes.')
           : null,
       };
     }
     return trek;
-  });
+  })];
 
   const activeSosCount = treks.filter(t => t.status === 'SOS').length;
   const warningsCount = treks.filter(t => t.status === 'Warning').length;

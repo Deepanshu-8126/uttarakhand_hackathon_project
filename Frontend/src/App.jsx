@@ -37,6 +37,8 @@ import BottomNavBar from './components/navigation/BottomNavBar';
 import AddToTripModal from './components/planner/AddToTripModal';
 import GlobalToast from './components/common/GlobalToast';
 import GlobalAiCopilotLauncher from './components/copilot/GlobalAiCopilotLauncher';
+import SOSFloatingButton from './components/sos/SOSFloatingButton';
+import SOSActiveBanner from './components/sos/SOSActiveBanner';
 
 function App() {
   return (
@@ -46,12 +48,16 @@ function App() {
           <FavoritesProvider>
             <CartProvider>
               <Router>
+                <SOSActiveBanner />
                 <ErrorBoundary fallback={null}>
                   <AddToTripModal />
                 </ErrorBoundary>
                 <GlobalToast />
                 <ErrorBoundary fallback={null}>
                   <GlobalAiCopilotLauncher />
+                </ErrorBoundary>
+                <ErrorBoundary fallback={null}>
+                  <SOSFloatingButton />
                 </ErrorBoundary>
                 <ErrorBoundary fallback={null}>
                   <BottomNavBar />
