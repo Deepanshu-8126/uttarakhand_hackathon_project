@@ -136,6 +136,26 @@ export default function DevbhoomiVoiceStudioModal({
     currentAiTextRef.current = '';
     currentUserTextRef.current = '';
 
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
+    // On Production HTTPS, directly start resilient Web Speech + Neural voice without WebSocket blocking
+    if (isHttps) {
+      try {
+        const audioCtx = audioProcessor.initContext();
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+        const micAnalyser = await audioProcessor.startMicCapture(() => {});
+        setAnalyser(micAnalyser);
+        setOutputAnalyser(audioProcessor.getOutputAnalyser());
+      } catch (err) {
+        console.warn('[DevbhoomiVoiceStudio] Audio capture notice:', err);
+      }
+      setStatus('listening');
+      startUniversalSpeechFallback();
+      return;
+    }
+
     try {
       const audioCtx = audioProcessor.initContext();
       if (audioCtx.state === 'suspended') {
