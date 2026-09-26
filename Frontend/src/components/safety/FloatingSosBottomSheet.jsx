@@ -98,19 +98,19 @@ export default function FloatingSosBottomSheet() {
 
   return (
     <>
-      {/* ── Floating Safety & SOS Trigger Button ── */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* ── Floating Safety & SOS Trigger Button (Positioned safely above BottomNavBar on mobile) ── */}
+      <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 pointer-events-auto">
         <button
           onClick={() => setIsOpen(true)}
-          className="group flex items-center gap-2.5 px-4 py-3 bg-[#d97706] hover:bg-[#b45309] active:scale-95 text-white font-bold rounded-full shadow-xl border-2 border-amber-300/40 backdrop-blur-md transition-all duration-200 cursor-pointer"
+          className="group flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 active:scale-95 text-white font-bold rounded-full shadow-[0_8px_25px_rgba(217,119,6,0.4)] border border-amber-300/40 backdrop-blur-md transition-all duration-200 cursor-pointer"
           title="Open Safety & Offline SOS Grid"
         >
-          <span className="relative flex h-3 w-3">
+          <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
           </span>
-          <ShieldAlert size={18} className="text-white shrink-0" />
-          <span className="text-xs font-black tracking-wide uppercase">Safety &amp; SOS</span>
+          <ShieldAlert size={16} className="text-white shrink-0" />
+          <span className="text-[11px] font-black tracking-wider uppercase whitespace-nowrap">SOS Mesh</span>
         </button>
       </div>
 

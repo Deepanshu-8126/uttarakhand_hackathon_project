@@ -1518,6 +1518,17 @@ export default function MapPage() {
                 )}
               </div>
             </div>
+
+            {/* Direct Delhi Metro & Himalayan Corridor Route Decider Button */}
+            <button
+              type="button"
+              onClick={() => setTransitDrawerOpen(true)}
+              className="px-3.5 py-1.5 min-h-[38px] sm:min-h-[42px] rounded-2xl transition-all font-black flex items-center gap-2 bg-gradient-to-r from-[#0f3d2e] via-[#14532d] to-[#0f3d2e] text-white shadow-md hover:brightness-110 active:scale-95 cursor-pointer border border-emerald-400/50 shrink-0"
+              title="Delhi NCR to Uttarakhand Multimodal Route Decider"
+            >
+              <Navigation size={14} className="text-emerald-300 animate-pulse shrink-0" />
+              <span className="text-xs font-black tracking-tight whitespace-nowrap">🚇 Delhi ⇄ Uttarakhand Route Decider</span>
+            </button>
           </div>
 
           {/* Active Himalayan Corridor Floating Status Pill with Start & Real Google Maps Actions */}
@@ -1859,7 +1870,18 @@ export default function MapPage() {
                 <span>{sidebarOpen ? 'Map View' : 'Places List'}</span>
               </button>
 
-              {/* Action 1: Corridor Radar */}
+              {/* Action 1: Delhi Metro & Corridor Route Decider */}
+              <button
+                type="button"
+                onClick={() => setTransitDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/40 transition-all font-bold cursor-pointer"
+                title="Open Delhi NCR to Uttarakhand Multimodal Route Decider"
+              >
+                <Navigation size={13} className="text-emerald-300" />
+                <span className="tracking-wide">Route Decider</span>
+              </button>
+
+              {/* Action 2: Corridor Radar */}
               <button
                 type="button"
                 onClick={() => {

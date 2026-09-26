@@ -166,21 +166,29 @@ class ApiService {
   // ── Devbhoomi AI Voice Bridge ─────────────────────────
   static Future<Map<String, dynamic>> sendVoiceMessage(
       String query, {String lang = 'en'}) async {
-    final bridgeHosts = ['http://10.0.2.2:8765', 'http://127.0.0.1:8765'];
-    for (final host in bridgeHosts) {
+    final candidateUrls = [
+      'http://10.0.2.2:8765/api/voice/ask',
+      'http://127.0.0.1:8765/api/voice/ask',
+      '$baseUrl/voice/ask',
+      'http://10.0.2.2:5000/api/voice/ask',
+      'http://127.0.0.1:5000/api/voice/ask',
+    ];
+
+    for (final url in candidateUrls) {
       try {
         final res = await http
             .post(
-              Uri.parse('$host/api/voice/ask'),
+              Uri.parse(url),
               headers: {'Content-Type': 'application/json'},
-              body: json.encode({'query': query, 'lang': lang}),
+              body: json.encode({'query': query, 'lang': lang, 'message': query}),
             )
-            .timeout(const Duration(seconds: 6));
+            .timeout(const Duration(seconds: 5));
         if (res.statusCode == 200) {
           final data = json.decode(res.body) as Map<String, dynamic>;
-          if (data['response'] != null) {
+          final reply = data['response'] ?? data['message'] ?? data['text'];
+          if (reply != null && reply.toString().isNotEmpty) {
             return {
-              'text': data['response'].toString(),
+              'text': reply.toString(),
               'toolsUsed': (data['toolsUsed'] as List?)?.map((e) => e.toString()).toList() ?? ['VoiceDemoBridge'],
               'confidence': 'grounded',
               'source': 'voice-demo-bridge',

@@ -402,19 +402,26 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                               color: orbColor.withOpacity(0.15 - (_voicePulseController.value * 0.07)),
                             ),
                           ),
-                          Container(
-                            width: 100, height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(colors: [orbColor.withOpacity(0.9), orbColor.withOpacity(0.5), const Color(0xFF064E3B)]),
-                              boxShadow: [BoxShadow(color: orbColor.withOpacity(0.4), blurRadius: 28, spreadRadius: 4)],
-                            ),
-                            child: Icon(
-                              voiceState == 'processing' ? Icons.hourglass_top
-                                  : voiceState == 'speaking' ? Icons.volume_up
-                                  : Icons.mic,
-                              color: Colors.white,
-                              size: 40,
+                          GestureDetector(
+                            onTap: () {
+                              if (voiceState == 'idle' || voiceState == 'speaking') {
+                                submit('Namaste! Mujhe Uttarakhand me ghoomne ki best jagah aur real ground condition bataiye.');
+                              }
+                            },
+                            child: Container(
+                              width: 100, height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(colors: [orbColor.withOpacity(0.9), orbColor.withOpacity(0.5), const Color(0xFF064E3B)]),
+                                boxShadow: [BoxShadow(color: orbColor.withOpacity(0.4), blurRadius: 28, spreadRadius: 4)],
+                              ),
+                              child: Icon(
+                                voiceState == 'processing' ? Icons.hourglass_top
+                                    : voiceState == 'speaking' ? Icons.volume_up
+                                    : Icons.mic,
+                                color: Colors.white,
+                                size: 40,
+                              ),
                             ),
                           ),
                         ],
