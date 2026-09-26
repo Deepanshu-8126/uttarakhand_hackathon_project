@@ -67,9 +67,18 @@ jobs:
       - name: Locate and Stage APK
         run: |
           mkdir -p dist-apk
-          APK_PATH=$(find mobile_app/build -name "app-release.apk" -type f | head -1)
+          echo "Scanning filesystem for built APKs..."
+          find . -name "*.apk" -type f -ls || true
+          APK_PATH=$(find . -name "app-release.apk" -type f | head -1)
           if [ -z "$APK_PATH" ]; then
-            APK_PATH=$(find mobile_app/build -name "*.apk" -type f | head -1)
+            APK_PATH=$(find . -name "*release*.apk" -type f | head -1)
+          fi
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find . -name "*.apk" -type f | head -1)
+          fi
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::No APK file found in build directory!"
+            exit 1
           fi
           echo "Found APK at: $APK_PATH"
           cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.1.0-Release.apk

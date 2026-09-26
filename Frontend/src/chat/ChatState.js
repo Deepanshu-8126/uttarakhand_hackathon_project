@@ -8,12 +8,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const CHAT_STORAGE_KEY = 'devbhoomi_agent_chat_v3';
 
-export function useChatState({ initialQuery = '', onTripContextChange = null } = {}) {
+export function useChatState({ initialQuery = '', onTripContextChange: _onTripContextChange = null } = {}) {
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
       if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch {
+      // ignore
+    }
     return [
       {
         id: 'welcome-msg',
