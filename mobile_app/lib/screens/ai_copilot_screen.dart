@@ -230,9 +230,27 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               ),
             ),
 
+          // ── Quick Suggestion Chips Bar (Matches reference design) ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            color: Colors.white,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildPromptChip('🪷', '3-Day Rishikesh spiritual retreat', 'Suggest a 3-day spiritual retreat in Rishikesh with Ganga Aarti & meditation ashrams'),
+                  const SizedBox(width: 6),
+                  _buildPromptChip('🏔️', '4x4 Offbeat road trip to Munsiyari', 'Suggest a 4-day scenic road trip from Dehradun to Munsiyari with verified 4x4 Thar rental and boutique homestays.'),
+                  const SizedBox(width: 6),
+                  _buildPromptChip('🏡', 'Budget homestays near Valley of Flowers', 'Find verified budget Pahadi homestays near Valley of Flowers & Govindghat under ₹2,000'),
+                ],
+              ),
+            ),
+          ),
+
           // ── Input Box ──────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -3))],
@@ -538,6 +556,36 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
           },
         );
       },
+    );
+  }
+
+  Widget _buildPromptChip(String icon, String label, String prompt) {
+    return InkWell(
+      onTap: () => _handleSendMessage(prompt),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 11)),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -967,8 +1015,366 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     );
   }
 
+  // ── 3B. Vox Himalayan Expedition Card (Matches Reference Design) ─────────────
+  Widget _buildVoxExpeditionCard(String text) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Title & Subtitle
+          const Text(
+            '4-Day Panchachuli Vista Expedition (Dehradun to Munsiyari)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F3D2E),
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "I've crafted an offbeat, high-altitude itinerary crossing the Kumaon ridge. This route combines scenic mountain passes, verified 4x4 Thar with certified local chauffeur, and quiet mountain homestays overlooking the five peaks of Panchachuli.",
+            style: TextStyle(fontSize: 11.5, color: Color(0xFF475569), height: 1.4),
+          ),
+          const SizedBox(height: 10),
+
+          // 3-Metric Stats Row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAF8),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('TOTAL DISTANCE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                      SizedBox(height: 2),
+                      Text('585 km', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                      Text('Scenic Ridge', style: TextStyle(fontSize: 8.5, color: Color(0xFF059669), fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAF8),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('EST. BUDGET', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                      SizedBox(height: 2),
+                      Text('₹24,800', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                      Text('Vehicle + Stays', style: TextStyle(fontSize: 8.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAF8),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('ELEVATION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                      SizedBox(height: 2),
+                      Text('2,748m peak', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                      Text('Kalamuni Pass', style: TextStyle(fontSize: 8.5, color: Color(0xFF059669), fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Daily Waypoints Section
+          const Text(
+            'CURATED DAILY WAYPOINTS',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E), letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 6),
+
+          // D1, D2, D3 items
+          _buildWaypointItem('D1', 'Dehradun to Kausani via Almora Pine Forests', '280 km • 8h', 'Pass through Mohan tea gardens, Binsar wildlife ridge, and catch the sunset over Trishul peak.'),
+          const SizedBox(height: 6),
+          _buildWaypointItem('D2', 'Kausani to Birthi Falls & Munsiyari', '165 km • 6h', 'Ascend Kalamuni Pass (2,748m) with panoramic views into Johar Valley and frozen Birthi water cascade.'),
+          const SizedBox(height: 6),
+          _buildWaypointItem('D3', 'Khaliya Top Trek & Panchachuli Sunset', 'Alpine Day', 'Gentle 6 km rhododendron trail to Khaliya ridge with 360° Great Himalayan snow range vantage point.'),
+          const SizedBox(height: 12),
+
+          // Recommended Vehicle & Homestay Grid
+          Row(
+            children: [
+              // Vehicle
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAF8),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJMJEgm2IA0tZhGP9KQXyqq-DkNQEfn62QUdcW7oH0cN3jEaYnpVhKLUiGI-Pz3FKSJEaFv7YK7tZoF8YQq8mvx6JAvI3UdDNgeEcV1YmPXfkIUwJdAcib9eEmbpr_wJit-iYGV9xE0_Q2s4NtoFoaK1vScD9tpk04_-DQWQ-LtmYj-ABcaY8bM5bvfxCWGHOV6FSNglf5hG4I6Z_0g6ccplxGLvkBCDsH-R2BApnLKsVanvov6eBp',
+                            height: 80,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Container(height: 80, color: const Color(0xFF0F3D2E)),
+                          ),
+                          Positioned(
+                            top: 4,
+                            left: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text('Verified Fleet', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 8, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F3D2E),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text('₹4,500/day', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Mahindra Thar 4x4', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0F172A))),
+                            SizedBox(height: 2),
+                            Text('Includes mountain chauffeur Rawat Ji & chains.', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Homestay
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAF8),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyUA786yYnyIa2PN_m9vXt0lyz9Zrxzv9nXkTI5E1Lh0nq1gunfrfn1WK5veEGfFOW1D0zaoQa0zMgX0Iwi7gjpFKNBPhCUfX8u2YL9wF2cRXxCbUlPYagETi2t3iVTxLfvx81YJH27SsJetV3xkIxb8dbF-Y_W6zMOtnimWAzs_dRHLw0UDr1Shb1sGaN9gaOqUouY_VvNgCKVB2AJV6I3_2rFZadqqqM9x8QFxS6anj_ns7GESAq',
+                            height: 80,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Container(height: 80, color: const Color(0xFF0F3D2E)),
+                          ),
+                          Positioned(
+                            top: 4,
+                            left: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text('Curated Homestay', style: TextStyle(color: Color(0xFFFDE047), fontSize: 8, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F3D2E),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text('₹3,800/night', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Panchachuli Stone Lodge', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0F172A))),
+                            SizedBox(height: 2),
+                            Text('Handcrafted mud-slate cottage with wood fire.', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Action Buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F3D2E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TripPlannerScreen()),
+                  ),
+                  icon: const Icon(Icons.event_available, size: 12),
+                  label: const Text('Reserve', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen())),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.map_outlined, size: 12, color: Color(0xFF0F3D2E)),
+                      SizedBox(width: 4),
+                      Text('Route Map', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F3D2E))),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Itinerary copied to clipboard!'), duration: Duration(seconds: 1)),
+                  );
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  child: const Icon(Icons.share_outlined, size: 12, color: Color(0xFF475569)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaypointItem(String day, String title, String metric, String desc) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAF8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
+            ),
+            child: Text(day, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF0F3D2E))),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0F172A)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(metric, style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontFamily: 'monospace')),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(desc, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), height: 1.3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── 4. Rich Formatted Markdown Parser ──────────────────────────────────────
   Widget _buildFormattedMessageBody(String text) {
+    // If text contains Panchachuli or Munsiyari or 4-day road trip pattern, render the rich Vox Expedition Card
+    if (text.contains('Panchachuli') || (text.toLowerCase().contains('munsiyari') && (text.contains('Day') || text.contains('Thar') || text.contains('road trip')))) {
+      return _buildVoxExpeditionCard(text);
+    }
+
     final paragraphs = text.split('\n\n');
 
     return Column(

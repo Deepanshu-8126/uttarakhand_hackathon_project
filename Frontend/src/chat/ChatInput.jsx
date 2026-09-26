@@ -106,6 +106,25 @@ export default function ChatInput({
           </div>
         </div>
       </div>
+
+      {/* Quick Suggestion Chips matching the HTML mockup */}
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pt-2 px-0.5">
+        {[
+          { icon: '🪷', label: '3-Day Rishikesh spiritual retreat', prompt: 'Suggest a 3-day spiritual retreat in Rishikesh with Ganga Aarti & meditation ashrams' },
+          { icon: '🏔️', label: '4x4 Offbeat road trip to Munsiyari', prompt: 'Suggest a 4-day scenic road trip from Dehradun to Munsiyari with verified 4x4 Thar rental and boutique homestays.' },
+          { icon: '🏡', label: 'Budget homestays near Valley of Flowers', prompt: 'Find verified budget Pahadi homestays near Valley of Flowers & Govindghat under ₹2,000' }
+        ].map((chip, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => onSend(chip.prompt)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-300 border border-stone-200/80 text-[11px] sm:text-xs font-medium text-stone-600 transition-all shrink-0 cursor-pointer active:scale-95 shadow-2xs"
+          >
+            <span>{chip.icon}</span>
+            <span>{chip.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

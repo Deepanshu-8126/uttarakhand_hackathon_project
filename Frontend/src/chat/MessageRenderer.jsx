@@ -19,6 +19,7 @@ import {
   Mountain
 } from 'lucide-react';
 import AgentThinking from './AgentThinking.jsx';
+import VoxExpeditionCard from './VoxExpeditionCard.jsx';
 import { DESTINATION_NAMED_IMAGES, getCardImages, getHimalayanFallbackImage } from '../utils/imageHelpers.js';
 
 // Top recognized destinations with guaranteed verified photography
@@ -138,8 +139,14 @@ export default function MessageRenderer({ message, onSendPrompt: _onSendPrompt =
           </div>
         )}
 
-        {/* Clean, Concise Message Body */}
-        <div className="space-y-2.5 text-xs sm:text-sm leading-relaxed text-slate-800 font-normal">
+        {/* Check if message has structured Expedition Data or matches Vox Expedition Pattern */}
+        {message.data?.expedition ? (
+          <VoxExpeditionCard data={message.data.expedition} content={message.content} />
+        ) : (message.content && (message.content.includes('Panchachuli') || (message.content.toLowerCase().includes('munsiyari') && (message.content.includes('Day') || message.content.includes('day') || message.content.includes('Thar') || message.content.includes('road trip'))))) ? (
+          <VoxExpeditionCard content={message.content} />
+        ) : (
+          /* Clean, Concise Message Body */
+          <div className="space-y-2.5 text-xs sm:text-sm leading-relaxed text-slate-800 font-normal">
           {message.content.split('\n\n').map((paragraph, pIdx) => {
             const trimmed = paragraph.trim();
             if (!trimmed) return null;
@@ -197,6 +204,7 @@ export default function MessageRenderer({ message, onSendPrompt: _onSendPrompt =
             );
           })}
         </div>
+        )}
 
         {/* ── Rich Real Photography Destination Spotlights (From Verified DB) ── */}
         {detectedDestinations.length > 0 && (
