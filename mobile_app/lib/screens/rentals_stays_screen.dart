@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_theme.dart';
 import '../models/stay.dart';
 import '../services/api_service.dart';
+import 'verification_proof_screen.dart';
 
 class RentalsStaysScreen extends StatefulWidget {
   const RentalsStaysScreen({super.key});
@@ -110,20 +111,35 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F3D2E).withOpacity(0.92),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.verified, size: 12, color: Color(0xFF34D399)),
-                          SizedBox(width: 4),
-                          Text('3-Layer Verified Partner', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                        ],
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VerificationProofScreen(
+                              title: r.name,
+                              location: r.location,
+                              category: 'Verified Fleet',
+                            ),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.verified, size: 12, color: Color(0xFF34D399)),
+                            SizedBox(width: 4),
+                            Text('3-Layer Verified Partner', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
