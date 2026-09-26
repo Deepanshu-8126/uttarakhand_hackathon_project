@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import 'verification_proof_screen.dart';
 import 'sos_safety_screen.dart';
 import 'map_screen.dart';
+import 'checkout_screen.dart';
 
 class RentalsStaysScreen extends StatefulWidget {
   const RentalsStaysScreen({super.key});
@@ -1268,10 +1269,14 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
   }
 
   void _showBookingDialog(BuildContext context, String title, String rate) {
+    // Parse base price integer
+    final cleanNum = rate.replaceAll(RegExp(r'[^0-9]'), '');
+    final priceInt = int.tryParse(cleanNum) ?? 2400;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
@@ -1284,45 +1289,101 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Instant Mountain Booking', style: TextStyle(color: AppTheme.mutedText, fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: const Text(
+                      '100% ESCROW PROTECTED',
+                      style: TextStyle(color: Color(0xFF0F4C3A), fontSize: 10, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20, color: Color(0xFF64748B)),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
               Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.textDark)),
-              Text('Rate: $rate (Escrow Protected)', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F4C3A))),
-              const SizedBox(height: 20),
+              const SizedBox(height: 2),
+              Text('Rate: $rate (Guaranteed Host Escrow)', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F4C3A))),
+              const SizedBox(height: 18),
+
               const TextField(
                 decoration: InputDecoration(
                   labelText: 'Traveler Full Name',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  prefixIcon: Icon(Icons.person_outline, size: 20, color: Color(0xFF0F4C3A)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
                 ),
               ),
               const SizedBox(height: 12),
               const TextField(
                 decoration: InputDecoration(
-                  labelText: 'Phone Number (for Pickup OTP)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  labelText: 'Phone Number (for Ground Pickup OTP)',
+                  prefixIcon: Icon(Icons.phone_outlined, size: 20, color: Color(0xFF0F4C3A)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
                 ),
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+
+              // Action 1: Full Escrow Checkout Page
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0F4C3A),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.lock_outline, size: 18),
+                  label: const Text('PROCEED TO ESCROW CHECKOUT', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CheckoutScreen(
+                          itemType: 'Mountain Stay & Ride',
+                          itemName: title,
+                          basePrice: priceInt,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Action 2: 1-Tap Quick Booking
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0F4C3A),
+                    side: const BorderSide(color: Color(0xFF0F4C3A)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Reservation request sent for $title!'),
+                        content: Text('Reservation request secured for $title!'),
                         backgroundColor: const Color(0xFF0F4C3A),
                       ),
                     );
                   },
-                  child: const Text('CONFIRM BOOKING (ESCROW LOCKED)', style: TextStyle(fontWeight: FontWeight.w900)),
+                  child: const Text('1-Tap Quick Reserve (Pay on Check-in)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
                 ),
               ),
             ],
