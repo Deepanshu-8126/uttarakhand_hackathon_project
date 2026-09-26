@@ -131,7 +131,7 @@ const SkeletonCard = () => (
 const StatsStrip = ({ destinationCount }) => {
   const stats = [
     { value: `${destinationCount || 106}`, label: 'Curated Places', sub: 'Across 13 Districts', icon: Mountain },
-    { value: '13 / 13', label: 'Districts Mapped', sub: '100% State Coverage', icon: MapPin },
+    { value: '13 / 13', label: 'Himalayan Districts', sub: '100% State Coverage', icon: MapPin },
     { value: '5', label: 'Arterial Corridors', sub: 'Char Dham & Kumaon', icon: Navigation },
     { value: '100%', label: 'Escrow & GPS Verified', sub: 'Web3 Proof-of-Trek', icon: ShieldCheck },
   ];
