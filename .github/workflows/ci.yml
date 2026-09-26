@@ -19,6 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 1
           submodules: false
 
       - name: Setup Node.js
@@ -51,6 +52,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 1
           submodules: false
 
       - name: Setup Node.js

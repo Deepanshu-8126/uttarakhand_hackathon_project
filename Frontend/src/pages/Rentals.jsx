@@ -7,7 +7,7 @@ import CategoryHero from '../components/CategoryHero';
 import RentalHero from '../components/rentals/RentalHero';
 import Pagination from '../components/common/Pagination';
 import { useRentals } from '../hooks/useRentals';
-import { LocateFixed, X } from 'lucide-react';
+import { LocateFixed, X, Compass } from 'lucide-react';
 import { 
   detectBrowserLocation, 
   findNearestHub, 

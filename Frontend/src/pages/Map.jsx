@@ -36,6 +36,7 @@ import {
   TrendingUp,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Shield,
   ShieldAlert,
   AlertTriangle,
