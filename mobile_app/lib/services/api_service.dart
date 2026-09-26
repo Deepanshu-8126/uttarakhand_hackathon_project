@@ -787,6 +787,8 @@ class ApiService {
         latitude: 31.0200,
         longitude: 78.1700,
       ),
+    ];
+  }
 
   static List<SpiritualPlace> _getLocalSpiritual() {
     return [
