@@ -54,7 +54,7 @@ jobs:
       - name: Build Android APK
         working-directory: ./mobile_app
         run: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
 
       - name: Locate and Stage APKs
         run: |

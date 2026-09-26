@@ -9,7 +9,7 @@ import DevbhoomiVoiceStudioModal from '../components/copilot/DevbhoomiVoiceStudi
 export default function VoiceControls({ 
   isOpen = false, 
   onClose = () => {}, 
-  lang = 'hi', 
+  lang: _lang = 'hi', 
   initialVoice = 'Aoede',
   onTranscriptReceived = () => {} 
 }) {

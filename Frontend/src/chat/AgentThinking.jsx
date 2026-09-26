@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Cpu, Sparkles, CheckCircle2, ShieldAlert, Compass, DollarSign, Calendar, Flame } from 'lucide-react';
+import { ChevronDown, ChevronRight, Cpu, CheckCircle2, ShieldAlert, Compass, DollarSign, Calendar, Flame } from 'lucide-react';
 
 const AGENT_ICONS = {
   PlannerAgent: Calendar,
