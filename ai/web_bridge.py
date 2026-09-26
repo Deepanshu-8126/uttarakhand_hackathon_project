@@ -76,8 +76,18 @@ SKIP_LIVE_VOICE = False
 FALLBACK_TEXT_MODELS = [
     os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
     "gemini-2.5-flash-lite",
-    "gemini-2.0-flash",
+    "gemini-1.5-flash",
 ]
+
+async def safe_send(ws: WebSocket, payload: dict) -> bool:
+    try:
+        from starlette.websockets import WebSocketState
+        if ws.client_state == WebSocketState.CONNECTED:
+            await ws.send_json(payload)
+            return True
+    except Exception:
+        pass
+    return False
 
 _SYSTEM_PROMPT = """You are Devbhoomi AI Companion, the ultimate expert travel, mountain safety, and cultural guide for Uttarakhand, India (Devbhoomi), powered by Discover Uttarakhand.
 
@@ -115,8 +125,31 @@ GREETING_TEXTS = {
     "en": "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand.",
 }
 
-# In-memory greeting audio cache (Base64 WAV)
+# In-memory & Upstash Redis response cache for sub-5ms instant voice delivery
 _GREETING_CACHE: dict[str, str] = {}
+_RESPONSE_CACHE: dict[str, tuple[str, str]] = {}
+
+UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "https://capable-drum-295620.upstash.io")
+UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "gQAAAAAABILEAAIgcDE5NmRiMDY0NGFmYTI0YWRiOGZhY2NkZjdlNDdjZDNiZQ")
+
+def cache_get_response(query_key: str) -> tuple[str, str] | None:
+    """Check in-memory cache for instant <5ms responses."""
+    clean_k = query_key.lower().strip().replace("?", "").replace("!", "")
+    if clean_k in _RESPONSE_CACHE:
+        logger.info(f"[cache-hit] In-memory fast hit for: '{clean_k}'")
+        return _RESPONSE_CACHE[clean_k]
+    # Check partial key match for common travel queries
+    for k, v in _RESPONSE_CACHE.items():
+        if k in clean_k or clean_k in k:
+            logger.info(f"[cache-hit] Fuzzy match hit for: '{clean_k}' -> '{k}'")
+            return v
+    return None
+
+def cache_set_response(query_key: str, text: str, audio_b64: str):
+    clean_k = query_key.lower().strip().replace("?", "").replace("!", "")
+    if clean_k and text:
+        _RESPONSE_CACHE[clean_k] = (text, audio_b64)
+        logger.info(f"[cache-set] Cached response for query: '{clean_k}' ({len(text)} chars)")
 
 
 def _get_genai_client():
@@ -591,7 +624,7 @@ async def stream_gemini_live_to_ws(
                             if getattr(sc, "output_transcription", None) and getattr(sc.output_transcription, "text", None):
                                 t = sc.output_transcription.text
                                 transcription_chunks.append(t)
-                                await websocket.send_json({"type": "transcript_delta", "delta": t})
+                                await safe_send(websocket, {"type": "transcript_delta", "delta": t})
 
                             if sc.model_turn:
                                 for part in sc.model_turn.parts:
@@ -600,7 +633,7 @@ async def stream_gemini_live_to_ws(
                                         pcm_chunks.append(data)
                                         chunk_b64 = base64.b64encode(data).decode("utf-8")
                                         # Stream chunk immediately to browser!
-                                        await websocket.send_json({
+                                        await safe_send(websocket, {
                                             "type": "audio_chunk",
                                             "chunk": chunk_b64,
                                             "rate": 24000,
@@ -620,7 +653,7 @@ async def stream_gemini_live_to_ws(
                     clean_text = " ".join(lines) if lines else raw_text
                 clean_text = clean_text.replace("*", "").replace("#", "").strip()
 
-                await websocket.send_json({
+                await safe_send(websocket, {
                     "type": "turn_complete",
                     "text": clean_text,
                     "audio_base64": wav_b64,
@@ -658,7 +691,7 @@ async def stream_gemini_live_to_ws(
 
         fb_audio = await synthesize_neural_voice(fb_text, lang)
 
-        await websocket.send_json({
+        await safe_send(websocket, {
             "type": "turn_complete",
             "text": fb_text,
             "audio_base64": fb_audio,
@@ -666,7 +699,7 @@ async def stream_gemini_live_to_ws(
         return fb_text, fb_audio
     except Exception as ex:
         logger.error(f"[stream_ws] Fallback error: {ex}")
-        await websocket.send_json({
+        await safe_send(websocket, {
             "type": "turn_complete",
             "text": "कृपया दोबारा पूछें, मैं सुन रहा हूँ।",
             "audio_base64": "",

@@ -106,7 +106,9 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
                 ? { message: cleanText, lang: 'en', history: messages.slice(-4) }
                 : { message: cleanText, sessionId }
             ),
-            signal: abortControllerRef.current.signal,
+            signal: AbortSignal.any
+              ? AbortSignal.any([abortControllerRef.current.signal, AbortSignal.timeout(7000)])
+              : abortControllerRef.current.signal,
           });
 
           if (res.ok) {
