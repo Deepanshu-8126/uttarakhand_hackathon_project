@@ -8,6 +8,7 @@ import { useFreshImage } from '../utils/images';
  * Minimal & Clean DestinationCard with Fresh Pexels/HD Auto-Loading
  */
 const DestinationCard = ({ destination, distance }) => {
+  const [imageLoaded, setImageLoaded] = React.useState(false);
   const locationParts = [destination.district, destination.region].filter(Boolean);
   const locationLabel = locationParts.length > 0 ? locationParts.join(' • ') : (destination.district || 'Uttarakhand');
 
@@ -20,17 +21,24 @@ const DestinationCard = ({ destination, distance }) => {
       to={`/destinations/${destination.slug || destination._id}`}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-stone-200/80 group text-left"
     >
-      {/* 1. Clean Destination Photo with Self-Healing Fallback */}
+      {/* 1. Clean Destination Photo with Smooth Shimmer & Self-Healing Fallback */}
       <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-stone-100">
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200 animate-pulse" />
+        )}
         <img
           src={coverImage}
           alt={destination.name || 'Destination in Uttarakhand'}
           loading="lazy"
+          onLoad={() => setImageLoaded(true)}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = getHimalayanFallbackImage(destination);
+            setImageLoaded(true);
           }}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ease-out ${
+            imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          }`}
         />
       </div>
 

@@ -3,8 +3,10 @@ import { useMapStore } from '../../store/mapStore';
 import { MdStar, MdTerrain, MdLuggage, MdCheck } from 'react-icons/md';
 
 import { getHimalayanFallbackImage } from '../../utils/imageHelpers';
+import { useFreshImage } from '../../utils/images';
 
 export default function DestinationCard({ destination }) {
+  const [imageLoaded, setImageLoaded] = React.useState(false);
   const { 
     selectedDestination, 
     setSelectedDestination, 
@@ -15,7 +17,8 @@ export default function DestinationCard({ destination }) {
 
   const isSelected = selectedDestination?.id === destination.id;
   const isAdded = tripDestinations.some((d) => d.id === destination.id);
-  const displayImage = destination.image || getHimalayanFallbackImage(destination);
+  const baseFallback = destination.image || getHimalayanFallbackImage(destination);
+  const displayImage = useFreshImage(destination.slug || destination.name, baseFallback);
 
   return (
     <div
@@ -28,14 +31,21 @@ export default function DestinationCard({ destination }) {
     >
       {/* Hero Image */}
       <div className="relative h-32 w-full overflow-hidden bg-slate-800">
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 animate-pulse" />
+        )}
         <img
           src={displayImage}
           alt={destination.name}
+          onLoad={() => setImageLoaded(true)}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = getHimalayanFallbackImage(destination);
+            setImageLoaded(true);
           }}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />
 
