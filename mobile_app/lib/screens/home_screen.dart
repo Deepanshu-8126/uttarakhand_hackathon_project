@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../models/destination.dart';
 import '../models/stay.dart';
 import '../services/api_service.dart';
+import '../services/auth_provider.dart';
 import 'destination_detail_screen.dart';
 import 'spiritual_screen.dart';
 import 'culture_screen.dart';
@@ -11,6 +13,8 @@ import 'activities_screen.dart';
 import 'guides_screen.dart';
 import 'sos_safety_screen.dart';
 import 'checkout_screen.dart';
+import 'profile_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int) onNavigateTab;
@@ -66,6 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       backgroundColor: AppTheme.cream,
       appBar: AppBar(
@@ -111,9 +117,18 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
           ),
           IconButton(
-            icon: const Icon(Icons.auto_awesome, color: AppTheme.forestGreen),
-            tooltip: 'AI Copilot',
-            onPressed: () => widget.onNavigateTab(4),
+            icon: Icon(
+              auth.isAuthenticated ? Icons.account_circle : Icons.account_circle_outlined,
+              color: auth.isAuthenticated ? const Color(0xFF059669) : AppTheme.forestGreen,
+              size: 26,
+            ),
+            tooltip: 'Profile & Credentials',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => auth.isAuthenticated ? const ProfileScreen() : const LoginScreen()),
+              );
+            },
           ),
           const SizedBox(width: 4),
         ],
@@ -390,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                           ),
-                          onPressed: () => widget.onNavigateTab(3), // Plan Trip
+                          onPressed: () => widget.onNavigateTab(3),
                           icon: const Icon(Icons.luggage, size: 14, color: Color(0xFF0F3D2E)),
                           label: const Text('PLAN JOURNEY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
                         ),
@@ -402,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                           ),
-                          onPressed: () => widget.onNavigateTab(2), // GIS Map
+                          onPressed: () => widget.onNavigateTab(2),
                           child: const Text('VIEW RADAR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
                         ),
                       ],

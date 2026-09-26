@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_provider.dart';
 import 'home_screen.dart';
 import 'rentals_stays_screen.dart';
 import 'spiritual_screen.dart';
@@ -13,6 +15,8 @@ import 'innovation_showcase_screen.dart';
 import 'sos_safety_screen.dart';
 import 'my_trip_screen.dart';
 import 'checkout_screen.dart';
+import 'profile_screen.dart';
+import 'login_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -32,6 +36,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final user = auth.user;
+    final isLoggedIn = auth.isAuthenticated;
+
     final screens = [
       HomeScreen(onNavigateTab: _onTabChanged),
       const RentalsStaysScreen(),
@@ -46,6 +54,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         backgroundColor: AppTheme.cream,
         child: Column(
           children: [
+            // User Header in Drawer
             Container(
               padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
               decoration: const BoxDecoration(
@@ -54,28 +63,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.terrain_rounded, color: Color(0xFF0F3D2E), size: 24),
+                    child: const Icon(Icons.person, color: Color(0xFF0F3D2E), size: 24),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('DISCOVER', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                      Text('UTTARAKHAND', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isLoggedIn ? (user?['name'] ?? 'Pahadi Explorer') : 'Guest Explorer',
+                          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          isLoggedIn ? (user?['email'] ?? 'Verified Member') : 'Tap to Sign In / Register',
+                          style: const TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
+                  _buildDrawerItem(Icons.account_circle_outlined, isLoggedIn ? 'My Profile & Pahadi Wallet' : 'Sign In / Register', () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => isLoggedIn ? const ProfileScreen() : const LoginScreen()),
+                    );
+                  }),
+                  const Divider(height: 16),
                   _buildDrawerItem(Icons.explore_outlined, 'Explore Valleys & Peaks', () {
                     Navigator.pop(context);
                     _onTabChanged(0);
@@ -116,7 +145,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     Navigator.pop(context);
                     _onTabChanged(5);
                   }),
-                  const Divider(height: 20),
+                  const Divider(height: 16),
                   _buildDrawerItem(Icons.route_outlined, 'My Expeditions & Itinerary', () {
                     Navigator.pop(context);
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTripScreen()));

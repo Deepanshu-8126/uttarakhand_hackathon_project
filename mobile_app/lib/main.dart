@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
+import 'services/auth_provider.dart';
 import 'screens/main_navigation_screen.dart';
 
 void main() {
@@ -28,7 +30,7 @@ void main() {
                   const SizedBox(height: 14),
                   const Text(
                     'Discover Uttarakhand',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1C1917)),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1C1917)),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -50,7 +52,14 @@ void main() {
       ),
     );
 
-    runApp(const DiscoverUttarakhandApp());
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ],
+        child: const DiscoverUttarakhandApp(),
+      ),
+    );
   }, (error, stackTrace) {
     debugPrint('Uncaught Zone Error: $error\n$stackTrace');
   });
