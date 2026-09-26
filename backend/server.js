@@ -39,6 +39,7 @@ import placesRoutes from './routes/placesRoutes.js';
 import internalAgentRoutes from './routes/internalAgentRoutes.js';
 import voiceRoutes from './routes/voiceRoutes.js';
 import sosRoutes from './routes/sosRoutes.js';
+import photoRoutes from './routes/photoRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Validate production environment variables
@@ -145,8 +146,12 @@ app.use('/api/places', placesRoutes);
 app.use('/api/search', placesRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/voice', voiceRoutes);
+app.use('/api/photos', photoRoutes);
+app.use('/photos', photoRoutes);
 app.use('/api/sos', sosRoutes);
 app.use('/sos', sosRoutes);
+app.use('/api/photos', photoRoutes);
+app.use('/photos', photoRoutes);
 app.use('/internal/agent', internalAgentRoutes);
 
 // Unprefixed Aliases for Render & Mobile clients (e.g., /agent/chat, /chat, /destinations, /stays)
