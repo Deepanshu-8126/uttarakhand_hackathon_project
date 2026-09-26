@@ -17,13 +17,19 @@ import Guide from '../models/Guide.js';
 // @access  Private
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
+    }
+
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     res.json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[GetUserProfile Error]', error);
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 };
 
@@ -32,21 +38,57 @@ export const getUserProfile = async (req, res) => {
 // @access  Private
 export const updateUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
+    }
+
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
-    user.location = req.body.location !== undefined ? req.body.location : user.location;
-    if (req.body.profileImage) {
-      user.profileImage = typeof req.body.profileImage === 'string' 
-        ? { url: req.body.profileImage } 
-        : req.body.profileImage;
+    // Check for email uniqueness if changing email
+    if (req.body.email && req.body.email !== user.email) {
+      const emailExists = await User.findOne({ email: req.body.email });
+      if (emailExists && emailExists._id.toString() !== userId.toString()) {
+        return res.status(400).json({ success: false, message: 'Email is already registered to another account.' });
+      }
+      user.email = req.body.email.trim();
     }
-    if (req.body.password) {
+
+    if (req.body.name) {
+      user.name = req.body.name.trim();
+    }
+
+    if (req.body.phone !== undefined) {
+      user.phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : String(req.body.phone || '');
+    }
+
+    if (req.body.location !== undefined) {
+      user.location = typeof req.body.location === 'string' 
+        ? req.body.location.trim() 
+        : (req.body.location?.address || req.body.location?.name || '');
+    }
+
+    if (req.body.profileImage) {
+      if (typeof req.body.profileImage === 'string' && req.body.profileImage.trim()) {
+        user.profileImage = {
+          url: req.body.profileImage.trim(),
+          source: 'User Upload',
+          alt: `${user.name} Profile Photo`
+        };
+      } else if (typeof req.body.profileImage === 'object' && req.body.profileImage.url) {
+        user.profileImage = {
+          url: req.body.profileImage.url,
+          publicId: req.body.profileImage.publicId || null,
+          source: req.body.profileImage.source || 'User Upload',
+          alt: req.body.profileImage.alt || `${user.name} Profile Photo`
+        };
+      }
+    }
+
+    if (req.body.password && typeof req.body.password === 'string' && req.body.password.length >= 6) {
       user.password = req.body.password;
     }
 
@@ -64,7 +106,8 @@ export const updateUserProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[UpdateUserProfile Error]', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to update profile.' });
   }
 };
 
