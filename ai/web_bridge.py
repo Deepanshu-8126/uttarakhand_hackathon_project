@@ -855,7 +855,16 @@ async def websocket_voice_endpoint(websocket: WebSocket):
 
             in_task = asyncio.create_task(pump_client_to_session())
             out_task = asyncio.create_task(pump_session_to_client())
-            await asyncio.gather(in_task, out_task, return_exceptions=True)
+            done, pending = await asyncio.wait(
+                [in_task, out_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for t in pending:
+                t.cancel()
+                try:
+                    await t
+                except (asyncio.CancelledError, Exception):
+                    pass
 
     except Exception as e:
         logger.warning(f"[ws] Gemini Live direct session error: {e}. Running fallback message loop...")
