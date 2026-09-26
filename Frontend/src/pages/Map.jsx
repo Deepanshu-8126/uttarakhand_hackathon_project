@@ -1155,7 +1155,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('All')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'All'
                   ? 'bg-[#0f3d2e] text-white shadow-xs'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
@@ -1174,7 +1174,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('destination')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'destination'
                   ? 'bg-[#0f3d2e] text-white shadow-xs'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
@@ -1191,7 +1191,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('spiritual')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'spiritual'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
@@ -1208,7 +1208,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('activity')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'activity'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'
@@ -1225,7 +1225,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('stay')}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'stay'
                   ? 'bg-[#0f3d2e] text-white shadow-xs ring-2 ring-emerald-400/50'
                   : 'bg-emerald-50/70 hover:bg-emerald-100/80 text-[#0f3d2e] border border-emerald-200'
@@ -1242,8 +1242,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setSelectedCategory('rental')}
-       
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 selectedCategory === 'rental'
                   ? 'bg-sky-700 text-white shadow-xs ring-2 ring-sky-400/50'
                   : 'bg-sky-50/70 hover:bg-sky-100 text-sky-800 border border-sky-200'
@@ -1261,7 +1260,7 @@ export default function MapPage() {
               <button
                 type="button"
                 onClick={() => setMoreDropdownOpen(o => !o)}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer ${
+                className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer ${
                   moreDropdownOpen
                     ? 'bg-[#0f3d2e] text-white border-[#0f3d2e]'
                     : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
@@ -1541,7 +1540,7 @@ export default function MapPage() {
               : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(corr.name + ' Uttarakhand')}`;
 
             return (
-              <div className="absolute top-16 sm:top-4 right-2 sm:right-4 z-[400] flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur-md px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl shadow-lg border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[calc(100vw-1rem)]">
+              <div className="absolute top-20 sm:top-4 right-2 sm:right-4 z-[400] flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur-md px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl shadow-xl border border-emerald-200 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[calc(100vw-1rem)]">
                 <div className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full shrink-0 shadow-xs"

@@ -232,8 +232,8 @@ const famousTreks = [
     nearbyPlaces: ["Sankri Village", "Osla", "Maninda Tal", "Ruinsara Tal"],
     category: "Trekking",
     coverImage: {
-      url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop",
-      source: "Unsplash",
+      url: "/assets/destinations/himalayan_basecamp_village.jpg",
+      source: "Local Himalayan Assets",
       alt: "Har Ki Dun Valley of Gods"
     }
   },
