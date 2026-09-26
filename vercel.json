@@ -2,6 +2,27 @@
   "buildCommand": "node -e \"const fs=require('fs'), cp=require('child_process'); if(fs.existsSync('Frontend')) { cp.execSync('cd Frontend && npm install && npm run build', {stdio: 'inherit'}); } else { cp.execSync('npm run build', {stdio: 'inherit'}); }\"",
   "outputDirectory": "Frontend/dist",
   "framework": "vite",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
