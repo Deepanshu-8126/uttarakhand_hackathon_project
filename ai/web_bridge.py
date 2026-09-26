@@ -61,7 +61,7 @@ app.add_middleware(
 )
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-LIVE_VOICE_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
+LIVE_VOICE_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-latest")
 LIVE_VOICE_FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest"
 LIVE_VOICE_NAME = os.getenv("GEMINI_VOICE_NAME", "Aoede")
 TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
@@ -148,7 +148,7 @@ async def synthesize_gemini_live_voice(
         text_chunks: list[str] = []
         transcription_chunks: list[str] = []
 
-        async with asyncio.timeout(6.0):
+        async with asyncio.timeout(12.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                 await session.send(input=prompt, end_of_turn=True)
                 async for response in session.receive():
@@ -181,7 +181,8 @@ async def synthesize_gemini_live_voice(
             return clean_text, wav_b64
 
     except Exception as e:
-        logger.warning(f"[gemini-live] Live voice session timed out or failed: {e}")
+        import traceback
+        logger.warning(f"[gemini-live] Live voice session timed out or failed: {type(e).__name__}: {e}\n{traceback.format_exc()}")
 
     return "", ""
 
@@ -527,7 +528,7 @@ async def stream_gemini_live_to_ws(
     transcription_chunks: list[str] = []
 
     try:
-        async with asyncio.timeout(5.5):
+        async with asyncio.timeout(12.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                 await session.send(input=prompt, end_of_turn=True)
                 async for response in session.receive():

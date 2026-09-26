@@ -87,88 +87,52 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
       if (abortControllerRef.current) abortControllerRef.current.abort();
       abortControllerRef.current = new AbortController();
 
-      // Try SSE stream endpoint
-      const response = await fetch(`${API_BASE}/chat/stream`, {
+      // Primary: /api/agent/chat — confirmed working on Render
+      const response = await fetch(`${API_BASE}/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-session-id': sessionId },
         body: JSON.stringify({ message: cleanText, sessionId }),
         signal: abortControllerRef.current.signal
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error('Streaming failed, fallback to JSON');
-      }
+      if (response.ok) {
+        const resData = await response.json();
+        const agentResp = resData.response || resData;
+        const replyText = agentResp.message || agentResp.data?.message || '';
+        const suggestions = (agentResp.suggestedActions || []).map(a => a.label || a).filter(Boolean);
+        const agentName = agentResp.agent || agentResp.meta?.provider || 'Devbhoomi Companion';
+        if (agentResp.tripContext) setEntities(agentResp.tripContext);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let streamedContent = '';
-      let currentAgent = 'Devbhoomi Companion';
-      let currentSuggestions = [];
-      let currentThinking = [];
-      let currentData = null;
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (line.startsWith('event: ')) {
-            const eventType = line.replace('event: ', '').trim();
-            const dataLine = lines[i + 1]?.startsWith('data: ') ? lines[i + 1].replace('data: ', '').trim() : null;
-
-            if (dataLine) {
-              try {
-                const parsed = JSON.parse(dataLine);
-
-                if (eventType === 'thinking') {
-                  currentThinking.push(parsed.thought);
-                  setThinkingSteps((prev) => [...prev, { step: prev.length + 1, thought: parsed.thought }]);
-                } else if (eventType === 'agent_assigned') {
-                  currentAgent = parsed.agent;
-                  setActiveAgent(parsed.agent);
-                } else if (eventType === 'token') {
-                  streamedContent += parsed.delta;
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.id === assistantMsgId ? { ...m, content: streamedContent, agent: currentAgent } : m
-                    )
-                  );
-                } else if (eventType === 'message') {
-                  streamedContent = parsed.message || streamedContent;
-                  currentSuggestions = parsed.suggestions || [];
-                  currentData = parsed.data || null;
-                  if (parsed.entities) setEntities(parsed.entities);
-                }
-              } catch (e) {}
-            }
-          }
+        // Simulate streaming word-by-word for premium feel
+        const words = replyText.split(/(?<=\s)/);
+        let built = '';
+        for (const word of words) {
+          built += word;
+          const snap = built;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId ? { ...m, content: snap, agent: agentName } : m
+            )
+          );
+          await new Promise((r) => setTimeout(r, 18));
         }
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, content: replyText, agent: agentName, suggestions, data: agentResp.data || null }
+              : m
+          )
+        );
+        return;
       }
 
-      // Finalize assistant message
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMsgId
-            ? {
-                ...m,
-                content: streamedContent || 'Here is the verified information for your journey in Uttarakhand.',
-                agent: currentAgent,
-                suggestions: currentSuggestions,
-                data: currentData,
-                thinking: currentThinking
-              }
-            : m
-        )
-      );
+      throw new Error(`Agent API returned ${response.status}`);
 
     } catch (err) {
       if (err.name === 'AbortError') return;
 
-      // Fallback: Standard direct chat POST
+      // Hard fallback: /api/chat/query (legacy route, may work on older deploy)
       try {
         const fallbackRes = await fetch(`${API_BASE}/chat/query`, {
           method: 'POST',
@@ -190,21 +154,18 @@ export function useChatState({ initialQuery = '', onTripContextChange = null } =
                 : m
             )
           );
+          return;
         }
-      } catch (fbErr) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMsgId
-              ? {
-                  ...m,
-                  content: 'Apologies, I am temporarily having trouble accessing the network. Please tap to retry.',
-                  agent: 'System',
-                  isError: true
-                }
-              : m
-          )
-        );
-      }
+      } catch (_) {}
+
+      // All failed
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? { ...m, content: 'Apologies, I am temporarily having trouble accessing the network. Please tap to retry.', agent: 'System', isError: true }
+            : m
+        )
+      );
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
