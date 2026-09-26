@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_theme.dart';
+import 'sos_safety_screen.dart';
 
 class TripPlannerScreen extends StatefulWidget {
   const TripPlannerScreen({super.key});
@@ -29,32 +31,83 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('AI Trip Planner', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.textDark)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
+            tooltip: 'Emergency SOS',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header card
+            // Rich Himalayan Mountain Hero Banner
             Container(
-              padding: const EdgeInsets.all(18),
+              height: 140,
               decoration: BoxDecoration(
-                color: AppTheme.forestGreen,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Plan Your Uttarakhand Trip',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Tell us your budget, time and interests. We will shape the optimal mountain journey.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.16), blurRadius: 16, offset: const Offset(0, 6)),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/Trisul_peak_from_bedni_bugyal.jpg/1920px-Trisul_peak_from_bedni_bugyal.jpg',
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: const Color(0xFF0F3D2E)),
+                      errorWidget: (context, url, error) => Container(color: const Color(0xFF0F3D2E)),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            const Color(0xFF09261C).withOpacity(0.92),
+                            const Color(0xFF09261C).withOpacity(0.40),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF059669).withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'AI EXPEDITION OPTIMIZER',
+                              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Plan Your Uttarakhand Journey',
+                            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                          ),
+                          const Text(
+                            'AI-balanced budget, verified stays, mountain routes & emergency buffer.',
+                            style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -224,10 +277,18 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           children: [
             Icon(icon, size: 16, color: iconColor),
             const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
           ],
         ),
-        Text(amount, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            amount,
+            maxLines: 1,
+            softWrap: false,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E)),
+          ),
+        ),
       ],
     );
   }

@@ -413,6 +413,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              // Slide Indicators
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Row(
+                  children: List.generate(
+                    heroSlides.length,
+                    (i) => GestureDetector(
+                      onTap: () => setState(() => activeSlide = i),
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        width: activeSlide % heroSlides.length == i ? 18 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: activeSlide % heroSlides.length == i ? const Color(0xFF34D399) : Colors.white54,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(

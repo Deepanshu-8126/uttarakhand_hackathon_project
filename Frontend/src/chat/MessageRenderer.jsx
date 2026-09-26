@@ -1,10 +1,11 @@
 /**
  * Devbhoomi Conversational AI - Message Renderer
  * Minimalist, high-craft message display: Clean White + Deep Himalayan Emerald theme,
- * crisp markdown, zero clutter, concise structured cards.
+ * with authentic database/cached real photography previews (zero wasted API credits).
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Copy, 
   Check, 
@@ -12,11 +13,31 @@ import {
   User, 
   Calendar, 
   Home, 
-  MapPin
+  MapPin,
+  ExternalLink,
+  Compass,
+  Mountain
 } from 'lucide-react';
 import AgentThinking from './AgentThinking.jsx';
+import { DESTINATION_NAMED_IMAGES, getCardImages, getHimalayanFallbackImage } from '../utils/imageHelpers.js';
 
-export default function MessageRenderer({ message, onSendPrompt = () => {} }) {
+// Top recognized destinations with guaranteed verified photography
+const PROMINENT_DESTINATIONS = [
+  { name: 'Kedarnath Temple', slug: 'kedarnath', keywords: ['kedarnath', 'kedar'], altitude: '3,583m', photo: '/assets/yatra_sarthi/kedarnath.jpg', tag: 'Char Dham' },
+  { name: 'Valley of Flowers', slug: 'valley-of-flowers', keywords: ['valley of flowers', 'bhyundar'], altitude: '3,658m', photo: '/assets/yatra_sarthi/valley_of_flowers.jpg', tag: 'UNESCO Biosphere' },
+  { name: 'Auli Ski Meadows', slug: 'auli', keywords: ['auli', 'joshimath'], altitude: '2,800m', photo: '/assets/yatra_sarthi/auli.jpg', tag: 'Snow & Panorama' },
+  { name: 'Rishikesh Ganga Ghats', slug: 'rishikesh', keywords: ['rishikesh', 'triveni ghat', 'ram jhula'], altitude: '340m', photo: '/assets/yatra_sarthi/rishikesh.jpg', tag: 'Yoga Capital' },
+  { name: 'Chopta & Tungnath', slug: 'chopta', keywords: ['chopta', 'tungnath', 'chandrashila'], altitude: '3,680m', photo: '/assets/yatra_sarthi/chopta.jpg', tag: 'Highest Shiva Shrine' },
+  { name: 'Nainital Lake City', slug: 'nainital', keywords: ['nainital', 'naini lake'], altitude: '2,084m', photo: '/assets/yatra_sarthi/nainital.jpg', tag: 'Emerald Lake' },
+  { name: 'Badrinath Dham', slug: 'badrinath', keywords: ['badrinath', 'badri'], altitude: '3,133m', photo: '/assets/yatra_sarthi/badrinath.jpg', tag: 'Sacred Dham' },
+  { name: 'Munsyari Panchachuli', slug: 'munsiyari', keywords: ['munsyari', 'munsiyari', 'panchachuli'], altitude: '2,200m', photo: '/assets/destinations/munsiyari/cover.jpg', tag: '5-Peak Alpenglow' },
+  { name: 'Jim Corbett', slug: 'jim-corbett-national-park', keywords: ['corbett', 'jim corbett', 'dhikala'], altitude: '400m', photo: '/assets/yatra_sarthi/corbett.jpg', tag: 'Tiger Wilderness' },
+  { name: 'Haridwar Har Ki Pauri', slug: 'haridwar', keywords: ['haridwar', 'har ki pauri'], altitude: '314m', photo: '/assets/yatra_sarthi/haridwar.jpg', tag: 'Ganga Gateway' },
+  { name: 'Adi Kailash & Om Parvat', slug: 'adi-kailash', keywords: ['adi kailash', 'om parvat'], altitude: '5,945m', photo: '/assets/destinations/pithoragarh/gallery-1.jpg', tag: 'Mystic Peak' },
+  { name: 'Jageshwar Dham', slug: 'jageshwar', keywords: ['jageshwar'], altitude: '1,870m', photo: '/assets/jageshwar.jpg', tag: 'Ancient Deodar Shrines' }
+];
+
+export default function MessageRenderer({ message, onSendPrompt: _onSendPrompt = () => {} }) {
   const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user';
 
@@ -26,6 +47,34 @@ export default function MessageRenderer({ message, onSendPrompt = () => {} }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Detect mentioned destinations in message for rich photographic cards
+  const detectedDestinations = useMemo(() => {
+    if (isUser || !message.content) return [];
+    
+    // Explicit destinations passed in payload
+    if (message.data?.destinations && Array.isArray(message.data.destinations) && message.data.destinations.length > 0) {
+      return message.data.destinations.slice(0, 2).map(d => ({
+        name: d.name,
+        slug: d.slug || d.id,
+        altitude: d.altitude ? `${d.altitude}m` : 'Himalayas',
+        photo: d.coverImage?.url || d.coverImage || DESTINATION_NAMED_IMAGES[d.slug] || '/assets/yatra_sarthi/nainital.jpg',
+        tag: d.district || 'Verified Spot'
+      }));
+    }
+
+    const lower = message.content.toLowerCase();
+    const matched = [];
+
+    for (const dest of PROMINENT_DESTINATIONS) {
+      if (dest.keywords.some(k => lower.includes(k))) {
+        matched.push(dest);
+        if (matched.length >= 2) break;
+      }
+    }
+
+    return matched;
+  }, [message, isUser]);
 
   if (isUser) {
     return (
@@ -138,7 +187,59 @@ export default function MessageRenderer({ message, onSendPrompt = () => {} }) {
           })}
         </div>
 
-        {/* Rich Stays Micro-Cards (Compact) */}
+        {/* ── Rich Real Photography Destination Spotlights (From Verified DB) ── */}
+        {detectedDestinations.length > 0 && (
+          <div className="mt-3.5 pt-3 border-t border-stone-100">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Mountain size={12} className="text-emerald-700" /> Real Destination Snapshot
+              </span>
+              <span className="text-[9px] text-stone-400 font-normal">Verified Himalayan Photography</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {detectedDestinations.map((dest, idx) => (
+                <Link
+                  key={idx}
+                  to={`/destinations/${dest.slug}`}
+                  className="group/card flex items-center gap-2.5 p-2 rounded-2xl bg-stone-50 hover:bg-emerald-50/70 border border-stone-200/80 hover:border-emerald-300 transition-all duration-200 shadow-2xs overflow-hidden"
+                >
+                  {/* Photo Thumbnail */}
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden shrink-0 relative bg-stone-200">
+                    <img
+                      src={dest.photo}
+                      alt={dest.name}
+                      onError={(e) => {
+                        e.currentTarget.src = '/assets/yatra_sarthi/nainital.jpg';
+                      }}
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 pr-1">
+                    <div className="font-bold text-xs text-slate-900 truncate group-hover/card:text-emerald-900 transition-colors">
+                      {dest.name}
+                    </div>
+                    <div className="text-[10px] text-stone-500 flex items-center gap-1 mt-0.5">
+                      <MapPin size={10} className="text-emerald-700 shrink-0" />
+                      <span className="truncate">{dest.tag}</span>
+                      <span>•</span>
+                      <span className="text-emerald-700 font-semibold">{dest.altitude}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 mt-1">
+                      <span>Explore</span>
+                      <ExternalLink size={9} className="group-hover/card:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Rich Stays Micro-Cards (Compact Real Photos) ── */}
         {message.data?.stays?.stays && message.data.stays.stays.length > 0 && (
           <div className="mt-3 pt-2.5 border-t border-stone-100">
             <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1.5 flex items-center justify-between">

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
+import 'sos_safety_screen.dart';
 
 class InnovationShowcaseScreen extends StatefulWidget {
   const InnovationShowcaseScreen({super.key});
@@ -44,9 +45,17 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
       backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text(
-          'Intelligent Mountain Travel Suite',
+          'Intelligent Mountain Tech',
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.forestGreen),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
+            tooltip: 'Emergency SOS',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 30),
@@ -195,7 +204,16 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                     children: [
                       const Text('ACTIVE TREKKERS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
                       const SizedBox(height: 4),
-                      Text('${telemetryData['activeTrekkers'] ?? 1842}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${telemetryData['activeTrekkers'] ?? 1842}',
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E)),
+                        ),
+                      ),
                       const Text('GPS Tracked on Trails', style: TextStyle(fontSize: 9, color: Color(0xFF059669), fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -215,7 +233,16 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                     children: [
                       const Text('ESCROW SECURED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
                       const SizedBox(height: 4),
-                      Text('${telemetryData['escrowSecuredAmount'] ?? '₹12,45,000'}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${telemetryData['escrowSecuredAmount'] ?? '₹12,45,000'}',
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E), letterSpacing: -0.5),
+                        ),
+                      ),
                       const Text('Smart Contract Vault', style: TextStyle(fontSize: 9, color: Color(0xFF059669), fontWeight: FontWeight.w600)),
                     ],
                   ),
