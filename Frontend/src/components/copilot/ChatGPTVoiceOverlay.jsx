@@ -369,20 +369,19 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
         } catch (_) { /* bridge offline — escalate */ }
 
         // Tier 3: Render backend /api/agent/chat (always reachable on mobile/Vercel)
-        // NOTE: transcript state may lag — so we capture it from closure at send time
-        const fallbackText = (lang === 'hi'
+        const textToSend = (transcript && transcript.trim()) || (lang === 'hi'
           ? 'उत्तराखंड यात्रा के बारे में बताओ'
           : 'Tell me about places to visit in Uttarakhand');
         try {
           const renderRes = await fetch(`${RENDER_API}/agent/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: fallbackText }),
+            body: JSON.stringify({ message: textToSend }),
             signal: AbortSignal.timeout(15000),
           });
           if (renderRes.ok) {
             const data = await renderRes.json();
-            const reply = (data.data?.message || data.response?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
+            const reply = (data.response?.message || data.data?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
             if (reply) {
               setLastAgentReply(reply);
               playGoogleNeuralTts(reply, () => startListening());

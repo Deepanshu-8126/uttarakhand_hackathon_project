@@ -46,6 +46,8 @@ from voice_demo.devbhoomi import (
     get_homestays,
 )
 from voice_demo.weather import fetch_weather
+from voice_demo.gemini.agent import DEVBHOOMI_TOOLS
+from voice_demo.gemini.tools import execute_tool
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voice-demo-bridge")
@@ -65,6 +67,9 @@ LIVE_VOICE_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio
 LIVE_VOICE_FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest"
 LIVE_VOICE_NAME = os.getenv("GEMINI_VOICE_NAME", "Aoede")
 TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# Set SKIP_LIVE_VOICE=false to always use Gemini Live WebSocket (Aoede voice)
+SKIP_LIVE_VOICE = False
+
 FALLBACK_TEXT_MODELS = [
     os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
     "gemini-2.5-flash-lite",
@@ -128,6 +133,8 @@ async def synthesize_gemini_live_voice(
 
     Returns (clean_spoken_text, base64_wav_audio).
     """
+    if SKIP_LIVE_VOICE:
+        return "", ""   # Immediately fall to edge-tts (no 12s timeout)
     try:
         client = _get_genai_client()
         facts_text = ("\nVerified Facts from Devbhoomi DB:\n" + "\n".join(enriched_facts)) if enriched_facts else ""
@@ -135,6 +142,7 @@ async def synthesize_gemini_live_voice(
 
         config = types.LiveConnectConfig(
             response_modalities=[types.Modality.AUDIO],
+            tools=[DEVBHOOMI_TOOLS],
             output_audio_transcription=types.AudioTranscriptionConfig(),
             speech_config=types.SpeechConfig(
                 voice_config=types.VoiceConfig(
@@ -151,8 +159,17 @@ async def synthesize_gemini_live_voice(
         async with asyncio.timeout(12.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                 await session.send(input=prompt, end_of_turn=True)
-                async for response in session.receive():
-                    sc = response.server_content
+                async for raw in session.receive():
+                    tool_call = getattr(raw, "tool_call", None)
+                    if tool_call and getattr(tool_call, "function_calls", None):
+                        logger.info(f"[gemini-live] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
+                        responses = []
+                        for fc in tool_call.function_calls:
+                            res = await execute_tool(fc.name, fc.args)
+                            responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
+                        await session.send_tool_response(function_responses=responses)
+
+                    sc = getattr(raw, "server_content", None)
                     if sc:
                         if getattr(sc, "output_transcription", None) and getattr(sc.output_transcription, "text", None):
                             transcription_chunks.append(sc.output_transcription.text)
@@ -514,6 +531,7 @@ async def stream_gemini_live_to_ws(
 
     config = types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
+        tools=[DEVBHOOMI_TOOLS],
         output_audio_transcription=types.AudioTranscriptionConfig(),
         speech_config=types.SpeechConfig(
             voice_config=types.VoiceConfig(
@@ -527,54 +545,64 @@ async def stream_gemini_live_to_ws(
     text_chunks: list[str] = []
     transcription_chunks: list[str] = []
 
-    try:
-        async with asyncio.timeout(12.0):
-            async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
-                await session.send(input=prompt, end_of_turn=True)
-                async for response in session.receive():
-                    sc = response.server_content
-                    if sc:
-                        if getattr(sc, "output_transcription", None) and getattr(sc.output_transcription, "text", None):
-                            t = sc.output_transcription.text
-                            transcription_chunks.append(t)
-                            await websocket.send_json({"type": "transcript_delta", "delta": t})
+    if not SKIP_LIVE_VOICE:
+        try:
+            async with asyncio.timeout(12.0):
+                async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
+                    await session.send(input=prompt, end_of_turn=True)
+                    async for raw in session.receive():
+                        tool_call = getattr(raw, "tool_call", None)
+                        if tool_call and getattr(tool_call, "function_calls", None):
+                            logger.info(f"[gemini-live-ws] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
+                            responses = []
+                            for fc in tool_call.function_calls:
+                                res = await execute_tool(fc.name, fc.args)
+                                responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
+                            await session.send_tool_response(function_responses=responses)
 
-                        if sc.model_turn:
-                            for part in sc.model_turn.parts:
-                                if part.inline_data and part.inline_data.data:
-                                    data = part.inline_data.data
-                                    pcm_chunks.append(data)
-                                    chunk_b64 = base64.b64encode(data).decode("utf-8")
-                                    # Stream chunk immediately to browser!
-                                    await websocket.send_json({
-                                        "type": "audio_chunk",
-                                        "chunk": chunk_b64,
-                                        "rate": 24000,
-                                    })
-                                if part.text:
-                                    text_chunks.append(part.text)
-                        if sc.turn_complete:
-                            break
+                        sc = getattr(raw, "server_content", None)
+                        if sc:
+                            if getattr(sc, "output_transcription", None) and getattr(sc.output_transcription, "text", None):
+                                t = sc.output_transcription.text
+                                transcription_chunks.append(t)
+                                await websocket.send_json({"type": "transcript_delta", "delta": t})
 
-        if pcm_chunks:
-            pcm_bytes = b"".join(pcm_chunks)
-            wav_b64 = pcm_to_wav_base64(pcm_bytes, 24000)
-            clean_text = "".join(transcription_chunks).strip()
-            if not clean_text:
-                raw_text = "".join(text_chunks).strip()
-                lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.startswith("**") and not l.startswith("#")]
-                clean_text = " ".join(lines) if lines else raw_text
-            clean_text = clean_text.replace("*", "").replace("#", "").strip()
+                            if sc.model_turn:
+                                for part in sc.model_turn.parts:
+                                    if part.inline_data and part.inline_data.data:
+                                        data = part.inline_data.data
+                                        pcm_chunks.append(data)
+                                        chunk_b64 = base64.b64encode(data).decode("utf-8")
+                                        # Stream chunk immediately to browser!
+                                        await websocket.send_json({
+                                            "type": "audio_chunk",
+                                            "chunk": chunk_b64,
+                                            "rate": 24000,
+                                        })
+                                    if part.text:
+                                        text_chunks.append(part.text)
+                            if sc.turn_complete:
+                                break
 
-            await websocket.send_json({
-                "type": "turn_complete",
-                "text": clean_text,
-                "audio_base64": wav_b64,
-            })
-            return clean_text, wav_b64
+            if pcm_chunks:
+                pcm_bytes = b"".join(pcm_chunks)
+                wav_b64 = pcm_to_wav_base64(pcm_bytes, 24000)
+                clean_text = "".join(transcription_chunks).strip()
+                if not clean_text:
+                    raw_text = "".join(text_chunks).strip()
+                    lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.startswith("**") and not l.startswith("#")]
+                    clean_text = " ".join(lines) if lines else raw_text
+                clean_text = clean_text.replace("*", "").replace("#", "").strip()
 
-    except Exception as e:
-        logger.warning(f"[stream_ws] Gemini Live stream timed out or failed: {e}. Executing rapid fallback...")
+                await websocket.send_json({
+                    "type": "turn_complete",
+                    "text": clean_text,
+                    "audio_base64": wav_b64,
+                })
+                return clean_text, wav_b64
+
+        except Exception as e:
+            logger.warning(f"[stream_ws] Gemini Live stream timed out or failed: {e}. Executing rapid fallback...")
 
     # Rapid Fallback if Gemini Live WebSocket was delayed
     try:
