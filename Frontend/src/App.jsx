@@ -42,13 +42,15 @@ import SOSActiveBanner from './components/sos/SOSActiveBanner';
 import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
+  const routerBasename = import.meta.env.BASE_URL || '/';
+
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <AuthProvider>
           <FavoritesProvider>
             <CartProvider>
-              <Router>
+              <Router basename={routerBasename}>
                 <SOSActiveBanner />
                 <ErrorBoundary fallback={null}>
                   <AddToTripModal />
