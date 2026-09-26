@@ -3,7 +3,7 @@ import {
   MapPin, Star, Compass, Navigation, Coffee,
   Mountain, ExternalLink, Sparkles, Camera,
   CheckCircle2, Layers, Info,
-  ArrowLeft, ArrowRight, X, Eye, Clock, TrendingUp
+  ArrowLeft, ArrowRight, X, Eye, Clock, TrendingUp, ChevronRight
 } from 'lucide-react';
 import { placesApi } from '../api/placesApi';
 

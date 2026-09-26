@@ -116,27 +116,27 @@ export default function Navbar() {
       <header className={`sticky top-0 z-50 w-full backdrop-blur-xl transition-colors duration-200 ${
         isDark 
           ? 'bg-[#040e09]/95 border-b border-white/[0.08] shadow-md text-white' 
-          : 'bg-white/90 border-b border-stone-200/80 shadow-xs text-stone-900'
+          : 'bg-white/95 border-b border-stone-200/80 shadow-xs text-stone-900'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
 
             {/* ── 1. Logo - NEVER squish ─────────────────────────────────── */}
-            <Link to="/" className="shrink-0 flex items-center gap-2 sm:gap-3 group">
+            <Link to="/" className="shrink-0 flex items-center gap-2 sm:gap-2.5 group">
               <img
                 src="/logo.png"
                 alt="Discovery Uttarakhand"
-                className={`w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform shrink-0 ${
+                className={`w-7 h-7 sm:w-9 sm:h-9 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform shrink-0 ${
                   isDark ? 'border border-emerald-500/30 bg-[#06140c]' : 'border border-emerald-900/10 bg-white'
                 }`}
               />
               <div className="shrink-0">
-                <span className={`text-sm sm:text-base lg:text-lg font-black tracking-tight block leading-none whitespace-nowrap ${
+                <span className={`text-sm sm:text-base font-black tracking-tight block leading-none whitespace-nowrap ${
                   isDark ? 'text-white' : 'text-[#0f3d2e]'
                 }`}>
                   Discovery
                 </span>
-                <span className={`text-[8px] sm:text-[10px] font-bold tracking-widest uppercase block whitespace-nowrap ${
+                <span className={`text-[8px] sm:text-[9px] font-bold tracking-widest uppercase block whitespace-nowrap ${
                   isDark ? 'text-emerald-400' : 'text-emerald-700'
                 }`}>
                   {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}
@@ -145,7 +145,7 @@ export default function Navbar() {
             </Link>
 
             {/* ── 2. Tablet Navigation (768px - 1024px): Max 3 items ─────── */}
-            <div className="hidden md:flex lg:hidden items-center gap-2">
+            <div className="hidden md:flex lg:hidden items-center gap-1.5">
               {navLinks.slice(0, 3).map((link) => {
                 const Icon = link.icon;
                 const isCurrent = location.pathname.startsWith(link.path);
@@ -154,13 +154,13 @@ export default function Navbar() {
                     key={link.label}
                     to={link.path}
                     onClick={(e) => handleNavClick(link, e)}
-                    className={`whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    className={`whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
                       isCurrent 
                         ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-emerald-50 text-[#0f3d2e]') 
                         : (isDark ? 'text-stone-300 hover:text-white' : 'text-stone-700 hover:text-[#0f3d2e]')
                     }`}
                   >
-                    <Icon size={13} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-700 shrink-0"} />
+                    <Icon size={12} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-700 shrink-0"} />
                     <span>{link.label}</span>
                   </Link>
                 );
@@ -168,8 +168,8 @@ export default function Navbar() {
             </div>
 
             {/* ── 3. Desktop Navigation Links (> 1024px): All items row ─── */}
-            <div className="hidden lg:flex items-center gap-6">
-              <nav className={`flex items-center gap-1 p-1.5 rounded-full backdrop-blur-md transition-colors ${
+            <div className="hidden lg:flex items-center gap-3 xl:gap-5">
+              <nav className={`flex items-center gap-0.5 p-1 rounded-full backdrop-blur-md transition-colors ${
                 isDark 
                   ? 'bg-white/[0.04] border border-white/10' 
                   : 'bg-stone-100/80 border border-stone-200/70'
@@ -187,16 +187,16 @@ export default function Navbar() {
                       key={link.label}
                       to={link.path}
                       onClick={(e) => handleNavClick(link, e)}
-                      className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all duration-200 ${
+                      className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-tight transition-all duration-200 ${
                         isCurrent 
                           ? (isDark ? 'bg-emerald-950/80 text-emerald-300 shadow-xs border border-emerald-500/40' : 'bg-white text-[#0f3d2e] shadow-xs border border-emerald-900/10') 
                           : (isDark ? 'text-stone-300 hover:text-white hover:bg-white/[0.06]' : 'text-stone-600 hover:text-[#0f3d2e] hover:bg-white/70')
                       }`}
                     >
-                      <Icon size={13} className={isCurrent ? (isDark ? 'text-emerald-400 shrink-0' : 'text-emerald-700 shrink-0') : 'text-stone-400 shrink-0'} />
+                      <Icon size={12} className={isCurrent ? (isDark ? 'text-emerald-400 shrink-0' : 'text-emerald-700 shrink-0') : 'text-stone-400 shrink-0'} />
                       <span>{link.label}</span>
                       {link.badge && (
-                        <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full shadow-2xs shrink-0 ${
+                        <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full shadow-2xs shrink-0 ${
                           isDark 
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
                             : 'bg-emerald-100 text-[#0f3d2e] border border-emerald-300/80'
@@ -210,21 +210,21 @@ export default function Navbar() {
               </nav>
 
               {/* Weather + Location Pill */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <TopNavWeatherBadge isDark={isDark} />
 
                 <button
                   type="button"
                   onClick={() => setShowLocationModal(true)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
                     isDark 
                       ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200' 
                       : 'border border-stone-200 bg-white hover:bg-emerald-50 text-stone-800'
                   }`}
                   title="Change location"
                 >
-                  <MapPin size={12} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-800 shrink-0"} />
-                  <span className={`whitespace-nowrap max-w-[90px] truncate ${isDark ? 'text-stone-300' : 'text-stone-700'}`}>
+                  <MapPin size={11} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-800 shrink-0"} />
+                  <span className={`whitespace-nowrap max-w-[85px] truncate ${isDark ? 'text-stone-300' : 'text-stone-700'}`}>
                     {userLocation?.city || 'Location'}
                   </span>
                 </button>
