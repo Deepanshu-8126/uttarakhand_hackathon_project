@@ -60,6 +60,31 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* GPU Hardware Acceleration & Smooth 60fps Scrolling */
+  .smooth-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform, opacity;
+  }
+
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+  }
+
+  /* Universal Silky Smooth Transitions */
+  .smooth-transition {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  img {
+    content-visibility: auto;
   }
 
   @media (min-width: 1024px) and (max-width: 1536px) {
