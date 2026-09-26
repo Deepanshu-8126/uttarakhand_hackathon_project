@@ -1036,6 +1036,8 @@ export default function DestinationDetails() {
                 <div className="relative">
                   <input
                     type="text"
+                    id="destination-copilot-input"
+                    name="destinationCopilotPrompt"
                     placeholder={`Ask anything about ${destination.name}...`}
                     value={copilotPrompt}
                     onChange={(e) => setCopilotPrompt(e.target.value)}
