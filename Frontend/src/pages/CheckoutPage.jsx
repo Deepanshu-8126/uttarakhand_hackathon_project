@@ -163,7 +163,7 @@ export default function CheckoutPage() {
   const taxes = Math.round(subtotal * 0.05); // 5% Govt Tourism cess
   const totalAmount = subtotal + taxes;
 
-  const handlePayAndSecure = () => {
+  const handlePayAndSecure = async () => {
     // 🔒 STRICT AUTHENTICATION GUARD
     if (!isAuthenticated) {
       navigate(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
