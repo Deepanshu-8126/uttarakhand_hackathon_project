@@ -706,36 +706,44 @@ Generated via Discovery Uttarakhand GIS.`;
 
       {/* Drawer / Bottom-Sheet Container */}
       <aside
-        className="fixed inset-x-0 bottom-0 md:bottom-auto md:top-0 md:right-0 md:left-auto z-[1100] w-full md:max-w-[440px] max-h-[92vh] md:max-h-full h-auto md:h-full bg-white shadow-2xl border-t md:border-t-0 md:border-l border-stone-200 flex flex-col font-sans text-stone-900 rounded-t-3xl md:rounded-none animate-in slide-in-from-bottom md:slide-in-from-right duration-250 select-none overflow-hidden"
+        className="fixed inset-x-0 bottom-0 md:bottom-0 md:top-16 lg:top-20 md:right-0 md:left-auto z-[1100] w-full md:max-w-[460px] max-h-[88vh] md:max-h-[calc(100vh-64px)] lg:max-h-[calc(100vh-80px)] h-auto md:h-full bg-white shadow-2xl border-t md:border-t-0 md:border-l border-stone-200/90 flex flex-col font-sans text-stone-900 rounded-t-3xl md:rounded-none animate-in slide-in-from-bottom md:slide-in-from-right duration-250 select-none overflow-hidden"
         aria-label="Himalayan Routes Navigator"
       >
         {/* Mobile Drag Indicator */}
         <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mt-2.5 mb-1 md:hidden" />
 
         {/* ── Header ── */}
-        <div className="px-5 py-3.5 bg-white border-b border-stone-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#0f3d2e] flex items-center justify-center shadow-sm shrink-0">
-              <Navigation size={18} className="text-emerald-300" />
+        <div className="px-4 sm:px-5 py-3 bg-white border-b border-stone-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#0f3d2e] flex items-center justify-center shadow-xs shrink-0">
+              <Navigation size={18} className="text-emerald-400" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-black tracking-tight text-[#0f3d2e]">Himalayan Routes Navigator</h3>
-                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0f3d2e]">
+                <h3 className="text-xs sm:text-sm font-black tracking-tight text-[#0f3d2e] truncate">
+                  Himalayan Routes Navigator
+                </h3>
+                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-[#0f3d2e] shrink-0 border border-emerald-300/60">
                   GIS 2026
                 </span>
               </div>
-              <p className="text-[11px] text-stone-500 font-medium">Multi-Modal Alpine Highway &amp; Pilgrimage GIS</p>
+              <p className="text-[10.5px] text-stone-500 font-medium truncate">
+                Multi-Modal Alpine Highway &amp; Transit GIS
+              </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close Drawer"
-            className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition cursor-pointer"
-          >
-            <X size={15} />
-          </button>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close Drawer"
+              className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition cursor-pointer"
+              title="Close Transit Drawer"
+            >
+              <X size={15} />
+            </button>
+          </div>
         </div>
 
         {/* ── Tabs (3-Way): Route & Steps | Stops Inspector | 5 Corridors ── */}
