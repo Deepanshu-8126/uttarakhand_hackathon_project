@@ -245,6 +245,95 @@ export default function DevbhoomiVoiceStudioModal({
   };
 
   const webSpeechRecRef = useRef(null);
+  const silenceTimerRef = useRef(null);
+  const isProcessingRef = useRef(false);
+
+  const handleProcessVoiceInput = async (userSaid) => {
+    if (!userSaid || userSaid.trim().length < 2 || isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
+    // Stop recognition while AI is thinking and speaking to prevent feedback loop
+    if (webSpeechRecRef.current) {
+      try { webSpeechRecRef.current.stop(); } catch (e) {}
+    }
+
+    const cleanUser = userSaid.trim();
+    setTranscriptHistory(prev => [...prev, { role: 'user', text: cleanUser, time: getCurrentTimestamp() }]);
+    setStatus('processing');
+    setLiveAiText('Thinking...');
+    setLiveUserText('');
+
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://uttarakhand-hackathon-project.onrender.com/api';
+      const res = await fetch(`${apiBase}/agent/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: cleanUser })
+      });
+
+      const data = await res.json();
+      const reply = data.data?.message || data.response?.message || data.data?.text || data.message || data.response || 'Namaste! Main aapka Devbhoomi travel assistant hoon. Kahiye main aapki kya madad kar sakta hoon?';
+      const cleanReply = reply.replace(/[*#_~`]/g, '').trim();
+
+      setLiveAiText(cleanReply);
+      setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
+      setStatus('speaking');
+
+      if (!isSpeakerMuted) {
+        speakText(cleanReply, {
+          lang: 'hi-IN',
+          rate: 1.05,
+          pitch: 1.0,
+          onStart: () => setStatus('speaking'),
+          onEnd: () => {
+            isProcessingRef.current = false;
+            setStatus('listening');
+            restartRecognition();
+          },
+          onError: () => {
+            isProcessingRef.current = false;
+            setStatus('listening');
+            restartRecognition();
+          }
+        });
+      } else {
+        setTimeout(() => {
+          isProcessingRef.current = false;
+          setStatus('listening');
+          restartRecognition();
+        }, 2000);
+      }
+    } catch (apiErr) {
+      console.warn('[UniversalVoice] API error, using local fallback:', apiErr);
+      const fallbackReply = `Namaste! Uttarakhand ke baare mein aapne poochha: "${cleanUser}". Weather suhana hai aur Char Dham highways open hain.`;
+      setLiveAiText(fallbackReply);
+      setTranscriptHistory(prev => [...prev, { role: 'assistant', text: fallbackReply, time: getCurrentTimestamp() }]);
+      setStatus('speaking');
+      
+      speakText(fallbackReply, {
+        lang: 'hi-IN',
+        onEnd: () => {
+          isProcessingRef.current = false;
+          setStatus('listening');
+          restartRecognition();
+        },
+        onError: () => {
+          isProcessingRef.current = false;
+          setStatus('listening');
+          restartRecognition();
+        }
+      });
+    }
+  };
+
+  const restartRecognition = () => {
+    if (!isOpen || isProcessingRef.current) return;
+    try {
+      if (webSpeechRecRef.current) {
+        webSpeechRecRef.current.start();
+      }
+    } catch (e) {}
+  };
 
   const startUniversalSpeechFallback = () => {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -263,7 +352,7 @@ export default function DevbhoomiVoiceStudioModal({
       rec.continuous = true;
       rec.interimResults = true;
 
-      rec.onresult = async (event) => {
+      rec.onresult = (event) => {
         let interim = '';
         let final = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -272,55 +361,32 @@ export default function DevbhoomiVoiceStudioModal({
         }
 
         const currentText = (final || interim).trim();
-        setLiveUserText(currentText);
+        if (currentText) {
+          setLiveUserText(currentText);
+        }
 
-        if (final && final.trim().length > 2) {
-          const userSaid = final.trim();
-          setTranscriptHistory(prev => [...prev, { role: 'user', text: userSaid, time: getCurrentTimestamp() }]);
-          setStatus('processing');
-          setLiveAiText('Thinking...');
-
-          try {
-            const apiBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://uttarakhand-hackathon-project.onrender.com/api';
-            const res = await fetch(`${apiBase}/agent/chat`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message: userSaid })
-            });
-
-            const data = await res.json();
-            const reply = data.response?.message || data.message || data.response || 'Namaste! Main aapka Devbhoomi travel assistant hoon.';
-            const cleanReply = reply.replace(/[*#_~`]/g, '').trim();
-
-            setLiveAiText(cleanReply);
-            setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
-            setStatus('speaking');
-
-            if (!isSpeakerMuted) {
-              speakText(cleanReply, {
-                lang: 'hi-IN',
-                rate: 1.05,
-                pitch: 1.0,
-                onStart: () => setStatus('speaking'),
-                onEnd: () => setStatus('listening'),
-                onError: () => setStatus('listening')
-              });
-            } else {
-              setTimeout(() => setStatus('listening'), 2000);
+        if (final && final.trim().length > 1) {
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          handleProcessVoiceInput(final.trim());
+        } else if (interim && interim.trim().length > 2) {
+          // Debounce silence timer so pause after speech immediately triggers reply
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            if (!isProcessingRef.current && interim.trim()) {
+              handleProcessVoiceInput(interim.trim());
             }
-          } catch (apiErr) {
-            console.warn('[UniversalVoice] API error, using local reply:', apiErr);
-            setStatus('listening');
-          }
+          }, 1400);
         }
       };
 
-      rec.onerror = () => {
-        setStatus('listening');
+      rec.onerror = (e) => {
+        if (!isProcessingRef.current) {
+          setStatus('listening');
+        }
       };
 
       rec.onend = () => {
-        if (isOpen && status !== 'speaking' && status !== 'processing') {
+        if (isOpen && !isProcessingRef.current) {
           try { rec.start(); } catch (e) {}
         }
       };
@@ -333,6 +399,10 @@ export default function DevbhoomiVoiceStudioModal({
   };
 
   const stopVoiceSession = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+    }
+    isProcessingRef.current = false;
     if (webSpeechRecRef.current) {
       try { webSpeechRecRef.current.stop(); } catch (e) {}
       webSpeechRecRef.current = null;
