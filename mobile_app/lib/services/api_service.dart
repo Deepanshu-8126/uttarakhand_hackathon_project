@@ -200,9 +200,40 @@ class ApiService {
     return sendCopilotMessage(query, isVoice: true);
   }
 
-  // ── AI Copilot Chat ────────────────────────────────────────────────────────
+  // ── AI Copilot Chat (Agentic Bridge 8765 -> Express 5000 -> Local Grounded) ──
   static Future<Map<String, dynamic>> sendCopilotMessage(
       String message, {String? destination, bool isVoice = false}) async {
+    // 1. Try Python Agentic Bridge on Port 8765 first (supports Gemini 2.5 Flash + full LangChain/Agentic tools)
+    final bridgeUrls = [
+      'http://10.0.2.2:8765/api/chat',
+      'http://127.0.0.1:8765/api/chat',
+    ];
+
+    for (final bUrl in bridgeUrls) {
+      try {
+        final bRes = await http.post(
+          Uri.parse(bUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'message': message}),
+        ).timeout(const Duration(seconds: 4));
+
+        if (bRes.statusCode == 200) {
+          final bData = json.decode(bRes.body);
+          if (bData['success'] == true && bData['response'] != null) {
+            final r = bData['response'];
+            final rawTools = r['toolsUsed'] as List?;
+            return {
+              'text': r['message']?.toString() ?? '',
+              'toolsUsed': rawTools?.map((e) => e.toString()).toList() ?? ['DevbhoomiAgent'],
+              'confidence': r['confidence']?.toString() ?? 'grounded',
+              'suggestions': (r['suggestedActions'] as List?)?.map((e) => e.toString()).toList() ?? ['Explore Stays', 'Rent Bike', 'Weather Check'],
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Try Node.js Express backend on Port 5000 ($baseUrl/agent/chat)
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/agent/chat'),
@@ -215,7 +246,7 @@ class ApiService {
             if (destination != null) 'destinationName': destination,
           },
         }),
-      ).timeout(const Duration(seconds: 25));
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
