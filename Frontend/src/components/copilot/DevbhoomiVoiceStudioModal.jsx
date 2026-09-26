@@ -509,14 +509,14 @@ export default function DevbhoomiVoiceStudioModal({
           {isMuted ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5 text-emerald-400" />}
         </button>
 
-        {/* Center Control: ELEVATED GLOWING MIC BUTTON (Matches Vox AI / ChatGPT Voice) */}
+        {/* Center Control: ELEVATED GLOWING MIC BUTTON (Matches Vox AI Gradient Sphere) */}
         <button
           type="button"
           onClick={toggleMute}
-          className="relative group flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-400 text-white shadow-[0_0_50px_rgba(0,255,136,0.6)] hover:shadow-[0_0_70px_rgba(0,255,136,0.8)] border-4 border-white/30 transition-all transform active:scale-95 cursor-pointer"
+          className="relative group flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-fuchsia-600 via-purple-600 to-cyan-400 text-white shadow-[0_0_55px_rgba(217,70,239,0.7)] hover:shadow-[0_0_75px_rgba(217,70,239,0.9)] border-4 border-white/40 transition-all transform active:scale-95 cursor-pointer"
           title="Voice Command Active"
         >
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-40"></span>
           <Mic className="w-7 h-7 sm:w-9 sm:h-9 text-white drop-shadow-md group-hover:scale-110 transition-transform" />
         </button>
 

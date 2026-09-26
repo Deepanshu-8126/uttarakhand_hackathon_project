@@ -77,27 +77,27 @@ export const VoiceVisualizer = ({
         );
 
         if (status === 'speaking') {
-          // AI Speaking: Radiant Emerald, Mint & Cyan glow
-          auraGradient.addColorStop(0, 'rgba(16, 185, 129, 0.85)');
-          auraGradient.addColorStop(0.4, 'rgba(6, 182, 212, 0.5)');
-          auraGradient.addColorStop(0.75, 'rgba(52, 211, 153, 0.25)');
+          // AI Speaking: Radiant Emerald, Mint & Neon Cyan-Violet glow
+          auraGradient.addColorStop(0, 'rgba(16, 185, 129, 0.9)');
+          auraGradient.addColorStop(0.35, 'rgba(6, 182, 212, 0.6)');
+          auraGradient.addColorStop(0.7, 'rgba(168, 85, 247, 0.35)');
           auraGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
         } else if (status === 'listening') {
-          // User speaking / listening: Deep Emerald, Teal & Cyan
-          auraGradient.addColorStop(0, 'rgba(5, 150, 105, 0.85)');
-          auraGradient.addColorStop(0.4, 'rgba(20, 184, 166, 0.45)');
-          auraGradient.addColorStop(0.75, 'rgba(6, 182, 212, 0.2)');
-          auraGradient.addColorStop(1, 'rgba(5, 150, 105, 0)');
+          // User speaking / listening: Vivid Vox AI Pink Magenta, Violet & Cyan
+          auraGradient.addColorStop(0, 'rgba(236, 72, 153, 0.9)');
+          auraGradient.addColorStop(0.35, 'rgba(139, 92, 246, 0.65)');
+          auraGradient.addColorStop(0.7, 'rgba(6, 182, 212, 0.35)');
+          auraGradient.addColorStop(1, 'rgba(236, 72, 153, 0)');
         } else if (status === 'processing') {
-          // Processing: Amber & Gold
-          auraGradient.addColorStop(0, 'rgba(245, 158, 11, 0.8)');
-          auraGradient.addColorStop(0.5, 'rgba(217, 119, 6, 0.3)');
+          // Processing: Gold & Amber
+          auraGradient.addColorStop(0, 'rgba(245, 158, 11, 0.85)');
+          auraGradient.addColorStop(0.5, 'rgba(217, 119, 6, 0.4)');
           auraGradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
         } else {
-          // Idle ambient mountain pulse
-          auraGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-          auraGradient.addColorStop(0.6, 'rgba(13, 148, 136, 0.15)');
-          auraGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+          // Idle ambient pulse: Deep Magenta & Emerald
+          auraGradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+          auraGradient.addColorStop(0.6, 'rgba(16, 185, 129, 0.2)');
+          auraGradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
         }
 
         ctx.fillStyle = auraGradient;
@@ -116,7 +116,7 @@ export const VoiceVisualizer = ({
 
           ctx.fillStyle = status === 'speaking'
             ? `rgba(167, 243, 208, ${p.alpha * (0.4 + activeLevel)})`
-            : `rgba(153, 246, 228, ${p.alpha * (0.4 + activeLevel)})`;
+            : `rgba(244, 114, 182, ${p.alpha * (0.4 + activeLevel)})`;
           ctx.beginPath();
           ctx.arc(centerX + p.x, centerY + p.y, p.r * (1 + activeLevel), 0, Math.PI * 2);
           ctx.fill();
@@ -147,31 +147,31 @@ export const VoiceVisualizer = ({
           );
 
           if (status === 'speaking') {
-            layerGradient.addColorStop(0, `rgba(16, 185, 129, ${0.45 - l * 0.07})`);
-            layerGradient.addColorStop(0.5, `rgba(6, 182, 212, ${0.4 - l * 0.06})`);
-            layerGradient.addColorStop(1, `rgba(52, 211, 153, ${0.35 - l * 0.05})`);
+            layerGradient.addColorStop(0, `rgba(16, 185, 129, ${0.5 - l * 0.07})`);
+            layerGradient.addColorStop(0.5, `rgba(6, 182, 212, ${0.45 - l * 0.06})`);
+            layerGradient.addColorStop(1, `rgba(168, 85, 247, ${0.4 - l * 0.05})`);
           } else if (status === 'listening') {
-            layerGradient.addColorStop(0, `rgba(5, 150, 105, ${0.5 - l * 0.08})`);
-            layerGradient.addColorStop(0.5, `rgba(13, 148, 136, ${0.4 - l * 0.06})`);
-            layerGradient.addColorStop(1, `rgba(6, 182, 212, ${0.35 - l * 0.05})`);
+            layerGradient.addColorStop(0, `rgba(236, 72, 153, ${0.55 - l * 0.08})`);
+            layerGradient.addColorStop(0.5, `rgba(139, 92, 246, ${0.45 - l * 0.06})`);
+            layerGradient.addColorStop(1, `rgba(6, 182, 212, ${0.4 - l * 0.05})`);
           } else {
-            layerGradient.addColorStop(0, `rgba(16, 185, 129, ${0.3 - l * 0.05})`);
-            layerGradient.addColorStop(1, `rgba(13, 148, 136, ${0.25 - l * 0.04})`);
+            layerGradient.addColorStop(0, `rgba(168, 85, 247, ${0.35 - l * 0.05})`);
+            layerGradient.addColorStop(1, `rgba(16, 185, 129, ${0.3 - l * 0.04})`);
           }
 
           ctx.fillStyle = layerGradient;
           ctx.fill();
         }
 
-        // 4. Core glowing emerald sphere
+        // 4. Core glowing sphere
         const coreGradient = ctx.createRadialGradient(
           centerX - baseRadius * 0.25, centerY - baseRadius * 0.25, 0,
           centerX, centerY, baseRadius * 0.75
         );
         coreGradient.addColorStop(0, '#ffffff');
-        coreGradient.addColorStop(0.35, status === 'speaking' ? '#a7f3d0' : '#6ee7b7');
-        coreGradient.addColorStop(0.7, status === 'speaking' ? '#10b981' : '#0d9488');
-        coreGradient.addColorStop(1, status === 'speaking' ? '#047857' : '#0f766e');
+        coreGradient.addColorStop(0.35, status === 'speaking' ? '#a7f3d0' : '#f472b6');
+        coreGradient.addColorStop(0.7, status === 'speaking' ? '#10b981' : '#c084fc');
+        coreGradient.addColorStop(1, status === 'speaking' ? '#047857' : '#7e22ce');
 
         ctx.fillStyle = coreGradient;
         ctx.beginPath();
