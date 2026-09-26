@@ -10,16 +10,13 @@ import {
   Check, 
   Sparkles, 
   User, 
-  Compass, 
   Calendar, 
   Home, 
-  MapPin, 
-  ShieldAlert,
-  ArrowRight
+  MapPin
 } from 'lucide-react';
 import AgentThinking from './AgentThinking.jsx';
 
-export default function MessageRenderer({ message, onSendPrompt = () => {} }) {
+export default function MessageRenderer({ message, onSendPrompt: _onSendPrompt = () => {} }) {
   const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user';
 

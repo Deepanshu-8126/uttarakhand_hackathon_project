@@ -39,6 +39,7 @@ import GlobalToast from './components/common/GlobalToast';
 import GlobalAiCopilotLauncher from './components/copilot/GlobalAiCopilotLauncher';
 import SOSFloatingButton from './components/sos/SOSFloatingButton';
 import SOSActiveBanner from './components/sos/SOSActiveBanner';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -129,6 +130,7 @@ function App() {
                   <AdminManagement />
                 </ProtectedRoute>
               } />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Router>
         </CartProvider>

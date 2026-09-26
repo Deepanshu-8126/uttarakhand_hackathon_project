@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Mic, Square, Sparkles, Send } from 'lucide-react';
+import { ArrowUp, Mic, Square } from 'lucide-react';
 
 export default function ChatInput({
   onSend = () => {},

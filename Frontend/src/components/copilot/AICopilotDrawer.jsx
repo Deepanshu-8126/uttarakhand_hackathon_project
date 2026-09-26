@@ -2,7 +2,7 @@ import React from 'react';
 import ChatWindow from '../../chat/ChatWindow.jsx';
 import './AICopilotDrawer.css';
 
-export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }) {
+export default function AICopilotDrawer({ isOpen, onClose, tripId: _tripId, pageContext: _pageContext }) {
   return (
     <>
       {/* Backdrop */}

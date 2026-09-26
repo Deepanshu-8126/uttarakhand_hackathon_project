@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { Sparkles, Trash2, Mic, X, Compass, Shield, MapPin, Mountain, Hotel, Route, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Trash2, Mic, X, Compass, Shield, Mountain, Hotel, Route, ArrowRight } from 'lucide-react';
 import { useChatState } from './ChatState.js';
 import MessageRenderer from './MessageRenderer.jsx';
 import ChatInput from './ChatInput.jsx';
@@ -12,7 +12,7 @@ import SuggestedActions from './SuggestedActions.jsx';
 import VoiceControls from './VoiceControls.jsx';
 
 export default function ChatWindow({
-  isOpen = true,
+  isOpen: _isOpen = true,
   onClose = () => {},
   initialQuery = '',
   embedded = false
@@ -22,7 +22,6 @@ export default function ChatWindow({
     isLoading,
     isStreaming,
     activeAgent,
-    thinkingSteps,
     isVoiceOpen,
     setIsVoiceOpen,
     sendMessage,

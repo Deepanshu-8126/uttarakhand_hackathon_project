@@ -125,19 +125,19 @@ export default function GlobalAiCopilotLauncher() {
 
   return (
     <>
-      <div className="global-copilot-wrapper" role="region" aria-label="Trip Assistant Launcher">
+      <div className="global-copilot-wrapper" role="region" aria-label="Devbhoomi AI Copilot Launcher">
         <button
           className="global-copilot-btn"
           onClick={() => setIsOpen((prev) => !prev)}
-          title="Trip Assistant"
-          aria-label={isOpen ? "Close Trip Assistant" : "Open Trip Assistant"}
+          title="Devbhoomi AI Copilot"
+          aria-label={isOpen ? "Close AI Copilot" : "Open Devbhoomi AI Copilot"}
         >
           <div className="global-copilot-btn__icon-wrap">
-            {isOpen ? <X size={16} /> : <MessageSquare size={16} />}
+            {isOpen ? <X size={16} /> : <Sparkles size={16} className="text-amber-300 animate-pulse" />}
           </div>
-          <span className="global-copilot-btn__label">Trip Assistant</span>
+          <span className="global-copilot-btn__label">Devbhoomi AI</span>
           <span className="global-copilot-tooltip">
-            Ask anything about routes, stays &amp; trips in Uttarakhand
+            Ask anything about routes, stays &amp; mountain safety
           </span>
         </button>
       </div>

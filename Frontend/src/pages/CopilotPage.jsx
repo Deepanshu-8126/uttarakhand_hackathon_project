@@ -53,7 +53,15 @@ export default function CopilotPage() {
   return (
     <div className="copilot-page-wrapper">
       <Navbar />
-      <div className="copilot-layout">
+      <div className="copilot-layout relative">
+        
+        {/* Mobile Backdrop Overlay */}
+        {(sidebarOpen || contextOpen) && (
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-30 lg:hidden transition-opacity duration-300"
+            onClick={() => { setSidebarOpen(false); setContextOpen(false); }}
+          />
+        )}
         
         {/* Left Column: History */}
         <div className={`copilot-col-left ${sidebarOpen ? 'open' : ''}`}>
