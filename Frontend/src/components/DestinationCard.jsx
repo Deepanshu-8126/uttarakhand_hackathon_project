@@ -17,7 +17,8 @@ const DestinationCard = ({ destination, distance }) => {
     ? destination.coverImage 
     : (destination.coverImage?.url || destination.image || destination.imageUrl || images[0]);
   const baseFallback = rawDbImage || getHimalayanFallbackImage(destination);
-  const coverImage = rawDbImage || useFreshImage(destination.slug || destination.name, baseFallback);
+  const freshImage = useFreshImage(destination.slug || destination.name, baseFallback);
+  const coverImage = rawDbImage || freshImage;
 
   const destinationSlug = typeof destination.slug === 'string' && destination.slug.length > 0
     ? destination.slug 

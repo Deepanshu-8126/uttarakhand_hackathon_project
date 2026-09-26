@@ -22,7 +22,8 @@ export default function DestinationCard({ destination }) {
     ? destination.coverImage 
     : (destination.coverImage?.url || destination.image || destination.imageUrl || images[0]);
   const baseFallback = rawDbImage || getHimalayanFallbackImage(destination);
-  const displayImage = rawDbImage || useFreshImage(destination.slug || destination.name, baseFallback);
+  const freshImage = useFreshImage(destination.slug || destination.name, baseFallback);
+  const displayImage = rawDbImage || freshImage;
 
   return (
     <div

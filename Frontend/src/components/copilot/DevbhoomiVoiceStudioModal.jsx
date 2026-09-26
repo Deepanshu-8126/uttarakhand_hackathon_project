@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { 
   X, Mic, MicOff, Volume2, VolumeX, PhoneOff, 
-  Sparkles, Radio, Layers, Activity, Zap, Clock, User, Bot
+  Sparkles, Radio, Layers, Activity, Zap, Clock, User, Bot, AlertCircle, Send
 } from 'lucide-react';
 import { VoiceVisualizer } from './VoiceVisualizer';
-import { audioProcessor } from '../../services/audioProcessor';
-import { liveClient } from '../../services/geminiLiveClient';
 import { speakText, stopSpeaking } from '../../utils/speechSynthesis';
 
 export default function DevbhoomiVoiceStudioModal({
@@ -14,7 +12,7 @@ export default function DevbhoomiVoiceStudioModal({
   initialVoice = 'Aoede',
   onTranscriptReceived = () => {}
 }) {
-  const [status, setStatus] = useState('idle'); // idle | listening | speaking | processing | error
+  const [status, setStatus] = useState('listening'); // idle | listening | speaking | processing | error
   const [selectedVoice, setSelectedVoice] = useState(initialVoice);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
@@ -24,16 +22,20 @@ export default function DevbhoomiVoiceStudioModal({
   const [transcriptHistory, setTranscriptHistory] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [callDuration, setCallDuration] = useState(0);
-  const [micVolume, setMicVolume] = useState(0);
-  const [speakerVolume, setSpeakerVolume] = useState(0);
+  const [manualInput, setManualInput] = useState('');
 
-  const [analyser, setAnalyser] = useState(null);
-  const [outputAnalyser, setOutputAnalyser] = useState(null);
+  const [micAudioLevel, setMicAudioLevel] = useState(0);
+  const [aiAudioLevel, setAiAudioLevel] = useState(0);
 
   const isMutedRef = useRef(false);
-  const currentAiTextRef = useRef('');
-  const currentUserTextRef = useRef('');
+  const isProcessingRef = useRef(false);
+  const recognitionRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const analyserRef = useRef(null);
+  const outputAnalyserRef = useRef(null);
   const captionsEndRef = useRef(null);
+  const silenceTimerRef = useRef(null);
 
   const voices = [
     { id: 'Aoede', name: 'Aoede (Warm & Authentic, Female)' },
@@ -72,119 +74,188 @@ export default function DevbhoomiVoiceStudioModal({
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  // Real-time VU meter listener
-  useEffect(() => {
-    let animId;
-    const updateLevels = () => {
-      const dataArr = new Uint8Array(128);
-
-      if (analyser && !isMutedRef.current) {
-        analyser.getByteFrequencyData(dataArr);
-        let sum = 0;
-        for (let i = 0; i < dataArr.length; i++) {
-          sum += dataArr[i];
-        }
-        const avg = sum / dataArr.length;
-        const pct = Math.min(100, Math.round((avg / 128) * 100));
-        setMicVolume(pct);
-      } else {
-        setMicVolume(0);
-      }
-
-      if (outputAnalyser) {
-        outputAnalyser.getByteFrequencyData(dataArr);
-        let sum = 0;
-        for (let i = 0; i < dataArr.length; i++) {
-          sum += dataArr[i];
-        }
-        const avg = sum / dataArr.length;
-        const pct = Math.min(100, Math.round((avg / 128) * 100));
-        setSpeakerVolume(pct);
-      } else {
-        setSpeakerVolume(0);
-      }
-
-      animId = requestAnimationFrame(updateLevels);
-    };
-
-    if (isOpen) {
-      animId = requestAnimationFrame(updateLevels);
-    }
-
-    return () => cancelAnimationFrame(animId);
-  }, [analyser, outputAnalyser, isOpen]);
-
-  // Start voice session when modal opens
+  // Main Life-Cycle Start/Stop
   useEffect(() => {
     if (!isOpen) {
-      stopVoiceSession();
+      cleanupVoice();
       return;
     }
 
     startVoiceSession();
 
     return () => {
-      stopVoiceSession();
+      cleanupVoice();
     };
-  }, [isOpen, selectedVoice]);
+  }, [isOpen]);
 
   const startVoiceSession = async () => {
     setErrorMessage(null);
     setStatus('listening');
     setLiveAiText('');
     setLiveUserText('');
-    currentAiTextRef.current = '';
-    currentUserTextRef.current = '';
     isProcessingRef.current = false;
 
-    // Direct Browser Web Speech Recognition for guaranteed zero-friction voice
+    // 1. Microphone Hardware Audio Visualizer
     try {
-      const audioCtx = audioProcessor.initContext();
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(() => {});
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = stream;
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          audioContextRef.current = ctx;
+          if (ctx.state === 'suspended') {
+            await ctx.resume().catch(() => {});
+          }
+
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 128;
+          source.connect(analyser);
+          analyserRef.current = analyser;
+
+          // Fake output analyser for AI voice animations
+          const outAnalyser = ctx.createAnalyser();
+          outAnalyser.fftSize = 128;
+          outputAnalyserRef.current = outAnalyser;
+        }
       }
-      audioProcessor.startMicCapture(() => {}).then((micAnalyser) => {
-        setAnalyser(micAnalyser);
-        setOutputAnalyser(audioProcessor.getOutputAnalyser());
-      }).catch((e) => console.warn('[AudioProcessor] Mic visualizer notice:', e));
-    } catch (err) {
-      console.warn('[DevbhoomiVoiceStudio] Audio capture notice:', err);
+    } catch (micErr) {
+      console.warn('[VoiceStudio] Microphone capture notice (SpeechRec will still work):', micErr);
     }
 
-    startUniversalSpeechFallback();
+    // 2. Initialize Browser Speech Recognition (Web Speech API)
+    initSpeechRecognition();
   };
 
-  const webSpeechRecRef = useRef(null);
-  const silenceTimerRef = useRef(null);
-  const isProcessingRef = useRef(false);
-
-  const handleProcessVoiceInput = async (userSaid) => {
-    if (!userSaid || userSaid.trim().length < 2 || isProcessingRef.current) return;
-    isProcessingRef.current = true;
-
-    // Stop recognition while AI is thinking and speaking to prevent feedback loop
-    if (webSpeechRecRef.current) {
-      try { webSpeechRecRef.current.stop(); } catch (e) {}
+  const initSpeechRecognition = () => {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      setErrorMessage('Speech Recognition is not supported in this browser. Please use Chrome/Edge or type below.');
+      return;
     }
 
-    const cleanUser = userSaid.trim();
-    setTranscriptHistory(prev => [...prev, { role: 'user', text: cleanUser, time: getCurrentTimestamp() }]);
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (_) {}
+      }
+
+      const rec = new SpeechRec();
+      rec.lang = 'hi-IN';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+
+      rec.onstart = () => {
+        if (!isProcessingRef.current) {
+          setStatus('listening');
+        }
+      };
+
+      rec.onresult = (event) => {
+        if (isMutedRef.current || isProcessingRef.current) return;
+
+        let interim = '';
+        let final = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+
+        const currentSaid = (final || interim).trim();
+        if (currentSaid) {
+          setLiveUserText(currentSaid);
+        }
+
+        if (final && final.trim().length > 1) {
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          handleProcessVoiceQuery(final.trim());
+        } else if (interim && interim.trim().length > 2) {
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            if (!isProcessingRef.current && interim.trim()) {
+              handleProcessVoiceQuery(interim.trim());
+            }
+          }, 1500);
+        }
+      };
+
+      rec.onerror = (e) => {
+        console.warn('[SpeechRec] Error:', e.error);
+        if (e.error === 'not-allowed') {
+          setErrorMessage('Microphone access was denied. Please allow microphone permission in your browser.');
+        }
+      };
+
+      rec.onend = () => {
+        if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
+          try { rec.start(); } catch (_) {}
+        }
+      };
+
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (recInitErr) {
+      console.warn('[VoiceStudio] SpeechRecognition init failed:', recInitErr);
+    }
+  };
+
+  const handleProcessVoiceQuery = async (queryText) => {
+    if (!queryText || queryText.trim().length < 2 || isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
+    // Pause recognition to prevent echo
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (_) {}
+    }
+
+    const cleanUserText = queryText.trim();
+    setTranscriptHistory(prev => [...prev, { role: 'user', text: cleanUserText, time: getCurrentTimestamp() }]);
     setStatus('processing');
     setLiveAiText('Thinking...');
     setLiveUserText('');
 
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://uttarakhand-hackathon-project.onrender.com/api';
-      const res = await fetch(`${apiBase}/agent/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: cleanUser })
-      });
+      // Direct Live Node / Render API request
+      const candidateUrls = [
+        'https://uttarakhand-hackathon-project.onrender.com/api/agent/chat',
+        'http://localhost:5000/api/agent/chat',
+        'http://127.0.0.1:5000/api/agent/chat',
+      ];
 
-      const data = await res.json();
-      const reply = data.data?.message || data.response?.message || data.data?.text || data.message || data.response || 'Namaste! Main aapka Devbhoomi travel assistant hoon. Kahiye main aapki kya madad kar sakta hoon?';
-      const cleanReply = reply.replace(/[*#_~`]/g, '').trim();
+      let replyText = null;
 
+      for (const url of candidateUrls) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: cleanUserText,
+              pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
+            }),
+            signal: AbortSignal.timeout(6000),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const resp = data.response || data.data || data;
+            replyText = resp.message || resp.text || (typeof resp === 'string' ? resp : null);
+            if (replyText) break;
+          }
+        } catch (_) {}
+      }
+
+      if (!replyText) {
+        replyText = `Namaste! Uttarakhand ke baare me aapne pucha: "${cleanUserText}". Raste khule hain aur mosam accha hai. Kahiye main aapki aur kya madad karoon?`;
+      }
+
+      const cleanReply = replyText.replace(/[*#_~`]/g, '').trim();
       setLiveAiText(cleanReply);
       setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
       setStatus('speaking');
@@ -198,130 +269,58 @@ export default function DevbhoomiVoiceStudioModal({
           onEnd: () => {
             isProcessingRef.current = false;
             setStatus('listening');
-            restartRecognition();
+            restartListening();
           },
           onError: () => {
             isProcessingRef.current = false;
             setStatus('listening');
-            restartRecognition();
+            restartListening();
           }
         });
       } else {
         setTimeout(() => {
           isProcessingRef.current = false;
           setStatus('listening');
-          restartRecognition();
+          restartListening();
         }, 2000);
       }
-    } catch (apiErr) {
-      console.warn('[UniversalVoice] API error, using local fallback:', apiErr);
-      const fallbackReply = `Namaste! Uttarakhand ke baare mein aapne poochha: "${cleanUser}". Weather suhana hai aur Char Dham highways open hain.`;
-      setLiveAiText(fallbackReply);
-      setTranscriptHistory(prev => [...prev, { role: 'assistant', text: fallbackReply, time: getCurrentTimestamp() }]);
-      setStatus('speaking');
-      
-      speakText(fallbackReply, {
-        lang: 'hi-IN',
-        onEnd: () => {
-          isProcessingRef.current = false;
-          setStatus('listening');
-          restartRecognition();
-        },
-        onError: () => {
-          isProcessingRef.current = false;
-          setStatus('listening');
-          restartRecognition();
-        }
-      });
-    }
-  };
-
-  const restartRecognition = () => {
-    if (!isOpen || isProcessingRef.current) return;
-    try {
-      if (webSpeechRecRef.current) {
-        webSpeechRecRef.current.start();
-      }
-    } catch (e) {}
-  };
-
-  const startUniversalSpeechFallback = () => {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) {
+    } catch (err) {
+      console.warn('[VoiceStudio] Processing error:', err);
+      isProcessingRef.current = false;
       setStatus('listening');
-      return;
-    }
-
-    try {
-      if (webSpeechRecRef.current) {
-        try { webSpeechRecRef.current.stop(); } catch (e) {}
-      }
-
-      const rec = new SpeechRec();
-      rec.lang = 'hi-IN';
-      rec.continuous = true;
-      rec.interimResults = true;
-
-      rec.onresult = (event) => {
-        let interim = '';
-        let final = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) final += event.results[i][0].transcript;
-          else interim += event.results[i][0].transcript;
-        }
-
-        const currentText = (final || interim).trim();
-        if (currentText) {
-          setLiveUserText(currentText);
-        }
-
-        if (final && final.trim().length > 1) {
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          handleProcessVoiceInput(final.trim());
-        } else if (interim && interim.trim().length > 2) {
-          // Debounce silence timer so pause after speech immediately triggers reply
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = setTimeout(() => {
-            if (!isProcessingRef.current && interim.trim()) {
-              handleProcessVoiceInput(interim.trim());
-            }
-          }, 1400);
-        }
-      };
-
-      rec.onerror = (e) => {
-        if (!isProcessingRef.current) {
-          setStatus('listening');
-        }
-      };
-
-      rec.onend = () => {
-        if (isOpen && !isProcessingRef.current) {
-          try { rec.start(); } catch (e) {}
-        }
-      };
-
-      webSpeechRecRef.current = rec;
-      rec.start();
-    } catch (e) {
-      console.warn('[UniversalVoice] Speech recognition init error:', e);
+      restartListening();
     }
   };
 
-  const stopVoiceSession = () => {
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-    }
+  const restartListening = () => {
+    if (!isOpen || isProcessingRef.current || isMutedRef.current) return;
+    try {
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
+    } catch (_) {}
+  };
+
+  const cleanupVoice = () => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     isProcessingRef.current = false;
-    if (webSpeechRecRef.current) {
-      try { webSpeechRecRef.current.stop(); } catch (e) {}
-      webSpeechRecRef.current = null;
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (_) {}
+      recognitionRef.current = null;
     }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(t => t.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch (_) {}
+      audioContextRef.current = null;
+    }
+
     stopSpeaking();
-    liveClient.disconnect();
-    audioProcessor.destroy();
-    setAnalyser(null);
-    setOutputAnalyser(null);
     setStatus('idle');
   };
 
@@ -329,10 +328,23 @@ export default function DevbhoomiVoiceStudioModal({
     const next = !isMuted;
     setIsMuted(next);
     isMutedRef.current = next;
+    if (next) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (_) {}
+      }
+      setStatus('idle');
+    } else {
+      setStatus('listening');
+      restartListening();
+    }
   };
 
-  const toggleSpeaker = () => {
-    setIsSpeakerMuted(!isSpeakerMuted);
+  const handleManualSubmit = (e) => {
+    e.preventDefault();
+    if (!manualInput.trim()) return;
+    const query = manualInput.trim();
+    setManualInput('');
+    handleProcessVoiceQuery(query);
   };
 
   if (!isOpen) return null;
@@ -344,20 +356,20 @@ export default function DevbhoomiVoiceStudioModal({
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[340px] h-[260px] bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* ── 1. Top Bar: Minimal Brand, Status & Controls ────────────────────────── */}
+      {/* ── 1. Top Bar: Brand, Status & Controls ────────────────────────── */}
       <div className="w-full max-w-3xl flex items-center justify-between z-10 shrink-0">
         
         {/* Brand Pill */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-bold tracking-wide text-stone-200">Devbhoomi AI</span>
+          <span className="text-xs font-bold tracking-wide text-stone-200">Devbhoomi AI Voice</span>
           <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
             Live
           </span>
         </div>
 
         {/* Dynamic Center Status Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-stone-300">
+        <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-stone-300">
           <span className="relative flex h-2 w-2">
             <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
               status === 'speaking' ? 'bg-emerald-400' : status === 'listening' ? 'bg-cyan-400' : 'bg-amber-400'
@@ -366,36 +378,20 @@ export default function DevbhoomiVoiceStudioModal({
               status === 'speaking' ? 'bg-emerald-500' : status === 'listening' ? 'bg-cyan-500' : 'bg-amber-500'
             }`}></span>
           </span>
-          <span>
-            {status === 'speaking' ? 'Speaking...' :
-             status === 'listening' ? (isMuted ? 'Muted' : (micVolume > 5 ? 'Hearing you...' : 'Listening...')) :
-             status === 'processing' ? 'Connecting...' :
-             status === 'error' ? 'Notice' : 'Ready'}
+          <span className="capitalize">
+            {status === 'speaking' ? 'AI Speaking...' : status === 'processing' ? 'Consulting Ground Data...' : isMuted ? 'Mic Muted' : 'Listening... Speak now'}
           </span>
         </div>
 
-        {/* Right Controls */}
+        {/* Right Tools */}
         <div className="flex items-center gap-2">
-          {/* Voice Selector */}
-          <select
-            value={selectedVoice}
-            onChange={(e) => setSelectedVoice(e.target.value)}
-            className="bg-white/[0.05] hover:bg-white/[0.1] text-stone-300 text-xs font-medium px-2.5 py-1 rounded-xl border border-white/10 focus:outline-none cursor-pointer transition-all shrink-0 max-w-[120px] sm:max-w-none truncate"
-          >
-            {voices.map(v => (
-              <option key={v.id} value={v.id} className="bg-[#0b1a10] text-stone-200">
-                {v.name.split(' ')[0]}
-              </option>
-            ))}
-          </select>
-
-          {/* Mode Switcher */}
+          {/* Mute Speaker */}
           <button
-            onClick={() => setVisualMode(visualMode === 'orb' ? 'wave' : 'orb')}
-            title={`Switch to ${visualMode === 'orb' ? 'Spectrum Wave' : 'Fluid Orb'}`}
-            className="p-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-stone-400 hover:text-white transition-colors border border-white/10 cursor-pointer"
+            onClick={() => setIsSpeakerMuted(!isSpeakerMuted)}
+            title={isSpeakerMuted ? 'Unmute AI Voice' : 'Mute AI Voice'}
+            className="p-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-stone-300 hover:text-white transition-colors border border-white/10 cursor-pointer"
           >
-            {visualMode === 'orb' ? <Activity className="w-4 h-4 text-emerald-400" /> : <Layers className="w-4 h-4 text-teal-400" />}
+            {isSpeakerMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
           </button>
 
           {/* Close Button */}
@@ -409,14 +405,21 @@ export default function DevbhoomiVoiceStudioModal({
         </div>
       </div>
 
-      {/* ── 2. Center Stage: Gemini Glowing Orb & Subtitle Typography ─────────── */}
-      <div className="w-full max-w-xl flex flex-col items-center justify-center my-auto z-10 space-y-6 sm:space-y-8">
+      {/* ── 2. Center Stage: Visualizer & Live Captions ─────────── */}
+      <div className="w-full max-w-xl flex flex-col items-center justify-center my-auto z-10 space-y-5 sm:space-y-6">
         
-        {/* Gemini Visualizer Orb */}
-        <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 flex items-center justify-center shrink-0">
+        {errorMessage && (
+          <div className="w-full px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <p className="flex-1">{errorMessage}</p>
+          </div>
+        )}
+
+        {/* Visualizer Orb */}
+        <div className="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center shrink-0">
           <VoiceVisualizer
-            analyser={analyser}
-            outputAnalyser={outputAnalyser}
+            analyser={analyserRef.current}
+            outputAnalyser={outputAnalyserRef.current}
             isActive={status !== 'idle' && status !== 'error'}
             status={status}
             mode={visualMode}
@@ -428,7 +431,7 @@ export default function DevbhoomiVoiceStudioModal({
           {liveUserText ? (
             <div className="animate-in fade-in duration-200">
               <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 block mb-0.5">
-                You
+                You (Listening...)
               </span>
               <p className="text-sm sm:text-base font-semibold text-white leading-relaxed">
                 "{liveUserText}"
@@ -457,10 +460,10 @@ export default function DevbhoomiVoiceStudioModal({
           ) : (
             <div className="space-y-0.5">
               <p className="text-xs sm:text-sm font-medium text-stone-300">
-                "What is the best trek route to Chopta &amp; Tungnath?"
+                "Chopta ya Kedarnath ke raste ka haal kya hai?"
               </p>
               <p className="text-[11px] text-emerald-400/80 font-normal">
-                Ask anything about mountain passes, weather, homestays, or pilgrim routes.
+                Ask in Hindi or English — Mountain roads, weather, homestays, or trek advice.
               </p>
             </div>
           )}
@@ -471,6 +474,24 @@ export default function DevbhoomiVoiceStudioModal({
             </div>
           )}
         </div>
+
+        {/* Quick Text Input Fallback if microphone not working */}
+        <form onSubmit={handleManualSubmit} className="w-full flex items-center gap-2">
+          <input
+            type="text"
+            value={manualInput}
+            onChange={(e) => setManualInput(e.target.value)}
+            placeholder="Type your question or speak aloud..."
+            className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-stone-100 placeholder:text-stone-500 focus:outline-none focus:border-emerald-500"
+          />
+          <button
+            type="submit"
+            disabled={!manualInput.trim()}
+            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+          >
+            <Send className="w-3.5 h-3.5" />
+          </button>
+        </form>
       </div>
 
       {/* ── 3. Bottom Action Controls Bar ─────────────────────────────────────── */}
@@ -494,8 +515,12 @@ export default function DevbhoomiVoiceStudioModal({
         <button
           type="button"
           onClick={toggleMute}
-          className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] border border-emerald-400/40 transition-all active:scale-95 cursor-pointer"
-          title="Microphone Active"
+          className={`flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-all active:scale-95 cursor-pointer ${
+            isMuted 
+              ? 'bg-stone-700 text-stone-400 border border-stone-600'
+              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] border border-emerald-400/40'
+          }`}
+          title={isMuted ? 'Microphone Muted (Tap to speak)' : 'Microphone Active'}
         >
           <Mic className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
         </button>
