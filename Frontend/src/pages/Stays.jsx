@@ -29,6 +29,8 @@ import { getCardImages } from '../utils/imageHelpers';
 import AltitudeGuardModal from '../components/safety/AltitudeGuardModal';
 import WomenSosModal from '../components/safety/WomenSosModal';
 
+const ITEMS_PER_PAGE = 9;
+
 // ── Curated Real Unsplash High-Res Fallback Photo Collections for Stays ──────────
 const REAL_STAY_PHOTO_BANKS = [
   [

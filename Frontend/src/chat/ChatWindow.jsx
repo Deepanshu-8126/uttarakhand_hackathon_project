@@ -79,9 +79,9 @@ export default function ChatWindow({
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-emerald-800 via-emerald-700 to-teal-600 p-[1px] shadow-sm shrink-0">
             <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center">
-              <Compass size={17} className="text-emerald-800 animate-spin-slow" />
+              <Compass size={17} className="text-emerald-800" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
@@ -90,7 +90,7 @@ export default function ChatWindow({
                 Devbhoomi AI
               </h2>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/90 text-[9px] sm:text-[10px] font-bold text-emerald-800 whitespace-nowrap shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
                 <span className="truncate max-w-[110px] sm:max-w-none">{activeAgent || 'Copilot'}</span>
               </span>
             </div>
