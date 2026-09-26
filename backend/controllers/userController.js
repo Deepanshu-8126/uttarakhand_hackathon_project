@@ -92,6 +92,12 @@ export const updateUserProfile = async (req, res) => {
       user.password = req.body.password;
     }
 
+    // Role safety normalization
+    const VALID_ROLES = ['user', 'citizen', 'tourist', 'trekker', 'local', 'partner', 'owner', 'guide', 'admin'];
+    if (user.role && !VALID_ROLES.includes(user.role)) {
+      user.role = 'user';
+    }
+
     const updatedUser = await user.save();
     res.json({
       success: true,

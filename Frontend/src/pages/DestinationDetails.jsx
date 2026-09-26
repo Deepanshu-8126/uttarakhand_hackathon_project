@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ReviewSection from '../components/ReviewSection';
 import DestinationMap from '../components/DestinationMap';
 import GooglePlacesRadarWidget from '../components/GooglePlacesRadarWidget';
 import DestinationWeatherCard from '../components/widgets/DestinationWeatherCard';
@@ -410,6 +411,10 @@ export default function DestinationDetails() {
             <a href="#activities" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Adventures</a>
             <a href="#radar" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Radar</a>
             <a href="#map" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">GIS Map</a>
+            <a href="#reviews" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition flex items-center gap-1">
+              <Star size={13} className="text-amber-500 fill-amber-500" />
+              <span>Verified Reviews</span>
+            </a>
           </div>
 
           {/* Quick Action Button */}
@@ -1189,7 +1194,10 @@ export default function DestinationDetails() {
         </div>
       )}
 
-      {/* ── 10. Footer ── */}
+      {/* ── 10. Verified Traveler Feedback & Web3 Reviews Section ── */}
+      <ReviewSection targetId={destination._id || destination.slug} targetType="destination" />
+
+      {/* ── 11. Footer ── */}
       <Footer />
 
     </div>
