@@ -32,10 +32,13 @@ import uvicorn
 
 # Load environment
 _HERE = Path(__file__).resolve().parent
-for _candidate in (_HERE / ".env", _HERE.parent / ".env"):
+for _candidate in (
+    _HERE.parent / "voice_try" / "voice-demo" / ".env",
+    _HERE / ".env",
+    _HERE.parent / ".env",
+):
     if _candidate.exists():
-        load_dotenv(_candidate, override=False)
-        break
+        load_dotenv(_candidate, override=True)
 
 from google import genai
 from google.genai import types
