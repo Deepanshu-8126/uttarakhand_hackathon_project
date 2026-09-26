@@ -440,10 +440,21 @@ Respond as Devbhoomi Companion — helpful, detailed, markdown-formatted."""
 
 @app.post("/api/voice/ask")
 async def ask_voice_agent(req: VoiceQueryRequest):
-    """Direct HTTP voice query endpoint returning authentic Gemini Live studio audio."""
+    """Direct HTTP voice query endpoint returning authentic Gemini Live studio audio with sub-5ms cache lookup."""
     q = req.query.strip()
     if not q:
         return {"response": "Please speak or type a question.", "tools_used": [], "audio_base64": ""}
+
+    # 0. Check instant cache (<5ms)
+    cached = cache_get_response(q)
+    if cached:
+        logger.info(f"[ask_voice_agent] <5ms cache hit for '{q}'")
+        return {
+            "response": cached[0],
+            "tools_used": ["in_memory_cache"],
+            "engine": "gemini_live_aoede_cached",
+            "audio_base64": cached[1],
+        }
 
     tools_used = []
     enriched_facts = []
@@ -512,6 +523,10 @@ Respond as the Devbhoomi Voice Companion in 1-3 spoken, clear, natural sentences
                 clean_text = "Namaste! Main aapka Devbhoomi companion hoon. Kripya apna prashna dobara poochein."
 
         audio_b64 = await synthesize_neural_voice(clean_text, req.lang)
+
+    # Save to cache for instant future hits
+    if clean_text and audio_b64:
+        cache_set_response(q, clean_text, audio_b64)
 
     return {
         "response": clean_text,
@@ -653,6 +668,9 @@ async def stream_gemini_live_to_ws(
                     clean_text = " ".join(lines) if lines else raw_text
                 clean_text = clean_text.replace("*", "").replace("#", "").strip()
 
+                if clean_text and wav_b64:
+                    cache_set_response(prompt, clean_text, wav_b64)
+
                 await safe_send(websocket, {
                     "type": "turn_complete",
                     "text": clean_text,
@@ -690,6 +708,9 @@ async def stream_gemini_live_to_ws(
             fb_text = "Namaste! Main aapka Devbhoomi voice companion hoon. Kripya apna prashna dobara poochein."
 
         fb_audio = await synthesize_neural_voice(fb_text, lang)
+
+        if fb_text and fb_audio:
+            cache_set_response(prompt, fb_text, fb_audio)
 
         await safe_send(websocket, {
             "type": "turn_complete",
@@ -738,6 +759,18 @@ async def websocket_voice_endpoint(websocket: WebSocket):
                 lang = msg.get("lang", "en")
 
                 await websocket.send_json({"type": "status", "status": "processing"})
+
+                # Instant sub-5ms cache check
+                cached = cache_get_response(query_text)
+                if cached:
+                    logger.info(f"[ws] <5ms instant cache hit for '{query_text}'")
+                    await safe_send(websocket, {
+                        "type": "turn_complete",
+                        "text": cached[0],
+                        "audio_base64": cached[1],
+                    })
+                    await websocket.send_json({"type": "status", "status": "idle"})
+                    continue
 
                 # Ground with Devbhoomi database tools
                 enriched_facts = []
@@ -793,6 +826,18 @@ async def websocket_voice_endpoint(websocket: WebSocket):
                     if user_query and "SILENT" not in user_query.upper():
                         # Immediately send user transcript so UI shows it in 300ms!
                         await websocket.send_json({"type": "user_transcript", "text": user_query})
+
+                        # Instant sub-5ms cache check on user transcript
+                        cached = cache_get_response(user_query)
+                        if cached:
+                            logger.info(f"[ws/audio] <5ms instant cache hit for transcribed '{user_query}'")
+                            await safe_send(websocket, {
+                                "type": "turn_complete",
+                                "text": cached[0],
+                                "audio_base64": cached[1],
+                            })
+                            await websocket.send_json({"type": "status", "status": "idle"})
+                            continue
 
                         # Ground with Devbhoomi DB
                         enriched_facts = []
