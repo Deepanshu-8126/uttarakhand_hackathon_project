@@ -492,6 +492,7 @@ export default function LoginPage() {
                     name="identity"
                     type="text"
                     required
+                    autoComplete="username"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder={isPartner ? 'partner@business.com or +91 98765 43210' : 'name@example.com or +91 98765 43210'}
@@ -525,6 +526,7 @@ export default function LoginPage() {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     required
+                    autoComplete={isRegister ? 'new-password' : 'current-password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"

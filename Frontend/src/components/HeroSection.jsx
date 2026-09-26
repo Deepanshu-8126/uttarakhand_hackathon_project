@@ -225,7 +225,7 @@ const CURATED_EXPERIENCES = [
     subtitle: 'Vibrant alpine meadows blooming with endemic wildflowers.',
     src: '/assets/yatra_sarthi/valley_of_flowers.jpg',
     fallbackSrc: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=85',
-    link: '/destinations/valley-of-flowers',
+    link: '/destinations/valley-of-flowers-national-park',
     featured: false
   },
   {

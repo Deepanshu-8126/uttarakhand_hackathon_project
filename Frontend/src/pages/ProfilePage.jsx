@@ -301,9 +301,13 @@ const ProfilePage = () => {
     ? currentUser.name.split(' ').map((n) => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
     : 'U';
 
-  const avatarUrl =
+  const rawAvatarUrl =
     currentUser?.profileImage?.url ||
     (typeof currentUser?.profileImage === 'string' ? currentUser?.profileImage : null);
+
+  const avatarUrl = rawAvatarUrl && rawAvatarUrl.startsWith('http:')
+    ? rawAvatarUrl.replace('http:', 'https:')
+    : rawAvatarUrl;
 
   return (
     <div className="min-h-screen bg-[#faf9f6] pt-4 sm:pt-6 pb-28 sm:pb-16 px-3 sm:px-6 lg:px-8">
