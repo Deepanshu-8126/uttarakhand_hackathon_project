@@ -54,22 +54,26 @@ function generateLocalGroundedResponse(message = '') {
  * Send message with 3-Tier fallback logic.
  */
 export async function sendAgentMessage({ message, history, pageContext, chatId, tripId }) {
-  // Tier 1: Try Python AI bridge (Port 8765 web_bridge or Port 8000 unified app)
-  for (const port of [8765, 8000]) {
-    try {
-      const url = `http://localhost:${port}/api/chat`;
-      const bridgeRes = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, history: history || [], pageContext, tripContext: pageContext }),
-        signal: AbortSignal.timeout(2500)
-      });
-      if (bridgeRes.ok) {
-        const data = await bridgeRes.json();
-        if (data && data.response) return data;
+  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
+  // Tier 1: Try Python AI bridge only in local development
+  if (!isHttps) {
+    for (const port of [8765, 8000]) {
+      try {
+        const url = `http://localhost:${port}/api/chat`;
+        const bridgeRes = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history: history || [], pageContext, tripContext: pageContext }),
+          signal: AbortSignal.timeout(2000)
+        });
+        if (bridgeRes.ok) {
+          const data = await bridgeRes.json();
+          if (data && data.response) return data;
+        }
+      } catch (err) {
+        // Port unavailable, try next
       }
-    } catch (err) {
-      // Port unavailable, try next
     }
   }
 
@@ -111,21 +115,25 @@ export async function streamAgentMessage({ message, history, pageContext, chatId
   let text = '';
   let responseData = null;
 
-  // Tier 1: Python Bridge
-  try {
-    const bridgeRes = await fetch(`${BRIDGE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, history: history || [], pageContext }),
-      signal: signal || AbortSignal.timeout(2000)
-    });
-    if (bridgeRes.ok) {
-      const data = await bridgeRes.json();
-      responseData = data?.response;
-      text = responseData?.message || '';
+  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
+  // Tier 1: Python Bridge (local only)
+  if (!isHttps && BRIDGE_URL && !BRIDGE_URL.includes('localhost')) {
+    try {
+      const bridgeRes = await fetch(`${BRIDGE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history: history || [], pageContext }),
+        signal: signal || AbortSignal.timeout(2000)
+      });
+      if (bridgeRes.ok) {
+        const data = await bridgeRes.json();
+        responseData = data?.response;
+        text = responseData?.message || '';
+      }
+    } catch (err) {
+      // Tier 1 bypass
     }
-  } catch (err) {
-    // Tier 1 bypass
   }
 
   // Tier 2: Express Backend API

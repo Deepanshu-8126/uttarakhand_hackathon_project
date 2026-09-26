@@ -57,9 +57,6 @@ function App() {
                 <ErrorBoundary fallback={null}>
                   <GlobalAiCopilotLauncher />
                 </ErrorBoundary>
-                <ErrorBoundary fallback={null}>
-                  <SOSFloatingButton />
-                </ErrorBoundary>
                 <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/explore" element={<Home />} />

@@ -6,6 +6,7 @@ import {
 import { VoiceVisualizer } from './VoiceVisualizer';
 import { audioProcessor } from '../../services/audioProcessor';
 import { liveClient } from '../../services/geminiLiveClient';
+import { speakText, stopSpeaking } from '../../utils/speechSynthesis';
 
 export default function DevbhoomiVoiceStudioModal({
   isOpen = false,
@@ -275,14 +276,15 @@ export default function DevbhoomiVoiceStudioModal({
             setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
             setStatus('speaking');
 
-            if ('speechSynthesis' in window && !isSpeakerMuted) {
-              window.speechSynthesis.cancel();
-              const utt = new SpeechSynthesisUtterance(cleanReply);
-              utt.lang = 'hi-IN';
-              utt.rate = 1.0;
-              utt.onend = () => setStatus('listening');
-              utt.onerror = () => setStatus('listening');
-              window.speechSynthesis.speak(utt);
+            if (!isSpeakerMuted) {
+              speakText(cleanReply, {
+                lang: 'hi-IN',
+                rate: 1.05,
+                pitch: 1.0,
+                onStart: () => setStatus('speaking'),
+                onEnd: () => setStatus('listening'),
+                onError: () => setStatus('listening')
+              });
             } else {
               setTimeout(() => setStatus('listening'), 2000);
             }
@@ -315,9 +317,7 @@ export default function DevbhoomiVoiceStudioModal({
       try { webSpeechRecRef.current.stop(); } catch (e) {}
       webSpeechRecRef.current = null;
     }
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopSpeaking();
     liveClient.disconnect();
     audioProcessor.destroy();
     setAnalyser(null);
