@@ -5,6 +5,12 @@ import '../models/destination.dart';
 import '../models/stay.dart';
 import '../services/api_service.dart';
 import 'destination_detail_screen.dart';
+import 'spiritual_screen.dart';
+import 'culture_screen.dart';
+import 'activities_screen.dart';
+import 'guides_screen.dart';
+import 'sos_safety_screen.dart';
+import 'checkout_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int) onNavigateTab;
@@ -85,8 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
+              children: const [
+                Text(
                   'DISCOVER',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1, color: AppTheme.textDark),
                 ),
@@ -100,11 +106,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
+            tooltip: 'Emergency SOS',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SosSafetyScreen())),
+          ),
+          IconButton(
             icon: const Icon(Icons.auto_awesome, color: AppTheme.forestGreen),
             tooltip: 'AI Copilot',
-            onPressed: () => widget.onNavigateTab(4), // Navigate to AI tab
+            onPressed: () => widget.onNavigateTab(4),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
       body: isLoading
@@ -117,12 +128,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Hero Banner Carousel (Exact match to Website Hero) ──
+                    // ── Hero Banner Carousel ──
                     _buildHeroBanner(),
 
                     const SizedBox(height: 16),
 
-                    // ── Search Bar (Clean Website Pill) ──────────────────────
+                    // ── Quick Category Action Badges ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          _buildQuickActionButton('Spiritual', Icons.temple_hindu_outlined, const Color(0xFFFEF3C7), const Color(0xFF92400E), () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const SpiritualScreen()));
+                          }),
+                          const SizedBox(width: 8),
+                          _buildQuickActionButton('Culture', Icons.palette_outlined, const Color(0xFFE0E7FF), const Color(0xFF3730A3), () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const CultureScreen()));
+                          }),
+                          const SizedBox(width: 8),
+                          _buildQuickActionButton('Adventures', Icons.kayaking_outlined, const Color(0xFFDCFCE7), const Color(0xFF166534), () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivitiesScreen()));
+                          }),
+                          const SizedBox(width: 8),
+                          _buildQuickActionButton('Guides', Icons.person_pin_outlined, const Color(0xFFF3E8FF), const Color(0xFF6B21A8), () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const GuidesScreen()));
+                          }),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Search Bar ───────────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Container(
@@ -159,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 14),
 
-                    // ── Category Filter Pills (Exact Website FilterPills) ─────
+                    // ── Category Filter Pills ────────────────────────────────
                     SizedBox(
                       height: 36,
                       child: ListView.builder(
@@ -203,12 +240,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 18),
 
-                    // ── The Devbhoomi Trust Standard (Exact match to Website ProblemStatement) ──
+                    // ── The Devbhoomi Trust Standard ─────────────────────────
                     _buildDevbhoomiTrustBanner(),
 
                     const SizedBox(height: 22),
 
-                    // ── Destinations Section (Exact match to Website ExploreSection) ──
+                    // ── Destinations Section ─────────────────────────────────
                     _buildSectionHeader('Explore Uttarakhand', 'Pristine valleys, sacred shrines, and authentic mountain life', () {}),
                     const SizedBox(height: 12),
                     _buildDestinationsGrid(),
@@ -230,7 +267,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 28),
 
                     // ── Verified Guides Section ──────────────────────────────
-                    _buildSectionHeader('Meet Local Guides', 'Explore Uttarakhand with someone who knows it.', () {}),
+                    _buildSectionHeader('Meet Local Guides', 'Explore Uttarakhand with someone who knows it.', () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const GuidesScreen()));
+                    }),
                     const SizedBox(height: 12),
                     _buildGuidesList(),
 
@@ -242,6 +281,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildQuickActionButton(String label, IconData icon, Color bgColor, Color fgColor, VoidCallback onTap) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: fgColor.withOpacity(0.2)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: fgColor, size: 20),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: fgColor)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeroBanner() {
     final heroSlides = [
       {
@@ -250,13 +313,6 @@ class _HomeScreenState extends State<HomeScreen> {
         'tag': 'GPS VERIFIED • LIVE CORRIDOR',
         'image': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
         'dest': 'Nainital & Kumaon Lakes',
-      },
-      {
-        'title': 'ADI KAILASH & OM PARVAT',
-        'subtitle': 'Ancient Shiva Pilgrimage at 5,945m',
-        'tag': 'HIGH ALTITUDE TREK • ESCROW READY',
-        'image': 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=80',
-        'dest': 'Pithoragarh Border Trails',
       },
     ];
 
@@ -671,7 +727,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           InkWell(
-                            onTap: () => widget.onNavigateTab(1),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CheckoutScreen(
+                                    itemType: 'Bike Rental (3-Layer Verified)',
+                                    itemName: r.name,
+                                    basePrice: r.pricePerDay,
+                                  ),
+                                ),
+                              );
+                            },
                             borderRadius: BorderRadius.circular(999),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

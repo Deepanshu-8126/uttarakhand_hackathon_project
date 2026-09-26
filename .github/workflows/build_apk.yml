@@ -55,6 +55,9 @@ jobs:
       - name: Get Flutter Packages
         run: flutter pub get
 
+      - name: Verify Code Quality & Analyze
+        run: flutter analyze
+
       - name: Build Android APKs (Release & Debug)
         run: |
           flutter build apk --release --no-tree-shake-icons
@@ -64,18 +67,18 @@ jobs:
         run: |
           mkdir -p ../dist-apk
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.2.apk
+            cp build/app/outputs/flutter-apk/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.4.apk
           elif [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
-            cp build/app/outputs/apk/release/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.2.apk
+            cp build/app/outputs/apk/release/app-release.apk ../dist-apk/Discover-Uttarakhand-v1.0.4.apk
           fi
           if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
-            cp build/app/outputs/flutter-apk/app-debug.apk ../dist-apk/Discover-Uttarakhand-v1.0.2-Debug.apk
+            cp build/app/outputs/flutter-apk/app-debug.apk ../dist-apk/Discover-Uttarakhand-v1.0.4-Debug.apk
           fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Discover-Uttarakhand-Android-APK-v1.0.2
+          name: Discover-Uttarakhand-Android-APK-v1.0.4
           path: dist-apk/*.apk
           if-no-files-found: error
           retention-days: 30
@@ -84,20 +87,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.2-apk
-          name: "Discover Uttarakhand Android APK v1.0.2 (Fresh Build)"
+          tag_name: v1.0.4-apk
+          name: "Discover Uttarakhand Android APK v1.0.4 (Full Web Parity + Spatial GIS & Emergency SOS)"
           body: |
-            ## 🏔️ Discovery Uttarakhand Android App v1.0.2
+            ## 🏔️ Discovery Uttarakhand Android App v1.0.4
 
-            **Direct 1-Click APK Download** (Fresh Build with AI Copilot + Voice Demo + Technical Rental Specs):
-            - **[Discover-Uttarakhand-v1.0.2.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.2-apk/Discover-Uttarakhand-v1.0.2.apk)** (Release APK - Recommended)
-            - **[Discover-Uttarakhand-v1.0.2-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.2-apk/Discover-Uttarakhand-v1.0.2-Debug.apk)** (Debug APK - Works on all developer devices)
+            **Direct 1-Click APK Download**:
+            - **[Discover-Uttarakhand-v1.0.4.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.4-apk/Discover-Uttarakhand-v1.0.4.apk)** (Release APK - High Performance)
+            - **[Discover-Uttarakhand-v1.0.4-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.4-apk/Discover-Uttarakhand-v1.0.4-Debug.apk)** (Debug APK - Compatible with all test devices)
             
-            ### Instructions:
-            1. Uninstall any older app version from your phone if installed.
-            2. Download `Discover-Uttarakhand-v1.0.2.apk`.
-            3. Tap **Install / Allow from this source**.
-            4. Open the app!
+            ### What's Inside:
+            - **Full Web Parity**: Spiritual, Culture, Activities, Mountain Stays, 3-Layer Verified Bike Rentals, and Local Mountain Guides.
+            - **Emergency Mountain SOS**: 1-second hold panic button, real-time GPS telemetry, and SDRF instant dispatch with one-tap WhatsApp sharing.
+            - **Spatial GIS Mountain Map**: Interactive relief contours, corridor live statuses, and one-tap escrow booking.
+            - **Intelligent Tech Suite**: AMS altitude safeguards, offline QR escrow vouchers, and Pahadi Coins rewards.
           files: dist-apk/*.apk
           draft: false
           prerelease: false
@@ -106,8 +109,8 @@ jobs:
 
       - name: Generate Release Notes & Summary
         run: |
-          echo "### 🚀 Discovery Uttarakhand Android APK v1.0.2 Built Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Discovery Uttarakhand Android APK v1.0.4 Built Successfully!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **App Version**: 1.0.2+3" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Version**: 1.0.4+5" >> $GITHUB_STEP_SUMMARY
           echo "- **Platform**: Android (APK)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Direct Download**: [Download Discover-Uttarakhand-v1.0.2.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.2-apk/Discover-Uttarakhand-v1.0.2.apk)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Direct Download**: [Download Discover-Uttarakhand-v1.0.4.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.4-apk/Discover-Uttarakhand-v1.0.4.apk)" >> $GITHUB_STEP_SUMMARY
