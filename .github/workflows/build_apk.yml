@@ -69,19 +69,19 @@ jobs:
         run: |
           mkdir -p dist-apk
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk dist-apk/Discover-Uttarakhand-v1.0.4.apk
+            cp build/app/outputs/flutter-apk/app-release.apk dist-apk/Discover-Uttarakhand-v1.0.5.apk
           elif [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
-            cp build/app/outputs/apk/release/app-release.apk dist-apk/Discover-Uttarakhand-v1.0.4.apk
+            cp build/app/outputs/apk/release/app-release.apk dist-apk/Discover-Uttarakhand-v1.0.5.apk
           fi
           if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
-            cp build/app/outputs/flutter-apk/app-debug.apk dist-apk/Discover-Uttarakhand-v1.0.4-Debug.apk
+            cp build/app/outputs/flutter-apk/app-debug.apk dist-apk/Discover-Uttarakhand-v1.0.5-Debug.apk
           fi
           ls -la dist-apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Discover-Uttarakhand-Android-APK
+          name: Discover-Uttarakhand-Android-APK-v1.0.5
           path: mobile_app/dist-apk/*.apk
           if-no-files-found: warn
           retention-days: 30
@@ -90,19 +90,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v1.0.4-apk
-          name: "Discover Uttarakhand Android APK v1.0.4"
+          tag_name: v1.0.5-apk
+          name: "Discover Uttarakhand Android APK v1.0.5 (Live Release)"
           body: |
-            ## 🏔️ Discovery Uttarakhand Android Mobile App (APK)
+            ## 🏔️ Discovery Uttarakhand Android Mobile App (APK v1.0.5)
 
             ### 📲 Direct APK Download Links:
-            - **[Discover-Uttarakhand-v1.0.4.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.4-apk/Discover-Uttarakhand-v1.0.4.apk)** (Universal Release APK - Recommended)
-            - **[Discover-Uttarakhand-v1.0.4-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.4-apk/Discover-Uttarakhand-v1.0.4-Debug.apk)** (Debug APK - Compatible with all test devices)
+            - **[Discover-Uttarakhand-v1.0.5.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.5-apk/Discover-Uttarakhand-v1.0.5.apk)** (Universal Release APK - Recommended)
+            - **[Discover-Uttarakhand-v1.0.5-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.5-apk/Discover-Uttarakhand-v1.0.5-Debug.apk)** (Debug APK - Compatible with all test devices)
 
-            ### Features:
+            ### What's Inside v1.0.5:
             - 🚨 **Mountain Emergency SOS**: 1-second hold panic button, real-time GPS telemetry, and SDRF instant dispatch with one-tap WhatsApp sharing.
             - 🗺️ **Spatial GIS Mountain Map**: Interactive relief contours, corridor live statuses, and one-tap escrow booking.
-            - 🎙️ **Gemini Live AI Voice Companion**: Real-time mountain intelligence and high-altitude advice.
+            - 🎙️ **Gemini Live AI Voice Companion**: Real-time mountain intelligence, voice synthesizer, and high-altitude advice.
             - 🎟️ **Offline Escrow QR Pass**: Secure blockchain-backed verified booking vouchers.
           files: mobile_app/dist-apk/*.apk
           draft: false

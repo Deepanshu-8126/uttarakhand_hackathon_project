@@ -177,6 +177,15 @@ class ProfileScreen extends StatelessWidget {
                 );
               }
             }),
+
+            const SizedBox(height: 15),
+            const Center(
+              child: Text(
+                '🏔️ Discovery Uttarakhand v1.0.5 (Build 6 • Live Release)',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
