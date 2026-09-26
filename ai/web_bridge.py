@@ -145,8 +145,6 @@ async def synthesize_gemini_live_voice(
 
         config = types.LiveConnectConfig(
             response_modalities=[types.Modality.AUDIO],
-            tools=[DEVBHOOMI_TOOLS],
-            output_audio_transcription=types.AudioTranscriptionConfig(),
             speech_config=types.SpeechConfig(
                 voice_config=types.VoiceConfig(
                     prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=LIVE_VOICE_NAME)
@@ -161,7 +159,9 @@ async def synthesize_gemini_live_voice(
 
         async with asyncio.timeout(12.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
-                await session.send(input=prompt, end_of_turn=True)
+                await session.send_client_content(
+                    turns=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
+                )
                 async for raw in session.receive():
                     tool_call = getattr(raw, "tool_call", None)
                     if tool_call and getattr(tool_call, "function_calls", None):
@@ -534,7 +534,6 @@ async def stream_gemini_live_to_ws(
 
     config = types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
-        tools=[DEVBHOOMI_TOOLS],
         output_audio_transcription=types.AudioTranscriptionConfig(),
         speech_config=types.SpeechConfig(
             voice_config=types.VoiceConfig(
@@ -552,7 +551,9 @@ async def stream_gemini_live_to_ws(
         try:
             async with asyncio.timeout(12.0):
                 async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
-                    await session.send(input=prompt, end_of_turn=True)
+                    await session.send_client_content(
+                        turns=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
+                    )
                     async for raw in session.receive():
                         tool_call = getattr(raw, "tool_call", None)
                         if tool_call and getattr(tool_call, "function_calls", None):
