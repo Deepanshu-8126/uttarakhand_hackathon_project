@@ -43,10 +43,10 @@ export default function ChatInput({
 
   return (
     <div 
-      className="relative w-full max-w-4xl mx-auto px-3 sm:px-4 py-2.5"
+      className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 py-3"
       style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}
     >
-      <div className="relative rounded-2xl bg-white border border-stone-200/90 focus-within:border-emerald-600 focus-within:ring-3 focus-within:ring-emerald-500/15 shadow-md shadow-stone-200/50 transition-all duration-200">
+      <div className="relative rounded-2xl bg-white border border-stone-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10 shadow-xs transition-all duration-200">
         <textarea
           ref={textareaRef}
           id="du-ai-copilot-input"
@@ -68,7 +68,7 @@ export default function ChatInput({
               type="button"
               onClick={onOpenVoice}
               title="Speak with Devbhoomi Live Voice"
-              className="group px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 text-emerald-800 flex items-center gap-1.5 text-[11px] sm:text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs"
+              className="group px-3 py-1 rounded-full bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 flex items-center gap-1.5 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs"
             >
               <Mic size={13} className="text-emerald-700 group-hover:scale-110 transition-transform" />
               <span>Voice</span>
@@ -77,7 +77,7 @@ export default function ChatInput({
 
           {/* Right: Submit or Stop Button */}
           <div className="flex items-center gap-2 pointer-events-auto">
-            <span className="hidden sm:inline text-[10px] text-stone-400 font-mono">
+            <span className="hidden sm:inline text-[11px] text-stone-400 font-sans">
               ↵ Enter
             </span>
 
@@ -86,9 +86,9 @@ export default function ChatInput({
                 type="button"
                 onClick={onStop}
                 title="Stop response"
-                className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-all active:scale-95 cursor-pointer shadow-2xs"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-all active:scale-95 cursor-pointer flex items-center justify-center shadow-2xs"
               >
-                <Square size={13} className="fill-current" />
+                <Square size={12} className="fill-current" />
               </button>
             ) : (
               <button
@@ -96,31 +96,31 @@ export default function ChatInput({
                 disabled={!text.trim() || isLoading}
                 onClick={handleSend}
                 title="Send query"
-                className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all duration-200 active:scale-95 flex items-center justify-center ${
                   text.trim() && !isLoading
-                    ? 'bg-[#0f3d2e] hover:bg-[#165541] text-white shadow-md shadow-emerald-950/20 cursor-pointer border border-emerald-800/40'
-                    : 'bg-stone-100 text-stone-300 cursor-not-allowed border border-stone-200'
+                    ? 'bg-[#0a3e2b] hover:bg-[#12583e] text-white shadow-xs cursor-pointer'
+                    : 'bg-stone-100 text-stone-300 cursor-not-allowed border border-stone-200/80'
                 }`}
               >
-                <ArrowUp size={15} className={text.trim() ? "text-white" : "text-stone-300"} />
+                <ArrowUp size={14} className={text.trim() ? "text-white" : "text-stone-300"} />
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Quick Suggestion Chips matching the HTML mockup */}
-      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pt-2 px-0.5">
+      {/* Quick Suggestion Chips matching Image 2 */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2.5 px-0.5">
         {[
-          { icon: '🪷', label: '3-Day Rishikesh spiritual retreat', prompt: 'Suggest a 3-day spiritual retreat in Rishikesh with Ganga Aarti & meditation ashrams' },
-          { icon: '🏔️', label: '4x4 Offbeat road trip to Munsiyari', prompt: 'Suggest a 4-day scenic road trip from Dehradun to Munsiyari with verified 4x4 Thar rental and boutique homestays.' },
-          { icon: '🏡', label: 'Budget homestays near Valley of Flowers', prompt: 'Find verified budget Pahadi homestays near Valley of Flowers & Govindghat under ₹2,000' }
+          { icon: '🌸', label: '3-Day Rishikesh spiritual retreat', prompt: 'Suggest a 3-day spiritual retreat in Rishikesh with Ganga Aarti & meditation ashrams' },
+          { icon: '🏔️', label: '4×4 Offbeat road trip to Munsiyari', prompt: 'Suggest a 4-day scenic road trip from Dehradun to Munsiyari with verified 4x4 Thar rental and boutique homestays.' },
+          { icon: '🏡', label: 'Verified Homestays in Chopta', prompt: 'Find verified budget Pahadi homestays near Chopta & Tungnath under ₹2,000' }
         ].map((chip, idx) => (
           <button
             key={idx}
             type="button"
             onClick={() => onSend(chip.prompt)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100/90 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-300 border border-stone-200/80 text-[11px] sm:text-xs font-medium text-stone-600 transition-all shrink-0 cursor-pointer active:scale-95 shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-50 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-200 border border-stone-200/80 text-[11px] sm:text-xs font-medium text-stone-600 transition-all shrink-0 cursor-pointer active:scale-95 shadow-2xs whitespace-nowrap"
           >
             <span>{chip.icon}</span>
             <span>{chip.label}</span>
