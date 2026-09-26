@@ -62,32 +62,74 @@ export class AudioProcessor {
     this.analyserNode.fftSize = 256;
     this.analyserNode.smoothingTimeConstant = 0.8;
 
-    // Buffer size 2048
-    this.processorNode = this.micCtx.createScriptProcessor(2048, 1, 1);
-
     this.sourceNode.connect(this.analyserNode);
-    this.analyserNode.connect(this.processorNode);
-    this.processorNode.connect(this.micCtx.destination);
 
     const inSampleRate = this.micCtx.sampleRate;
     const targetSampleRate = 16000;
 
-    this.processorNode.onaudioprocess = (e) => {
-      const inputData = e.inputBuffer.getChannelData(0);
-      
-      // High-quality Linear Interpolation Downsampling to 16000 Hz
-      const samples16k = this.downsampleTo16kHz(inputData, inSampleRate, targetSampleRate);
-      const pcm16 = this.floatTo16BitPCM(samples16k);
-      const base64Chunk = this.arrayBufferToBase64(pcm16.buffer);
-      if (typeof onPcmChunk === 'function') {
-        onPcmChunk(base64Chunk);
+    // Use modern AudioWorklet to avoid ScriptProcessorNode deprecation warnings
+    let workletSuccess = false;
+    if (this.micCtx.audioWorklet) {
+      try {
+        const workletCode = `
+          class MicCaptureProcessor extends AudioWorkletProcessor {
+            process(inputs, outputs, parameters) {
+              const input = inputs[0];
+              if (input && input[0]) {
+                this.port.postMessage(input[0]);
+              }
+              return true;
+            }
+          }
+          registerProcessor('mic-capture-processor', MicCaptureProcessor);
+        `;
+        const blob = new Blob([workletCode], { type: 'application/javascript' });
+        const workletUrl = URL.createObjectURL(blob);
+        await this.micCtx.audioWorklet.addModule(workletUrl);
+        URL.revokeObjectURL(workletUrl);
+
+        this.workletNode = new AudioWorkletNode(this.micCtx, 'mic-capture-processor');
+        this.workletNode.port.onmessage = (event) => {
+          const inputData = event.data;
+          const samples16k = this.downsampleTo16kHz(inputData, inSampleRate, targetSampleRate);
+          const pcm16 = this.floatTo16BitPCM(samples16k);
+          const base64Chunk = this.arrayBufferToBase64(pcm16.buffer);
+          if (typeof onPcmChunk === 'function') {
+            onPcmChunk(base64Chunk);
+          }
+        };
+
+        this.analyserNode.connect(this.workletNode);
+        this.workletNode.connect(this.micCtx.destination);
+        workletSuccess = true;
+      } catch (e) {
+        workletSuccess = false;
       }
-    };
+    }
+
+    if (!workletSuccess) {
+      this.processorNode = this.micCtx.createScriptProcessor(2048, 1, 1);
+      this.analyserNode.connect(this.processorNode);
+      this.processorNode.connect(this.micCtx.destination);
+      this.processorNode.onaudioprocess = (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        const samples16k = this.downsampleTo16kHz(inputData, inSampleRate, targetSampleRate);
+        const pcm16 = this.floatTo16BitPCM(samples16k);
+        const base64Chunk = this.arrayBufferToBase64(pcm16.buffer);
+        if (typeof onPcmChunk === 'function') {
+          onPcmChunk(base64Chunk);
+        }
+      };
+    }
 
     return this.analyserNode;
   }
 
   stopMicCapture() {
+    if (this.workletNode) {
+      this.workletNode.disconnect();
+      this.workletNode = null;
+    }
     if (this.processorNode) {
       this.processorNode.disconnect();
       this.processorNode = null;

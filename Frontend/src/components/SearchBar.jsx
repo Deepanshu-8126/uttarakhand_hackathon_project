@@ -265,8 +265,11 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
         </div>
 
         <div className="flex-1 min-w-0">
+          <label htmlFor="explore-main-search" className="sr-only">Search destinations, shrines, bugyals</label>
           <input
             ref={inputRef}
+            id="explore-main-search"
+            name="searchQuery"
             type="text"
             value={value}
             onChange={onChange}

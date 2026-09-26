@@ -53,6 +53,24 @@ function saveLocalSession(sessionObj) {
   } catch (e) {}
 }
 
+function isValidJwt(token) {
+  if (!token || typeof token !== 'string') return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    localStorage.removeItem('token');
+    return false;
+  }
+}
+
 const useChatStore = create((set, get) => ({
   chats: [],
   activeChat: null,
@@ -69,8 +87,8 @@ const useChatStore = create((set, get) => ({
     const localChats = getLocalSessions();
     const token = localStorage.getItem('token');
 
-    // If user is not logged in, rely solely on local guest sessions without triggering 401 error
-    if (!token) {
+    // If user is not logged in or token is expired, rely solely on local guest sessions without triggering 401 error
+    if (!token || !isValidJwt(token)) {
       set({ chats: localChats, loading: false });
       const activeId = sessionStorage.getItem("du_active_session_id");
       if (activeId && !get().activeChat) {
@@ -123,7 +141,7 @@ const useChatStore = create((set, get) => ({
     }
 
     const token = localStorage.getItem('token');
-    if (!token) {
+    if (!token || !isValidJwt(token)) {
       const localChats = getLocalSessions();
       const found = localChats.find(c => c._id === id);
       if (found) {
