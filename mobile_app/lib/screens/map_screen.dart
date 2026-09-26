@@ -417,7 +417,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                               color: isSatelliteMode ? Colors.white : const Color(0xFF0F172A),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search 129+ Uttarakhand places, peaks, valleys...',
+                              hintText: 'Search 106+ Uttarakhand destinations, peaks, valleys...',
                               hintStyle: TextStyle(
                                 fontSize: 12,
                                 color: isSatelliteMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8),

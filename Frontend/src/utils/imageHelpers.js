@@ -4,28 +4,40 @@
  * 100% High-Speed Cloudflare CDN & Verified Local Assets (Zero Wikimedia 429/403 blocks).
  */
 
+// ── Helper to prefix public assets with Vite BASE_URL for GitHub Pages ───
+export const getAssetUrl = (path) => {
+  if (!path || typeof path !== 'string') return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path;
+  }
+  const base = import.meta.env.BASE_URL || '/';
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  const cleanBase = base.endsWith('/') ? base : `${base}/`;
+  return `${cleanBase}${cleanPath}`;
+};
+
 // ── 1. Verified Distinct Destination Image Directory ───────────────────────────
 // 100% Unique, authentic high-resolution photography for every prominent Uttarakhand destination
 export const DESTINATION_NAMED_IMAGES = {
   // Sacred Char Dham & Panch Kedar
-  'kedarnath': '/assets/yatra_sarthi/kedarnath.jpg',
-  'badrinath': '/assets/yatra_sarthi/badrinath.jpg',
+  'kedarnath': getAssetUrl('/assets/yatra_sarthi/kedarnath.jpg'),
+  'badrinath': getAssetUrl('/assets/yatra_sarthi/badrinath.jpg'),
   'gangotri': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
   'yamunotri': 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80',
-  'tungnath': '/assets/yatra_sarthi/chopta.jpg',
+  'tungnath': getAssetUrl('/assets/yatra_sarthi/chopta.jpg'),
   'rudranath': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
   'madhyamaheshwar': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
   'kalpeshwar': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
   'hemkund sahib': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
   'hemkund': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-  'jageshwar': '/assets/jageshwar.jpg',
+  'jageshwar': getAssetUrl('/assets/jageshwar.jpg'),
   'kainchi dham': 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80',
   'baijnath': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=80',
   'someshwar': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=80',
 
   // River Ghats & Yoga Gateways
-  'rishikesh': '/assets/yatra_sarthi/rishikesh.jpg',
-  'haridwar': '/assets/yatra_sarthi/haridwar.jpg',
+  'rishikesh': getAssetUrl('/assets/yatra_sarthi/rishikesh.jpg'),
+  'haridwar': getAssetUrl('/assets/yatra_sarthi/haridwar.jpg'),
   'devprayag': 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80',
   'rudraprayag': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
   'karnaprayag': 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80',
@@ -33,57 +45,50 @@ export const DESTINATION_NAMED_IMAGES = {
   'vishnuprayag': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
 
   // High-Altitude Meadows & Treks
-  'valley of flowers': '/assets/yatra_sarthi/valley_of_flowers.jpg',
-  'auli': '/assets/yatra_sarthi/auli.jpg',
-  'chopta': '/assets/destinations/chopta_snow_camp.jpg',
-  'tungnath': '/assets/destinations/tungnath_summit.jpg',
-  'dayara bugyal': '/assets/destinations/uttarakhand_bugyal_panoramic.jpg',
-  'kuari pass': '/assets/destinations/chandrashila_sunset_snow.jpg',
-  'roopkund': '/assets/destinations/brahmatal_snow_trek.jpg',
-  'kedarkantha': '/assets/destinations/kedarkantha_summit_view.jpg',
-  'har ki dun': '/assets/destinations/himalayan_basecamp_village.jpg',
-  'adi kailash': '/assets/destinations/adi_kailash.jpg',
-  'om parvat': '/assets/destinations/om_parvat.jpg',
+  'valley of flowers': getAssetUrl('/assets/yatra_sarthi/valley_of_flowers.jpg'),
+  'auli': getAssetUrl('/assets/yatra_sarthi/auli.jpg'),
+  'chopta': getAssetUrl('/assets/destinations/chopta_snow_camp.jpg'),
+  'tungnath': getAssetUrl('/assets/destinations/tungnath_summit.jpg'),
+  'dayara bugyal': getAssetUrl('/assets/destinations/uttarakhand_bugyal_panoramic.jpg'),
+  'kuari pass': getAssetUrl('/assets/destinations/chandrashila_sunset_snow.jpg'),
+  'roopkund': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+  'kedarkantha': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
+  'har ki dun': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+  'adi kailash': getAssetUrl('/assets/destinations/adi_kailash.jpg'),
+  'om parvat': getAssetUrl('/assets/yatra_sarthi/om_parvat.jpg'),
   'gaumukh': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
-  'milam': '/assets/destinations/himalayan_basecamp_village.jpg',
-  'munsiyari': '/assets/destinations/munsiyari/cover.jpg',
+  'milam': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+  'munsiyari': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
 
   // Lakes & Hill Stations
-  'nainital': '/assets/yatra_sarthi/nainital.jpg',
-  'bhimtal': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-  'sattal': 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80',
+  'nainital': getAssetUrl('/assets/yatra_sarthi/nainital.jpg'),
+  'bhimtal': getAssetUrl('/assets/destinations/bhimtal/cover.jpg'),
+  'sattal': getAssetUrl('/assets/destinations/sattal/cover.jpg'),
   'naukuchiatal': 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80',
-  'mussoorie': '/assets/yatra_sarthi/mussoorie.jpg',
-  'dhanaulti': '/assets/destinations/kanatal/cover.jpg',
-  'kanatal': '/assets/destinations/kanatal/cover.jpg',
+  'mussoorie': getAssetUrl('/assets/yatra_sarthi/mussoorie.jpg'),
+  'dhanaulti': getAssetUrl('/assets/destinations/dhanaulti/cover.jpg'),
+  'kanatal': getAssetUrl('/assets/destinations/dhanaulti/cover.jpg'),
   'tehri': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
   'lansdowne': 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=80',
   'ranikhet': 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
-  'kausani': 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80',
-  'almora': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
-  'mukteshwar': '/assets/destinations/mukteshwar/cover.jpg',
-  'pithoragarh': '/assets/destinations/pithoragarh/cover.jpg',
+  'kausani': getAssetUrl('/assets/destinations/kausani/cover.jpg'),
+  'almora': getAssetUrl('/assets/destinations/almora/cover.jpg'),
+  'mukteshwar': getAssetUrl('/assets/destinations/mukteshwar/cover.jpg'),
+  'pithoragarh': getAssetUrl('/assets/destinations/pithoragarh/cover.jpg'),
   'bageshwar': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=80',
-  'champawat': 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80',
-  'lohaghat': '/assets/destinations/lohaghat/cover.jpg',
+  'champawat': getAssetUrl('/assets/destinations/champawat/cover.jpg'),
+  'lohaghat': getAssetUrl('/assets/destinations/champawat/cover.jpg'),
   'chakrata': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
   'dehradun': 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
 
-  // Waterfalls & Caves
-  'lake mist': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-  'kempty falls': 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80',
-  'bhatta falls': 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80',
-  'robbers cave': 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80',
-  'patal bhuvaneshwar': 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80',
-
   // Wildlife & Sanctuaries
-  'jim corbett national park': '/assets/yatra_sarthi/corbett.jpg',
-  'corbett': '/assets/yatra_sarthi/corbett.jpg',
+  'jim corbett national park': getAssetUrl('/assets/yatra_sarthi/corbett.jpg'),
+  'corbett': getAssetUrl('/assets/yatra_sarthi/corbett.jpg'),
   'rajaji national park': 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
   'rajaji': 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
   'binsar wildlife sanctuary': 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
   'binsar': 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1200&q=80',
-  'nanda devi national park': '/assets/destinations/nanda_devi_clouds.jpg'
+  'nanda devi national park': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80'
 };
 
 // ── 2. Distinct Thematic Keyword Photo Pools (Zero Repeating Links, Zero Broken URLs) ───────────

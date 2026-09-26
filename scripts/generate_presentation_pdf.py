@@ -194,7 +194,7 @@ def build_pdf():
 
     meta_text = """
     <b>Category:</b> AI Mountain Copilot + Web3 Escrow Tourism Platform<br/>
-    <b>Target Region:</b> Uttarakhand, India (129+ Destinations, 86 Stays, 24 Overcrowding Alternatives)<br/>
+    <b>Target Region:</b> Uttarakhand, India (106 Verified Destinations across 13 Districts, 51+ KMVN & Stays, 24 Offbeat Alternatives)<br/>
     <b>Audience:</b> Hackathon Judges, Technical Evaluators, Industry Jury<br/>
     <b>Version:</b> Final Comprehensive Submission v1.0.7
     """

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { RefreshCw, Map, Zap, Mountain, Star, Sparkles, Navigation, Plus, Radio, ArrowRight, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Map, Zap, Mountain, Star, Sparkles, Navigation, Plus, Radio, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import SearchBar from './SearchBar';
 import FilterPills from './FilterPills';
 import DestinationCard from './DestinationCard';
@@ -127,18 +127,18 @@ const SkeletonCard = () => (
   </div>
 );
 
-// ── Stats strip — 4 metric cards matching Discovery Uttarakhand standard ──
+// ── Stats strip — 4 genuine, verifiable metrics matching platform reality ──
 const StatsStrip = ({ destinationCount }) => {
   const stats = [
-    { value: `${destinationCount || 106}+`, label: 'Destinations', icon: Mountain },
-    { value: '50+', label: 'Verified Routes', icon: Map },
-    { value: '250+', label: 'Stories', icon: Star },
-    { value: '500+', label: 'Certified Guides', icon: ShieldCheck },
+    { value: `${destinationCount || 106}`, label: 'Curated Places', sub: 'Across 13 Districts', icon: Mountain },
+    { value: '13 / 13', label: 'Districts Mapped', sub: '100% State Coverage', icon: MapPin },
+    { value: '5', label: 'Arterial Corridors', sub: 'Char Dham & Kumaon', icon: Navigation },
+    { value: '100%', label: 'Escrow & GPS Verified', sub: 'Web3 Proof-of-Trek', icon: ShieldCheck },
   ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-      {stats.map(({ value, label, icon: Icon }) => (
+      {stats.map(({ value, label, sub, icon: Icon }) => (
         <div 
           key={label} 
           className="h-[96px] bg-white p-4 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#F0F0F0] flex items-center gap-3.5 hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300 group cursor-default"
@@ -147,8 +147,9 @@ const StatsStrip = ({ destinationCount }) => {
             <Icon size={24} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <div className="text-[22px] font-black text-[#0F172A] tracking-tight leading-tight">{value}</div>
-            <div className="text-[13px] text-[#64748B] font-medium leading-tight mt-0.5 truncate">{label}</div>
+            <div className="text-[20px] sm:text-[22px] font-black text-[#0F172A] tracking-tight leading-tight">{value}</div>
+            <div className="text-[13px] text-[#1E293B] font-bold leading-tight mt-0.5 truncate">{label}</div>
+            <div className="text-[11px] text-[#64748B] font-medium leading-none mt-1 truncate">{sub}</div>
           </div>
         </div>
       ))}
