@@ -1087,106 +1087,220 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     );
   }
 
-  // Modal Sheet for Himalayan Transit Corridors
+  // Modal Sheet for Himalayan Transit Corridors & Route Navigator
   void _showCorridorsBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isSatelliteMode ? const Color(0xFF0A1B14) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(
-              color: isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFCBD5E1),
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+        String activePreset = 'kedarnath';
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: BoxDecoration(
+                color: isSatelliteMode ? const Color(0xFF0A1B14) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(
+                  color: isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFCBD5E1),
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
-                    'Himalayan Transit Corridors',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
-                  ),
-                  Icon(Icons.directions_bus_filled_outlined, color: Color(0xFF0F3D2E)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Arterial highway belts linking pilgrimage, high passes, and mountain valleys.',
-                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 16),
-              ...corridors.map((c) => Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: (c['color'] as Color).withOpacity(0.3)),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F3D2E),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.navigation_rounded, color: Color(0xFF34D399), size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Himalayan Route Navigator',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                              ),
+                              Text(
+                                'Live Highway Status & Mountain Waypoints',
+                                style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Quick Route Shortcuts
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              c['name'],
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: (c['color'] as Color).withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                c['status'],
-                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c['color'] as Color),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          c['route'],
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.speed, size: 12, color: Color(0xFF0F3D2E)),
-                            const SizedBox(width: 4),
-                            Text('${c['distance']} • ${c['duration']}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
-                            const Spacer(),
-                            Text(c['weather'], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
-                          ],
-                        ),
+                        _buildRouteShortcutChip('Kedarnath', 'kedarnath', activePreset, (id) => setSheetState(() => activePreset = id)),
+                        const SizedBox(width: 6),
+                        _buildRouteShortcutChip('Badrinath & Auli', 'chardham', activePreset, (id) => setSheetState(() => activePreset = id)),
+                        const SizedBox(width: 6),
+                        _buildRouteShortcutChip('Kumaon Lakes', 'kumaon', activePreset, (id) => setSheetState(() => activePreset = id)),
+                        const SizedBox(width: 6),
+                        _buildRouteShortcutChip('Valley of Flowers', 'valley', activePreset, (id) => setSheetState(() => activePreset = id)),
+                        const SizedBox(width: 6),
+                        _buildRouteShortcutChip('Adi Kailash', 'adikailash', activePreset, (id) => setSheetState(() => activePreset = id)),
                       ],
                     ),
-                  )),
-            ],
-          ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Corridors List & Waypoints
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        ...corridors.map((c) {
+                          final isSelected = activePreset == c['id'];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFFECFDF5)
+                                  : (isSatelliteMode ? const Color(0xFF0F241A) : const Color(0xFFF8FAFC)),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF059669)
+                                    : (c['color'] as Color).withOpacity(0.25),
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(color: c['color'] as Color, shape: BoxShape.circle),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          c['name'],
+                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: (c['color'] as Color).withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        c['status'],
+                                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c['color'] as Color),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  c['route'],
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.speed, size: 13, color: Color(0xFF0F3D2E)),
+                                    const SizedBox(width: 4),
+                                    Text('${c['distance']} • ${c['duration']}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF334155))),
+                                    const Spacer(),
+                                    Text(c['weather'], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                      label: const Text('View Active Corridors on Map'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F3D2E),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildRouteShortcutChip(String label, String id, String current, Function(String) onSelect) {
+    final isSelected = current == id;
+    return GestureDetector(
+      onTap: () => onSelect(id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0F3D2E) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: isSelected ? const Color(0xFF0F3D2E) : const Color(0xFFE2E8F0)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: isSelected ? Colors.white : const Color(0xFF334155),
+          ),
+        ),
+      ),
     );
   }
 }

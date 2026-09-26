@@ -12,13 +12,42 @@ const DestinationCard = ({ destination, distance }) => {
   const locationParts = [destination.district, destination.region].filter(Boolean);
   const locationLabel = locationParts.length > 0 ? locationParts.join(' • ') : (destination.district || 'Uttarakhand');
 
-  const images = getCardImages(destination);
-  const rawDbImage = (typeof destination.coverImage === 'string' && destination.coverImage) 
-    ? destination.coverImage 
-    : (destination.coverImage?.url || destination.image || destination.imageUrl || images[0]);
-  const baseFallback = rawDbImage || getHimalayanFallbackImage(destination);
-  const freshImage = useFreshImage(destination.slug || destination.name, baseFallback);
-  const coverImage = rawDbImage || freshImage;
+  // 1. Gather all available photos (DB images array, gallery, local mapping)
+  const allImages = React.useMemo(() => {
+    const list = [];
+    if (typeof destination.coverImage === 'string' && destination.coverImage) list.push(destination.coverImage);
+    else if (destination.coverImage?.url) list.push(destination.coverImage.url);
+    if (destination.image) list.push(destination.image);
+    if (destination.imageUrl) list.push(destination.imageUrl);
+
+    const helperImages = getCardImages(destination);
+    if (Array.isArray(helperImages)) list.push(...helperImages);
+
+    if (Array.isArray(destination.gallery)) {
+      destination.gallery.forEach((g) => {
+        if (typeof g === 'string') list.push(g);
+        else if (g?.url) list.push(g.url);
+      });
+    }
+
+    const fallback = getHimalayanFallbackImage(destination);
+    if (fallback && !list.includes(fallback)) list.push(fallback);
+
+    return Array.from(new Set(list.filter(Boolean)));
+  }, [destination]);
+
+  const [currentImgIndex, setCurrentImgIndex] = React.useState(0);
+
+  // Auto-rotate destination photography smoothly
+  React.useEffect(() => {
+    if (allImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentImgIndex((prev) => (prev + 1) % allImages.length);
+    }, 4500); // Cycles photo smoothly every 4.5 seconds
+    return () => clearInterval(timer);
+  }, [allImages]);
+
+  const activeImageSrc = allImages[currentImgIndex] || allImages[0] || getHimalayanFallbackImage(destination);
 
   const destinationSlug = typeof destination.slug === 'string' && destination.slug.length > 0
     ? destination.slug 
@@ -29,13 +58,14 @@ const DestinationCard = ({ destination, distance }) => {
       to={`/destinations/${destinationSlug}`}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-stone-200/80 group text-left"
     >
-      {/* 1. Clean Destination Photo with Smooth Shimmer & Self-Healing Fallback */}
+      {/* 1. Dynamic Auto-Cycling Destination Photo Carousel */}
       <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-stone-100">
         {!imageLoaded && (
           <div className="absolute inset-0 bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200 animate-pulse" />
         )}
         <img
-          src={coverImage}
+          key={activeImageSrc}
+          src={activeImageSrc}
           alt={destination.name || 'Destination in Uttarakhand'}
           loading="lazy"
           onLoad={() => setImageLoaded(true)}
@@ -48,6 +78,20 @@ const DestinationCard = ({ destination, distance }) => {
             imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
         />
+
+        {/* Gallery Dots Indicator if multiple photos exist */}
+        {allImages.length > 1 && (
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/40 backdrop-blur-xs">
+            {allImages.slice(0, 5).map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  idx === (currentImgIndex % 5) ? 'w-4 bg-emerald-400' : 'w-1.5 bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 2. Content */}
