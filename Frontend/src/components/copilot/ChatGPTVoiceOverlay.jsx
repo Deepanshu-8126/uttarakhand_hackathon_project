@@ -325,20 +325,20 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
           }
         } catch (_) { /* bridge offline — escalate */ }
 
-        // Tier 3: Render backend /api/chat (always reachable on mobile/Vercel)
+        // Tier 3: Render backend /api/agent/chat (always reachable on mobile/Vercel)
         const fallbackText = transcript || (lang === 'hi'
           ? 'उत्तराखंड यात्रा के बारे में बताओ'
           : 'Tell me about places to visit in Uttarakhand');
         try {
-          const renderRes = await fetch(`${RENDER_API}/chat`, {
+          const renderRes = await fetch(`${RENDER_API}/agent/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: fallbackText }),
-            signal: AbortSignal.timeout(30000),
+            signal: AbortSignal.timeout(15000),
           });
           if (renderRes.ok) {
             const data = await renderRes.json();
-            const reply = (data.message || data.data?.message || '').replace(/[*#_~`]/g, '').trim();
+            const reply = (data.data?.message || data.response?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
             if (reply) {
               setLastAgentReply(reply);
               speakWithBrowser(reply, () => startListening());
@@ -504,17 +504,17 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       }
     } catch (_) { /* bridge offline — fall to Render */ }
 
-    // Tier 3: Render backend /api/chat — always reachable from mobile/Vercel
+    // Tier 3: Render backend /api/agent/chat — always reachable from mobile/Vercel
     try {
-      const renderRes = await fetch(`${RENDER_API}/chat`, {
+      const renderRes = await fetch(`${RENDER_API}/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: queryText }),
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(15000),
       });
       if (renderRes.ok) {
         const data = await renderRes.json();
-        const reply = (data.message || data.data?.message || '').replace(/[*#_~`]/g, '').trim();
+        const reply = (data.data?.message || data.response?.message || data.message || '').replace(/[*#_~`]/g, '').trim();
         if (reply) {
           setLastAgentReply(reply);
           speakWithBrowser(reply, () => startListening());
@@ -525,12 +525,12 @@ export default function ChatGPTVoiceOverlay({ isOpen, onClose }) {
       console.error('[VoiceOverlay] Render API failed:', err);
     }
 
-    // All tiers failed
-    const errMsg = lang === 'hi'
-      ? 'माफ़ करें, नेटवर्क से कनेक्ट नहीं हो पाया। कृपया दोबारा कोशिश करें।'
-      : 'Sorry, could not reach the server. Please check your connection and try again.';
-    setLastAgentReply(errMsg);
-    speakWithBrowser(errMsg, () => startListening());
+    // Offline Grounded Pahadi Travel Guide Fallback
+    const offlineReply = lang === 'hi'
+      ? 'देवभूमि में आपका स्वागत है। आप नैनीताल, केदारनाथ, मसूरी, चोपता या ऋषिकेश के लिए राइड्स और होमस्टे बुक कर सकते हैं।'
+      : 'Welcome to Devbhoomi Uttarakhand. You can explore Nainital, Kedarnath, Mussoorie, Chopta, or Rishikesh with verified stays and 4x4 rentals.';
+    setLastAgentReply(offlineReply);
+    speakWithBrowser(offlineReply, () => startListening());
   };
 
   const initVoiceConnection = useCallback(async () => {
