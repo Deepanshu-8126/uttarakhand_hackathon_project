@@ -391,218 +391,92 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* ── 5. Mobile & Tablet Full-Screen Alpine Drawer (< 1024px) ───────── */}
+      {/* ── 5. Mobile & Tablet Full-Screen Overlay (< 1024px) ───────────────── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-[#fdfbf7]/98 backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-6 lg:hidden overflow-y-auto animate-in fade-in duration-200">
-          
-          {/* Header Bar inside Drawer */}
-          <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
-            <Link 
-              to="/" 
+        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center gap-6 p-6 lg:hidden overflow-y-auto animate-in fade-in duration-200">
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xl cursor-pointer"
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+
+          {/* Brand Logo in Overlay */}
+          <div className="flex items-center gap-3 mb-2 shrink-0">
+            <img
+              src="/logo.png"
+              alt="Discovery Uttarakhand"
+              className="w-10 h-10 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
+            />
+            <span className="font-extrabold text-xl text-[#0f3d2e]">Discovery Uttarakhand</span>
+          </div>
+
+          {/* Active Trip Banner if available */}
+          {activeTripDestination && (
+            <Link
+              to={activeTripUrl}
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5"
+              className="w-full max-w-sm p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#0f3d2e] text-center shadow-xs"
             >
-              <img
-                src="/logo.png"
-                alt="Discovery Uttarakhand"
-                className="w-9 h-9 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
-              />
-              <div>
-                <span className="font-black text-base text-[#0f3d2e] block leading-none">Discovery</span>
-                <span className="text-[9px] font-extrabold text-emerald-700 tracking-wider uppercase block mt-0.5">
-                  {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block mb-0.5">
+                🟢 Trip in Progress
+              </span>
+              <span className="font-extrabold text-sm text-emerald-950 block truncate">
+                {activeTripDestination} {activeTripDuration ? `(${activeTripDuration})` : ''}
+              </span>
+            </Link>
+          )}
+
+          {/* Navigation Overlay Links */}
+          <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                to={link.path}
+                onClick={(e) => handleNavClick(link, e)}
+                className="whitespace-nowrap text-lg font-bold text-stone-800 hover:text-[#0f3d2e] transition-colors py-1"
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <Link
+              to="/rescue-ops"
+              onClick={() => setMobileMenuOpen(false)}
+              className="whitespace-nowrap text-lg font-bold text-rose-600 hover:text-rose-700 transition-colors py-1"
+            >
+              🚨 Rescue Ops &amp; SOS
             </Link>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-emerald-50 border border-stone-200 text-xs font-bold text-stone-800 transition flex items-center gap-1"
-              >
-                <Languages size={12} className="text-emerald-700 shrink-0" />
-                <span>{lang === 'en' ? 'हिन्दी' : 'EN'}</span>
-              </button>
+            <Link
+              to="/innovations"
+              onClick={() => setMobileMenuOpen(false)}
+              className="whitespace-nowrap text-lg font-bold text-emerald-700 hover:text-emerald-900 transition-colors py-1"
+            >
+              🛡️ Web3 Verification
+            </Link>
 
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold transition cursor-pointer"
-                aria-label="Close menu"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
+            {/* Language Switcher in Overlay */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="mt-1 px-4 py-2 rounded-full bg-stone-100 hover:bg-emerald-50 border border-stone-200 text-sm font-bold text-stone-800 transition"
+            >
+              {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
+            </button>
 
-          {/* Body Content with Scroll */}
-          <div className="py-4 space-y-4 flex-1">
-
-            {/* Weather + Location Strip */}
-            <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs">
-              <TopNavWeatherBadge isDark={false} />
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setShowLocationModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-[#0f3d2e] border border-emerald-200/80 hover:bg-emerald-100 transition"
-              >
-                <MapPin size={12} className="text-emerald-700 shrink-0" />
-                <span className="truncate max-w-[110px]">{userLocation?.city || 'Location'}</span>
-              </button>
-            </div>
-
-            {/* Active Trip Banner if available */}
-            {activeTripDestination && (
-              <Link
-                to={activeTripUrl}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/90 text-[#0f3d2e] shadow-2xs"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                    Trip in Progress
-                  </span>
-                  <span className="text-xs font-bold text-emerald-700">{activeTripDuration}</span>
-                </div>
-                <span className="font-extrabold text-sm text-slate-900 block truncate">
-                  {activeTripDestination}
-                </span>
-              </Link>
-            )}
-
-            {/* Main Navigation Grid */}
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-stone-500 mb-2 px-1">
-                Explore &amp; Services
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                {navLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isCurrent = link.path === '/' 
-                    ? location.pathname === '/' 
-                    : link.isExplore
-                      ? location.pathname === '/explore' || location.hash === '#explore'
-                      : location.pathname.startsWith(link.path);
-
-                  return (
-                    <Link
-                      key={link.label}
-                      to={link.path}
-                      onClick={(e) => handleNavClick(link, e)}
-                      className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all active:scale-98 ${
-                        isCurrent
-                          ? 'bg-[#0f3d2e] text-white border-[#0f3d2e] shadow-xs'
-                          : 'bg-white hover:bg-emerald-50/60 border-stone-200/80 text-stone-800 shadow-2xs'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                        isCurrent ? 'bg-white/20 text-emerald-300' : 'bg-emerald-50 text-[#0f3d2e]'
-                      }`}>
-                        <Icon size={16} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-black truncate block leading-tight">
-                          {link.label}
-                        </span>
-                        {link.badge && (
-                          <span className={`text-[8px] font-black uppercase tracking-wider px-1 py-0.2 rounded-md mt-0.5 inline-block ${
-                            isCurrent ? 'bg-emerald-400 text-stone-950' : 'bg-emerald-100 text-emerald-800'
-                          }`}>
-                            {link.badge}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Safety & Web3 Grid */}
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-stone-500 mb-2 px-1">
-                Safety &amp; Web3 Trust
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Link
-                  to="/rescue-ops"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 p-3 rounded-2xl bg-rose-50/80 hover:bg-rose-100/80 border border-rose-200/80 text-rose-950 transition-all active:scale-98"
-                >
-                  <span className="text-xl">🚨</span>
-                  <div>
-                    <span className="text-xs font-black text-rose-900 block leading-tight">
-                      Rescue Ops &amp; SOS
-                    </span>
-                    <span className="text-[10px] text-rose-700 font-semibold block mt-0.5">
-                      Emergency response &amp; GPS live telemetry
-                    </span>
-                  </div>
-                </Link>
-
-                <Link
-                  to="/innovations"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/80 border border-emerald-200/80 text-emerald-950 transition-all active:scale-98"
-                >
-                  <span className="text-xl">🛡️</span>
-                  <div>
-                    <span className="text-xs font-black text-[#0f3d2e] block leading-tight">
-                      Web3 Verification
-                    </span>
-                    <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">
-                      Verified partner &amp; vehicle certificates
-                    </span>
-                  </div>
-                </Link>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Bottom Action Footer */}
-          <div className="pt-3 border-t border-stone-200/80 flex items-center gap-2">
-            {!isAuthenticated ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate('/login');
-                }}
-                className="py-3 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-black transition text-center shrink-0 flex items-center gap-1.5"
-              >
-                <User size={14} className="text-[#0f3d2e]" />
-                <span>{t('nav_signin') || 'Sign In'}</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate('/profile');
-                }}
-                className="py-3 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-black transition text-center shrink-0 flex items-center gap-1.5"
-              >
-                <User size={14} className="text-[#0f3d2e]" />
-                <span>Profile</span>
-              </button>
-            )}
-
+            {/* Plan Trip Primary CTA */}
             <Link
               to="/trip-planner"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex-1 py-3 px-4 rounded-2xl bg-[#0f3d2e] hover:bg-[#185340] text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md active:scale-98 flex items-center justify-center gap-1.5"
+              className="w-full mt-1 py-3.5 px-6 rounded-full bg-[#0f3d2e] text-white font-extrabold text-sm text-center uppercase tracking-wider shadow-md active:scale-95"
             >
-              <Sparkles size={14} className="text-emerald-300" />
-              <span>{t('nav_plantrip') || 'Plan Trip Now'}</span>
+              {t('nav_plantrip') || 'Plan Trip Now'}
             </Link>
           </div>
-
         </div>
       )}
 
