@@ -28,6 +28,21 @@ except ImportError:
     )
 
 
+import re
+import subprocess
+
+def play_spoken_audio(text: str):
+    """Speak text out loud through laptop/computer speakers."""
+    try:
+        clean = re.sub(r'[*#_~`]', '', text).replace("'", "").replace('"', '').replace('\n', ' ').strip()
+        if not clean:
+            return
+        cmd = ["powershell", "-NoProfile", "-Command", f"$s = New-Object -ComObject SAPI.SpVoice; $s.Speak('{clean[:250]}')"]
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
+
 async def main_voice():
     """Launch interactive voice agent session."""
     if hasattr(sys.stdout, "reconfigure"):
@@ -37,10 +52,11 @@ async def main_voice():
             pass
 
     print("=" * 65)
-    print("[DEVBHOOMI VOICE AGENT] (Pipecat + LangGraph + ElevenLabs)")
+    print("[DEVBHOOMI VOICE AGENT] (Pipecat + LangGraph + ElevenLabs + Spoken Voice)")
     print("   Brain: gym_support.graph (Unified LangGraph Agentic Graph)")
     print("=" * 65)
     print("\nInitial Spoken Greeting:\n  \"" + GREETING + "\"")
+    play_spoken_audio(GREETING)
 
     graph = build_graph()
     print("\n[+] LangGraph Agentic Graph compiled successfully with 6 Himalayan Ground Tools.")
@@ -59,6 +75,7 @@ async def main_voice():
                 continue
             if user_input.lower() in ("exit", "quit", "stop", "bye"):
                 print("Namaste! Stopping voice agent.")
+                play_spoken_audio("Namaste! Stopping voice agent.")
                 break
 
             print("[Brain] Processing turn through LangGraph...")
@@ -67,6 +84,7 @@ async def main_voice():
                 messages = result.get("messages", [])
                 bot_reply = messages[-1].content if messages else "Namaste!"
                 print(f"[Assistant Reply]: {bot_reply}")
+                play_spoken_audio(bot_reply)
             except Exception as e:
                 print(f"[Agent Note] {e}")
 
