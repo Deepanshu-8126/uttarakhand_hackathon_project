@@ -8,7 +8,8 @@ import crypto from 'crypto';
 import { ethers } from 'ethers';
 
 /**
- * Generate a cryptographically secure 32-byte random hex salt
+ * Generate a cryptographically secure 32-byte random hex salt (0x-prefixed 64-char hex string)
+ * Standard format across all off-chain and on-chain verification modules.
  */
 export function generateSalt() {
   return '0x' + crypto.randomBytes(32).toString('hex');
@@ -17,8 +18,15 @@ export function generateSalt() {
 /**
  * Recursive deterministic object stringification
  * Guarantees exact byte-for-byte serialization across Node versions and platforms.
+ * Handles undefined, functions, symbols, and Dates safely.
  */
 export function stableStringify(obj) {
+  if (obj === undefined || typeof obj === 'function' || typeof obj === 'symbol') {
+    return 'null';
+  }
+  if (obj instanceof Date) {
+    return JSON.stringify(obj.toISOString());
+  }
   if (obj === null || typeof obj !== 'object') {
     return JSON.stringify(obj);
   }
@@ -35,25 +43,28 @@ export function stableStringify(obj) {
 /**
  * Salted Canonical Payload for PartnerListing Attestation
  * Strict sorted keys; zero wallet address, zero PII, zero guessable registration numbers.
+ * @param {Object} listing - PartnerListing document or draft object
+ * @param {number} version - Attestation version number
+ * @param {string} attestationSalt - 0x-prefixed 32-byte hex salt string
  */
 export function buildListingCanonicalPayload(listing, version, attestationSalt) {
   return {
-    attestationSalt: String(attestationSalt),
+    attestationSalt: String(attestationSalt || ''),
     capacity: {
-      bathrooms: Number(listing.capacity?.bathrooms || 0),
-      bedrooms: Number(listing.capacity?.bedrooms || 0),
-      maxGuests: Number(listing.capacity?.maxGuests || 0)
+      bathrooms: Number(listing?.capacity?.bathrooms || 0),
+      bedrooms: Number(listing?.capacity?.bedrooms || 0),
+      maxGuests: Number(listing?.capacity?.maxGuests || 0)
     },
-    category: String(listing.category || ''),
-    district: String(listing.district || ''),
-    listingId: String(listing._id || listing.id),
-    listingType: String(listing.listingType),
+    category: String(listing?.category || ''),
+    district: String(listing?.district || ''),
+    listingId: String(listing?._id || listing?.id || ''),
+    listingType: String(listing?.listingType || ''),
     pricing: {
-      amount: Number(listing.pricing?.amount || 0),
-      currency: String(listing.pricing?.currency || 'INR'),
-      unit: String(listing.pricing?.unit || 'night')
+      amount: Number(listing?.pricing?.amount || 0),
+      currency: String(listing?.pricing?.currency || 'INR'),
+      unit: String(listing?.pricing?.unit || 'night')
     },
-    title: String(listing.title).trim(),
+    title: String(listing?.title || '').trim(),
     version: Number(version || 1)
   };
 }
@@ -75,6 +86,9 @@ export function computeListingIdHash(listingId) {
 
 /**
  * Salted Vehicle Identifier Hash: keccak256(normalizedPlate + vehicleSalt)
+ * Note: vehicleSalt is always a 0x-prefixed 32-byte hex string (from generateSalt)
+ * @param {string} registrationNumber - Raw license plate (e.g. "UK 07 TA 1234")
+ * @param {string} vehicleSalt - 0x-prefixed 32-byte hex string
  */
 export function computeSaltedVehicleHash(registrationNumber, vehicleSalt) {
   const normalized = String(registrationNumber).replace(/[\s-]/g, '').toUpperCase();
@@ -83,6 +97,11 @@ export function computeSaltedVehicleHash(registrationNumber, vehicleSalt) {
 
 /**
  * Salted Vehicle Permit Digest: keccak256(permitType, district, validUntilTimestamp, permitSalt)
+ * Note: permitSalt is always a 0x-prefixed 32-byte hex string (from generateSalt)
+ * @param {string} permitType - e.g. "CHAR_DHAM_ALL_ACCESS"
+ * @param {string} district - e.g. "Rudraprayag"
+ * @param {number|Date|string} validUntilTimestamp - Unix timestamp in seconds or ISO Date
+ * @param {string} permitSalt - 0x-prefixed 32-byte hex string
  */
 export function computeSaltedPermitDigest(permitType, district, validUntilTimestamp, permitSalt) {
   const validUntilNum = typeof validUntilTimestamp === 'number' 
