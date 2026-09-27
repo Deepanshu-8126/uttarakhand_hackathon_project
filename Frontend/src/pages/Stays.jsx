@@ -27,28 +27,28 @@ import Footer from '../components/Footer';
 import { useStays } from '../hooks/useStays';
 import { useFavorites } from '../context/FavoritesContext';
 import { useMapStore } from '../store/mapStore';
-import { getCardImages } from '../utils/imageHelpers';
+import { getCardImages, getAssetUrl } from '../utils/imageHelpers';
 import AltitudeGuardModal from '../components/safety/AltitudeGuardModal';
 import WomenSosModal from '../components/safety/WomenSosModal';
 
 const ITEMS_PER_PAGE = 9;
 
-// Curated high-res authentic Uttarakhand mountain stay photo banks
+// Curated high-res authentic Uttarakhand mountain stay photo banks (100% Verified Local & Mountain Assets)
 const REAL_STAY_PHOTO_BANKS = [
   [
-    'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80'
+    getAssetUrl('/assets/stay-1.jpg'),
+    getAssetUrl('/assets/stay-2.jpg'),
+    getAssetUrl('/assets/stay-3.jpg')
   ],
   [
-    'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1000&q=80'
+    getAssetUrl('/assets/stay-2.jpg'),
+    getAssetUrl('/assets/stay-3.jpg'),
+    getAssetUrl('/assets/stay-1.jpg')
   ],
   [
-    'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1000&q=80'
+    getAssetUrl('/assets/stay-3.jpg'),
+    getAssetUrl('/assets/stay-1.jpg'),
+    getAssetUrl('/assets/stay-2.jpg')
   ]
 ];
 

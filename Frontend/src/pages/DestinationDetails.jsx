@@ -39,7 +39,7 @@ import {
   Layers,
   Maximize2
 } from 'lucide-react';
-import { getHimalayanFallbackImage } from '../utils/imageHelpers';
+import { getHimalayanFallbackImage, getRealDestinationPhotos, getAssetUrl } from '../utils/imageHelpers';
 
 // Fallback high-res alpine photos in case API is offline or slow
 const CURATED_HIMALAYAN_FALLBACKS = [
@@ -236,18 +236,19 @@ export default function DestinationDetails() {
       });
     };
 
-    // 1. Primary Destination Cover Image
+    // 1. PRIORITY 1: Verified Real Multi-Angle Destination Photography
+    const realPhotos = getRealDestinationPhotos(slug, destination?.name);
+    if (Array.isArray(realPhotos) && realPhotos.length > 0) {
+      realPhotos.forEach((rp) => {
+        addPhoto(rp.url, rp.photographer || 'Verified Uttarakhand Archive', rp.alt || destination?.name);
+      });
+    }
+
+    // 2. Database Cover Image (if distinct)
     if (destination?.coverImage?.url) {
       addPhoto(destination.coverImage.url, 'Verified Uttarakhand Archive', `${destination.name} Main Panorama`);
     } else if (typeof destination?.coverImage === 'string') {
       addPhoto(destination.coverImage, 'Verified Uttarakhand Archive', `${destination.name} Main Panorama`);
-    }
-
-    // 2. High-res Photography from live search (max 3)
-    if (pexelsPhotos.length > 0) {
-      pexelsPhotos.slice(0, 3).forEach((p) => {
-        addPhoto(p.url, p.photographer, p.alt);
-      });
     }
 
     // 3. Database Gallery Array
@@ -258,11 +259,12 @@ export default function DestinationDetails() {
       });
     }
 
-    // 4. Database Images Array
-    if (Array.isArray(destination?.images)) {
-      destination.images.forEach((img) => {
-        const src = typeof img === 'string' ? img : img?.url;
-        if (src) addPhoto(src, 'Uttarakhand Tourism Board', destination.name);
+    // 4. High-res Photography from live search (supplement if needed)
+    if (list.length < 6 && pexelsPhotos.length > 0) {
+      pexelsPhotos.forEach((p) => {
+        if (list.length < 6) {
+          addPhoto(p.url, p.photographer, p.alt);
+        }
       });
     }
 
@@ -274,7 +276,7 @@ export default function DestinationDetails() {
     });
 
     return list.slice(0, 6);
-  }, [destination, pexelsPhotos]);
+  }, [destination, pexelsPhotos, slug]);
 
   // Dynamic Auto-Rotation: rotate main featured photo every 6 seconds
   useEffect(() => {
