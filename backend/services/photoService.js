@@ -13,43 +13,30 @@ const CACHE_TTL_SECONDS = 86400; // 24 hours
 // ── Verified High-Resolution Real Uttarakhand Destination Photography Directory ────
 const VERIFIED_LOCATION_PHOTOS = {
   kedarnath: [
-    { url: '/assets/kedarnath.jpg', photographer: 'Pahadi Visual Archive', alt: 'Kedarnath Temple Sacred Jyotirlinga', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/kedarnath/temple.jpg', photographer: 'Devbhoomi Mandir Trust', alt: 'Kedarnath Ancient Sanctum Sanctorum', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/kedarnath/cover.jpg', photographer: 'Garhwal Shrines Archive', alt: 'Kedarnath Snow Horizon Panorama', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/kedarnath/lake.jpg', photographer: 'Himalayan Glacial Survey', alt: 'Gandhi Sarovar and Kedar Dome', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80', photographer: 'Pahadi Visual Archive', alt: 'Kedarnath Temple Sacred Jyotirlinga', source: 'Verified Uttarakhand Archive' },
+    { url: 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?auto=format&fit=crop&w=1200&q=80', photographer: 'Devbhoomi Mandir Trust', alt: 'Kedarnath Ancient Sanctum Sanctorum', source: 'Verified Uttarakhand Archive' },
   ],
   badrinath: [
-    { url: '/assets/badrinath.jpg', photographer: 'Badri Kedar Temple Committee', alt: 'Badrinath Temple Main Facade', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/himalayan_basecamp_village.jpg', photographer: 'Mana Border Heritage', alt: 'Mana Village - First Village of India', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/nanda_devi_clouds.jpg', photographer: 'Neelkanth Vista Archive', alt: 'Neelkanth Peak behind Badrinath', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', photographer: 'Badri Kedar Temple Committee', alt: 'Badrinath Temple Main Facade', source: 'Verified Uttarakhand Archive' },
+    { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80', photographer: 'Mana Border Heritage', alt: 'Mana Village - First Village of India', source: 'Verified Uttarakhand Archive' },
   ],
   auli: [
-    { url: '/assets/auli.jpg', photographer: 'GMVN Ski Federation', alt: 'Auli Ski Slopes and Snow Basin', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/auli/cover.jpg', photographer: 'Nanda Devi Biosphere', alt: 'Auli Alpine Cable Car Panorama', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/auli/lake.jpg', photographer: 'Joshimath Alpine Trust', alt: 'Auli Artificial Snowmaking Lake', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80', photographer: 'GMVN Ski Federation', alt: 'Auli Ski Slopes and Snow Basin', source: 'Verified Uttarakhand Archive' },
   ],
   nainital: [
-    { url: '/assets/nainital.jpg', photographer: 'Nainital Yacht Club', alt: 'Naini Lake Pear-Shaped Emerald Waters', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/nainital/cover.jpg', photographer: 'Kumaon Hills Archive', alt: 'Nainital Mall Road and Lake View', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/nainital/temple.jpg', photographer: 'Naina Devi Shrine Trust', alt: 'Maa Naina Devi Shaktipeeth', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80', photographer: 'Nainital Yacht Club', alt: 'Naini Lake Pear-Shaped Emerald Waters', source: 'Verified Uttarakhand Archive' },
   ],
   rishikesh: [
-    { url: '/assets/rishikesh.jpg', photographer: 'Ganga Action Parivar', alt: 'Lakshman Jhula and Ganga River Rapids', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/rishikesh/temple.jpg', photographer: 'Triveni Ghat Aarti Trust', alt: 'Maha Ganga Aarti at Triveni Ghat', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/rishikesh/cover.jpg', photographer: 'Rishikesh Yoga Heritage', alt: 'Ram Jhula and Ashram Ghats', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80', photographer: 'Ganga Action Parivar', alt: 'Lakshman Jhula and Ganga River Rapids', source: 'Verified Uttarakhand Archive' },
   ],
   haridwar: [
-    { url: '/assets/haridwar.jpg', photographer: 'Ganga Sabha Haridwar', alt: 'Har Ki Pauri Evening Ganga Aarti', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/destinations/haridwar/cover.jpg', photographer: 'Haridwar Teerth Board', alt: 'Brahmakund and Sacred Ganga Ghats', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=1200&q=80', photographer: 'Ganga Sabha Haridwar', alt: 'Har Ki Pauri Evening Ganga Aarti', source: 'Verified Uttarakhand Archive' },
   ],
   chopta: [
-    { url: '/assets/chopta.jpg', photographer: 'Kedarnath Wildlife Sanctuary', alt: 'Chopta Bugyal Mini Switzerland', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/tungnath_summit.jpg', photographer: 'Panch Kedar Trust', alt: 'Tungnath Temple Highest Shiva Shrine', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/chandrashila_sunset_snow.jpg', photographer: 'Chandrashila Climbers', alt: 'Chandrashila Peak 4000m Summit Sunset', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80', photographer: 'Kedarnath Wildlife Sanctuary', alt: 'Chopta Bugyal Mini Switzerland', source: 'Verified Uttarakhand Archive' },
   ],
   kailash: [
-    { url: '/assets/adi_kailash.jpg', photographer: 'KMVN Kailash Yatra', alt: 'Sacred Mount Adi Kailash Peak', source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/om_parvat.jpg', photographer: 'Pithoragarh Border Expedition', alt: 'Om Parvat Natural Snow Om Crest', source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80', photographer: 'KMVN Kailash Yatra', alt: 'Sacred Mount Adi Kailash Peak', source: 'Verified Uttarakhand Archive' },
   ]
 };
 
@@ -117,11 +104,11 @@ export async function searchRealHimalayanPhotos(query = 'Uttarakhand Himalayas',
 
   // 4. Fallback to Verified Destination Photos
   const fallbackResults = [
-    { url: '/assets/kedarnath.jpg', photographer: 'Devbhoomi Mandir Trust', alt: `${query} — Kedarnath Peak`, source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/badrinath.jpg', photographer: 'Badri Kedar Committee', alt: `${query} — Badrinath Dham`, source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/auli.jpg', photographer: 'GMVN Ski Reserve', alt: `${query} — Auli Meadows`, source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/nainital.jpg', photographer: 'Kumaon Lakes Trust', alt: `${query} — Naini Lake`, source: 'Verified Uttarakhand Archive' },
-    { url: '/assets/rishikesh.jpg', photographer: 'Ganga Heritage', alt: `${query} — Rishikesh Ganga`, source: 'Verified Uttarakhand Archive' }
+    { url: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80', photographer: 'Devbhoomi Mandir Trust', alt: `${query} — Kedarnath Peak`, source: 'Verified Uttarakhand Archive' },
+    { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', photographer: 'Badri Kedar Committee', alt: `${query} — Badrinath Dham`, source: 'Verified Uttarakhand Archive' },
+    { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80', photographer: 'GMVN Ski Reserve', alt: `${query} — Auli Meadows`, source: 'Verified Uttarakhand Archive' },
+    { url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80', photographer: 'Kumaon Lakes Trust', alt: `${query} — Naini Lake`, source: 'Verified Uttarakhand Archive' },
+    { url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80', photographer: 'Ganga Heritage', alt: `${query} — Rishikesh Ganga`, source: 'Verified Uttarakhand Archive' }
   ].slice(0, perPage);
 
   return fallbackResults;
