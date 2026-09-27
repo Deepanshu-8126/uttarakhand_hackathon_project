@@ -14,6 +14,10 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8765 ^| findstr LISTENING') 
     taskkill /F /PID %%a >nul 2>&1
 )
 
-cd /d "c:\Users\Deepanshu\Desktop\discover\voice_try\voice-demo"
-".venv\Scripts\python.exe" "c:\Users\Deepanshu\Desktop\discover\ai\web_bridge.py"
+cd /d "c:\Users\Deepanshu\Desktop\discover\ai"
+if exist ".venv\Scripts\python.exe" (
+    ".venv\Scripts\python.exe" "web_bridge.py"
+) else (
+    python "web_bridge.py"
+)
 pause

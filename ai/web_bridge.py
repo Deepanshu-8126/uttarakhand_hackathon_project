@@ -34,12 +34,11 @@ import uvicorn
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
-for _p in (_HERE / "app", _HERE.parent / "voice_try" / "voice-demo" / "src"):
+for _p in (_HERE / "app", _HERE / "voice_demo"):
     if _p.exists() and str(_p) not in sys.path:
         sys.path.append(str(_p))
 
 for _candidate in (
-    _HERE.parent / "voice_try" / "voice-demo" / ".env",
     _HERE / ".env",
     _HERE.parent / ".env",
 ):
