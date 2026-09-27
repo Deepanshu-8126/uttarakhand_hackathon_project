@@ -67,9 +67,12 @@ def configure(backend: Backend, project: str | None = None) -> str:
     api_key = os.environ.get("LANGSMITH_API_KEY")
     project_name = project_name_for(backend, project)
 
-    if not api_key:
+    tracing_enabled = os.environ.get("LANGSMITH_TRACING", "").lower() not in ("false", "0", "off") and os.environ.get("LANGCHAIN_TRACING_V2", "").lower() not in ("false", "0", "off")
+    if not api_key or not tracing_enabled:
+        os.environ["LANGSMITH_TRACING"] = "false"
+        os.environ["LANGCHAIN_TRACING_V2"] = "false"
         print(
-            f"[voice-demo] LANGSMITH_API_KEY not set — running '{backend}' without tracing.",
+            f"[voice-demo] LangSmith tracing disabled — running '{backend}' without tracing.",
             file=sys.stderr,
         )
         return project_name

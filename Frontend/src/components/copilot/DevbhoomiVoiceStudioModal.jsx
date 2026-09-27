@@ -264,8 +264,6 @@ export default function DevbhoomiVoiceStudioModal({
           } catch (_) {}
         }
       }
-        } catch (_) {}
-      }
 
       if (!replyText) {
         replyText = `Namaste! Uttarakhand ke baare me aapne pucha: "${cleanUserText}". Devbhoomi me mosam suhana hai aur Char Dham highways open hain. Kahiye main aapki kya madad karoon?`;

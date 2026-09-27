@@ -359,11 +359,12 @@ export const MOUNTAIN_STAY_IMAGES = [
 ];
 
 export const VEHICLE_RENTAL_IMAGES = [
-  getAssetUrl('/assets/activa.jpg'),
   getAssetUrl('/assets/himalayan-bike.jpg'),
+  getAssetUrl('/assets/classic-350.jpg'),
+  getAssetUrl('/assets/activa.jpg'),
   getAssetUrl('/assets/pickup-1.jpg'),
   getAssetUrl('/assets/pickup-2.jpg'),
-  getAssetUrl('/assets/activa-2.jpg')
+  getAssetUrl('/assets/innova.jpg')
 ];
 
 // ── 4. Deterministic Hash for Unique Image Selection ──────────────────────────
@@ -376,23 +377,33 @@ function hashString(str) {
   return Math.abs(hash);
 }
 
-export function getRealVehicleAsset(name = '', type = '') {
-  const n = (name + ' ' + type).toLowerCase();
+export function getRealVehicleAsset(name = '', type = '', vehicles = []) {
+  let vehicleNames = '';
+  if (Array.isArray(vehicles) && vehicles.length > 0) {
+    vehicleNames = vehicles.map(v => (v.name || '') + ' ' + (v.type || '') + ' ' + (v.model || '')).join(' ');
+  }
+  const n = (name + ' ' + type + ' ' + vehicleNames).toLowerCase();
   
-  if (n.includes('pickup') || n.includes('camper') || n.includes('bolero') || n.includes('commercial') || n.includes('truck') || n.includes('4x4') || n.includes('tata yodha') || n.includes('intra')) {
-    return getAssetUrl('/assets/pickup-1.jpg');
+  if (n.includes('innova') || n.includes('taxi') || n.includes('cab') || n.includes('chauffeur') || n.includes('sedan') || n.includes('dzire') || n.includes('etios')) {
+    return getAssetUrl('/assets/innova.jpg');
   }
-  if (n.includes('thar') || n.includes('scorpio') || n.includes('innova') || n.includes('safari') || n.includes('suv') || n.includes('xuv') || n.includes('fortuner') || n.includes('hector') || n.includes('harrier') || n.includes('duster') || n.includes('marazzo') || n.includes('xylo') || n.includes('ertiga')) {
-    return getAssetUrl('/assets/pickup-2.jpg');
+  if (n.includes('classic 350') || n.includes('classic') || n.includes('bullet') || n.includes('meteor') || n.includes('hunter') || n.includes('standard')) {
+    return getAssetUrl('/assets/classic-350.jpg');
   }
-  if (n.includes('himalayan') || n.includes('royal enfield') || n.includes('classic') || n.includes('bullet') || n.includes('meteor') || n.includes('interceptor') || n.includes('xpulse') || n.includes('duke') || n.includes('pulsar') || n.includes('apache') || n.includes('mt-15') || n.includes('r15') || n.includes('bike') || n.includes('motorcycle')) {
+  if (n.includes('himalayan') || n.includes('royal enfield') || n.includes('xpulse') || n.includes('duke') || n.includes('pulsar') || n.includes('apache') || n.includes('bike') || n.includes('motorcycle') || n.includes('cruiser') || n.includes('interceptor')) {
     return getAssetUrl('/assets/himalayan-bike.jpg');
   }
-  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('jupiter') || n.includes('access') || n.includes('ntorq') || n.includes('fascino') || n.includes('vespa') || n.includes('burgman') || n.includes('splendor') || n.includes('shine')) {
+  if (n.includes('thar') || n.includes('4x4') || n.includes('jeep') || n.includes('gypsy') || n.includes('offroad') || n.includes('off-road') || n.includes('camper') || n.includes('pickup')) {
+    return getAssetUrl('/assets/pickup-1.jpg');
+  }
+  if (n.includes('scorpio') || n.includes('bolero') || n.includes('suv') || n.includes('safari') || n.includes('xuv') || n.includes('fortuner') || n.includes('ertiga') || n.includes('car')) {
+    return getAssetUrl('/assets/pickup-2.jpg');
+  }
+  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('jupiter') || n.includes('access') || n.includes('ntorq') || n.includes('fascino') || n.includes('vespa') || n.includes('burgman') || n.includes('dio')) {
     return getAssetUrl('/assets/activa.jpg');
   }
   
-  return getAssetUrl('/assets/activa.jpg');
+  return getAssetUrl('/assets/himalayan-bike.jpg');
 }
 
 // ── 5. Intelligent Self-Healing Fallback Provider (Zero Duplicates) ───────────
@@ -459,7 +470,7 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
       url = val.url || val.src || val.secure_url || val.path || null;
     }
     if (url && typeof url === 'string' && url.length > 5 && !url.includes('placeholder') && !images.includes(url)) {
-      images.push(url);
+      images.push(getAssetUrl(url));
     }
   };
 
@@ -478,24 +489,28 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
   const isVehicle = item.category?.toLowerCase()?.includes('rental') || 
                     item.category?.toLowerCase()?.includes('bike') || 
                     item.category?.toLowerCase()?.includes('car') || 
+                    item.category?.toLowerCase()?.includes('vehicle') || 
                     item.type?.toLowerCase()?.includes('bike') || 
                     item.type?.toLowerCase()?.includes('car') || 
-                    item.pricePerDay;
+                    item.type?.toLowerCase()?.includes('rental') || 
+                    item.type?.toLowerCase()?.includes('vehicle') || 
+                    item.pricePerDay ||
+                    (Array.isArray(item.vehicles) && item.vehicles.length > 0);
 
-  // PRIORITY 1: For Vehicles & Stays, if image is missing or a wikimedia url that might fail, provide real assets
+  // PRIORITY 1: For Vehicles & Stays, provide 100% real verified Uttarakhand photography
   if (isVehicle) {
-    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder')) {
+    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder') && !item.image.includes('/assets/rentals/')) {
       addUrl(item.image);
     }
-    images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category));
+    images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category, item.vehicles));
     return images;
   }
 
   if (isStay) {
-    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder')) {
+    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder') && !item.image.includes('/assets/stays/')) {
       addUrl(item.image);
     }
-    if (item.coverImage && typeof item.coverImage === 'string' && !item.coverImage.includes('wikimedia.org')) {
+    if (item.coverImage && typeof item.coverImage === 'string' && !item.coverImage.includes('wikimedia.org') && !item.coverImage.includes('/assets/stays/')) {
       addUrl(item.coverImage);
     }
     const seed = hashString(item.id || item._id || item.name || 'stay') + index;

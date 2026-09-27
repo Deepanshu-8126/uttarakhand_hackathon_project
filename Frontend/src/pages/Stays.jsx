@@ -351,7 +351,7 @@ export default function Stays() {
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-[#0f4c3a] group h-[380px] flex flex-col justify-end p-6">
                   <div 
                     className="absolute inset-0 bg-cover bg-center opacity-70 group-hover:scale-105 transition duration-700" 
-                    style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1200&q=80')" }}
+                    style={{ backgroundImage: `url('${getAssetUrl('/assets/stay-2.jpg')}')` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 

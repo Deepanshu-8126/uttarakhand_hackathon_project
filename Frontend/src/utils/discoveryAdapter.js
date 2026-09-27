@@ -9,7 +9,19 @@
 export const normalizeDiscoveryCandidate = (item, parentDestination = {}) => {
   if (!item) return null;
 
-  const id = String(item._id || item.id || item.slug || Math.random());
+  let cleanId = '';
+  if (typeof item._id === 'string' && item._id.length > 0) cleanId = item._id;
+  else if (typeof item.id === 'string' && item.id.length > 0) cleanId = item.id;
+  else if (item._id && typeof item._id === 'object' && item._id.toString && !item._id.toString().includes('object Object')) cleanId = item._id.toString();
+  else if (item.id && typeof item.id === 'object' && item.id.toString && !item.id.toString().includes('object Object')) cleanId = item.id.toString();
+  else cleanId = String(Math.random());
+
+  let cleanSlug = '';
+  if (typeof item.slug === 'string' && item.slug.trim() && !item.slug.includes('object Object')) cleanSlug = item.slug.trim();
+  else if (typeof item.name === 'string' && item.name.trim()) cleanSlug = item.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+  else cleanSlug = cleanId;
+
+  const id = cleanId;
   const name = item.name || item.title || 'Uttarakhand Experience';
   const district = item.district || parentDestination.district || 'Uttarakhand';
   const category = item.category || item.itemType || 'Destination';
@@ -44,18 +56,18 @@ export const normalizeDiscoveryCandidate = (item, parentDestination = {}) => {
   }
 
   // Route URL based on domain type
-  let detailUrl = `/destinations/${item.slug || id}`;
-  if (itemType === 'spiritual') detailUrl = `/spiritual/${item.slug || id}`;
-  else if (itemType === 'culture') detailUrl = `/culture/${item.slug || id}`;
-  else if (itemType === 'activity') detailUrl = `/activities/${item.slug || id}`;
-  else if (itemType === 'stay') detailUrl = `/stays/${item.slug || id}`;
+  let detailUrl = `/destinations/${cleanSlug}`;
+  if (itemType === 'spiritual') detailUrl = `/spiritual/${cleanSlug}`;
+  else if (itemType === 'culture') detailUrl = `/culture/${cleanSlug}`;
+  else if (itemType === 'activity') detailUrl = `/activities/${cleanSlug}`;
+  else if (itemType === 'stay') detailUrl = `/stays/${cleanSlug}`;
   else if (itemType === 'rental') detailUrl = `/rentals`;
-  else if (itemType === 'guide') detailUrl = `/guides/${item.slug || id}`;
+  else if (itemType === 'guide') detailUrl = `/guides/${cleanSlug}`;
 
   return {
     _id: id,
     id: id,
-    slug: item.slug || String(id),
+    slug: cleanSlug,
     name: name,
     district: district,
     category: category,

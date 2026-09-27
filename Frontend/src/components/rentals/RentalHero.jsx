@@ -5,6 +5,8 @@ import {
   Compass
 } from 'lucide-react';
 
+import { getAssetUrl } from '../../utils/imageHelpers';
+
 const RENTAL_SLIDES = [
   {
     title: 'Rent Your Mountain Ride',
@@ -12,9 +14,7 @@ const RENTAL_SLIDES = [
     description: 'Conquer steep hairpins, misty pine passes & sacred valleys with 100% hill-tested 4x4 SUVs, cruisers & sedans.',
     tag: 'Alpine Mountain Highway',
     hubText: 'Char Dham All-Weather Corridor (NH-07 / NH-58)',
-    // Reliable high-resolution scenic driving & mountain highway imagery
-    src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=85&w=1920&auto=format&fit=crop',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-car-driving-on-a-curved-road-in-the-mountains-41544-large.mp4',
+    src: getAssetUrl('/assets/pickup-1.jpg'),
     badge: '4x4 & All-Weather Ready',
     stats: '45+ Fleets Active Today'
   },
@@ -24,8 +24,7 @@ const RENTAL_SLIDES = [
     description: 'Specialized 4-wheel-drive Mahindra Thar, Scorpio & Isuzu fleets inspected for steep ascents, monsoon grip & gravel passes.',
     tag: 'High-Altitude 4x4 Expedition',
     hubText: 'Joshimath • Mana • Tungnath • Munsiyari Pass',
-    src: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=85&w=1920&auto=format&fit=crop',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-fog-over-the-mountain-forest-41551-large.mp4',
+    src: getAssetUrl('/assets/pickup-2.jpg'),
     badge: 'Braking & Grip Inspected',
     stats: '100% Mountain Tested'
   },
@@ -35,8 +34,7 @@ const RENTAL_SLIDES = [
     description: 'Fully equipped Royal Enfield Himalayan 450, Scram & Classic 350 ready with luggage panniers, crash guards & USB charging.',
     tag: 'Bike & Solo Cruiser Circuit',
     hubText: 'Rishikesh • Dehradun • Haridwar Railhead Pickups',
-    src: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=85&w=1920&auto=format&fit=crop',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-mountain-stream-flowing-down-a-valley-41549-large.mp4',
+    src: getAssetUrl('/assets/himalayan-bike.jpg'),
     badge: 'Touring Panniers Included',
     stats: 'Instant Railhead Pickup'
   },
@@ -46,8 +44,7 @@ const RENTAL_SLIDES = [
     description: 'Verified native pahadi drivers with 10+ years experience in snow, fog & high passes. 0% commission transparent rates.',
     tag: 'Gateway City Hubs',
     hubText: 'Jolly Grant Airport • Kathgodam Station • Haldwani Hub',
-    src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=85&w=1920&auto=format&fit=crop',
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-over-mountain-peaks-41548-large.mp4',
+    src: getAssetUrl('/assets/innova.jpg'),
     badge: 'Zero Surge Guarantee',
     stats: '15+ Gateway City Hubs'
   }
