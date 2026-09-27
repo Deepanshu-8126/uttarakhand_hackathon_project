@@ -4,8 +4,7 @@
  * transient planning support, and payload boundary sanitization.
  */
 
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import mongoose from 'mongoose';
 import SavedTrip from '../models/SavedTrip.js';
 import { AiContextBuilder } from '../services/aiContextBuilder.js';
 import { AiPlannerService } from '../services/aiPlannerService.js';
@@ -20,42 +19,25 @@ export const generatePlan = async (req, res) => {
     // Mode A: SAVED TRIP (Authentication & Ownership Enforced)
     // ─────────────────────────────────────────────────────────────
     if (tripId) {
-      // 1. Authenticate user via JWT header
-      let token = null;
-      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
-      }
-
-      if (!token) {
+      // 1. Ownership check requires authenticated user
+      if (!req.user) {
         return res.status(401).json({
           success: false,
           message: 'Authentication required to generate AI insights for a saved trip.'
         });
       }
 
-      let decodedUser = null;
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        decodedUser = await User.findById(decoded.id).select('-password');
-      } catch (err) {
-        return res.status(401).json({
+      // 2. Validate tripId format to avoid CastError 500
+      if (!mongoose.Types.ObjectId.isValid(tripId)) {
+        return res.status(400).json({
           success: false,
-          message: 'Invalid or expired session token.'
+          message: 'Invalid tripId'
         });
       }
 
-      if (!decodedUser) {
-        return res.status(401).json({
-          success: false,
-          message: 'User session not found.'
-        });
-      }
-
-      // 2. Fetch trip and verify ownership
+      // 3. Fetch trip with single array populate and verify ownership
       const savedTrip = await SavedTrip.findById(tripId)
-        .populate('destinations')
-        .populate('activities')
-        .populate('stays');
+        .populate(['destinations', 'activities', 'stays']);
 
       if (!savedTrip) {
         return res.status(404).json({
@@ -65,7 +47,7 @@ export const generatePlan = async (req, res) => {
       }
 
       // Strict ownership check
-      if (savedTrip.user && !savedTrip.user.equals(decodedUser._id)) {
+      if (savedTrip.user && !savedTrip.user.equals(req.user._id)) {
         return res.status(403).json({
           success: false,
           message: 'Access denied: You are not authorized to access this trip.'

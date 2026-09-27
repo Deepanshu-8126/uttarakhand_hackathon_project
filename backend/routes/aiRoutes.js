@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { generatePlan, getAiHealth } from '../controllers/aiController.js';
+import { optionalAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -38,6 +39,6 @@ const aiRateLimiter = (req, res, next) => {
 router.get('/health', getAiHealth);
 
 // Mount planning route
-router.post('/plan', aiRateLimiter, generatePlan);
+router.post('/plan', aiRateLimiter, optionalAuth, generatePlan);
 
 export default router;

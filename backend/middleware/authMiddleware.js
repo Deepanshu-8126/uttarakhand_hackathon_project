@@ -49,3 +49,24 @@ export const partnerOnly = (req, res, next) => {
     res.status(403).json({ success: false, message: 'Access denied: Partner privileges required.' });
   }
 };
+
+export const requireAuth = protect;
+
+export const optionalAuth = async (req, res, next) => {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id).select('-password');
+      if (user) {
+        req.user = user;
+      }
+    } catch (_) {
+      // Token invalid or expired, continue as unauthenticated
+    }
+  }
+  next();
+};
