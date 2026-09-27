@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useMapStore } from '../../store/mapStore';
 import SidebarItem from './SidebarItem';
 import LayerControls from './LayerControls';
@@ -38,13 +38,27 @@ export default function Sidebar() {
     toggleTripPlanner,
     allDestinations,
     allSpiritual,
-    allStays,
     tripStats
   } = useMapStore();
 
-  const filteredDestinations = allDestinations.filter(
-    (d) => selectedCategory === 'all' || d.category === selectedCategory
+  const filteredDestinations = useMemo(() => 
+    (allDestinations || []).filter(
+      (d) => selectedCategory === 'all' || d.category === selectedCategory
+    ),
+    [allDestinations, selectedCategory]
   );
+
+  // Prevent background map dragging and lock body scroll on mobile when sidebar is open
+  useEffect(() => {
+    if (isSidebarOpen && window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSidebarOpen]);
 
   return (
     <>
@@ -52,7 +66,7 @@ export default function Sidebar() {
       {!isSidebarOpen && (
         <button
           onClick={toggleSidebar}
-          className="absolute top-4 left-4 z-[1000] p-3 rounded-2xl bg-slate-900/90 text-amber-400 border border-slate-700/80 shadow-2xl backdrop-blur-md hover:bg-slate-800 transition-all hover:scale-105"
+          className="absolute top-4 left-4 z-[500] p-3 rounded-2xl bg-slate-900/90 text-amber-400 border border-slate-700/80 shadow-2xl backdrop-blur-md hover:bg-slate-800 transition-all hover:scale-105"
           title="Expand Sidebar"
         >
           <MdChevronRight className="text-2xl" />
@@ -61,8 +75,8 @@ export default function Sidebar() {
 
       {/* Main Sidebar Container */}
       <aside
-        className={`fixed top-0 left-0 h-full z-[1000] transition-all duration-300 ease-in-out flex flex-col ${
-          isSidebarOpen ? 'w-88 md:w-96 translate-x-0' : '-translate-x-full w-0'
+        className={`fixed top-0 left-0 h-full z-[500] transition-all duration-300 ease-in-out flex flex-col ${
+          isSidebarOpen ? 'w-[22rem] md:w-96 translate-x-0' : '-translate-x-full w-0'
         } bg-slate-950/90 backdrop-blur-xl border-r border-slate-800/80 text-slate-100 shadow-2xl overflow-hidden`}
       >
         {/* Brand Header */}
@@ -181,7 +195,7 @@ export default function Sidebar() {
                         <img
                           src={dest.image || dest.coverImage?.url || (typeof dest.coverImage === 'string' ? dest.coverImage : null) || '/assets/fallback.svg'}
                           alt={dest.name}
-                          onError={(e) => { e.target.src = '/assets/fallback.svg'; }}
+                          onError={(e) => { e.target.onerror = null; e.target.src = '/assets/fallback.svg'; }}
                           className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-slate-800"
                         />
                         <div className="flex-1 min-w-0">
@@ -394,7 +408,7 @@ export default function Sidebar() {
                       <img
                         src={site.image || site.coverImage?.url || '/assets/fallback.svg'}
                         alt={site.name}
-                        onError={(e) => { e.target.src = '/assets/fallback.svg'; }}
+                        onError={(e) => { e.target.onerror = null; e.target.src = '/assets/fallback.svg'; }}
                         className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-slate-800"
                       />
                       <div className="flex-1 min-w-0">
