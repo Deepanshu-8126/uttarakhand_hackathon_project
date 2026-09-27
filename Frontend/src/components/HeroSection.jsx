@@ -126,6 +126,9 @@ const DYNAMIC_OCCASION_SLIDES = [
     tag: 'Sacred Alpenglow',
     occasion: 'Golden Sunrise Darshan',
     src: '/assets/yatra_sarthi/adi_kailash.jpg',
+    videoUrl: '/assets/devbhoomi_reel.mp4',
+    startTime: 8,
+    rotate: 90,
     fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85',
     slug: 'adi-kailash',
     subtitle: 'Golden sunrise illuminating the sacred Kumaon pinnacle above Parvati Sarovar.'
@@ -137,6 +140,9 @@ const DYNAMIC_OCCASION_SLIDES = [
     tag: 'Ancient High Pass',
     occasion: 'Himalayan Ridge & Sacred Trails',
     src: '/assets/destinations/om_parvat.jpg',
+    videoUrl: '/assets/devbhoomi_reel.mp4',
+    startTime: 4,
+    rotate: 90,
     fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85',
     slug: 'om-parvat',
     subtitle: 'Breathtaking high-altitude pass adorned with sacred flags overlooking ancient border valleys.'
@@ -586,30 +592,59 @@ export default function HeroSection() {
                 isActive ? 'opacity-100 z-0' : 'opacity-0 -z-10'
               }`}
             >
-              <img
-                src={media.src}
-                alt={media.name}
-                onError={(e) => { 
-                  if (media.fallbackSrc && e.currentTarget.src !== media.fallbackSrc) {
-                    e.currentTarget.src = media.fallbackSrc;
-                  } else {
-                    e.currentTarget.src = '/assets/yatra_sarthi/nainital.jpg';
-                  }
-                }}
-                className="w-full h-full object-cover object-center ken-burns-hero"
-              />
+              {media.videoUrl ? (
+                <video
+                  src={media.videoUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  onLoadedMetadata={(e) => {
+                    if (media.startTime) {
+                      e.currentTarget.currentTime = media.startTime;
+                    }
+                  }}
+                  className={`w-full h-full object-cover object-center transition-transform duration-500 ${
+                    media.rotate === 90 ? 'rotate-90 scale-[1.75]' :
+                    media.rotate === -90 || media.rotate === 270 ? '-rotate-90 scale-[1.75]' :
+                    media.rotate === 180 ? 'rotate-180 scale-105' :
+                    'scale-105'
+                  }`}
+                />
+              ) : (
+                <img
+                  src={media.src}
+                  alt={media.name}
+                  onError={(e) => { 
+                    if (media.fallbackSrc && e.currentTarget.src !== media.fallbackSrc) {
+                      e.currentTarget.src = media.fallbackSrc;
+                    } else {
+                      e.currentTarget.src = '/assets/yatra_sarthi/nainital.jpg';
+                    }
+                  }}
+                  className="w-full h-full object-cover object-center ken-burns-hero"
+                />
+              )}
             </div>
           );
         })}
 
-        {/* Clean, balanced cinematic gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/55 z-1" />
+        {/* Clean, balanced cinematic gradient overlay (ultra-light on video slides for maximum scenery visibility) */}
+        <div 
+          className={`absolute inset-0 z-1 pointer-events-none transition-all duration-700 ${
+            currentMedia.videoUrl 
+              ? 'bg-gradient-to-t from-black/80 via-transparent to-black/20' 
+              : 'bg-gradient-to-t from-black/85 via-black/35 to-black/55'
+          }`} 
+        />
 
         {/* Top Header: Minimal Occasion & Live Spotlight Tag */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-xs font-medium text-stone-200 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-            <span className="truncate max-w-[200px] sm:max-w-none text-emerald-300 font-semibold">{currentMedia.occasion || timeBasedOccasion.title}</span>
+            <span className="truncate max-w-[200px] sm:max-w-none text-emerald-300 font-semibold">
+              {currentMedia.videoUrl ? '🎬 HD Himalayan Motion Reel' : (currentMedia.occasion || timeBasedOccasion.title)}
+            </span>
           </div>
 
           {/* Slide Indicator Dots / Count */}
@@ -621,12 +656,16 @@ export default function HeroSection() {
         </div>
 
         {/* ── Main Hero Typography & Dynamic Destination ── */}
-        <div className="relative z-10 max-w-2xl mb-2 sm:mb-6">
+        <div className={`relative z-10 transition-all duration-500 ${
+          currentMedia.videoUrl 
+            ? 'max-w-xl mb-1 sm:mb-2 p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-black/40 backdrop-blur-md border border-white/15 shadow-xl' 
+            : 'max-w-2xl mb-2 sm:mb-6'
+        }`}>
           
           {/* Location & Altitude Pill */}
           <Link
             to={`/destinations/${currentMedia.slug}`}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-medium text-white/95 mb-2 sm:mb-3.5 shadow-xs transition-colors group/pill"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-medium text-white/95 mb-2 shadow-xs transition-colors group/pill"
           >
             <MapPin size={12} className="text-emerald-300" />
             <span className="truncate max-w-[140px] sm:max-w-none">{currentMedia.location}</span>
@@ -635,18 +674,28 @@ export default function HeroSection() {
             <ArrowRight size={11} className="text-emerald-300 opacity-0 group-hover/pill:opacity-100 group-hover/pill:translate-x-0.5 transition-all" />
           </Link>
 
-          {/* Clean, Bold White Hero Headline */}
+          {/* Clean, Bold White Hero Headline (Compact on Video Slides to keep scenery 80%+ clear) */}
           <Link to={`/destinations/${currentMedia.slug}`} className="block group/head">
-            <h1 className="text-2xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] mb-2 sm:mb-3 text-white drop-shadow-md">
-              Experience Sacred{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white underline decoration-emerald-400/40 decoration-wavy decoration-1 underline-offset-4 group-hover/head:decoration-emerald-300 transition-colors">
-                {currentMedia.name}
-              </span>
-            </h1>
+            {currentMedia.videoUrl ? (
+              <h1 className="text-xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight mb-1.5 text-white drop-shadow-md">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white">
+                  {currentMedia.name}
+                </span>
+              </h1>
+            ) : (
+              <h1 className="text-2xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] mb-2 sm:mb-3 text-white drop-shadow-md">
+                Experience Sacred{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-white underline decoration-emerald-400/40 decoration-wavy decoration-1 underline-offset-4 group-hover/head:decoration-emerald-300 transition-colors">
+                  {currentMedia.name}
+                </span>
+              </h1>
+            )}
           </Link>
 
           {/* Direct, high-signal description */}
-          <p className="text-xs sm:text-base text-white/90 font-medium max-w-xl leading-relaxed drop-shadow-sm line-clamp-2">
+          <p className={`text-xs text-white/90 font-medium leading-relaxed drop-shadow-sm ${
+            currentMedia.videoUrl ? 'line-clamp-1 max-w-lg' : 'sm:text-base max-w-xl line-clamp-2'
+          }`}>
             {currentMedia.subtitle}
           </p>
         </div>

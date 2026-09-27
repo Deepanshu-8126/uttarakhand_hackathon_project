@@ -3,7 +3,8 @@ import StructuredTravelCards from "./StructuredTravelCards";
 import AgenticToolCallTimeline from "./AgenticToolCallTimeline";
 import { Sparkles, Volume2, VolumeX } from "lucide-react";
 import { executeAgentAction } from "../../utils/agentActionExecutor";
-import { speakText, stopSpeaking, isSpeechSynthesisSupported } from "../../utils/speechSynthesis";
+import { speakText, stopSpeaking, playAudioStream, isSpeechSynthesisSupported } from "../../utils/speechSynthesis";
+import api from "../../api/api";
 
 const TYPE_STYLES = {
   answer: "",
@@ -64,16 +65,59 @@ export default function CopilotMessage({ msg, onConfirm, onCancel, onSelectActio
     };
   }, [isSpeaking]);
 
-  const toggleSpeak = () => {
+  const fallbackSpeak = () => {
+    speakText(msg.text, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false)
+    });
+  };
+
+  const toggleSpeak = async () => {
     if (isSpeaking) {
       stopSpeaking();
       setIsSpeaking(false);
     } else {
-      speakText(msg.text, {
-        onStart: () => setIsSpeaking(true),
-        onEnd: () => setIsSpeaking(false),
-        onError: () => setIsSpeaking(false)
-      });
+      setIsSpeaking(true);
+      if (msg.audio_base64) {
+        playAudioStream(msg.audio_base64, {
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false),
+          onError: () => fallbackSpeak()
+        });
+        let audioSrc = null;
+        try {
+          const res = await api.post('/voice/elevenlabs/tts', { text: msg.text });
+          if (res.data && res.data.success && res.data.audio_base64) {
+            audioSrc = res.data.audio_base64;
+          }
+        } catch (_) {}
+
+        if (!audioSrc) {
+          try {
+            const raw = await fetch('http://localhost:5000/api/voice/elevenlabs/tts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: msg.text })
+            });
+            if (raw.ok) {
+              const d = await raw.json();
+              if (d.success && d.audio_base64) {
+                audioSrc = d.audio_base64;
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (audioSrc) {
+          playAudioStream(audioSrc, {
+            onStart: () => setIsSpeaking(true),
+            onEnd: () => setIsSpeaking(false),
+            onError: () => fallbackSpeak()
+          });
+          return;
+        }
+        fallbackSpeak();
     }
   };
 

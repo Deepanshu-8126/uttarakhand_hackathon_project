@@ -6,9 +6,7 @@ import FilterPills from './FilterPills';
 import DestinationCard from './DestinationCard';
 import Pagination from './common/Pagination';
 import { useDestinations } from '../hooks/useDestinations';
-import { placesApi } from '../api/placesApi';
 import { useMapStore } from '../store/mapStore';
-import { useFreshImage } from '../utils/images';
 import api from '../api/api';
 
 const ITEMS_PER_PAGE = 12;
@@ -292,6 +290,7 @@ const ExploreSection = () => {
           Discover valleys, peaks, sacred shrines, and hidden mountain landmarks across 13 districts &amp; live satellite radar.
         </p>
       </div>
+
 
       {/* Category filter pills */}
       <div className="flex justify-center mb-7">

@@ -110,8 +110,10 @@ const DestinationMap = ({ center, items }) => {
     <div className="w-full h-[500px] rounded-3xl overflow-hidden shadow-sm border border-border-light z-0 relative">
       <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="w-full h-full z-0">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={19}
         />
         {markers.map((marker, idx) => (
           <Marker 

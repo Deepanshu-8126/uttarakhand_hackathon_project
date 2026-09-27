@@ -39,7 +39,7 @@ import {
   Layers,
   Maximize2
 } from 'lucide-react';
-import { getHimalayanFallbackImage, getRealDestinationPhotos, getAssetUrl } from '../utils/imageHelpers';
+import { getHimalayanFallbackImage, getRealDestinationPhotos, getAssetUrl, getCardImages } from '../utils/imageHelpers';
 
 // Fallback high-res alpine photos in case API is offline or slow
 const CURATED_HIMALAYAN_FALLBACKS = [
@@ -343,6 +343,36 @@ export default function DestinationDetails() {
     ? destination.experiences
     : [destination.category || 'Mountain Oasis', 'Pilgrimage', 'Lake Basin', 'Alpine Serenity'];
 
+  const CANONICAL_ALTITUDES = {
+    'adi-kailash': '5,945',
+    'adi kailash': '5,945',
+    'om-parvat': '5,590',
+    'om parvat': '5,590',
+    'kedarnath': '3,583',
+    'badrinath': '3,300',
+    'tungnath': '3,680',
+    'chopta': '2,680',
+    'auli': '3,050',
+    'nainital': '2,084',
+    'mussoorie': '2,005',
+    'valley-of-flowers': '3,658',
+    'hemkund-sahib': '4,329',
+    'rishikesh': '340',
+    'haridwar': '314',
+    'munsiyari': '2,200',
+    'pithoragarh': '1,636'
+  };
+
+  const displayAltitude = destination.altitude
+    ? `${destination.altitude.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}m`
+    : (CANONICAL_ALTITUDES[destination.slug] || CANONICAL_ALTITUDES[destination.name?.toLowerCase()]
+        ? `${CANONICAL_ALTITUDES[destination.slug] || CANONICAL_ALTITUDES[destination.name?.toLowerCase()]}m`
+        : '2,084m');
+
+  const numericAltitude = destination.altitude 
+    ? parseInt(destination.altitude, 10) 
+    : parseInt((CANONICAL_ALTITUDES[destination.slug] || '2000').replace(/,/g, ''), 10);
+
   const thingsToDo = related?.thingsToDo || [];
   const stays = related?.stays || [];
 
@@ -419,20 +449,20 @@ export default function DestinationDetails() {
         </div>
       </div>
 
-      {/* ── 3. Panoramic Hero Section (Rich Aesthetics & Emerald Gradient Glow) ── */}
-      <section className="relative bg-gradient-to-br from-stone-950 via-[#0a231b] to-stone-950 text-white overflow-hidden py-12 lg:py-16">
+      {/* ── 3. Panoramic Hero Section (Rich Aesthetics & Crisp Peak Visibility) ── */}
+      <section className="relative bg-[#0d1f18] text-white overflow-hidden py-12 lg:py-16 border-b border-stone-800">
         
-        {/* Background Ambient Imagery & Shimmer */}
-        <div className="absolute inset-0 z-0 opacity-35 mix-blend-luminosity">
+        {/* Background Ambient Imagery with High Clarity */}
+        <div className="absolute inset-0 z-0 opacity-55">
           <img
             src={allGalleryPhotos[0]?.url || getHimalayanFallbackImage(destination)}
             alt={destination.name}
             loading="eager"
             fetchPriority="high"
             onError={e => { e.currentTarget.src = CURATED_PEXELS_FALLBACKS[0].url; }}
-            className="w-full h-full object-cover object-center filter blur-xs scale-105"
+            className="w-full h-full object-cover object-center scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-[#081a14]/80 to-stone-950/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/70 to-stone-950/40" />
         </div>
 
         {/* Ambient Emerald Radial Glow */}
@@ -455,12 +485,12 @@ export default function DestinationDetails() {
                   <span>{destination.district} District</span>
                 </span>
 
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-stone-200 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-emerald-300 text-xs font-bold">
                   <Mountain size={12} className="text-emerald-400" />
-                  <span>Elevation {destination.altitude ? `${destination.altitude}m` : '1,370m'}</span>
+                  <span>Elevation {displayAltitude}</span>
                 </span>
 
-                {destination.altitude && parseInt(destination.altitude, 10) > 3000 && (
+                {numericAltitude > 3000 && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 text-xs font-black">
                     <AlertTriangle size={12} />
                     <span>High-Altitude Zone</span>
@@ -811,6 +841,17 @@ export default function DestinationDetails() {
           {/* ── Left Column: Overview, Stays, Adventures, Radar, Map ── */}
           <div className="lg:col-span-2 space-y-8">
             
+            {/* Google Places Live Radar (Filtered & Curated - Moved to Top Position) */}
+            <div id="radar">
+              <GooglePlacesRadarWidget 
+                locationName={destination.name}
+                coordinates={{
+                  lat: destination.coordinates?.lat || destination.location?.coordinates?.[1] || 29.35,
+                  lng: destination.coordinates?.lng || destination.location?.coordinates?.[0] || 79.5667
+                }}
+              />
+            </div>
+
             {/* Overview & Key Highlights Card */}
             <div id="overview" className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-xs space-y-6">
               <div>
@@ -876,21 +917,26 @@ export default function DestinationDetails() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {stays.slice(0, 4).map((stay) => {
+                  {stays.slice(0, 4).map((stay, idx) => {
                     const price = stay.price?.amount || stay.pricePerNight || '2,400';
+                    const cardImg = getCardImages(stay, '/assets/stay-1.jpg', idx)[0] || 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800&auto=format&fit=crop';
                     return (
                       <div
-                        key={stay._id || stay.slug}
+                        key={stay._id || stay.slug || idx}
                         className="bg-stone-50/70 rounded-2xl p-3 border border-stone-200/80 flex flex-col justify-between hover:border-[#0f3d2e]/40 hover:shadow-md transition-all group"
                       >
                         <div>
                           <div className="h-36 rounded-xl overflow-hidden bg-stone-200 mb-2.5 relative">
                             <img
-                              src={stay.images?.[0] || stay.coverImage || 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800&auto=format&fit=crop'}
-                              alt={stay.name}
+                              src={cardImg}
+                              alt=""
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=800&auto=format&fit=crop';
+                              }}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            <span className="absolute top-2 left-2 bg-[#0f3d2e]/90 text-emerald-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                            <span className="absolute top-2 left-2 z-10 bg-[#0f3d2e]/90 text-emerald-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs backdrop-blur-md">
                               🏡 KMVN / Partner
                             </span>
                           </div>
@@ -974,16 +1020,6 @@ export default function DestinationDetails() {
               </div>
             )}
 
-            {/* Google Places Live Radar (Filtered & Curated) */}
-            <div id="radar">
-              <GooglePlacesRadarWidget 
-                locationName={destination.name}
-                coordinates={{
-                  lat: destination.coordinates?.lat || destination.location?.coordinates?.[1] || 29.35,
-                  lng: destination.coordinates?.lng || destination.location?.coordinates?.[0] || 79.5667
-                }}
-              />
-            </div>
 
             {/* Geographical Map Section */}
             {destination.location?.coordinates && (

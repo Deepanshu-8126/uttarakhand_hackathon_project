@@ -149,6 +149,30 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
           );
         });
         _scrollToBottom();
+
+        // Check for uiActions (Favorites Vault & Action Confirmation)
+        if (result['uiActions'] != null && (result['uiActions'] as List).isNotEmpty) {
+          final firstAction = (result['uiActions'] as List).first;
+          final itemTitle = firstAction['item']?['title'] ?? 'Item';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.bookmark_added, color: Colors.greenAccent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Saved to Favorites Vault: $itemTitle',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF0F3D2E),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

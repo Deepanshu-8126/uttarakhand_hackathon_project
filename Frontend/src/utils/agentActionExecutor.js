@@ -73,7 +73,9 @@ export const ALLOWED_ACTIONS = new Set([
   'FIND_STAYS',
   'SHOW_ROUTE',
   'CHECK_WEATHER',
-  'EXPLORE_DESTINATION'
+  'EXPLORE_DESTINATION',
+  'SAVE_TO_FAVORITES',
+  'SAVE_GUIDE_CONTACT'
 ]);
 
 export const ALLOWED_FOCUS_FIELDS = new Set([
@@ -452,6 +454,20 @@ export function executeAgentAction(action, context = {}) {
         useMapStore.getState().setSelectedCategory(action.category);
       }
       return { executed: true };
+    }
+
+    case 'SAVE_TO_FAVORITES':
+    case 'SAVE_GUIDE_CONTACT': {
+      try {
+        const item = action.item || action.payload || {};
+        const savedList = JSON.parse(localStorage.getItem('devbhoomi_saved_favorites') || '[]');
+        savedList.unshift({
+          ...item,
+          savedAt: new Date().toISOString()
+        });
+        localStorage.setItem('devbhoomi_saved_favorites', JSON.stringify(savedList));
+      } catch (e) {}
+      return { executed: true, item: action.item };
     }
 
     case 'SUGGEST_ACTION':

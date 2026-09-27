@@ -1,6 +1,7 @@
 import express from 'express';
 import { AgentRouter } from '../ai/workflows/agentRouter.js';
 import { cacheGet, cacheSet } from '../config/redis.js';
+import { synthesizeElevenLabsVoice, getElevenLabsVoices } from '../services/elevenLabsService.js';
 
 const router = express.Router();
 
@@ -17,8 +18,8 @@ router.get('/greeting', (req, res) => {
   res.status(200).json({
     success: true,
     greeting: GREETINGS[lang],
-    voice: 'Aoede',
-    engine: 'devbhoomi_ai_voice',
+    voice: process.env.ELEVENLABS_API_KEY ? 'ElevenLabs-Multilingual' : 'Aoede',
+    engine: process.env.ELEVENLABS_API_KEY ? 'elevenlabs' : 'devbhoomi_ai_voice',
     audio_base64: ''
   });
 });
@@ -30,9 +31,41 @@ router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'online',
     service: 'devbhoomi_voice_service',
-    voice: 'Aoede',
+    voice: process.env.ELEVENLABS_API_KEY ? 'ElevenLabs Studio Voice' : 'Aoede',
+    elevenlabs_configured: Boolean(process.env.ELEVENLABS_API_KEY),
     timestamp: new Date().toISOString()
   });
+});
+
+/**
+ * POST /api/voice/elevenlabs/tts
+ * Directly synthesize any text into ElevenLabs base64 audio stream
+ */
+router.post('/elevenlabs/tts', async (req, res) => {
+  try {
+    const { text, voiceId } = req.body;
+    if (!text) {
+      return res.status(400).json({ success: false, message: 'Text payload is required.' });
+    }
+
+    const ttsRes = await synthesizeElevenLabsVoice(text, voiceId);
+    return res.status(200).json(ttsRes);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/voice/elevenlabs/voices
+ * Get list of available ElevenLabs voices
+ */
+router.get('/elevenlabs/voices', async (req, res) => {
+  try {
+    const voices = await getElevenLabsVoices();
+    return res.status(200).json({ success: true, voices });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 /**
@@ -40,7 +73,7 @@ router.get('/health', (req, res) => {
  */
 router.post('/ask', async (req, res) => {
   try {
-    const { query, message, lang } = req.body;
+    const { query, message, lang, voiceId } = req.body;
     const userQuery = (query || message || '').trim();
 
     if (!userQuery) {
@@ -52,34 +85,69 @@ router.post('/ask', async (req, res) => {
       });
     }
 
-    // 1. Check Redis Cache to save LLM tokens & API credits
+    // 1. Check Redis Cache
     const cacheKey = `voice:ask:${encodeURIComponent(userQuery.toLowerCase())}:${lang || 'en'}`;
     const cached = await cacheGet(cacheKey);
     if (cached) {
       return res.status(200).json(cached);
     }
 
+    // 2. Process query via AgentRouter for grounded travel response
     const result = await AgentRouter.processChatStream({
       message: userQuery,
       sessionId: req.headers['x-session-id'] || 'voice_session',
       userId: req.user?._id || null,
+      pageContext: { pageType: 'VOICE_AGENT', currentPage: 'COPILOT_VOICE' },
       res: null
     });
 
     const replyText = result.message || (result.data && result.data.message) || 'Namaste! Main aapka Devbhoomi voice companion hoon.';
+    const cleanReply = replyText.replace(/[*#_~`]/g, '').trim();
+
+    let audio_base64 = '';
+    let engine = 'devbhoomi_voice_copilot';
+
+    // 3. Synthesize speech using ElevenLabs if key is configured
+    if (process.env.ELEVENLABS_API_KEY) {
+      const elevenRes = await synthesizeElevenLabsVoice(cleanReply, voiceId);
+      if (elevenRes.success && elevenRes.audio_base64) {
+        audio_base64 = elevenRes.audio_base64;
+        engine = 'elevenlabs';
+      }
+    }
+
+    // 4. Fallback to Python AI Studio Voice Bridge if ElevenLabs is not set or failed
+    if (!audio_base64) {
+      const pythonUrl = process.env.PYTHON_AI_URL || 'http://127.0.0.1:8000';
+      try {
+        const pyRes = await fetch(`${pythonUrl}/api/voice/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: userQuery, lang: lang || 'hi' }),
+          signal: AbortSignal.timeout(5000)
+        });
+        if (pyRes.ok) {
+          const pyData = await pyRes.json();
+          if (pyData.audio_base64) {
+            audio_base64 = pyData.audio_base64;
+            engine = pyData.engine || 'gemini_live_aoede';
+          }
+        }
+      } catch (_) {}
+    }
 
     const responsePayload = {
       success: true,
-      response: replyText.replace(/[*#_~`]/g, '').trim(),
+      response: cleanReply,
       message: replyText,
       toolsUsed: result.toolsUsed || ['searchDestinations', 'getWeather'],
       suggestions: result.suggestions || [],
-      engine: 'devbhoomi_voice_copilot',
-      audio_base64: '',
+      engine,
+      audio_base64,
       cached: false
     };
 
-    // Cache for 12 hours (43200s) to save LLM tokens
+    // Cache for 12 hours
     await cacheSet(cacheKey, { ...responsePayload, cached: true }, 43200);
 
     return res.status(200).json(responsePayload);
@@ -99,7 +167,7 @@ router.post('/ask', async (req, res) => {
  */
 router.post('/audio_query', async (req, res) => {
   try {
-    const { audio_base64, lang, message, query } = req.body;
+    const { audio_base64, lang, message, query, voiceId } = req.body;
     const userQuery = (message || query || (lang?.startsWith('hi') ? 'उत्तराखंड यात्रा के बारे में बताओ' : 'Tell me about places to visit in Uttarakhand')).trim();
 
     const cacheKey = `voice:audio_query:${encodeURIComponent(userQuery.toLowerCase())}:${lang || 'en'}`;
@@ -116,14 +184,26 @@ router.post('/audio_query', async (req, res) => {
     });
 
     const replyText = result.message || 'Namaste! Main aapka Devbhoomi voice companion hoon.';
+    const cleanReply = replyText.replace(/[*#_~`]/g, '').trim();
+
+    let out_audio = '';
+    let engine = 'devbhoomi_voice_copilot';
+
+    if (process.env.ELEVENLABS_API_KEY) {
+      const elevenRes = await synthesizeElevenLabsVoice(cleanReply, voiceId);
+      if (elevenRes.success && elevenRes.audio_base64) {
+        out_audio = elevenRes.audio_base64;
+        engine = 'elevenlabs';
+      }
+    }
 
     const responsePayload = {
       success: true,
       user_transcript: userQuery,
-      response: replyText.replace(/[*#_~`]/g, '').trim(),
+      response: cleanReply,
       tools_used: result.toolsUsed || [],
-      engine: 'devbhoomi_voice_copilot',
-      audio_base64: ''
+      engine,
+      audio_base64: out_audio
     };
 
     await cacheSet(cacheKey, responsePayload, 43200);

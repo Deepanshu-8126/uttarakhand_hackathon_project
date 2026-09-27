@@ -351,12 +351,25 @@ export const createBooking = async (req, res) => {
       guests: numGuests
     };
 
+    // Resolve Partner ID for dashboard routing
+    let partnerRef = null;
+    if (partnerListingRef) {
+      const pl = await PartnerListing.findById(partnerListingRef).select('partner');
+      if (pl) partnerRef = pl.partner;
+    } else if (stayRef) {
+      const st = await Stay.findById(stayRef).select('partner ownerUser');
+      if (st) partnerRef = st.partner || st.ownerUser;
+    } else if (rentalRef) {
+      const rt = await Rental.findById(rentalRef).select('partner ownerUser');
+      if (rt) partnerRef = rt.partner || rt.ownerUser;
+    }
+
     // 10. Persist Booking Record
-    // Note: status is strictly set to 'PENDING', client status in req.body is ignored.
     const booking = await Booking.create({
       user: req.user.id || req.user._id,
       type: normalizedType,
       partnerListing: partnerListingRef,
+      partner: partnerRef,
       stay: stayRef,
       rental: rentalRef,
       guide: guideRef,

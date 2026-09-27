@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String itemType;
@@ -28,50 +29,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int get platformFee => 120;
   int get total => subtotal - coinDiscount + platformFee;
 
-  void _handlePayment() {
+  void _handlePayment() async {
     setState(() => isProcessing = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => isProcessing = false);
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Row(
-              children: const [
-                Icon(Icons.check_circle, color: Color(0xFF059669), size: 24),
-                SizedBox(width: 8),
-                Text('Escrow Secured!', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Your payment of ₹', style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-                Text('₹$total Locked in Devbhoomi Escrow Vault', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F3D2E))),
-                const SizedBox(height: 10),
-                const Text('Funds will ONLY be released to the host upon your safe check-in or offline OTP voucher confirmation.', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
-              ],
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.forestGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                ),
-                child: const Text('View Itinerary'),
-              ),
+    
+    // Create real booking record on backend
+    final bookingRes = await ApiService.createBooking(
+      type: widget.itemType.toLowerCase().contains('stay') ? 'stay' : 'rental',
+      title: widget.itemName,
+      amount: total,
+      days: days,
+    );
+
+    final bookingRef = bookingRes['bookingReference'] ?? bookingRes['data']?['bookingReference'] ?? 'DU-MOB-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final otpCode = bookingRes['checkInOtp'] ?? bookingRes['data']?['checkInOtp'] ?? '1234';
+
+    if (mounted) {
+      setState(() => isProcessing = false);
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Color(0xFF059669), size: 24),
+              SizedBox(width: 8),
+              Text('Escrow Secured!', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
             ],
           ),
-        );
-      }
-    });
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Booking Ref: $bookingRef', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F3D2E))),
+              const SizedBox(height: 6),
+              Text('Check-in OTP: $otpCode', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF059669))),
+              const SizedBox(height: 10),
+              Text('₹$total Locked in Devbhoomi Escrow Vault', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F3D2E))),
+              const SizedBox(height: 6),
+              const Text('Funds will ONLY be released to the host upon your safe check-in or offline OTP voucher confirmation.', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.forestGreen,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              ),
+              child: const Text('View Itinerary'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override

@@ -8,6 +8,7 @@ import {
   EyeOff, 
   ShieldCheck, 
   ArrowRight, 
+  ArrowLeft,
   Loader2, 
   AlertCircle,
   User,
@@ -202,13 +203,33 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fdfbf7] text-slate-800 font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-[100dvh] flex flex-col bg-[#fdfbf7] text-slate-800 font-sans overflow-x-hidden selection:bg-emerald-500 selection:text-white">
       
-      {/* ── 1. Top Navbar ───────────────────────────────────────── */}
-      <Navbar />
+      {/* ── 1. Top Back Header Bar ───────────────────────────────────────── */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 flex items-center justify-between z-30">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1) navigate(-1);
+            else navigate('/');
+          }}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-800 text-xs font-bold transition-all shadow-xs hover:border-stone-400 cursor-pointer active:scale-95"
+        >
+          <ArrowLeft size={15} className="text-stone-700" />
+          <span>Back</span>
+        </button>
+
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-900/10 hover:bg-emerald-900/20 text-[#0f3d2e] text-xs font-bold transition-colors cursor-pointer"
+        >
+          <Home size={14} />
+          <span>Home</span>
+        </Link>
+      </div>
 
       {/* ── 2. Split Screen Main Layout ────────────────────────── */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 items-center gap-8">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 items-center gap-8 pb-12 sm:pb-16">
         
         {/* Left Column: Visual Brand Hero (Hidden on Mobile, Visible on Desktop lg:col-span-5) */}
         <div className="hidden lg:flex lg:col-span-5 flex-col justify-between h-full min-h-[580px] p-8 rounded-3xl bg-gradient-to-br from-[#040e09] via-[#0f3d2e] to-[#081a13] text-white relative overflow-hidden shadow-2xl border border-emerald-500/20">
@@ -604,12 +625,15 @@ export default function LoginPage() {
             </p>
 
             {/* Guest Explorer Link */}
-            <Link
-              to="/"
-              className="text-xs text-slate-400 hover:text-slate-700 block text-center mt-2 transition-colors font-semibold"
-            >
-              ← Continue as Guest Explorer
-            </Link>
+            <div className="mt-4 pt-3 border-t border-stone-100 text-center">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-[#0f3d2e] transition-colors font-bold px-3.5 py-2 rounded-xl hover:bg-emerald-50 cursor-pointer"
+              >
+                <ArrowLeft size={13} />
+                <span>Continue as Guest Explorer</span>
+              </Link>
+            </div>
           </div>
         </div>
 

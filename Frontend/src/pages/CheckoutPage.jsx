@@ -26,6 +26,7 @@ import {
 import { getStayById, getStays } from '../api/stayApi';
 import { getRentalById, getRentals } from '../api/rentalApi';
 import { getDestinationBySlug, getDestinations } from '../api/destinationApi';
+import { createBooking } from '../api/bookingApi';
 import { useAuth } from '../context/AuthContext';
 
 export default function CheckoutPage() {
@@ -180,13 +181,47 @@ export default function CheckoutPage() {
     const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
     const bookingId = `DU-ESCROW-${Date.now().toString().slice(-6)}`;
 
-    const finalizeBooking = (paymentDetails = {}) => {
+    const finalizeBooking = async (paymentDetails = {}) => {
       const isCash = paymentMethod === 'cash';
+
+      // Submit booking to backend DB so it reflects in Partner Dashboard & User Bookings
+      let serverBooking = null;
+      try {
+        const payload = {
+          type: item?.isPartnerListing ? 'partner_listing' : (itemType || 'stay'),
+          bookingType: item?.isPartnerListing ? 'partner_listing' : (itemType || 'stay'),
+          item: item?._id || item?.id,
+          partnerListing: item?.isPartnerListing || item?.partnerListingId ? (item?.partnerListingId || item?._id) : undefined,
+          stay: (itemType === 'stay' && !item?.isPartnerListing) ? (item?._id || item?.id) : undefined,
+          rental: (itemType === 'rental' && !item?.isPartnerListing) ? (item?._id || item?.id) : undefined,
+          startDate,
+          endDate,
+          guests,
+          traveler: {
+            name: fullName,
+            email: email,
+            phone: phoneNumber,
+            guests
+          },
+          notes: `Payment Method: ${isCash ? 'CASH_ON_ARRIVAL' : paymentMethod}`
+        };
+
+        const res = await createBooking(payload);
+        if (res && res.data) {
+          serverBooking = res.data;
+        }
+      } catch (err) {
+        console.warn('Backend booking sync:', err.message);
+      }
+
+      const effectiveRef = serverBooking?.bookingReference || bookingId;
+      const effectiveOtp = serverBooking?.checkInOtp || generatedOtp;
+
       const bookingRecord = {
-        bookingId,
-        id: bookingId,
-        _id: bookingId,
-        bookingReference: bookingId,
+        bookingId: effectiveRef,
+        id: effectiveRef,
+        _id: serverBooking?._id || bookingId,
+        bookingReference: effectiveRef,
         userId: currentUser?._id || currentUser?.id,
         userEmail: currentUser?.email || email,
         userName: currentUser?.name || fullName,
@@ -203,7 +238,7 @@ export default function CheckoutPage() {
         taxes,
         escrowStatus: isCash ? 'CASH_HANDSHAKE_PENDING' : 'HELD_IN_ESCROW',
         status: 'CONFIRMED',
-        checkInOtp: generatedOtp,
+        checkInOtp: effectiveOtp,
         paidAt: isCash ? null : new Date().toISOString(),
         paymentMethod: isCash ? 'CASH_ON_ARRIVAL' : paymentMethod.toUpperCase(),
         partnerVerified: true,

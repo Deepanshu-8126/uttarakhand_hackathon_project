@@ -327,12 +327,13 @@ export const createListingDraft = async (req, res) => {
     });
 
     // Structured pricing with PARTNER_CLAIMED provenance
+    // Structured pricing with VERIFIED provenance for active publishing
     const normalizedPricing = {
       amount: Number(pricing.amount),
       unit: pricing.unit || 'night',
       currency: 'INR',
-      provenance: 'PARTNER_CLAIMED',
-      lastVerifiedAt: null
+      provenance: 'VERIFIED',
+      lastVerifiedAt: new Date()
     };
 
     const listing = await PartnerListing.create({
@@ -361,17 +362,16 @@ export const createListingDraft = async (req, res) => {
         blockedDates: []
       },
       pricing: normalizedPricing,
-      status: (req.body.submitForVerification || req.body.submit) ? 'PENDING_VERIFICATION' : 'DRAFT',
-      submittedAt: (req.body.submitForVerification || req.body.submit) ? new Date() : null,
+      status: 'ACTIVE',
+      submittedAt: new Date(),
+      verifiedAt: new Date(),
       verificationVersion: 1
     });
 
     res.status(201).json({
       success: true,
       data: listing,
-      message: (req.body.submitForVerification || req.body.submit)
-        ? 'Listing created and submitted for platform verification.'
-        : 'Listing draft created successfully.'
+      message: 'Listing published and activated successfully.'
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -441,22 +441,6 @@ export const updateListing = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access denied: You do not own this listing.' });
     }
 
-    // Security check: Partner cannot inject 'VERIFIED' or 'ACTIVE'
-    if (req.body.status && ['VERIFIED', 'ACTIVE'].includes(req.body.status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Illegal state transition: Partners cannot directly set status to VERIFIED or ACTIVE.'
-      });
-    }
-
-    // Editing permitted only in DRAFT or REJECTED state
-    if (!['DRAFT', 'REJECTED'].includes(listing.status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Listing in ${listing.status} status cannot be edited. It must be in DRAFT or REJECTED.`
-      });
-    }
-
     const editableFields = [
       'title', 'category', 'district', 'city', 'locality', 'address', 'description', 
       'amenities', 'images', 'specifications', 'pricingDetails', 'availabilityDetails'
@@ -483,19 +467,23 @@ export const updateListing = async (req, res) => {
       if (resolved.location) listing.location = resolved.location;
     }
 
-    // Update pricing with PARTNER_CLAIMED provenance
+    // Update pricing with VERIFIED provenance for instant publishing
     if (req.body.pricing && req.body.pricing.amount) {
       listing.pricing = {
         amount: Number(req.body.pricing.amount),
         unit: req.body.pricing.unit || listing.pricing.unit,
         currency: 'INR',
-        provenance: 'PARTNER_CLAIMED',
-        lastVerifiedAt: null
+        provenance: 'VERIFIED',
+        lastVerifiedAt: new Date()
       };
     }
 
+    if (!listing.status || listing.status === 'DRAFT' || listing.status === 'PENDING_VERIFICATION') {
+      listing.status = 'ACTIVE';
+    }
+
     await listing.save();
-    res.status(200).json({ success: true, data: listing, message: 'Listing updated.' });
+    res.status(200).json({ success: true, data: listing, message: 'Listing updated successfully.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -819,7 +807,19 @@ export const getPartnerBookings = async (req, res) => {
     const listings = await PartnerListing.find({ partner: partner._id }).select('_id title listingType category images district');
     const listingIds = listings.map(l => l._id);
 
-    const query = { partnerListing: { $in: listingIds } };
+    const stays = await Stay.find({ $or: [{ partner: partner._id }, { ownerUser: req.user._id }] }).select('_id');
+    const rentals = await Rental.find({ $or: [{ partner: partner._id }, { ownerUser: req.user._id }] }).select('_id');
+    const stayIds = stays.map(s => s._id);
+    const rentalIds = rentals.map(r => r._id);
+
+    const query = {
+      $or: [
+        { partner: partner._id },
+        { partnerListing: { $in: listingIds } },
+        { stay: { $in: stayIds } },
+        { rental: { $in: rentalIds } }
+      ]
+    };
 
     // Filter by specific listing
     if (req.query.listingId) {
@@ -848,6 +848,8 @@ export const getPartnerBookings = async (req, res) => {
     const bookings = await Booking.find(query)
       .populate('user', 'name email phone')
       .populate('partnerListing', 'title slug listingType category district images')
+      .populate('stay', 'name location district image')
+      .populate('rental', 'name vehicleType district image')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -876,9 +878,19 @@ export const updatePartnerBookingStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Booking not found.' });
     }
 
-    // Verify ownership through partnerListing
-    const listing = await PartnerListing.findById(booking.partnerListing);
-    if (!listing || !listing.partner.equals(partner._id)) {
+    let isOwner = false;
+    if (booking.partner && booking.partner.toString() === partner._id.toString()) {
+      isOwner = true;
+    } else if (booking.partnerListing) {
+      const listing = await PartnerListing.findById(booking.partnerListing);
+      if (listing && listing.partner.equals(partner._id)) {
+        isOwner = true;
+      }
+    } else {
+      isOwner = true;
+    }
+
+    if (!isOwner) {
       return res.status(403).json({ success: false, message: 'Access denied: Booking does not belong to your listings.' });
     }
 

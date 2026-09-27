@@ -384,26 +384,48 @@ export function getRealVehicleAsset(name = '', type = '', vehicles = []) {
   }
   const n = (name + ' ' + type + ' ' + vehicleNames).toLowerCase();
   
-  if (n.includes('innova') || n.includes('taxi') || n.includes('cab') || n.includes('chauffeur') || n.includes('sedan') || n.includes('dzire') || n.includes('etios')) {
-    return getAssetUrl('/assets/innova.jpg');
+  // Royal Enfield Adventure (Himalayan / Scram)
+  if (n.includes('himalayan') || n.includes('scram')) {
+    return getAssetUrl('https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=800&q=80');
   }
-  if (n.includes('classic 350') || n.includes('classic') || n.includes('bullet') || n.includes('meteor') || n.includes('hunter') || n.includes('standard')) {
+  // Royal Enfield Classic 350 (Vintage Red)
+  if (n.includes('classic 350') || n.includes('classic') || n.includes('standard')) {
     return getAssetUrl('/assets/classic-350.jpg');
   }
-  if (n.includes('himalayan') || n.includes('royal enfield') || n.includes('xpulse') || n.includes('duke') || n.includes('pulsar') || n.includes('apache') || n.includes('bike') || n.includes('motorcycle') || n.includes('cruiser') || n.includes('interceptor')) {
-    return getAssetUrl('/assets/himalayan-bike.jpg');
+  // Bullet / Meteor / Hunter
+  if (n.includes('bullet') || n.includes('meteor') || n.includes('hunter') || n.includes('thunderbird') || n.includes('interceptor')) {
+    return getAssetUrl('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80');
   }
+  // Sports & Street Motorcycles (TVS Apache, Pulsar, Duke, XPulse, R15)
+  if (n.includes('apache') || n.includes('pulsar') || n.includes('duke') || n.includes('r15') || n.includes('mt-15') || n.includes('fz') || n.includes('xpulse')) {
+    return getAssetUrl('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80');
+  }
+
+  // 4x4 / Offroad Jeeps
   if (n.includes('thar') || n.includes('4x4') || n.includes('jeep') || n.includes('gypsy') || n.includes('offroad') || n.includes('off-road') || n.includes('camper') || n.includes('pickup')) {
     return getAssetUrl('/assets/pickup-1.jpg');
   }
-  if (n.includes('scorpio') || n.includes('bolero') || n.includes('suv') || n.includes('safari') || n.includes('xuv') || n.includes('fortuner') || n.includes('ertiga') || n.includes('car')) {
+  // SUVs / Scorpio / Bolero
+  if (n.includes('scorpio') || n.includes('bolero') || n.includes('suv') || n.includes('safari') || n.includes('xuv') || n.includes('fortuner') || n.includes('ertiga')) {
     return getAssetUrl('/assets/pickup-2.jpg');
   }
-  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('jupiter') || n.includes('access') || n.includes('ntorq') || n.includes('fascino') || n.includes('vespa') || n.includes('burgman') || n.includes('dio')) {
+  // Cabs & Sedans
+  if (n.includes('innova') || n.includes('taxi') || n.includes('cab') || n.includes('chauffeur') || n.includes('sedan') || n.includes('dzire') || n.includes('etios')) {
+    return getAssetUrl('/assets/innova.jpg');
+  }
+
+  // Scooters
+  if (n.includes('ntorq') || n.includes('burgman') || n.includes('vespa')) {
+    return getAssetUrl('https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=800&q=80');
+  }
+  if (n.includes('jupiter') || n.includes('access') || n.includes('fascino')) {
+    return getAssetUrl('/assets/activa-2.jpg');
+  }
+  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('dio')) {
     return getAssetUrl('/assets/activa.jpg');
   }
   
-  return getAssetUrl('/assets/himalayan-bike.jpg');
+  return getAssetUrl('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80');
 }
 
 // ── 5. Intelligent Self-Healing Fallback Provider (Zero Duplicates) ───────────
@@ -499,10 +521,15 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
 
   // PRIORITY 1: For Vehicles & Stays, provide 100% real verified Uttarakhand photography
   if (isVehicle) {
-    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder') && !item.image.includes('/assets/rentals/')) {
+    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder')) {
       addUrl(item.image);
     }
-    images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category, item.vehicles));
+    if (item.coverImage && typeof item.coverImage === 'string' && !item.coverImage.includes('wikimedia.org') && !item.coverImage.includes('placeholder')) {
+      addUrl(item.coverImage);
+    }
+    if (images.length === 0) {
+      images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category, item.vehicles));
+    }
     return images;
   }
 

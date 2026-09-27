@@ -301,22 +301,25 @@ export const agentChat = async (req, res) => {
     }
     const sanitizedMessage = message.trim().slice(0, MAX_MESSAGE_LENGTH).replace(/[<>]/g, "");
 
-    // Upstash Redis Cache Check for Sub-10ms Lightning Fast Delivery ⚡
+    // Upstash Redis Cache Check for Sub-10ms Lightning Fast Delivery ⚡ (Bypass for dynamic state-changing commands)
+    const isActionCmd = /(?:save|book|dalde|daaldo|dal de|daal do|reserve|favorite|fav|guide|contact|number)/i.test(sanitizedMessage);
     const cacheKey = `agent_resp_${sanitizedMessage.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 80)}`;
-    try {
-      const cachedResponse = await cacheGet(cacheKey);
-      if (cachedResponse) {
-        console.log(`[Upstash Redis Cache HIT ⚡] Served "${sanitizedMessage.slice(0, 30)}" in <10ms`);
-        return res.status(200).json({
-          success: true,
-          sessionId: sessionId || requestId,
-          chatId: chatId || null,
-          data: cachedResponse,
-          response: cachedResponse,
-          meta: { cached: true, cacheSource: "Upstash Redis In-Memory Cache" }
-        });
-      }
-    } catch (_) {}
+    if (!isActionCmd) {
+      try {
+        const cachedResponse = await cacheGet(cacheKey);
+        if (cachedResponse) {
+          console.log(`[Upstash Redis Cache HIT ⚡] Served "${sanitizedMessage.slice(0, 30)}" in <10ms`);
+          return res.status(200).json({
+            success: true,
+            sessionId: sessionId || requestId,
+            chatId: chatId || null,
+            data: cachedResponse,
+            response: cachedResponse,
+            meta: { cached: true, cacheSource: "Upstash Redis In-Memory Cache" }
+          });
+        }
+      } catch (_) {}
+    }
 
     // 2. Resolve user (optional auth — works for transient trips without login)
     let user = null;
@@ -600,10 +603,12 @@ export const agentChat = async (req, res) => {
       res.end();
       return;
     } else {
-      // Save into Upstash Redis Cache (600s TTL)
-      try {
-        await cacheSet(cacheKey, agentResponse, 600);
-      } catch (_) {}
+      // Save into Upstash Redis Cache (600s TTL) - Skip caching error/unavailable messages
+      if (agentResponse?.message && !/unavailable|error|failed/i.test(agentResponse.message)) {
+        try {
+          await cacheSet(cacheKey, agentResponse, 600);
+        } catch (_) {}
+      }
 
       return res.status(200).json({
         success: true,

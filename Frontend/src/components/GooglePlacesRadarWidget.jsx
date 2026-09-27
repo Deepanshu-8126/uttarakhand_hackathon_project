@@ -6,6 +6,7 @@ import {
   ArrowLeft, ArrowRight, X, Eye, Clock, TrendingUp, ChevronRight
 } from 'lucide-react';
 import { placesApi } from '../api/placesApi';
+import { useFreshImage } from '../utils/images';
 
 // Premium Himalayan real photo fallbacks – no AI/generic stock
 const HIMALAYAN_FALLBACKS = [
@@ -26,9 +27,12 @@ const TABS = [
 
 function PlaceCard({ place, index, onSelect }) {
   const [imgErr, setImgErr] = useState(false);
-  const src = !imgErr && place.photo_urls?.[0]
+  const initialSrc = !imgErr && place.photo_urls?.[0]
     ? place.photo_urls[0]
     : HIMALAYAN_FALLBACKS[index % HIMALAYAN_FALLBACKS.length];
+
+  const freshPhoto = useFreshImage(place.name || 'Uttarakhand Dhaba', initialSrc);
+  const src = imgErr ? HIMALAYAN_FALLBACKS[index % HIMALAYAN_FALLBACKS.length] : freshPhoto;
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.vicinity}`)}`;
 

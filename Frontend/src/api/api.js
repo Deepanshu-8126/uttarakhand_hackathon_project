@@ -50,7 +50,6 @@ api.interceptors.response.use(
     );
 
     if (isNetworkError && isLocalhost && !originalRequest._retry) {
-      console.warn('[API Failover] Local backend offline, falling back to Live Cloud Backend:', LIVE_BACKEND_URL);
       originalRequest._retry = true;
       originalRequest.baseURL = LIVE_BACKEND_URL;
       api.defaults.baseURL = LIVE_BACKEND_URL;

@@ -23,15 +23,17 @@ export function cleanTextForSpeech(rawText) {
     .replace(/\*(.*?)\*/g, '$1')
     .replace(/__(.*?)__/g, '$1')
     .replace(/~~(.*?)~~/g, '$1')
+    // Replace arrows and dashes with natural pauses
+    .replace(/→|->|=>/g, ' se ')
+    .replace(/–|-/g, ' ')
     // Remove headings and markdown bullets
     .replace(/^#+\s+/gm, '')
     .replace(/^[\s*-]+\s+/gm, '')
-    // Remove URLs
+    // Remove URLs and HTML tags
     .replace(/https?:\/\/\S+/g, '')
-    // Remove HTML tags
     .replace(/<[^>]*>/g, '')
     // Clean symbols and excessive whitespace
-    .replace(/[•★◆✦]/g, '')
+    .replace(/[•★◆✦\*\#\_\~`]/g, '')
     .replace(/[\r\n]+/g, '. ')
     .replace(/\s{2,}/g, ' ')
     .trim();
@@ -49,8 +51,8 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 }
 
 /**
- * Rank voices to prioritize studio-quality neural voices
- * (Microsoft Natural Online, Google Neural, Edge TTS).
+ * Rank voices to prioritize studio-quality natural neural voices
+ * (Microsoft Swara / Madhur / Neerja Natural Online, Google Neural, Edge TTS).
  */
 function getBestNeuralVoice(targetLang, hasHindi) {
   if (!cachedVoices || cachedVoices.length === 0) {
@@ -59,16 +61,16 @@ function getBestNeuralVoice(targetLang, hasHindi) {
   const voices = cachedVoices.length > 0 ? cachedVoices : (typeof window !== 'undefined' && window.speechSynthesis ? window.speechSynthesis.getVoices() : []);
   if (!voices || voices.length === 0) return null;
 
-  // Filter out legacy robotic voices
-  const highQuality = voices.filter(v => !v.name.includes('Desktop') && !v.name.includes('David') && !v.name.includes('Zira'));
+  // Filter out legacy robotic SAPI5 desktop voices
+  const highQuality = voices.filter(v => !v.name.includes('Desktop') && !v.name.includes('David') && !v.name.includes('Zira') && !v.name.includes('Anna'));
   const candidatePool = highQuality.length > 0 ? highQuality : voices;
 
   if (hasHindi || targetLang.startsWith('hi')) {
     return (
-      candidatePool.find(v => v.name.includes('Swara') && v.name.includes('Natural')) ||
-      candidatePool.find(v => v.name.includes('Madhur') && v.name.includes('Natural')) ||
+      candidatePool.find(v => v.name.includes('Swara') && (v.name.includes('Natural') || v.name.includes('Online'))) ||
+      candidatePool.find(v => v.name.includes('Madhur') && (v.name.includes('Natural') || v.name.includes('Online'))) ||
       candidatePool.find(v => v.name.includes('Google') && (v.lang.startsWith('hi') || v.name.includes('हिन्दी') || v.name.includes('Hindi'))) ||
-      candidatePool.find(v => v.name.includes('Natural') && (v.lang.startsWith('hi') || v.name.includes('Hindi'))) ||
+      candidatePool.find(v => (v.name.includes('Natural') || v.name.includes('Neural')) && (v.lang.startsWith('hi') || v.name.includes('Hindi'))) ||
       candidatePool.find(v => v.name.includes('Neerja') && v.name.includes('Natural')) ||
       candidatePool.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi')) ||
       candidatePool.find(v => v.name.includes('India')) ||
@@ -79,12 +81,12 @@ function getBestNeuralVoice(targetLang, hasHindi) {
 
   // English selection
   return (
-    candidatePool.find(v => v.name.includes('Neerja') && v.name.includes('Natural')) ||
-    candidatePool.find(v => v.name.includes('Prabhat') && v.name.includes('Natural')) ||
-    candidatePool.find(v => v.name.includes('Natural') && (v.lang === 'en-IN' || v.name.includes('India'))) ||
+    candidatePool.find(v => v.name.includes('Neerja') && (v.name.includes('Natural') || v.name.includes('Online'))) ||
+    candidatePool.find(v => v.name.includes('Prabhat') && (v.name.includes('Natural') || v.name.includes('Online'))) ||
+    candidatePool.find(v => (v.name.includes('Natural') || v.name.includes('Neural')) && (v.lang === 'en-IN' || v.name.includes('India'))) ||
     candidatePool.find(v => v.name.includes('Google UK English Female')) ||
     candidatePool.find(v => v.name.includes('Google US English')) ||
-    candidatePool.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) ||
+    candidatePool.find(v => (v.name.includes('Natural') || v.name.includes('Neural')) && v.lang.startsWith('en')) ||
     candidatePool.find(v => v.lang === 'en-IN') ||
     candidatePool.find(v => v.lang.startsWith('en')) ||
     candidatePool[0]
@@ -97,7 +99,11 @@ function getBestNeuralVoice(targetLang, hasHindi) {
 export function playAudioStream(audioSrc, { onStart, onEnd, onError } = {}) {
   stopSpeaking();
   try {
-    const audio = new Audio(audioSrc.startsWith('data:') || audioSrc.startsWith('http') ? audioSrc : `data:audio/wav;base64,${audioSrc}`);
+    let formattedSrc = audioSrc;
+    if (!audioSrc.startsWith('data:') && !audioSrc.startsWith('http')) {
+      formattedSrc = `data:audio/mpeg;base64,${audioSrc}`;
+    }
+    const audio = new Audio(formattedSrc);
     activeAudio = audio;
 
     audio.onplay = () => {
@@ -111,7 +117,6 @@ export function playAudioStream(audioSrc, { onStart, onEnd, onError } = {}) {
 
     audio.onerror = (err) => {
       activeAudio = null;
-      console.warn('[AudioStream Error]', err);
       if (onError) onError(err);
     };
 
@@ -129,7 +134,7 @@ export function playAudioStream(audioSrc, { onStart, onEnd, onError } = {}) {
  */
 export function speakText(text, { 
   lang = 'hi-IN', 
-  rate = 0.98, 
+  rate = 0.95, 
   pitch = 1.0, 
   onStart, 
   onEnd, 
@@ -182,9 +187,6 @@ export function speakText(text, {
 
     utterance.onerror = (e) => {
       activeUtterance = null;
-      if (e.error !== 'interrupted' && e.error !== 'canceled') {
-        console.warn('[SpeechSynthesis] Utterance error:', e.error);
-      }
       if (onError) onError(e);
     };
 
@@ -199,7 +201,6 @@ export function speakText(text, {
       }, 50);
     }
   } catch (err) {
-    console.error('[SpeechSynthesis] Error speaking text:', err);
     if (onError) onError(err);
   }
 }

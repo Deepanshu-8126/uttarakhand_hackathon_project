@@ -3,184 +3,53 @@ import api from './api';
 export const getVehicleImage = (name = '', type = '') => {
   const n = (name + ' ' + type).toLowerCase();
   
-  // Royal Enfield / Adventure / Cruisers
+  // Royal Enfield Adventure / Cruisers
   if (n.includes('himalayan')) {
-    return '/assets/rentals/dhanaulti-royal-enfield-himalayan/cover.jpg';
+    return 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=800&q=80';
   }
   if (n.includes('classic 350') || n.includes('classic') || n.includes('standard')) {
-    return '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg';
+    return '/assets/classic-350.jpg';
   }
-  if (n.includes('bullet')) {
-    return '/assets/rentals/tehri-royal-enfield-bullet-350/cover.jpg';
+  if (n.includes('bullet') || n.includes('meteor') || n.includes('hunter') || n.includes('thunderbird') || n.includes('interceptor')) {
+    return 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80';
   }
-  if (n.includes('meteor')) {
-    return '/assets/rentals/rudraprayag-royal-enfield-meteor-350/cover.jpg';
+
+  // Sports & Street Motorcycles (TVS Apache, Pulsar, Duke, XPulse, R15, MT-15)
+  if (n.includes('apache') || n.includes('pulsar') || n.includes('duke') || n.includes('r15') || n.includes('mt-15') || n.includes('fz') || n.includes('xpulse')) {
+    return 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80';
   }
-  if (n.includes('interceptor') || n.includes('continental')) {
-    return '/assets/rentals/kanatal-royal-enfield-interceptor-650/cover.jpg';
-  }
-  if (n.includes('thunderbird')) {
-    return '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg';
+  if (n.includes('splendor') || n.includes('deluxe') || n.includes('shine') || n.includes('avenger')) {
+    return 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80';
   }
 
   // Scooters
-  if (n.includes('activa 5g')) {
-    return '/assets/rentals/lansdowne-honda-activa-5g/cover.jpg';
+  if (n.includes('ntorq') || n.includes('burgman') || n.includes('vespa')) {
+    return 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=800&q=80';
   }
-  if (n.includes('activa')) {
-    return '/assets/rentals/srinagar-honda-activa-6g/cover.jpg';
+  if (n.includes('jupiter') || n.includes('access') || n.includes('fascino')) {
+    return '/assets/activa-2.jpg';
   }
-  if (n.includes('jupiter')) {
-    return '/assets/rentals/lansdowne-tvs-jupiter/cover.jpg';
-  }
-  if (n.includes('ntorq')) {
-    return '/assets/rentals/rishikesh-tvs-ntorq-125/cover.jpg';
-  }
-  if (n.includes('access')) {
-    return '/assets/rentals/ramnagar-suzuki-access-125/cover.jpg';
-  }
-  if (n.includes('burgman')) {
-    return '/assets/rentals/ramnagar-suzuki-burgman-street/cover.jpg';
-  }
-  if (n.includes('vespa')) {
-    return '/assets/rentals/bhimtal-vespa-zx-125/cover.jpg';
-  }
-  if (n.includes('fascino') || n.includes('ray zr') || n.includes('ray')) {
-    return '/assets/rentals/bhimtal-yamaha-fascino/cover.jpg';
-  }
-  if (n.includes('scooty') || n.includes('scooter') || n.includes('dio')) {
-    return '/assets/rentals/srinagar-honda-activa-6g/cover.jpg';
+  if (n.includes('activa') || n.includes('scooty') || n.includes('scooter') || n.includes('dio')) {
+    return '/assets/activa.jpg';
   }
   
-  // Bikes / Trail
-  if (n.includes('xpulse') || n.includes('impulse') || n.includes('scram')) {
-    return '/assets/rentals/chamoli-hero-xpulse-200/cover.jpg';
-  }
-  if (n.includes('apache')) {
-    return '/assets/rentals/chopta-tvs-apache-rtr-160/cover.jpg';
-  }
-  if (n.includes('pulsar')) {
-    return '/assets/rentals/ramnagar-bajaj-pulsar-150/cover.jpg';
-  }
-  if (n.includes('duke') || n.includes('ktm') || n.includes('rc 200') || n.includes('rc 390')) {
-    return '/assets/rentals/bhimtal-ktm-duke-200/cover.jpg';
-  }
-  if (n.includes('r15')) {
-    return '/assets/rentals/rishikesh-yamaha-r15-v4/cover.jpg';
-  }
-  if (n.includes('mt-15') || n.includes('fz')) {
-    return '/assets/rentals/ramnagar-yamaha-mt-15/cover.jpg';
-  }
-  if (n.includes('avenger')) {
-    return '/assets/rentals/pithoragarh-royal-enfield-classic-350/cover.jpg';
-  }
-  if (n.includes('splendor')) {
-    return '/assets/rentals/kotdwar-hero-splendor-plus/cover.jpg';
-  }
-  if (n.includes('hf deluxe') || n.includes('deluxe')) {
-    return '/assets/rentals/kotdwar-hero-hf-deluxe/cover.jpg';
-  }
-  if (n.includes('shine')) {
-    return '/assets/rentals/kanatal-honda-shine/cover.jpg';
-  }
-
   // SUVs / 4x4 / Big Mountain Cars
-  if (n.includes('thar') || n.includes('gurkha')) {
-    return '/assets/rentals/srinagar-mahindra-thar/cover.jpg';
+  if (n.includes('thar') || n.includes('gurkha') || n.includes('4x4') || n.includes('jeep') || n.includes('gypsy')) {
+    return '/assets/pickup-1.jpg';
   }
-  if (n.includes('scorpio')) {
-    return '/assets/rentals/ranikhet-mahindra-scorpio/cover.jpg';
+  if (n.includes('scorpio') || n.includes('bolero') || n.includes('xuv') || n.includes('safari') || n.includes('fortuner') || n.includes('nexon') || n.includes('creta') || n.includes('harrier')) {
+    return '/assets/pickup-2.jpg';
   }
-  if (n.includes('xuv') || n.includes('xuv700') || n.includes('xuv300')) {
-    return '/assets/rentals/tehri-mahindra-xuv700/cover.jpg';
-  }
-  if (n.includes('xylo')) {
-    return '/assets/rentals/bhimtal-mahindra-xylo/cover.jpg';
-  }
-  if (n.includes('marazzo')) {
-    return '/assets/rentals/chopta-mahindra-marazzo/cover.jpg';
-  }
-  if (n.includes('bolero')) {
-    return '/assets/rentals/mukteshwar-mahindra-bolero-camper/cover.jpg';
-  }
-  if (n.includes('innova')) {
-    return '/assets/rentals/nainital-toyota-innova-crysta/cover.jpg';
-  }
-  if (n.includes('fortuner')) {
-    return '/assets/rentals/haridwar-toyota-fortuner/cover.jpg';
-  }
-  if (n.includes('etios')) {
-    return '/assets/rentals/tehri-toyota-etios/cover.jpg';
-  }
-  if (n.includes('creta') || n.includes('venue')) {
-    return '/assets/rentals/rudraprayag-hyundai-creta/cover.jpg';
-  }
-  if (n.includes('seltos')) {
-    return '/assets/rentals/dhanaulti-kia-seltos/cover.jpg';
-  }
-  if (n.includes('nexon')) {
-    return '/assets/rentals/mussoorie-tata-nexon/cover.jpg';
-  }
-  if (n.includes('harrier')) {
-    return '/assets/rentals/rishikesh-tata-harrier/cover.jpg';
-  }
-  if (n.includes('safari')) {
-    return '/assets/rentals/tehri-tata-safari/cover.jpg';
-  }
-  if (n.includes('hector')) {
-    return '/assets/rentals/mukteshwar-mg-hector/cover.jpg';
-  }
-  if (n.includes('duster')) {
-    return '/assets/rentals/chamoli-renault-duster/cover.jpg';
-  }
-  if (n.includes('traveller') || n.includes('tempo')) {
-    return '/assets/rentals/bhimtal-tempo-traveller-12-seater/cover.jpg';
+  if (n.includes('innova') || n.includes('dzire') || n.includes('swift') || n.includes('baleno') || n.includes('etios') || n.includes('city') || n.includes('car') || n.includes('taxi') || n.includes('sedan')) {
+    return '/assets/innova.jpg';
   }
 
-  // Hatchback & Sedans
-  if (n.includes('dzire') || n.includes('swift dzire')) {
-    return '/assets/rentals/haldwani-maruti-suzuki-dzire/cover.jpg';
-  }
-  if (n.includes('swift')) {
-    return '/assets/rentals/srinagar-maruti-suzuki-swift/cover.jpg';
-  }
-  if (n.includes('i20')) {
-    return '/assets/rentals/joshimath-hyundai-i20/cover.jpg';
-  }
-  if (n.includes('baleno')) {
-    return '/assets/rentals/pithoragarh-maruti-suzuki-baleno/cover.jpg';
-  }
-  if (n.includes('city') || n.includes('honda city')) {
-    return '/assets/rentals/rudraprayag-honda-city/cover.jpg';
-  }
-  if (n.includes('celerio')) {
-    return '/assets/rentals/tehri-maruti-suzuki-celerio/cover.jpg';
-  }
-  if (n.includes('wagonr') || n.includes('wagon r')) {
-    return '/assets/rentals/tehri-maruti-wagonr/cover.jpg';
-  }
-  if (n.includes('alto')) {
-    return '/assets/rentals/ranikhet-maruti-alto-800/cover.jpg';
-  }
-  if (n.includes('ertiga')) {
-    return '/assets/rentals/ranikhet-maruti-suzuki-ertiga/cover.jpg';
-  }
-  if (n.includes('ciaz')) {
-    return '/assets/rentals/rudraprayag-honda-city/cover.jpg';
-  }
-
-  // Default real vehicle fallback
+  // Default bike fallback
   if (n.includes('bike') || n.includes('motorcycle')) {
-    return '/assets/rentals/dhanaulti-royal-enfield-himalayan/cover.jpg';
-  }
-  if (n.includes('suv') || n.includes('4x4')) {
-    return '/assets/rentals/srinagar-mahindra-thar/cover.jpg';
-  }
-  if (n.includes('sedan') || n.includes('car') || n.includes('hatchback')) {
-    return '/assets/rentals/haldwani-maruti-suzuki-dzire/cover.jpg';
+    return 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80';
   }
 
-  return '/assets/rentals/srinagar-honda-activa-6g/cover.jpg';
+  return '/assets/activa.jpg';
 };
 
 export const getRentals = async () => {
@@ -195,6 +64,7 @@ export const getRentals = async () => {
           let rawUrl = v.image?.url || (typeof v.image === 'string' ? v.image : null);
           if (
             !rawUrl || 
+            rawUrl.includes('wikimedia.org') ||
             rawUrl.includes('interior.png') || 
             rawUrl.includes('unsplash.com') ||
             rawUrl.includes('fallback.svg')

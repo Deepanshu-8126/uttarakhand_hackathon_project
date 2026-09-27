@@ -25,6 +25,173 @@ import { getCardImages } from '../utils/imageHelpers';
 
 const ITEMS_PER_PAGE = 6;
 
+// ── Curated Activity & Trek Hero Showcase Slides ─────────────────────────────
+const CURATED_ACTIVITY_SLIDES = [
+  {
+    id: 'rafting',
+    title: 'White Water Rafting & Cliff Jump',
+    location: 'Shivpuri - Laxman Jhula, Rishikesh',
+    altitude: '340m',
+    badge: 'Grade IV Ganges Rapids',
+    tag: 'Rafting Expeditions',
+    src: 'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=1600&q=85',
+    fallbackSrc: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=85',
+    subtitle: 'Conquer roaring Grade III & IV Himalayan rapids through emerald Ganges gorges with certified river guides.',
+    filterQuery: 'Rafting'
+  },
+  {
+    id: 'bungee',
+    title: 'Bungee Jumping & 83m Giant Swing',
+    location: 'Mohanchatti High Gorge, Rishikesh',
+    altitude: '450m',
+    badge: 'India’s Highest Fixed Jump',
+    tag: 'Adrenaline Rush',
+    src: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=85',
+    fallbackSrc: 'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=1600&q=85',
+    subtitle: 'Freefall 83 meters above sacred mountain valleys with international safety jump masters.',
+    filterQuery: 'Bungee'
+  },
+  {
+    id: 'kedarkantha',
+    title: 'Kedarkantha Winter Snow Ridge Trek',
+    location: 'Govind Wildlife Sanctuary, Uttarkashi',
+    altitude: '3,810m',
+    badge: 'Classic Himalayan Summit',
+    tag: 'Alpine Treks',
+    src: '/assets/destinations/kedarkantha_summit_view.jpg',
+    fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85',
+    subtitle: 'Trek pine bugyals to reach a dramatic 360° snow-clad summit overlooking Swargarohini peaks.',
+    filterQuery: 'Kedarkantha'
+  },
+  {
+    id: 'paragliding',
+    title: 'Tandem Paragliding & Sky Soaring',
+    location: 'Bhimtal & Mukteshwar, Kumaon',
+    altitude: '1,370m',
+    badge: 'Thermal Sky Flight',
+    tag: 'Aerial Gliding',
+    src: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=85',
+    fallbackSrc: '/assets/destinations/uttarakhand_bugyal_panoramic.jpg',
+    subtitle: 'Soar high above sapphire lake basins and oak-forested Kumaon valleys with experienced pilots.',
+    filterQuery: 'Paragliding'
+  }
+];
+
+function ActivitiesHeroBanner({ onSelectActivityFilter }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % CURATED_ACTIVITY_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  const current = CURATED_ACTIVITY_SLIDES[currentIndex];
+
+  return (
+    <div 
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="relative w-full h-[360px] sm:h-[440px] md:h-[480px] rounded-2xl sm:rounded-4xl overflow-hidden shadow-2xl bg-stone-900 flex flex-col justify-between p-5 sm:p-10 mb-8 group text-white border border-stone-800"
+    >
+      {/* Background Slides */}
+      {CURATED_ACTIVITY_SLIDES.map((slide, idx) => {
+        const isActive = idx === currentIndex;
+        return (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out pointer-events-none ${
+              isActive ? 'opacity-100 z-0' : 'opacity-0 -z-10'
+            }`}
+          >
+            <img
+              src={slide.src}
+              alt={slide.title}
+              onError={(e) => {
+                if (slide.fallbackSrc && e.currentTarget.src !== slide.fallbackSrc) {
+                  e.currentTarget.src = slide.fallbackSrc;
+                }
+              }}
+              className="w-full h-full object-cover object-center scale-105 transition-transform duration-1000"
+            />
+          </div>
+        );
+      })}
+
+      {/* Ambient Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/55 z-1 pointer-events-none" />
+
+      {/* Top Header Controls */}
+      <div className="relative z-10 flex items-center justify-between">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-xs font-semibold text-emerald-300 shadow-xs">
+          <Sparkles size={13} className="text-emerald-400 animate-pulse" />
+          <span>{current.badge}</span>
+        </div>
+
+        {/* Counter */}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-xs font-mono text-white/80">
+          <span>{currentIndex + 1}</span>
+          <span className="text-white/40">/</span>
+          <span>{CURATED_ACTIVITY_SLIDES.length}</span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-2xl mb-2 sm:mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-medium text-white/90 mb-3">
+          <MapPin size={12} className="text-emerald-300" />
+          <span>{current.location}</span>
+          <span className="text-white/40">•</span>
+          <span className="text-emerald-200 font-semibold">{current.altitude}</span>
+        </div>
+
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight mb-2 drop-shadow-md">
+          {current.title}
+        </h2>
+
+        <p className="text-xs sm:text-sm text-stone-200 font-medium max-w-xl line-clamp-2 leading-relaxed mb-4">
+          {current.subtitle}
+        </p>
+
+        <button
+          type="button"
+          onClick={() => onSelectActivityFilter(current.filterQuery)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0f3d2e] hover:bg-emerald-600 text-emerald-100 hover:text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+        >
+          <span>Explore {current.tag}</span>
+          <ArrowRight size={13} />
+        </button>
+      </div>
+
+      {/* Manual Slide Arrows */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setCurrentIndex(prev => (prev - 1 + CURATED_ACTIVITY_SLIDES.length) % CURATED_ACTIVITY_SLIDES.length);
+        }}
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-lg"
+      >
+        <ChevronLeft size={20} />
+      </button>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setCurrentIndex(prev => (prev + 1) % CURATED_ACTIVITY_SLIDES.length);
+        }}
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-lg"
+      >
+        <ChevronRight size={20} />
+      </button>
+    </div>
+  );
+}
+
 export default function Activities() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -130,9 +297,12 @@ export default function Activities() {
 
       <main className="flex-grow flex flex-col pb-28 md:pb-36">
         
-        {/* ── Top Section: Filter Header & Search Bar ─────────────────────── */}
-        <section className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto w-full">
+        {/* ── Top Section: Hero Banner, Filter Header & Search Bar ─────────────────────── */}
+        <section className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
           
+          {/* 🌟 High-Craft Hero Activity Banner Showcase */}
+          <ActivitiesHeroBanner onSelectActivityFilter={(query) => setSearchKeyword(query)} />
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
             <div>
               <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold tracking-widest uppercase mb-2">
