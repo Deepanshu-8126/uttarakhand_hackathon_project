@@ -23,6 +23,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'citizen', 'tourist', 'trekker', 'local', 'partner', 'owner', 'guide', 'admin'],
     default: 'user',
+    lowercase: true,
+    trim: true,
   },
   profileImage: {
     type: imageSchema,

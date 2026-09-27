@@ -218,14 +218,29 @@ const ProfilePage = () => {
       let uploadedImageUrl = null;
 
       if (selectedFile) {
-        setProfileSaveMsg({ text: 'Optimizing profile photo...', type: 'info' });
-        // Instant client-side encoding for 0ms wait time
-        const reader = new FileReader();
-        uploadedImageUrl = await new Promise((resolve) => {
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(selectedFile);
-        });
+        setProfileSaveMsg({ text: 'Uploading profile photo to Cloudinary...', type: 'info' });
+        try {
+          const uploadRes = await uploadImage(selectedFile);
+          if (uploadRes?.success && uploadRes?.image?.url) {
+            uploadedImageUrl = uploadRes.image.url;
+          } else if (uploadRes?.success && uploadRes?.data?.url) {
+            uploadedImageUrl = uploadRes.data.url;
+          } else if (uploadRes?.url) {
+            uploadedImageUrl = uploadRes.url;
+          }
+        } catch (uploadErr) {
+          console.warn('Cloudinary upload endpoint fallback:', uploadErr);
+        }
+
+        if (!uploadedImageUrl) {
+          // Client-side encoding fallback
+          const reader = new FileReader();
+          uploadedImageUrl = await new Promise((resolve) => {
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(selectedFile);
+          });
+        }
       }
 
       setProfileSaveMsg({ text: 'Saving your profile details...', type: 'info' });

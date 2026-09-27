@@ -94,9 +94,14 @@ export const updateUserProfile = async (req, res) => {
 
     // Role safety normalization
     const VALID_ROLES = ['user', 'citizen', 'tourist', 'trekker', 'local', 'partner', 'owner', 'guide', 'admin'];
-    if (user.role && !VALID_ROLES.includes(user.role)) {
-      user.role = 'user';
+    if (req.body.role) {
+      const targetRole = String(req.body.role).toLowerCase().trim();
+      if (VALID_ROLES.includes(targetRole)) {
+        user.role = targetRole;
+      }
     }
+    const currentRole = String(user.role || 'user').toLowerCase().trim();
+    user.role = VALID_ROLES.includes(currentRole) ? currentRole : 'user';
 
     const updatedUser = await user.save();
     res.json({
