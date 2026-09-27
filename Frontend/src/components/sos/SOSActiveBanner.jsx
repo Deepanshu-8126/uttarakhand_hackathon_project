@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldAlert, Share2, Phone, X } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import useSOS from '../../hooks/useSOS';
 import SOSModal from './SOSModal';
 
@@ -13,7 +13,7 @@ export default function SOSActiveBanner() {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-rose-900 via-red-800 to-rose-950 text-white px-3 sm:px-6 py-2 border-b border-rose-500/40 flex items-center justify-between z-[9970] text-xs shadow-lg animate-fade-in select-none">
+      <div className="bg-gradient-to-r from-rose-900 via-red-800 to-rose-950 text-white px-3 sm:px-6 py-2 border-b border-rose-500/40 flex items-center justify-between z-40 text-xs shadow-lg select-none">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="relative flex h-2.5 w-2.5 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-300 opacity-75" />
