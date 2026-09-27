@@ -182,15 +182,21 @@ export function speakText(text, {
 
     utterance.onerror = (e) => {
       activeUtterance = null;
-      console.warn('[SpeechSynthesis] Utterance note:', e);
+      if (e.error !== 'interrupted' && e.error !== 'canceled') {
+        console.warn('[SpeechSynthesis] Utterance error:', e.error);
+      }
       if (onError) onError(e);
     };
 
     activeUtterance = utterance;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      window.speechSynthesis.resume();
-      window.speechSynthesis.speak(utterance);
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.resume();
+          window.speechSynthesis.speak(utterance);
+        } catch (_) {}
+      }, 50);
     }
   } catch (err) {
     console.error('[SpeechSynthesis] Error speaking text:', err);

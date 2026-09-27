@@ -167,7 +167,7 @@ export default function ChatWindow({
       }
 
       const rec = new SpeechRec();
-      rec.continuous = true;
+      rec.continuous = false; // continuous: false is standard across Chrome & Edge to prevent network socket drops
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
@@ -204,7 +204,7 @@ export default function ChatWindow({
           setLiveTranscript(fullDisplay);
         }
 
-        // Auto-submit after 1.6s pause in continuous speaking
+        // Auto-submit after 1.4s pause in speech
         clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const toSubmit = currentTranscriptRef.current || fullDisplay;
@@ -213,19 +213,17 @@ export default function ChatWindow({
             isListeningRef.current = false;
             handleVoiceSubmit(toSubmit);
           }
-        }, 1600);
+        }, 1400);
       };
 
       rec.onerror = (event) => {
-        console.warn('[SpeechRecognition Error]', event.error);
         if (event.error === 'not-allowed') {
-          alert('Microphone access was denied. Please allow microphone permissions in your browser bar.');
-          setVoiceStatus('idle');
-          isListeningRef.current = false;
-        } else if (event.error !== 'no-speech') {
-          setVoiceStatus('idle');
-          isListeningRef.current = false;
+          alert('Microphone access was denied. Please click the Lock icon (🔒) in your address bar and Allow Microphone.');
+        } else if (event.error !== 'no-speech' && event.error !== 'network') {
+          console.warn('[SpeechRecognition Notice]', event.error);
         }
+        setVoiceStatus('idle');
+        isListeningRef.current = false;
       };
 
       rec.onend = () => {
