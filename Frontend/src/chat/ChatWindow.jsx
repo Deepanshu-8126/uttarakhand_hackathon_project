@@ -9,6 +9,7 @@ import { RotateCw, Mic, X, Mountain, Route, CloudSun, Sparkles, Keyboard, Square
 import { useChatState } from './ChatState.js';
 import MessageRenderer from './MessageRenderer.jsx';
 import SuggestedActions from './SuggestedActions.jsx';
+import { speakText, stopSpeaking, isSpeechSynthesisSupported } from '../utils/speechSynthesis.js';
 
 export default function ChatWindow({
   isOpen = true,
@@ -34,11 +35,38 @@ export default function ChatWindow({
   } = useChatState({ initialQuery });
 
   const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   // Auto-scroll on new tokens or messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
+
+  // Sync latest assistant message with Voice Companion live reply & speak it aloud
+  useEffect(() => {
+    if (!isVoiceActive || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === 'assistant' && lastMsg.text) {
+      setLiveAiReply(lastMsg.text);
+      setVoiceStatus('speaking');
+      speakText(lastMsg.text, {
+        lang: selectedLanguage === 'हिन्दी' ? 'hi-IN' : 'en-IN',
+        onStart: () => setVoiceStatus('speaking'),
+        onEnd: () => setVoiceStatus('listening'),
+        onError: () => setVoiceStatus('listening'),
+      });
+    }
+  }, [messages, isVoiceActive, selectedLanguage]);
+
+  // Clean up speech recognition & synthesis when drawer closes or mode changes
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (_) {}
+      }
+    };
+  }, [isVoiceActive, isOpen]);
 
   // Last assistant message suggestions
   const latestSuggestions = messages[messages.length - 1]?.suggestions || [];
@@ -56,14 +84,68 @@ export default function ChatWindow({
     }
   };
 
+  // Start real-time speech recognition
+  const startListening = () => {
+    if (typeof window === 'undefined') return;
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      handleVoiceQuery('Badrinath weather forecast and Chopta snow status for this week');
+      return;
+    }
+
+    try {
+      stopSpeaking();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (_) {}
+      }
+      const recognition = new SpeechRec();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = selectedLanguage === 'हिन्दी' ? 'hi-IN' : 'en-IN';
+
+      recognition.onstart = () => {
+        setVoiceStatus('listening');
+        setLiveTranscript('Listening to your voice...');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        if (transcript) {
+          setLiveTranscript(transcript);
+        }
+      };
+
+      recognition.onend = () => {
+        if (liveTranscript && liveTranscript !== 'Listening to your voice...') {
+          setVoiceStatus('thinking');
+          sendMessage(liveTranscript);
+        } else {
+          setVoiceStatus('listening');
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('[SpeechRecognition Error]', event.error);
+        setVoiceStatus('listening');
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('[SpeechRecognition Start Error]', err);
+      handleVoiceQuery('Badrinath weather forecast and Chopta snow status for this week');
+    }
+  };
+
   // Trigger speech synthesis or live mock test in voice mode
   const handleVoiceQuery = async (queryText) => {
     setLiveTranscript(queryText);
     setVoiceStatus('thinking');
     try {
-      setVoiceStatus('speaking');
+      stopSpeaking();
       sendMessage(queryText);
-      setLiveAiReply('I recommend the Chopta – Tungnath – Chandrashila circuit. Current passes are sunny and clear at 14°C. Day 1: Rishikesh to Sari Village base. Day 2: Summit Tungnath & Chandrashila at sunrise. Day 3: Scenic return via Deoriatal lake.');
     } catch (_) {
       setVoiceStatus('listening');
     }
@@ -151,16 +233,27 @@ export default function ChatWindow({
             
             {/* 1. Circular Glowing Mic Orb & Pulsing Waveform */}
             <div className="flex flex-col items-center justify-center pt-2 pb-1 space-y-3">
-              <div className="w-20 h-20 rounded-full bg-emerald-100/70 ring-8 ring-emerald-50 flex items-center justify-center shadow-xs transition-transform duration-500 hover:scale-105">
-                <div className="w-14 h-14 rounded-full bg-[#0b533e] text-white flex items-center justify-center shadow-md">
+              <button
+                type="button"
+                onClick={startListening}
+                className="w-20 h-20 rounded-full bg-emerald-100/70 ring-8 ring-emerald-50 flex items-center justify-center shadow-xs transition-transform duration-500 hover:scale-105 active:scale-95 cursor-pointer"
+                title="Click to speak"
+              >
+                <div className={`w-14 h-14 rounded-full ${voiceStatus === 'listening' ? 'bg-[#0b533e] animate-pulse' : 'bg-[#0b533e]'} text-white flex items-center justify-center shadow-md`}>
                   <Mic size={26} className="text-white" />
                 </div>
-              </div>
+              </button>
 
               {/* Status Pill */}
               <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-emerald-800 shadow-2xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{voiceStatus === 'speaking' ? 'Speaking ground intelligence...' : 'Listening to your voice...'}</span>
+                <span>
+                  {voiceStatus === 'speaking' 
+                    ? 'Speaking ground intelligence...' 
+                    : voiceStatus === 'thinking'
+                    ? 'Analyzing mountain telemetry...'
+                    : 'Listening to your voice... (Click mic to speak)'}
+                </span>
               </div>
 
               {/* 7-Bar Animated Equalizer */}
@@ -168,8 +261,8 @@ export default function ChatWindow({
                 {[12, 18, 14, 20, 16, 10, 15].map((h, i) => (
                   <div
                     key={i}
-                    style={{ height: `${h}px` }}
-                    className="w-1 bg-emerald-500 rounded-full animate-pulse"
+                    style={{ height: voiceStatus === 'speaking' || voiceStatus === 'listening' ? `${h}px` : '4px' }}
+                    className={`w-1 ${voiceStatus === 'speaking' ? 'bg-emerald-500' : 'bg-emerald-400/60'} rounded-full animate-pulse transition-all`}
                   />
                 ))}
               </div>
@@ -271,11 +364,11 @@ export default function ChatWindow({
               {/* Big Center Mic Trigger */}
               <button
                 type="button"
-                onClick={() => handleVoiceQuery('Badrinath weather forecast and Chopta snow status for this week')}
+                onClick={startListening}
                 className="w-11 h-11 rounded-full bg-[#0b533e] hover:bg-[#073c2c] text-white flex items-center justify-center shadow-md transition-transform active:scale-90 cursor-pointer"
-                title="Tap to speak"
+                title="Tap to speak into microphone"
               >
-                <Mic size={20} />
+                <Mic size={20} className={voiceStatus === 'listening' ? 'animate-bounce' : ''} />
               </button>
 
               {/* Interrupt Button */}
@@ -283,6 +376,10 @@ export default function ChatWindow({
                 type="button"
                 onClick={() => {
                   stopGeneration();
+                  stopSpeaking();
+                  if (recognitionRef.current) {
+                    try { recognitionRef.current.abort(); } catch (_) {}
+                  }
                   setVoiceStatus('listening');
                 }}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold hover:bg-rose-100 transition-colors cursor-pointer shadow-2xs"
