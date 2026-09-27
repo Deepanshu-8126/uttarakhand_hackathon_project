@@ -105,88 +105,11 @@ def main() -> None:
 
     project = tracing.configure(args.backend, project=args.project)
 
-    if args.backend == "openai":
-        from .openai.agent import run as run_openai
-
-        _run_console_backend(run_openai, project)
-
-    elif args.backend == "openai-agents":
-        # Same OpenAI Realtime model as `openai`, but driven through the OpenAI
-        # Agents SDK (RealtimeAgent/RealtimeRunner) instead of the raw WebSocket
-        # event loop. Same console transport via the shared protocols.
-        from .openai_agents.agent import run as run_openai_agents
-
-        _run_console_backend(run_openai_agents, project)
-
-    elif args.backend == "gemini":
-        # Gemini Live over google-genai's raw WebSocket session, without ADK.
+    try:
         from .gemini.agent import run as run_gemini
-
         _run_console_backend(run_gemini, project)
-
-    elif args.backend == "adk":
-        from .adk.agent import run as run_adk
-
-        _run_console_backend(run_adk, project)
-
-    elif args.backend == "livekit":
-        # LiveKit's console mode is its own CLI under the hood; we just hand
-        # control over to it after wiring the tracer. STT→LLM→TTS cascade.
-        from .livekit.agent import run as run_livekit
-
-        run_livekit(project_name=project)
-
-    elif args.backend == "livekit-with-langgraph":
-        # Same LiveKit console flow as `livekit`, but the Agent's `llm_node` is
-        # overridden to run an in-process LangGraph graph. LiveKit owns the
-        # ChatContext (truthful, barge-in-truncated transcript); the graph owns
-        # the control flow (the ReAct tool loop) and keeps no transcript.
-        from .livekit_with_langgraph.agent import run as run_livekit_langgraph
-
-        run_livekit_langgraph(project_name=project)
-
-    elif args.backend == "livekit-with-openai-realtime":
-        # Same LiveKit console flow, but the session's LLM slot is a
-        # speech-to-speech OpenAI Realtime model instead of the cascade.
-        from .livekit_with_openai_realtime.agent import run as run_livekit_openai
-
-        run_livekit_openai(project_name=project)
-
-    elif args.backend == "livekit-with-gemini-live":
-        # Same LiveKit console flow, but the session's LLM slot is a
-        # speech-to-speech Gemini Live model instead of the cascade.
-        from .livekit_with_gemini_live.agent import run as run_livekit_gemini
-
-        run_livekit_gemini(project_name=project)
-
-    elif args.backend == "pipecat":
-        # Pipecat owns its own LocalAudioTransport; we wire the OTel tracer and
-        # run its pipeline. Stock OpenAI LLM service.
-        from .pipecat.agent import run as run_pipecat
-
-        asyncio.run(run_pipecat(project_name=project))
-
-    elif args.backend == "pipecat-with-langgraph":
-        # Same Pipecat pipeline, but the LLM stage is an in-process LangGraph
-        # graph whose nodes nest under the `llm` span.
-        from .pipecat_with_langgraph.agent import run as run_pipecat_langgraph
-
-        asyncio.run(run_pipecat_langgraph(project_name=project))
-
-    elif args.backend == "pipecat-with-openai-realtime":
-        # Same Pipecat pipeline, but the STT/LLM/TTS cascade is collapsed into a
-        # single speech-to-speech OpenAI Realtime model in the LLM slot.
-        from .pipecat_with_openai_realtime.agent import run as run_pipecat_realtime
-
-        asyncio.run(run_pipecat_realtime(project_name=project))
-
-    elif args.backend == "pipecat-with-gemini-live":
-        # Same Pipecat pipeline, but the STT/LLM/TTS cascade is collapsed into a
-        # single speech-to-speech Gemini Live model (turns driven by a local VAD
-        # since Gemini Live emits no turn frames of its own).
-        from .pipecat_with_gemini_live.agent import run as run_pipecat_gemini
-
-        asyncio.run(run_pipecat_gemini(project_name=project))
+    except Exception as e:
+        print(f"[voice-demo] Error launching Gemini Live agent: {e}")
 
 
 if __name__ == "__main__":
