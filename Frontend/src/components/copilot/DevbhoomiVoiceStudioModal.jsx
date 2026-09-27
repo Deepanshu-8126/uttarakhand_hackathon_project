@@ -142,7 +142,7 @@ export default function DevbhoomiVoiceStudioModal({
       }
 
       const rec = new SpeechRec();
-      rec.lang = 'hi-IN, en-IN, en-US'; // Multi-accent Indian subcontinent tuning
+      rec.lang = 'hi-IN'; // Standard BCP-47 tag for Hindi + Indian English recognition
       rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
