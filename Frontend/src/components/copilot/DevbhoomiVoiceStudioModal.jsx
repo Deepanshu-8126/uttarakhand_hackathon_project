@@ -142,8 +142,8 @@ export default function DevbhoomiVoiceStudioModal({
       }
 
       const rec = new SpeechRec();
-      rec.lang = 'hi-IN'; // Standard BCP-47 tag for Hindi + Indian English recognition
-      rec.continuous = true;
+      rec.lang = 'hi-IN';
+      rec.continuous = false; // continuous: false fixes Chrome/Windows WebSpeech socket drop
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
@@ -160,10 +160,11 @@ export default function DevbhoomiVoiceStudioModal({
         let final = '';
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const trans = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript;
+            final += trans;
           } else {
-            interim += event.results[i][0].transcript;
+            interim += trans;
           }
         }
 
@@ -175,13 +176,6 @@ export default function DevbhoomiVoiceStudioModal({
         if (final && final.trim().length > 1) {
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           handleProcessVoiceQuery(final.trim());
-        } else if (interim && interim.trim().length > 2) {
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = setTimeout(() => {
-            if (!isProcessingRef.current && interim.trim()) {
-              handleProcessVoiceQuery(interim.trim());
-            }
-          }, 1200);
         }
       };
 
@@ -190,18 +184,15 @@ export default function DevbhoomiVoiceStudioModal({
         if (e.error === 'not-allowed') {
           setErrorMessage('Microphone permission is blocked. Please click the Lock icon (🔒) in your address bar and Allow Microphone.');
         } else if (e.error === 'no-speech') {
-          // Normal silence, ignore
-        } else {
-          // Auto restart on network/audio-capture glitches
+          // Normal timeout when silence, restart smoothly
           if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
-            setTimeout(() => {
-              try { rec.start(); } catch (_) {}
-            }, 500);
+            try { rec.start(); } catch (_) {}
           }
         }
       };
 
       rec.onend = () => {
+        // Auto restart for continuous conversation unless currently speaking
         if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
           try { rec.start(); } catch (_) {}
         }
