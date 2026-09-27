@@ -1,11 +1,18 @@
 @echo off
+cd /d "%~dp0"
+
+set "FLUTTER_BIN=flutter"
+if exist "C:\Users\Deepanshu\flutter\bin\flutter.bat" (
+    set "FLUTTER_BIN=C:\Users\Deepanshu\flutter\bin\flutter.bat"
+)
+
 echo ===================================================
 echo   Discovery Uttarakhand - Android APK Build Script
 echo ===================================================
 echo.
 
 echo [1/2] Fetching Flutter dependencies...
-call flutter pub get
+call "%FLUTTER_BIN%" pub get
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to get flutter packages.
     pause
@@ -13,7 +20,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [2/2] Building Release APK...
-call flutter build apk --release
+call "%FLUTTER_BIN%" build apk --release
 if %errorlevel% neq 0 (
     echo [ERROR] Flutter APK build failed.
     pause
