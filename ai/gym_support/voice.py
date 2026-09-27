@@ -30,6 +30,12 @@ except ImportError:
 
 async def main_voice():
     """Launch interactive voice agent session."""
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
     print("=" * 65)
     print("[DEVBHOOMI VOICE AGENT] (Pipecat + LangGraph + ElevenLabs)")
     print("   Brain: gym_support.graph (Unified LangGraph Agentic Graph)")
