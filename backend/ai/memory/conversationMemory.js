@@ -67,21 +67,24 @@ export class ConversationMemory {
       sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     }
 
-    // Try MongoDB first if userId or valid ObjectID
-    if (userId && Chat) {
+    // Try MongoDB first if valid sessionId exists
+    if (Chat && sessionId) {
       try {
-        const chatDoc = await Chat.findOne({
-          $or: [{ _id: sessionId }, { sessionId: sessionId }, { user: userId }]
-        }).sort({ updatedAt: -1 });
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(String(sessionId));
+        const chatDoc = await Chat.findOne(
+          isObjectId
+            ? { $or: [{ _id: sessionId }, { sessionId: sessionId }] }
+            : { sessionId: sessionId }
+        ).sort({ updatedAt: -1 });
 
         if (chatDoc) {
           return {
             sessionId: chatDoc._id.toString(),
-            userId: chatDoc.user?.toString(),
+            userId: (chatDoc.user || chatDoc.userId)?.toString(),
             history: (chatDoc.messages || []).map(m => ({
-              role: m.sender === 'user' ? 'user' : 'assistant',
-              content: m.text,
-              timestamp: m.timestamp
+              role: (m.sender === 'user' || m.role === 'user') ? 'user' : 'assistant',
+              content: m.text || m.content || '',
+              timestamp: m.timestamp || m.createdAt
             })),
             entities: chatDoc.contextEntities || {}
           };
@@ -120,20 +123,25 @@ export class ConversationMemory {
     }
 
     // Persist to MongoDB if possible
-    if (userId && Chat) {
+    if (Chat && sessionId) {
       try {
         await Chat.findOneAndUpdate(
-          { $or: [{ _id: sessionId }, { sessionId }] },
+          { sessionId: sessionId },
           {
             $set: {
               contextEntities: session.entities,
               updatedAt: new Date()
             },
             $push: {
-              messages: [
-                { sender: 'user', text: userMessage, timestamp: new Date() },
-                { sender: 'assistant', text: assistantReply, timestamp: new Date() }
-              ]
+              messages: {
+                $each: [
+                  { sender: 'user', text: userMessage, timestamp: new Date() },
+                  { sender: 'assistant', text: assistantReply, timestamp: new Date() }
+                ]
+              }
+            },
+            $setOnInsert: {
+              ...(userId ? { user: userId, userId: userId } : {})
             }
           },
           { upsert: true }
