@@ -11,17 +11,14 @@ export default function SOSFloatingButton() {
   const isAlertActive = activeAlert && activeAlert.status !== 'RESOLVED' && activeAlert.status !== 'CANCELLED';
 
   // Do not overlay on full-screen AI Copilot workspace
-  if (location.pathname === '/copilot' || location.pathname.startsWith('/copilot')) {
+  if (location.pathname.startsWith('/copilot')) {
     return null;
   }
 
   return (
     <>
       {/* Floating Emergency SOS Pill Button */}
-      <div 
-        className="fixed bottom-20 left-4 z-[9980] flex items-center select-none"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
+      <div className="fixed bottom-20 left-4 z-50 flex items-center select-none">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
