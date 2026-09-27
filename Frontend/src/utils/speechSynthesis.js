@@ -128,6 +128,7 @@ export function speakText(text, {
 
     activeUtterance = utterance;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Clear any queued speech
       window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
     }

@@ -221,7 +221,7 @@ export default function DevbhoomiVoiceStudioModal({
     setLiveUserText('');
 
     try {
-      // Direct Live Node / Render API request
+      // Direct Live Node / Render API request with 15s timeout
       const candidateUrls = [
         'https://uttarakhand-hackathon-project.onrender.com/api/agent/chat',
         'http://localhost:5000/api/agent/chat',
@@ -239,7 +239,7 @@ export default function DevbhoomiVoiceStudioModal({
               message: cleanUserText,
               pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
             }),
-            signal: AbortSignal.timeout(6000),
+            signal: AbortSignal.timeout(15000),
           });
 
           if (res.ok) {
@@ -252,7 +252,7 @@ export default function DevbhoomiVoiceStudioModal({
       }
 
       if (!replyText) {
-        replyText = `Namaste! Uttarakhand ke baare me aapne pucha: "${cleanUserText}". Raste khule hain aur mosam accha hai. Kahiye main aapki aur kya madad karoon?`;
+        replyText = `Namaste! Uttarakhand ke baare me aapne pucha: "${cleanUserText}". Devbhoomi me mosam suhana hai aur Char Dham highways open hain. Kahiye main aapki kya madad karoon?`;
       }
 
       const cleanReply = replyText.replace(/[*#_~`]/g, '').trim();
