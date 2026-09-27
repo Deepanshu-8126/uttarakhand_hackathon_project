@@ -169,6 +169,12 @@ class SpiritualPlace {
       img = json['imageUrl'].toString();
     }
 
+    if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
+      img = 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?q=80&w=800&auto=format&fit=crop';
+    } else if (img.startsWith('/')) {
+      img = 'https://uttarakhand-hackathon-project.onrender.com$img';
+    }
+
     double? lat;
     double? lng;
     if (json['location'] != null && json['location'] is Map) {
@@ -237,6 +243,12 @@ class CulturePlace {
       img = json['imageUrl'].toString();
     }
 
+    if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
+      img = 'https://images.unsplash.com/photo-1596404987012-4217117df854?q=80&w=800&auto=format&fit=crop';
+    } else if (img.startsWith('/')) {
+      img = 'https://uttarakhand-hackathon-project.onrender.com$img';
+    }
+
     double? lat;
     double? lng;
     if (json['location'] != null && json['location'] is Map) {
@@ -303,6 +315,12 @@ class ActivityItem {
       }
     } else if (json['imageUrl'] != null) {
       img = json['imageUrl'].toString();
+    }
+
+    if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
+      img = 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?q=80&w=800&auto=format&fit=crop';
+    } else if (img.startsWith('/')) {
+      img = 'https://uttarakhand-hackathon-project.onrender.com$img';
     }
 
     return ActivityItem(

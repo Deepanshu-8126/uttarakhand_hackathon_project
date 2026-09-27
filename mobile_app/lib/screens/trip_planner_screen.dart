@@ -85,7 +85,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   fit: StackFit.expand,
                   children: [
                     CachedNetworkImage(
-                      imageUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/Trisul_peak_from_bedni_bugyal.jpg/1920px-Trisul_peak_from_bedni_bugyal.jpg',
+                      imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80',
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(color: const Color(0xFF0F3D2E)),
                       errorWidget: (context, url, error) => Container(color: const Color(0xFF0F3D2E)),
