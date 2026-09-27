@@ -36,8 +36,10 @@ async def main_voice():
                 print("\nVoice agent stopped.")
                 break
 
-            if not user_input or user_input.lower() in ("exit", "quit"):
-                print("Stopping voice agent.")
+            if not user_input:
+                continue
+            if user_input.lower() in ("exit", "quit", "stop", "bye"):
+                print("Namaste! Stopping voice agent.")
                 break
 
             print("[Brain] Processing turn through LangGraph...")
@@ -49,8 +51,12 @@ async def main_voice():
             except Exception as e:
                 print(f"[Agent Note] {e}")
 
-    except KeyboardInterrupt:
-        print("\nSession ended.")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("\nSession ended gracefully.")
 
 if __name__ == "__main__":
-    asyncio.run(main_voice())
+    try:
+        asyncio.run(main_voice())
+    except (KeyboardInterrupt, SystemExit, asyncio.CancelledError):
+        print("\n[Devbhoomi Voice Agent] Terminated.")
+

@@ -51,8 +51,10 @@ async def main_voice():
                 print("\nVoice agent stopped.")
                 break
 
-            if not user_input or user_input.lower() in ("exit", "quit"):
-                print("Stopping voice agent.")
+            if not user_input:
+                continue
+            if user_input.lower() in ("exit", "quit", "stop", "bye"):
+                print("Namaste! Stopping voice agent.")
                 break
 
             print("[Brain] Processing turn through LangGraph...")
@@ -61,17 +63,21 @@ async def main_voice():
                 messages = result.get("messages", [])
                 bot_reply = messages[-1].content if messages else "Namaste!"
 
-                print(f"🔊 Assistant (Voice Spoken Output): {bot_reply}")
+                print(f"[Assistant Reply]: {bot_reply}")
 
                 # Synthesize audio with ElevenLabs if key available
                 if eleven_key:
                     print("⚡ ElevenLabs Studio Voice Synthesis Active (audio stream ready).")
             except Exception as e:
-                print(f"⚠️ Agent processing note: {e}")
+                print(f"[Agent Note] {e}")
 
-    except KeyboardInterrupt:
-                print("\nVoice agent exited gracefully.")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("\nVoice agent session ended gracefully.")
 
 
 if __name__ == "__main__":
-    asyncio.run(main_voice())
+    try:
+        asyncio.run(main_voice())
+    except (KeyboardInterrupt, SystemExit, asyncio.CancelledError):
+        print("\n[Devbhoomi Voice Agent] Terminated.")
+
