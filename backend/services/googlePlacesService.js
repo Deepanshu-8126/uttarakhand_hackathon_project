@@ -102,9 +102,35 @@ const UTTARAKHAND_FALLBACK_GEMS = [
   }
 ];
 
+function haversineDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's mean radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res;
+  } catch (err) {
+    clearTimeout(t);
+    throw err;
+  }
+}
+
 class GooglePlacesService {
   constructor() {
-    this.geoapifyKey = process.env.GEOAPIFY_API_KEY || '2c3a7f1f2e184822a7631d30dfac330c';
+    this.geoapifyKey = process.env.GEOAPIFY_API_KEY || '';
     this.googleApiKey = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY || '';
   }
 
@@ -116,7 +142,8 @@ class GooglePlacesService {
    * Search places by text / keyword query
    */
   async searchPlaces({ query, location, radius = 50000 }) {
-    const cacheKey = `search_${query}_${location ? `${location.lat}_${location.lng}` : ''}`;
+    const cleanQuery = (query || '').trim().toLowerCase();
+    const cacheKey = `search_${cleanQuery}_${location ? `${location.lat}_${location.lng}` : ''}`;
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
@@ -127,7 +154,7 @@ class GooglePlacesService {
         if (location && location.lat && location.lng) {
           url += `&bias=proximity:${location.lng},${location.lat}`;
         }
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url);
         const data = await res.json();
         if (Array.isArray(data.features) && data.features.length > 0) {
           const formatted = data.features.map((f, i) => this.formatGeoapifyFeature(f, i));
@@ -143,7 +170,7 @@ class GooglePlacesService {
     if (this.googleApiKey) {
       try {
         let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' Uttarakhand')}&key=${this.googleApiKey}`;
-        const response = await fetch(url);
+        const response = await fetchWithTimeout(url);
         const data = await response.json();
         if (data.status === 'OK' && Array.isArray(data.results)) {
           const parsed = data.results.map(place => this.formatGooglePlace(place));
@@ -184,7 +211,7 @@ class GooglePlacesService {
         }
 
         const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${centerLng},${centerLat},${radius}&bias=proximity:${centerLng},${centerLat}&limit=25&apiKey=${geoKey}`;
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url);
         const data = await res.json();
 
         if (Array.isArray(data.features) && data.features.length > 0) {
@@ -206,7 +233,7 @@ class GooglePlacesService {
     if (this.googleApiKey) {
       try {
         const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${centerLat},${centerLng}&radius=${radius}&key=${this.googleApiKey}`;
-        const response = await fetch(url);
+        const response = await fetchWithTimeout(url);
         const data = await response.json();
         if (data.status === 'OK' && Array.isArray(data.results)) {
           const parsed = data.results.map(place => this.formatGooglePlace(place));
@@ -218,12 +245,10 @@ class GooglePlacesService {
       }
     }
 
-    // 3. High-grade Curated Fallback with distance calculation
+    // 3. High-grade Curated Fallback with Haversine distance calculation
     const sorted = [...UTTARAKHAND_FALLBACK_GEMS].map(gem => {
-      const dLat = gem.location.lat - centerLat;
-      const dLng = gem.location.lng - centerLng;
-      const distSq = dLat * dLat + dLng * dLng;
-      return { ...gem, distance_approx_km: Math.max(1, Math.round(Math.sqrt(distSq) * 111)) };
+      const distKm = haversineDistanceKm(centerLat, centerLng, gem.location.lat, gem.location.lng);
+      return { ...gem, distance_approx_km: Math.max(1, distKm) };
     }).sort((a, b) => a.distance_approx_km - b.distance_approx_km);
 
     setCache(cacheKey, sorted);
@@ -244,7 +269,7 @@ class GooglePlacesService {
     for (const m of modes) {
       try {
         const url = `https://api.geoapify.com/v1/routing?waypoints=${fromLat},${fromLng}|${toLat},${toLng}&mode=${m}&apiKey=${geoKey}`;
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url);
         const data = await res.json();
         if (data.features?.[0]) {
           const route = data.features[0];
@@ -289,16 +314,16 @@ class GooglePlacesService {
     return {
       place_id: p.place_id || `geoapify_${lat}_${lng}_${index}`,
       name: p.name || p.formatted || 'Local Himalayan Spot',
-      rating: 4.7 + (index % 3) * 0.1,
-      user_ratings_total: 80 + (index * 45),
+      rating: null,
+      user_ratings_total: null,
       vicinity: p.street || p.suburb || p.city || p.county || p.state || 'Uttarakhand, India',
       location: { lat, lng },
       photo_urls: [photoUrl],
       types: cats.length > 0 ? cats : ['point_of_interest'],
-      open_now: true,
+      open_now: null,
       distance_approx_km: p.distance ? Math.round(p.distance / 1000) : null,
       is_hidden_gem: isHidden,
-      is_google_verified: true,
+      is_google_verified: false,
       provider: 'Geoapify Live Radar & OSM'
     };
   }

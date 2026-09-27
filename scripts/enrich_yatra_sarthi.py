@@ -12,13 +12,35 @@ import shutil
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-YATRA_DIR = Path(r"C:\Users\DEEPAN~1\AppData\Local\Temp\kilo\yatra-sarthi")
+YATRA_DIR = Path(os.getenv("YATRA_DIR", "./yatra-sarthi"))
 DATA_DIR = YATRA_DIR / "data"
 IMG_DIR = YATRA_DIR / "frontend" / "img"
 
 BACKEND_SEED = BASE_DIR / "backend" / "seed"
 DATASET_SEED = BASE_DIR / "data-set" / "seed"
 FRONTEND_ASSETS = BASE_DIR / "Frontend" / "public" / "assets"
+
+def safe_int(x, default=None):
+    if x is None:
+        return default
+    x_str = str(x).strip()
+    if not x_str:
+        return default
+    try:
+        return int(float(x_str))
+    except (ValueError, TypeError):
+        return default
+
+def safe_float(x, default=None):
+    if x is None:
+        return default
+    x_str = str(x).strip()
+    if not x_str:
+        return default
+    try:
+        return float(x_str)
+    except (ValueError, TypeError):
+        return default
 
 def normalize_name(s: str) -> str:
     s = s.lower()
@@ -70,19 +92,14 @@ def enrich_destinations():
         slug = slugify(name)
         norm = normalize_name(name)
 
-        # Match existing
+        # Match existing without O(n^2) scanning
         existing = name_map.get(name.lower()) or norm_map.get(norm)
-        if not existing and len(norm) >= 4:
-            for k, v in norm_map.items():
-                if len(k) >= 4 and (norm in k or k in norm):
-                    existing = v
-                    break
 
         best_months = [int(m.strip()) for m in poi["best_months"].split(",") if m.strip().isdigit()] if poi.get("best_months") else []
-        cost_per_day = int(poi["cost_per_day"]) if poi.get("cost_per_day", "").isdigit() else None
-        entry_fee = int(poi["entry_fee"]) if poi.get("entry_fee", "").isdigit() else 0
-        min_days = int(poi["min_days"]) if poi.get("min_days", "").isdigit() else 1
-        rating = float(poi["rating"]) if poi.get("rating") else 4.5
+        cost_per_day = safe_int(poi.get("cost_per_day"))
+        entry_fee = safe_int(poi.get("entry_fee"), 0)
+        min_days = safe_int(poi.get("min_days"), 1)
+        rating = safe_float(poi.get("rating"), 4.5)
         crowd = poi.get("crowd", "medium")
         circuit = poi.get("cluster", "uttarakhand")
         tags = [t.strip() for t in poi.get("tags", "").split(";") if t.strip()]
@@ -109,6 +126,14 @@ def enrich_destinations():
                 existing["description"] = poi["description"]
             enriched_count += 1
         else:
+            # Check for real coordinates if available, otherwise null
+            lat = safe_float(poi.get("latitude") or poi.get("lat"))
+            lng = safe_float(poi.get("longitude") or poi.get("lng"))
+            loc_obj = {
+                "type": "Point",
+                "coordinates": [lng, lat]
+            } if (lat is not None and lng is not None) else None
+
             # Add new destination record
             new_dest = {
                 "name": name,
@@ -117,11 +142,8 @@ def enrich_destinations():
                 "shortDescription": poi.get("description", "")[:160],
                 "district": poi.get("district", "Uttarakhand"),
                 "region": "Garhwal" if poi.get("district") in ["Dehradun", "Haridwar", "Rudraprayag", "Chamoli", "Uttarkashi", "Tehri", "Pauri"] else "Kumaon",
-                "location": {
-                    "type": "Point",
-                    "coordinates": [78.5 + (len(destinations) % 20) * 0.1, 30.0 + (len(destinations) % 20) * 0.1]
-                },
-                "locationSource": "Yatra-Sarthi verified POI",
+                "location": loc_obj,
+                "locationSource": "Yatra-Sarthi verified POI" if loc_obj else None,
                 "circuit": circuit,
                 "category": poi.get("category", "sightseeing"),
                 "bestMonths": best_months,
@@ -147,12 +169,18 @@ def enrich_destinations():
             norm_map[norm] = new_dest
             added_count += 1
 
+    # Safe backup before overwrite
+    if dest_path.exists():
+        shutil.copy2(dest_path, dest_path.with_suffix('.bak.json'))
+
     with open(dest_path, "w", encoding="utf-8") as f:
         json.dump(destinations, f, indent=2, ensure_ascii=False)
     
-    # Mirror to data-set/seed
+    # Mirror to data-set/seed with backup
     dataset_dest = DATASET_SEED / "destinations.json"
     if dataset_dest.parent.exists():
+        if dataset_dest.exists():
+            shutil.copy2(dataset_dest, dataset_dest.with_suffix('.bak.json'))
         with open(dataset_dest, "w", encoding="utf-8") as f:
             json.dump(destinations, f, indent=2, ensure_ascii=False)
 

@@ -1,6 +1,6 @@
 import api from './api';
 
-const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '2c3a7f1f2e184822a7631d30dfac330c';
+const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '';
 
 const HIMALAYAN_BACKUP_PHOTOS = [
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',

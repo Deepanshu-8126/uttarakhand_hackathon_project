@@ -19,6 +19,33 @@ class AiCopilotScreen extends StatefulWidget {
   State<AiCopilotScreen> createState() => _AiCopilotScreenState();
 }
 
+const Map<String, List<String>> _kDestinationAliasMap = {
+  'kedarnath': ['kedarnath', 'kedar'],
+  'badrinath': ['badrinath', 'badri'],
+  'valley-of-flowers': ['valley of flowers', 'bhyundar', 'hemkund'],
+  'auli': ['auli', 'joshimath'],
+  'rishikesh': ['rishikesh', 'triveni ghat', 'ram jhula'],
+  'chopta': ['chopta', 'tungnath', 'chandrashila'],
+  'nainital': ['nainital', 'naini lake'],
+  'munsiyari': ['munsyari', 'munsiyari', 'panchachuli'],
+  'jim-corbett-national-park': ['corbett', 'jim corbett', 'dhikala'],
+  'haridwar': ['haridwar', 'har ki pauri'],
+  'adi-kailash': ['adi kailash', 'om parvat'],
+  'jageshwar': ['jageshwar'],
+  'mussoorie': ['mussoorie', 'kempty', 'gun hill'],
+  'dhanaulti': ['dhanaulti', 'kanatal'],
+  'gangotri': ['gangotri', 'gaumukh'],
+  'yamunotri': ['yamunotri', 'janki chatti'],
+  'almora': ['almora', 'kasar devi'],
+  'kausani': ['kausani', 'anasakti'],
+  'ranikhet': ['ranikhet', 'chaubatia'],
+  'mukteshwar': ['mukteshwar', 'chauli ki jali'],
+  'tehri': ['tehri', 'tehri lake'],
+  'dayara-bugyal': ['dayara', 'dayara bugyal'],
+  'kedarkantha': ['kedarkantha', 'sankri'],
+  'binsar': ['binsar'],
+};
+
 class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -42,7 +69,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     _voicePulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
 
     _loadDestinations();
 
@@ -100,16 +127,19 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
 
     if (overrideText == null) _controller.clear();
 
-    // Context history for AI agent (last 6 conversation turns)
+    // Context history for AI agent (last 4 conversation turns, trimmed to 500 chars)
     final existingMessages = _messages
         .where((m) => m.text.trim().isNotEmpty)
         .toList();
-    final recentTurns = existingMessages.length > 6
-        ? existingMessages.sublist(existingMessages.length - 6)
+    final recentTurns = existingMessages.length > 4
+        ? existingMessages.sublist(existingMessages.length - 4)
         : existingMessages;
-    final List<Map<String, String>> historyPayload = recentTurns.map((m) => {
-      'role': m.isUser ? 'user' : 'assistant',
-      'content': m.text,
+    final List<Map<String, String>> historyPayload = recentTurns.map((m) {
+      final trimmedText = m.text.length > 500 ? m.text.substring(0, 500) : m.text;
+      return {
+        'role': m.isUser ? 'user' : 'assistant',
+        'content': trimmedText,
+      };
     }).toList();
 
     setState(() {
@@ -338,6 +368,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     }
 
     VoicePlayerService.addListener(modalVoiceListener);
+    _voicePulseController.repeat(reverse: true);
 
     showModalBottomSheet(
       context: context,
@@ -353,12 +384,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               final q = query.trim();
               if (q.isEmpty) return;
               voiceInputController.clear();
-              setModalState(() {
-                voiceState = 'processing';
-                liveTranscript = q;
-                lastReply = '';
-                lastAudioBase64 = '';
-              });
+              if (ctx.mounted) {
+                setModalState(() {
+                  voiceState = 'processing';
+                  liveTranscript = q;
+                  lastReply = '';
+                  lastAudioBase64 = '';
+                });
+              }
 
               try {
                 final langCode = selectedLang == 'English' ? 'en' : 'hi';
@@ -366,11 +399,13 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                 final reply = (result['text'] as String?)?.trim() ?? 'Main aapki baat sun raha hoon.';
                 final audioBase64 = (result['audio_base64'] as String?) ?? '';
 
-                setModalState(() {
-                  voiceState = audioBase64.isNotEmpty ? 'speaking' : 'idle';
-                  lastReply = reply;
-                  lastAudioBase64 = audioBase64;
-                });
+                if (ctx.mounted) {
+                  setModalState(() {
+                    voiceState = audioBase64.isNotEmpty ? 'speaking' : 'idle';
+                    lastReply = reply;
+                    lastAudioBase64 = audioBase64;
+                  });
+                }
 
                 // Play authentic Gemini Live Aoede Studio audio
                 if (audioBase64.isNotEmpty) {
@@ -392,7 +427,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                   _scrollToBottom();
                 }
               } catch (e) {
-                if (mounted) {
+                if (ctx.mounted) {
                   setModalState(() {
                     voiceState = 'idle';
                     lastReply = 'Network issue. Kripya dobara poochiye.';
@@ -855,6 +890,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
         );
       },
     ).whenComplete(() {
+      _voicePulseController.stop();
+      _voicePulseController.reset();
       VoicePlayerService.removeListener(modalVoiceListener);
       voiceInputController.dispose();
     });
@@ -1062,39 +1099,12 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     final lower = text.toLowerCase();
     final matched = <Destination>[];
 
-    final Map<String, List<String>> aliasMap = {
-      'kedarnath': ['kedarnath', 'kedar'],
-      'badrinath': ['badrinath', 'badri'],
-      'valley-of-flowers': ['valley of flowers', 'bhyundar', 'hemkund'],
-      'auli': ['auli', 'joshimath'],
-      'rishikesh': ['rishikesh', 'triveni ghat', 'ram jhula'],
-      'chopta': ['chopta', 'tungnath', 'chandrashila'],
-      'nainital': ['nainital', 'naini lake'],
-      'munsiyari': ['munsyari', 'munsiyari', 'panchachuli'],
-      'jim-corbett-national-park': ['corbett', 'jim corbett', 'dhikala'],
-      'haridwar': ['haridwar', 'har ki pauri'],
-      'adi-kailash': ['adi kailash', 'om parvat'],
-      'jageshwar': ['jageshwar'],
-      'mussoorie': ['mussoorie', 'kempty', 'gun hill'],
-      'dhanaulti': ['dhanaulti', 'kanatal'],
-      'gangotri': ['gangotri', 'gaumukh'],
-      'yamunotri': ['yamunotri', 'janki chatti'],
-      'almora': ['almora', 'kasar devi'],
-      'kausani': ['kausani', 'anasakti'],
-      'ranikhet': ['ranikhet', 'chaubatia'],
-      'mukteshwar': ['mukteshwar', 'chauli ki jali'],
-      'tehri': ['tehri', 'tehri lake'],
-      'dayara-bugyal': ['dayara', 'dayara bugyal'],
-      'kedarkantha': ['kedarkantha', 'sankri'],
-      'binsar': ['binsar'],
-    };
-
     for (final dest in _allDestinations) {
       final destKey = dest.id.toLowerCase();
       final nameLower = dest.name.toLowerCase();
 
       bool isMatch = false;
-      for (final entry in aliasMap.entries) {
+      for (final entry in _kDestinationAliasMap.entries) {
         if (entry.key == destKey || entry.key == nameLower) {
           if (entry.value.any((alias) => lower.contains(alias))) {
             isMatch = true;
@@ -1175,7 +1185,21 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                 errorWidget: (context, url, error) => Container(
                   height: 130,
                   color: const Color(0xFF0F3D2E),
-                  child: const Center(child: Icon(Icons.terrain, color: Colors.white54, size: 36)),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.terrain, color: Colors.white54, size: 28),
+                        const SizedBox(height: 4),
+                        Text(
+                          dest.name.isNotEmpty
+                              ? dest.name.split(' ').where((w) => w.isNotEmpty).map((w) => w[0]).take(2).join()
+                              : 'UK',
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               Positioned(

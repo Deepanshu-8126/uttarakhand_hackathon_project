@@ -5,29 +5,44 @@ import { executeAgentAction, setActiveRequestId } from '../utils/agentActionExec
 
 const SESSIONS_STORAGE_KEY = "du_copilot_sessions_v2";
 
+function generateUniqueId(prefix = '') {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return prefix ? `${prefix}_${crypto.randomUUID()}` : crypto.randomUUID();
+  }
+  return `${prefix ? `${prefix}_` : ''}${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
 function getLocalSessions() {
   try {
     const raw = localStorage.getItem(SESSIONS_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.map(s => ({
-          _id: s.id || `sess_${Date.now()}`,
-          title: s.title || (s.destination ? `${s.destination} Trip` : 'Pahadi Travel Plan'),
-          destination: s.destination,
-          tripId: s.tripContext?.tripId || null,
-          createdAt: s.updatedAt || new Date().toISOString(),
-          updatedAt: s.updatedAt || new Date().toISOString(),
-          messages: (s.messages || []).map((m, idx) => ({
-            _id: m.id || `msg_${idx}`,
-            role: m.role === 'agent' ? 'assistant' : m.role,
-            content: m.text || m.content || '',
-            suggestedActions: m.suggestedActions || [],
-            toolsUsed: m.toolsUsed || [],
-            citations: m.citations || [],
-            createdAt: s.updatedAt || new Date().toISOString()
-          }))
-        }));
+        return parsed.map(s => {
+          const sessId = s.id || s._id || generateUniqueId('sess');
+          return {
+            _id: sessId,
+            id: sessId,
+            title: s.title || (s.destination ? `${s.destination} Trip` : 'Pahadi Travel Plan'),
+            destination: s.destination,
+            tripId: s.tripContext?.tripId || null,
+            createdAt: s.updatedAt || new Date().toISOString(),
+            updatedAt: s.updatedAt || new Date().toISOString(),
+            messages: (s.messages || []).map((m, idx) => {
+              const msgId = m.id || m._id || `msg_${idx}`;
+              return {
+                _id: msgId,
+                id: msgId,
+                role: m.role === 'agent' ? 'assistant' : m.role,
+                content: m.text || m.content || '',
+                suggestedActions: m.suggestedActions || [],
+                toolsUsed: m.toolsUsed || [],
+                citations: m.citations || [],
+                createdAt: s.updatedAt || new Date().toISOString()
+              };
+            })
+          };
+        });
       }
     }
   } catch (e) {
@@ -42,14 +57,23 @@ function saveLocalSession(sessionObj) {
     let list = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(list)) list = [];
     
-    const idx = list.findIndex(s => s.id === sessionObj.id);
+    const sessId = sessionObj.id || sessionObj._id;
+    if (!sessId) return;
+
+    const normalizedSession = {
+      ...sessionObj,
+      id: sessId,
+      _id: sessId
+    };
+
+    const idx = list.findIndex(s => s.id === sessId || s._id === sessId);
     if (idx >= 0) {
-      list[idx] = sessionObj;
+      list[idx] = normalizedSession;
     } else {
-      list = [sessionObj, ...list];
+      list = [normalizedSession, ...list];
     }
     localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(list.slice(0, 30)));
-    sessionStorage.setItem("du_active_session_id", sessionObj.id);
+    sessionStorage.setItem("du_active_session_id", sessId);
   } catch (e) {}
 }
 
@@ -58,7 +82,8 @@ function isValidJwt(token) {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return false;
-    const payload = JSON.parse(atob(parts[1]));
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -194,22 +219,17 @@ const useChatStore = create((set, get) => ({
       return data;
     } catch (error) {
       // Local fallback
-      const newLocalId = `sess_${Date.now()}`;
+      const newLocalId = generateUniqueId('sess');
       const newLocal = {
         _id: newLocalId,
+        id: newLocalId,
         title: title || 'New Trip Plan',
         tripId: tripId || null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         messages: []
       };
-      saveLocalSession({
-        id: newLocalId,
-        title: title || 'New Trip Plan',
-        messages: [],
-        tripContext: null,
-        updatedAt: new Date().toISOString()
-      });
+      saveLocalSession(newLocal);
       set((state) => ({ chats: [newLocal, ...state.chats], activeChat: newLocal, loading: false }));
       return newLocal;
     }
@@ -219,13 +239,13 @@ const useChatStore = create((set, get) => ({
     try {
       const { data } = await chatApi.updateChat(id, title);
       set((state) => ({
-        chats: state.chats.map(c => c._id === id ? data : c),
-        activeChat: state.activeChat?._id === id ? { ...state.activeChat, title: data.title } : state.activeChat
+        chats: state.chats.map(c => (c._id === id || c.id === id) ? data : c),
+        activeChat: (state.activeChat?._id === id || state.activeChat?.id === id) ? { ...state.activeChat, title: data.title } : state.activeChat
       }));
     } catch (error) {
       set((state) => ({
-        chats: state.chats.map(c => c._id === id ? { ...c, title } : c),
-        activeChat: state.activeChat?._id === id ? { ...state.activeChat, title } : state.activeChat
+        chats: state.chats.map(c => (c._id === id || c.id === id) ? { ...c, title } : c),
+        activeChat: (state.activeChat?._id === id || state.activeChat?.id === id) ? { ...state.activeChat, title } : state.activeChat
       }));
     }
   },
@@ -235,18 +255,18 @@ const useChatStore = create((set, get) => ({
       await chatApi.deleteChat(id);
     } catch (error) {}
     
-    // Also remove from local storage
+    // Also remove from local storage using unified id/_id match
     try {
       const raw = localStorage.getItem(SESSIONS_STORAGE_KEY);
       if (raw) {
-        const list = JSON.parse(raw).filter(s => s.id !== id);
+        const list = JSON.parse(raw).filter(s => (s.id !== id && s._id !== id));
         localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(list));
       }
     } catch (e) {}
 
     set((state) => ({
-      chats: state.chats.filter(c => c._id !== id),
-      activeChat: state.activeChat?._id === id ? null : state.activeChat
+      chats: state.chats.filter(c => c._id !== id && c.id !== id),
+      activeChat: (state.activeChat?._id === id || state.activeChat?.id === id) ? null : state.activeChat
     }));
   },
 
@@ -256,43 +276,72 @@ const useChatStore = create((set, get) => ({
     const reqId = "req_" + Date.now();
     setActiveRequestId(reqId);
 
-    const activeSessId = chatId || sessionStorage.getItem("du_active_session_id") || `sess_${Date.now()}`;
+    const activeSessId = chatId || sessionStorage.getItem("du_active_session_id") || generateUniqueId('sess');
     sessionStorage.setItem("du_active_session_id", activeSessId);
 
+    const tempUserMsgId = generateUniqueId('msg');
     const tempUserMsg = {
-      _id: Date.now().toString(),
+      _id: tempUserMsgId,
+      id: tempUserMsgId,
       role: 'user',
       content,
       provenance: 'USER',
       createdAt: new Date().toISOString()
     };
     
-    const tempAssistantMsgId = (Date.now() + 1).toString();
+    const tempAssistantMsgId = generateUniqueId('msg');
     const initialAssistantMsg = {
       _id: tempAssistantMsgId,
+      id: tempAssistantMsgId,
       role: 'assistant',
       content: '',
       provenance: 'GROUNDED',
       createdAt: new Date().toISOString()
     };
 
+    const persistLocal = (targetChat, tripContext = null) => {
+      if (!targetChat || !activeSessId) return;
+      saveLocalSession({
+        id: activeSessId,
+        _id: activeSessId,
+        title: targetChat.title || content.slice(0, 36),
+        destination: tripContext?.destination || targetChat.destination || "Uttarakhand",
+        updatedAt: new Date().toISOString(),
+        messages: (targetChat.messages || []).map(m => ({
+          id: m._id || m.id,
+          _id: m._id || m.id,
+          role: m.role === 'assistant' ? 'agent' : m.role,
+          text: m.content,
+          content: m.content,
+          suggestedActions: m.suggestedActions || [],
+          toolsUsed: m.toolsUsed || [],
+          citations: m.citations || []
+        })),
+        tripContext: tripContext || targetChat.tripContext || null
+      });
+    };
+
     set((state) => {
       const currentMsgs = state.activeChat?.messages || [];
       const updatedChat = {
-        ...(state.activeChat || { _id: activeSessId, title: content.slice(0, 36), createdAt: new Date().toISOString() }),
+        ...(state.activeChat || { _id: activeSessId, id: activeSessId, title: content.slice(0, 36), createdAt: new Date().toISOString() }),
         _id: activeSessId,
+        id: activeSessId,
         title: state.activeChat?.title || content.slice(0, 36),
         updatedAt: new Date().toISOString(),
         messages: [...currentMsgs, tempUserMsg, initialAssistantMsg]
       };
       
-      const existingIdx = state.chats.findIndex(c => c._id === activeSessId);
+      const existingIdx = state.chats.findIndex(c => (c._id === activeSessId || c.id === activeSessId));
       let updatedChats = [...state.chats];
       if (existingIdx >= 0) {
         updatedChats[existingIdx] = updatedChat;
       } else {
         updatedChats = [updatedChat, ...updatedChats];
       }
+
+      // Persist immediately so unclosed user questions remain cached even if tab is closed early
+      persistLocal(updatedChat);
 
       return {
         activeChat: updatedChat,
@@ -303,6 +352,27 @@ const useChatStore = create((set, get) => ({
     try {
       const controller = new AbortController();
       set({ streamAbortController: controller });
+
+      // RequestAnimationFrame chunk batching to eliminate lag on high-frequency streaming tokens
+      let pendingBuffer = '';
+      let rafId = null;
+
+      const flushBuffer = () => {
+        if (!pendingBuffer) return;
+        const textToAppend = pendingBuffer;
+        pendingBuffer = '';
+        set((state) => {
+          const msgs = [...(state.activeChat?.messages || [])];
+          const last = msgs[msgs.length - 1];
+          if (last && last.role === 'assistant') {
+            msgs[msgs.length - 1] = {
+              ...last,
+              content: (last.content || '') + textToAppend
+            };
+          }
+          return { activeChat: { ...state.activeChat, messages: msgs } };
+        });
+      };
 
       await streamAgentMessage({
         message: content,
@@ -318,22 +388,26 @@ const useChatStore = create((set, get) => ({
           if (event.type === 'status') {
             set({ agentStatus: event.message });
           } else if (event.type === 'chunk') {
-            set((state) => {
-              const msgs = [...(state.activeChat?.messages || [])];
-              const last = msgs[msgs.length - 1];
-              if (last && last.role === 'assistant') {
-                msgs[msgs.length - 1] = {
-                  ...last,
-                  content: (last.content || '') + event.text
-                };
-              }
-              return { activeChat: { ...state.activeChat, messages: msgs } };
-            });
+            pendingBuffer += event.text || '';
+            if (!rafId && typeof requestAnimationFrame !== 'undefined') {
+              rafId = requestAnimationFrame(() => {
+                flushBuffer();
+                rafId = null;
+              });
+            } else if (typeof requestAnimationFrame === 'undefined') {
+              flushBuffer();
+            }
           } else if (event.type === 'action') {
             if (event.action) {
               executeAgentAction(event.action, { requestId: reqId });
             }
           } else if (event.type === 'final') {
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+            }
+            flushBuffer();
+
             set((state) => {
               const msgs = [...(state.activeChat?.messages || [])];
               const last = msgs[msgs.length - 1];
@@ -350,23 +424,7 @@ const useChatStore = create((set, get) => ({
               }
 
               const finalizedChat = { ...state.activeChat, messages: msgs };
-
-              // Sync to local sessions storage
-              saveLocalSession({
-                id: activeSessId,
-                title: finalizedChat.title || content.slice(0, 36),
-                destination: event.response?.tripContext?.destination || "Uttarakhand",
-                updatedAt: new Date().toISOString(),
-                messages: msgs.map(m => ({
-                  id: m._id,
-                  role: m.role === 'assistant' ? 'agent' : m.role,
-                  text: m.content,
-                  suggestedActions: m.suggestedActions || [],
-                  toolsUsed: m.toolsUsed || [],
-                  citations: m.citations || []
-                })),
-                tripContext: event.response?.tripContext || null
-              });
+              persistLocal(finalizedChat, event.response?.tripContext);
 
               return {
                 activeChat: finalizedChat,
@@ -377,6 +435,12 @@ const useChatStore = create((set, get) => ({
               };
             });
           } else if (event.type === 'error') {
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+            }
+            flushBuffer();
+
             set((state) => {
               const msgs = [...(state.activeChat?.messages || [])];
               const last = msgs[msgs.length - 1];
@@ -387,16 +451,30 @@ const useChatStore = create((set, get) => ({
                   isError: true
                 };
               }
-              return { activeChat: { ...state.activeChat, messages: msgs }, sending: false, agentStatus: null, agentStreaming: false, streamAbortController: null };
+              const errChat = { ...state.activeChat, messages: msgs };
+              persistLocal(errChat);
+              return { activeChat: errChat, sending: false, agentStatus: null, agentStreaming: false, streamAbortController: null };
             });
           } else if (event.type === 'aborted') {
-            set({ sending: false, agentStatus: null, agentStreaming: false, streamAbortController: null });
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+            }
+            flushBuffer();
+
+            set((state) => {
+              persistLocal(state.activeChat);
+              return { sending: false, agentStatus: null, agentStreaming: false, streamAbortController: null };
+            });
           }
         }
       });
     } catch (error) {
       if (error.name === 'AbortError') return;
-      set({ error: error.message || 'Failed to send message', sending: false, agentStatus: null, agentStreaming: false, streamAbortController: null });
+      set((state) => {
+        persistLocal(state.activeChat);
+        return { error: error.message || 'Failed to send message', sending: false, agentStatus: null, agentStreaming: false, streamAbortController: null };
+      });
     }
   },
 

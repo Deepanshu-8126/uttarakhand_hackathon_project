@@ -3,7 +3,7 @@
  * Premium, ultra-crisp, high-definition tiles powered by Geoapify & CartoDB.
  */
 
-const GEOAPIFY_API_KEY = import.meta.env?.VITE_GEOAPIFY_API_KEY || '2c3a7f1f2e184822a7631d30dfac330c';
+const GEOAPIFY_API_KEY = import.meta.env?.VITE_GEOAPIFY_API_KEY || '';
 
 const GEOAPIFY_BRIGHT = {
   url: `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${GEOAPIFY_API_KEY}`,

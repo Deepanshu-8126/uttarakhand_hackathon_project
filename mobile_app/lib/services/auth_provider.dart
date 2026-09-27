@@ -15,10 +15,10 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   AuthProvider() {
-    _loadStoredSession();
+    loadStoredSession();
   }
 
-  Future<void> _loadStoredSession() async {
+  Future<void> loadStoredSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');

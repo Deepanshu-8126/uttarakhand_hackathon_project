@@ -15,12 +15,22 @@ import Destination from '../models/Destination.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// In-memory cache of 106 seed destinations for instant sub-millisecond search
+// In-memory cache & inverted index of 106 seed destinations for instant sub-millisecond search
 let seedDestinations = [];
+const seedTokenMap = new Map();
+
 try {
   const seedPath = path.resolve(__dirname, '../seed/destinations.json');
   if (fs.existsSync(seedPath)) {
     seedDestinations = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+    seedDestinations.forEach(d => {
+      const combined = `${d.name || ''} ${d.district || ''} ${d.region || ''}`.toLowerCase();
+      const words = combined.split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+      words.forEach(w => {
+        if (!seedTokenMap.has(w)) seedTokenMap.set(w, new Set());
+        seedTokenMap.get(w).add(d);
+      });
+    });
   }
 } catch (e) {
   console.warn('[HybridRAG] Could not load seed destinations:', e.message);
@@ -33,16 +43,26 @@ export async function searchInDB(query) {
   if (!query || typeof query !== 'string') return null;
   const clean = query.trim().toLowerCase();
 
-  // 1. Try Mongo DB search if available
+  // 1. Try Mongo DB search using fast Text Index with regex fallback
   try {
-    const mongoMatches = await Destination.find({
-      $or: [
-        { name: { $regex: clean, $options: 'i' } },
-        { district: { $regex: clean, $options: 'i' } },
-        { region: { $regex: clean, $options: 'i' } },
-        { highlights: { $regex: clean, $options: 'i' } }
-      ]
-    }).limit(3).select('name district region description highlights bestTimeToVisit altitudeMeters startingPrice');
+    let mongoMatches = [];
+    try {
+      mongoMatches = await Destination.find(
+        { $text: { $search: clean } },
+        { score: { $meta: 'textScore' } }
+      )
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(3)
+      .select('name district region description highlights bestTimeToVisit altitudeMeters startingPrice');
+    } catch (_) {
+      const escClean = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      mongoMatches = await Destination.find({
+        $or: [
+          { name: { $regex: escClean, $options: 'i' } },
+          { district: { $regex: escClean, $options: 'i' } }
+        ]
+      }).limit(3).select('name district region description highlights bestTimeToVisit altitudeMeters startingPrice');
+    }
 
     if (mongoMatches && mongoMatches.length > 0) {
       return mongoMatches.map(m => ({
@@ -56,22 +76,22 @@ export async function searchInDB(query) {
       }));
     }
   } catch (err) {
-    // Non-blocking fallback to seed JSON
+    // Non-blocking fallback to seed index
   }
 
-  // 2. In-memory seed search fallback
+  // 2. Pre-indexed sub-millisecond in-memory seed lookup
   if (seedDestinations.length > 0) {
-    // Use word boundaries so "ka" or short letters don't falsely match
-    const tokens = clean.split(/\s+/).filter(t => t.length >= 3 && !['hai', 'kya', 'aur', 'par', 'koi', 'mein', 'kahan'].includes(t));
-    const matches = seedDestinations.filter(d => {
-      const name = (d.name || '').toLowerCase();
-      const dist = (d.district || '').toLowerCase();
-      return tokens.some(tok => {
-        const regex = new RegExp(`\\b${tok}\\b`, 'i');
-        return regex.test(name) || regex.test(dist);
-      });
-    }).slice(0, 3);
+    const rawTokens = clean.split(/\s+/).filter(t => t.length >= 3 && !['hai', 'kya', 'aur', 'par', 'koi', 'mein', 'kahan'].includes(t));
+    const matchedSet = new Set();
+    
+    for (const tok of rawTokens) {
+      const cleanTok = tok.replace(/[^a-z0-9]/g, '');
+      if (cleanTok && seedTokenMap.has(cleanTok)) {
+        seedTokenMap.get(cleanTok).forEach(d => matchedSet.add(d));
+      }
+    }
 
+    const matches = Array.from(matchedSet).slice(0, 3);
     if (matches.length > 0) {
       return matches.map(m => ({
         name: m.name,
@@ -140,7 +160,7 @@ async function callAiWithCascade(systemPrompt, userPrompt) {
           if (text) return { text, provider: 'gemini', model: m };
         }
       } catch (err) {
-        // Fall to next model/provider
+        console.warn(`[HybridRAG] Gemini model ${m} error:`, err.message);
       }
     }
   }
@@ -219,9 +239,9 @@ Answer now:`;
   const aiResult = await callAiWithCascade(systemPrompt, userPrompt);
   let answer = aiResult.text.trim();
 
-  // 4. Ensure disclaimer is present if place is not verified in DB
+  // 4. Unconditionally append disclaimer whenever destination is not verified in DB
   const disclaimer = 'This is AI suggested, not verified by us yet. Want to add it?';
-  if (!isDbFound && !answer.toLowerCase().includes('not verified') && !answer.toLowerCase().includes('ai suggested')) {
+  if (!isDbFound) {
     answer += `\n\n*${disclaimer}*`;
   }
 
