@@ -16,9 +16,10 @@ from pydantic import BaseModel
 import uvicorn
 
 try:
-    from gym_support.graph import GREETING, build_graph
+    from .graph import GREETING, build_graph
 except ImportError:
-    from graph import GREETING, build_graph
+    from gym_support.graph import GREETING, build_graph
+
 
 app = FastAPI(
     title="Gym Support / Devbhoomi AI Server (ai)",

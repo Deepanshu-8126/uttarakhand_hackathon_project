@@ -9,11 +9,24 @@ if _AI_DIR not in sys.path:
     sys.path.insert(0, _AI_DIR)
 
 try:
-    from gym_support.graph import build_graph, GREETING, SYSTEM_PROMPT
-    from gym_support.graph import save_to_favorites_vault, lookup_weather, search_destinations
+    from .graph import (
+        GREETING,
+        SYSTEM_PROMPT,
+        build_graph,
+        lookup_weather,
+        save_to_favorites_vault,
+        search_destinations,
+    )
 except ImportError:
-    from graph import build_graph, GREETING, SYSTEM_PROMPT
-    from graph import save_to_favorites_vault, lookup_weather, search_destinations
+    from gym_support.graph import (
+        GREETING,
+        SYSTEM_PROMPT,
+        build_graph,
+        lookup_weather,
+        save_to_favorites_vault,
+        search_destinations,
+    )
+
 
 async def main_voice():
     """Launch interactive voice agent session."""
