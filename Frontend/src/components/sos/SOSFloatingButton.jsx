@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ShieldAlert, AlertTriangle } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import SOSModal from './SOSModal';
 import useSOS from '../../hooks/useSOS';
 

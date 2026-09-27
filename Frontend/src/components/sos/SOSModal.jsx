@@ -86,7 +86,7 @@ export default function SOSModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in select-none">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-xl select-none">
       
       {/* ── Main SOS Card ── */}
       <div className="relative w-full max-w-xl max-h-[94vh] flex flex-col rounded-3xl bg-[#080d0a] border border-rose-500/30 shadow-[0_0_50px_rgba(225,29,72,0.2)] overflow-hidden text-white">
