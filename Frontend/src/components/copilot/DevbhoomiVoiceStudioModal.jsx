@@ -95,7 +95,7 @@ export default function DevbhoomiVoiceStudioModal({
     setLiveUserText('');
     isProcessingRef.current = false;
 
-    // 1. Microphone Hardware Audio Visualizer
+    // 1. Microphone Hardware Audio Visualizer (Optional visual enhancement)
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -115,34 +115,34 @@ export default function DevbhoomiVoiceStudioModal({
           source.connect(analyser);
           analyserRef.current = analyser;
 
-          // Fake output analyser for AI voice animations
           const outAnalyser = ctx.createAnalyser();
           outAnalyser.fftSize = 128;
           outputAnalyserRef.current = outAnalyser;
         }
       }
     } catch (micErr) {
-      console.warn('[VoiceStudio] Microphone capture notice (SpeechRec will still work):', micErr);
+      console.warn('[VoiceStudio] Visualizer mic stream notice:', micErr);
     }
 
-    // 2. Initialize Browser Speech Recognition (Web Speech API)
+    // 2. Initialize Browser Speech Recognition (English + Hindi bilingual)
     initSpeechRecognition();
   };
 
   const initSpeechRecognition = () => {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
-      setErrorMessage('Speech Recognition is not supported in this browser. Please use Chrome/Edge or type below.');
+      setErrorMessage('Speech Recognition is not supported in this browser. Please use Chrome/Edge or type your message below.');
       return;
     }
 
     try {
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (_) {}
+        try { recognitionRef.current.abort(); } catch (_) {}
+        recognitionRef.current = null;
       }
 
       const rec = new SpeechRec();
-      rec.lang = 'hi-IN';
+      rec.lang = 'hi-IN, en-IN, en-US'; // Multi-accent Indian subcontinent tuning
       rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
@@ -181,14 +181,23 @@ export default function DevbhoomiVoiceStudioModal({
             if (!isProcessingRef.current && interim.trim()) {
               handleProcessVoiceQuery(interim.trim());
             }
-          }, 1500);
+          }, 1200);
         }
       };
 
       rec.onerror = (e) => {
-        console.warn('[SpeechRec] Error:', e.error);
+        console.warn('[SpeechRec] Event:', e.error);
         if (e.error === 'not-allowed') {
-          setErrorMessage('Microphone access was denied. Please allow microphone permission in your browser.');
+          setErrorMessage('Microphone permission is blocked. Please click the Lock icon (🔒) in your address bar and Allow Microphone.');
+        } else if (e.error === 'no-speech') {
+          // Normal silence, ignore
+        } else {
+          // Auto restart on network/audio-capture glitches
+          if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
+            setTimeout(() => {
+              try { rec.start(); } catch (_) {}
+            }, 500);
+          }
         }
       };
 
@@ -201,7 +210,7 @@ export default function DevbhoomiVoiceStudioModal({
       recognitionRef.current = rec;
       rec.start();
     } catch (recInitErr) {
-      console.warn('[VoiceStudio] SpeechRecognition init failed:', recInitErr);
+      console.warn('[VoiceStudio] SpeechRecognition start failed:', recInitErr);
     }
   };
 
