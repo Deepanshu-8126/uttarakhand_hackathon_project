@@ -218,25 +218,14 @@ const ProfilePage = () => {
       let uploadedImageUrl = null;
 
       if (selectedFile) {
-        setProfileSaveMsg({ text: 'Processing avatar photo...', type: 'info' });
-        try {
-          const upRes = await uploadImage(selectedFile);
-          if (upRes?.success && (upRes.image?.url || upRes.url)) {
-            uploadedImageUrl = upRes.image?.url || upRes.url;
-          }
-        } catch (uploadErr) {
-          console.warn('Backend upload endpoint fallback, encoding photo:', uploadErr);
-        }
-
-        // If backend upload wasn't used or had error, encode to local Base64 URL
-        if (!uploadedImageUrl) {
-          const reader = new FileReader();
-          uploadedImageUrl = await new Promise((resolve) => {
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(selectedFile);
-          });
-        }
+        setProfileSaveMsg({ text: 'Optimizing profile photo...', type: 'info' });
+        // Instant client-side encoding for 0ms wait time
+        const reader = new FileReader();
+        uploadedImageUrl = await new Promise((resolve) => {
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(selectedFile);
+        });
       }
 
       setProfileSaveMsg({ text: 'Saving your profile details...', type: 'info' });
