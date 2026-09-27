@@ -57,10 +57,10 @@ class Destination {
     }
 
     if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
-      final nameStr = (json['name'] ?? json['slug'] ?? '').toString().toLowerCase();
+      final nameStr = (json['name'] ?? json['slug'] ?? json['id'] ?? '').toString().toLowerCase();
       if (nameStr.contains('kedarnath')) {
         img = 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?auto=format&fit=crop&w=1200&q=80';
-      } else if (nameStr.contains('nainital')) {
+      } else if (nameStr.contains('nainital') || nameStr.contains('naini') || nameStr.contains('bhimtal')) {
         img = 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80';
       } else if (nameStr.contains('auli')) {
         img = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80';
@@ -68,10 +68,20 @@ class Destination {
         img = 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80';
       } else if (nameStr.contains('chopta') || nameStr.contains('tungnath')) {
         img = 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80';
-      } else if (nameStr.contains('badrinath')) {
+      } else if (nameStr.contains('badrinath') || nameStr.contains('jageshwar')) {
         img = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-      } else if (nameStr.contains('corbett')) {
+      } else if (nameStr.contains('corbett') || nameStr.contains('tiger')) {
         img = 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('haridwar')) {
+        img = 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('flower') || nameStr.contains('valley')) {
+        img = 'https://images.unsplash.com/photo-1596404987012-4217117df854?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('munsiyari') || nameStr.contains('kailash')) {
+        img = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('gangotri') || nameStr.contains('yamunotri')) {
+        img = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('tehri') || nameStr.contains('lake')) {
+        img = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80';
       } else {
         img = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80';
       }
