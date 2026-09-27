@@ -14,21 +14,12 @@ export class GeminiLiveClient {
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
     const envWs = import.meta.env.VITE_WS_URL || '';
 
-    // Production WSS first on HTTPS; localhost WS in local dev
-    this.candidateHosts = isHttps
-      ? [
-          envWs,
-          'wss://uttarakhand-hackathon-project.onrender.com',
-          'wss://uttarakhand-hackathon-project.onrender.com/ws',
-        ].filter(Boolean)
-      : [
-          envWs,
-          'ws://127.0.0.1:8765',
-          'ws://localhost:8765',
-          'ws://127.0.0.1:8008',
-          'ws://localhost:8008',
-          'wss://uttarakhand-hackathon-project.onrender.com'
-        ].filter(Boolean);
+    // Prioritize configured environment WebSocket URL; fallback to single localhost bridge in dev
+    this.candidateHosts = envWs
+      ? [envWs]
+      : (isHttps
+          ? ['wss://uttarakhand-hackathon-project.onrender.com']
+          : ['ws://localhost:8765']);
   }
 
   active() {
@@ -66,7 +57,7 @@ export class GeminiLiveClient {
 
     const tryConnect = (hostIdx) => {
       if (hostIdx >= this.candidateHosts.length) {
-        console.log('[GeminiLiveClient] WebSockets unavailable on remote network. Ready for Universal HTTP Voice Fallback.');
+        // Smoothly fall back to browser Web Speech API & Express REST without errors
         this.callbacks?.onFallbackReady?.();
         return;
       }
@@ -78,12 +69,11 @@ export class GeminiLiveClient {
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-          console.log(`[GeminiLiveClient] ✅ Connected to ${host}`);
           this.activeHostIndex = hostIdx;
           this.isConnected = true;
           this.callbacks?.onConnected?.();
 
-          // 20-second Keepalive Ping for Render
+          // 20-second Keepalive Ping
           if (this.pingInterval) clearInterval(this.pingInterval);
           this.pingInterval = setInterval(() => {
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -123,7 +113,7 @@ export class GeminiLiveClient {
               this.callbacks?.onError?.(data.message || 'WebSocket Error');
             }
           } catch (e) {
-            console.error('[GeminiLiveClient] Message parse error:', e);
+            console.warn('[GeminiLiveClient] Message parse note:', e);
           }
         };
 

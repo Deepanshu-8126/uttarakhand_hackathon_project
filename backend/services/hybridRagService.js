@@ -148,6 +148,7 @@ async function callAiWithCascade(systemPrompt, userPrompt) {
 
   // 2. Cascade to Groq (Fast & 100% reliable)
   if (groqKey) {
+    const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -156,7 +157,7 @@ async function callAiWithCascade(systemPrompt, userPrompt) {
           'Authorization': `Bearer ${groqKey}`
         },
         body: JSON.stringify({
-          model: 'qwen/qwen3.8-27b',
+          model: groqModel,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -170,7 +171,7 @@ async function callAiWithCascade(systemPrompt, userPrompt) {
       if (res.ok) {
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content;
-        if (text) return { text, provider: 'groq', model: 'qwen/qwen3.8-27b' };
+        if (text) return { text, provider: 'groq', model: groqModel };
       }
     } catch (err) {
       console.warn('[HybridRAG] Groq error:', err.message);
