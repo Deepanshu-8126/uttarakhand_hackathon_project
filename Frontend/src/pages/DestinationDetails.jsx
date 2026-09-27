@@ -42,86 +42,36 @@ import {
 import { getHimalayanFallbackImage } from '../utils/imageHelpers';
 
 // Fallback high-res alpine photos in case API is offline or slow
-const CURATED_PEXELS_FALLBACKS = [
+const CURATED_HIMALAYAN_FALLBACKS = [
   {
     url: 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=1200&auto=format&fit=crop',
     photographer: 'Himalayan Visual Archive',
     alt: 'Scenic Himalayan Mountain Lake & Valleys in Uttarakhand'
   },
   {
-    url: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Pexels Alpine Expedition',
+    url: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?q=80&w=1200&auto=format&fit=crop',
+    photographer: 'Alpine Expedition Archive',
     alt: 'Lush Pine Valleys and Pristine Waters'
   },
   {
-    url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Pexels Verified Traveler',
+    url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=1200&auto=format&fit=crop',
+    photographer: 'Verified Himalayan Traveler',
     alt: 'Misty Forest Ridges of Kumaon'
   },
   {
-    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop',
     photographer: 'Mountain Heritage Project',
     alt: 'High Alpine Meadows and Snow Horizons'
   },
   {
-    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Pexels Devbhoomi Lens',
+    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200&auto=format&fit=crop',
+    photographer: 'Devbhoomi Visual Archive',
     alt: 'Sunset Glow over Sacred Uttarakhand Peaks'
   },
   {
-    url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop',
     photographer: 'Starry Himalayan Sky Archive',
     alt: 'Milky Way Night View over Himalayan Ranges'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Pexels High Altitude Lens',
-    alt: 'Majestic Glacial Peak and Cloud Sea'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Alpine Stream Photography',
-    alt: 'Crystal Mountain Stream in Devbhoomi Forest'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Holy Rivers Explorer',
-    alt: 'Confluence of Emerald Himalayan Rivers'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1434394354979-a235cd36269d?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Snow Line Expeditions',
-    alt: 'Panoramic Snow Ridge Trail in Garhwal'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1511497584788-876761c1298b?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Oak & Pine Forest Trails',
-    alt: 'Golden Morning Sun Rays in Deodar Forest'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Highland Sunset Archive',
-    alt: 'Emerald Valley Reflection at Dusk'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Overland Himalayan Explorer',
-    alt: 'Scenic Mountain Pass Highway'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Alpine Valley Sentinel',
-    alt: 'Terraced Alpine Fields and Mountain Village'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Sacred Grove Chronicles',
-    alt: 'Autumn Colors in Himalayan Foothills'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=800&auto=format&fit=crop',
-    photographer: 'Tranquil Lake Archives',
-    alt: 'Mirror Lake View of Snow Peaks'
   }
 ];
 
@@ -139,10 +89,12 @@ export default function DestinationDetails() {
   const [showFullAbout, setShowFullAbout] = useState(false);
   const [copilotPrompt, setCopilotPrompt] = useState('');
   const [activePhotoIdx, setActivePhotoIdx] = useState(null);
+  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [copiedShare, setCopiedShare] = useState(false);
   const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
 
-  // Live Pexels Photography State
+  // Live Photography State
   const [pexelsPhotos, setPexelsPhotos] = useState([]);
   const [loadingPexels, setLoadingPexels] = useState(false);
 
@@ -163,13 +115,14 @@ export default function DestinationDetails() {
     setDestError(null);
     setShowFullAbout(false);
     setActivePhotoIdx(null);
+    setHeroPhotoIndex(0);
     setShowAllPhotosModal(false);
 
     getDestinationBySlug(slug)
       .then((res) => {
         if (res && res.success && res.data) {
           setDestination(res.data);
-          // Once destination loads, fetch live Pexels photography
+          // Once destination loads, fetch live HD photography
           fetchLivePexelsPhotos(res.data.name, res.data.district);
         } else {
           setDestError('Destination not found');
@@ -198,23 +151,23 @@ export default function DestinationDetails() {
       });
   }, [slug]);
 
-  // Fetch Live Real Pexels 4K Photography from Backend API
+  // Fetch Live Real 4K Photography from Backend API
   const fetchLivePexelsPhotos = async (destName, district) => {
     setLoadingPexels(true);
     try {
       const query = `${destName} ${district || ''} Uttarakhand India nature landscape`.trim();
-      const res = await api.get(`/photos/search?query=${encodeURIComponent(query)}&count=18`);
+      const res = await api.get(`/photos/search?query=${encodeURIComponent(query)}&count=6`);
       if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
         setPexelsPhotos(res.data.data);
       } else {
         // Fallback search with broader terms
-        const fallbackRes = await api.get(`/photos/search?query=${encodeURIComponent(destName + ' Uttarakhand')}&count=12`);
+        const fallbackRes = await api.get(`/photos/search?query=${encodeURIComponent(destName + ' Uttarakhand')}&count=6`);
         if (fallbackRes.data?.success && Array.isArray(fallbackRes.data.data) && fallbackRes.data.data.length > 0) {
           setPexelsPhotos(fallbackRes.data.data);
         }
       }
     } catch (err) {
-      console.warn('Live Pexels photo search error:', err.message);
+      console.warn('Live photo search error:', err.message);
     } finally {
       setLoadingPexels(false);
     }
@@ -265,32 +218,35 @@ export default function DestinationDetails() {
     navigate(`/copilot?q=${encodeURIComponent(prompt)}`);
   };
 
-  // Build Comprehensive List of Photos (Database images + Pexels live stream + curated fallbacks)
+  // Build Curated List of Top 5-6 Photos (Database images + High-res photography + curated fallbacks)
   const allGalleryPhotos = useMemo(() => {
     const list = [];
     const seenUrls = new Set();
 
-    const addPhoto = (url, photographer = 'Verified Himalayan Lens', alt = '') => {
+    const addPhoto = (url, photographer = 'Himalayan Visual Archive', alt = '') => {
       if (!url || typeof url !== 'string' || seenUrls.has(url)) return;
       seenUrls.add(url);
+      const cleanPhotographer = (photographer || 'Himalayan Visual Archive')
+        .replace(/Pexels\s*•?\s*/gi, '')
+        .trim();
       list.push({
         url,
-        photographer,
-        alt: alt || `${destination?.name || 'Uttarakhand'} Scenic View`
+        photographer: cleanPhotographer || 'Himalayan Visual Archive',
+        alt: alt || `${destination?.name || 'Uttarakhand'} Panoramic Vista`
       });
     };
 
     // 1. Primary Destination Cover Image
     if (destination?.coverImage?.url) {
-      addPhoto(destination.coverImage.url, 'Verified Database Asset', `${destination.name} Main Panorama`);
+      addPhoto(destination.coverImage.url, 'Verified Uttarakhand Archive', `${destination.name} Main Panorama`);
     } else if (typeof destination?.coverImage === 'string') {
-      addPhoto(destination.coverImage, 'Verified Database Asset', `${destination.name} Main Panorama`);
+      addPhoto(destination.coverImage, 'Verified Uttarakhand Archive', `${destination.name} Main Panorama`);
     }
 
-    // 2. High-res Pexels Photos from live search
+    // 2. High-res Photography from live search (max 3)
     if (pexelsPhotos.length > 0) {
-      pexelsPhotos.forEach((p) => {
-        addPhoto(p.url, p.photographer ? `Pexels • ${p.photographer}` : 'Pexels Verified Photographer', p.alt);
+      pexelsPhotos.slice(0, 3).forEach((p) => {
+        addPhoto(p.url, p.photographer, p.alt);
       });
     }
 
@@ -310,15 +266,24 @@ export default function DestinationDetails() {
       });
     }
 
-    // 5. Fillers from Curated Alpine Fallbacks
-    CURATED_PEXELS_FALLBACKS.forEach((fb) => {
-      if (list.length < 18) {
+    // 5. Fillers from Curated Himalayan Fallbacks (ensure 5-6 photos total)
+    CURATED_HIMALAYAN_FALLBACKS.forEach((fb) => {
+      if (list.length < 6) {
         addPhoto(fb.url, fb.photographer, fb.alt);
       }
     });
 
-    return list;
+    return list.slice(0, 6);
   }, [destination, pexelsPhotos]);
+
+  // Dynamic Auto-Rotation: rotate main featured photo every 6 seconds
+  useEffect(() => {
+    if (!isAutoPlaying || allGalleryPhotos.length <= 1) return;
+    const interval = setInterval(() => {
+      setHeroPhotoIndex((prev) => (prev + 1) % allGalleryPhotos.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, allGalleryPhotos.length]);
 
   if (loadingDest) {
     return (
@@ -405,7 +370,7 @@ export default function DestinationDetails() {
             <a href="#overview" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Overview</a>
             <a href="#gallery" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition flex items-center gap-1">
               <Camera size={13} className="text-emerald-600" />
-              <span>Pexels Gallery ({allGalleryPhotos.length})</span>
+              <span>Photo Gallery ({allGalleryPhotos.length})</span>
             </a>
             <a href="#stays" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Stays ({stays.length})</a>
             <a href="#activities" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Adventures</a>
