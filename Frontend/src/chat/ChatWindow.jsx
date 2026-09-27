@@ -1,9 +1,3 @@
-/**
- * Devbhoomi Conversational AI - ChatWindow
- * Slide-over Drawer Panel with Text Mode & Live Voice Companion View
- * Equipped with Real-time Speech Recognition, Web Audio Visualizer & Natural Voice Synthesis.
- */
-
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -14,6 +8,13 @@ import { useChatState } from './ChatState.js';
 import MessageRenderer from './MessageRenderer.jsx';
 import SuggestedActions from './SuggestedActions.jsx';
 import { speakText, stopSpeaking, cleanTextForSpeech, isSpeechSynthesisSupported } from '../utils/speechSynthesis.js';
+import { 
+  startMicRecording, 
+  sendVoiceAudio, 
+  fetchVoiceAudio, 
+  playBase64Audio, 
+  stopAudioPlayback 
+} from '../lib/voiceBridge.js';
 
 export default function ChatWindow({
   isOpen = true,
@@ -42,13 +43,9 @@ export default function ChatWindow({
   } = useChatState({ initialQuery });
 
   const messagesEndRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const currentTranscriptRef = useRef('');
-  const silenceTimeoutRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
-  const mediaStreamRef = useRef(null);
-  const animFrameRef = useRef(null);
+  const micSessionRef = useRef(null);
+  const hasSpokenRef = useRef(false);
+  const silenceTimerRef = useRef(null);
   const isListeningRef = useRef(false);
 
   // Auto-scroll on new tokens or messages in text mode
@@ -56,7 +53,9 @@ export default function ChatWindow({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
 
-  // Sync latest assistant message with Voice Companion live reply & auto-speak
+  // Sync latest assistant message with Voice Companion live reply
+  // IMPORTANT: Do NOT trigger any browser TTS (speakText) here.
+  // Voice output is exclusively handled by playBase64Audio from the Gemini Live Aoede bridge.
   useEffect(() => {
     if (!isVoiceActive || messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
@@ -65,258 +64,140 @@ export default function ChatWindow({
       if (content) {
         setLiveAiReply(content);
 
-        // When assistant is actively streaming/thinking
-        if (isLoading || isStreaming) {
+        // Only update status to 'thinking' if we're NOT already playing Aoede audio
+        if ((isLoading || isStreaming) && voiceStatus !== 'speaking') {
           setVoiceStatus('thinking');
-        } else if (!isLoading && !isStreaming) {
-          // Assistant finished generating response -> Speak it
-          if (!isVoiceMuted && isSpeechSynthesisSupported()) {
-            setVoiceStatus('speaking');
-            const clean = cleanTextForSpeech(content);
-            const langCode = selectedLanguage === 'English' ? 'en-IN' : 'hi-IN';
-            
-            speakText(clean, {
-              lang: langCode,
-              onStart: () => setVoiceStatus('speaking'),
-              onEnd: () => {
-                setVoiceStatus('idle');
-              },
-              onError: () => {
-                setVoiceStatus('idle');
-              }
-            });
-          } else {
-            setVoiceStatus('idle');
-          }
+        } else if (!isLoading && !isStreaming && voiceStatus === 'thinking') {
+          // Streaming finished, go idle (Aoede playback handles its own speaking→idle)
+          setVoiceStatus('idle');
         }
       }
     }
-  }, [messages, isLoading, isStreaming, isVoiceActive, isVoiceMuted, selectedLanguage]);
+  }, [messages, isLoading, isStreaming, isVoiceActive, voiceStatus]);
 
-  // ── 1. Web Audio Hardware Analyser for Real Microphone Visualizer ──
-  const startAudioVisualizer = useCallback(async () => {
-    try {
-      if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        audioContextRef.current = ctx;
-        if (ctx.state === 'suspended') {
-          await ctx.resume().catch(() => {});
-        }
-
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 64;
-        source.connect(analyser);
-        analyserRef.current = analyser;
-
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const trackAudio = () => {
-          if (!analyserRef.current) return;
-          analyserRef.current.getByteFrequencyData(dataArray);
-          let sum = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-          }
-          const avg = sum / dataArray.length / 255;
-          setMicAudioLevel(avg);
-          animFrameRef.current = requestAnimationFrame(trackAudio);
-        };
-        trackAudio();
-      }
-    } catch (err) {
-      console.warn('[ChatWindow] Mic stream visualizer permission notice:', err);
-    }
-  }, []);
-
-  const stopAudioVisualizer = useCallback(() => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(t => t.stop());
-      mediaStreamRef.current = null;
-    }
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      try { audioContextRef.current.close(); } catch (_) {}
-      audioContextRef.current = null;
-    }
-    analyserRef.current = null;
-    setMicAudioLevel(0);
-  }, []);
-
-  // ── 2. Real-Time Web Speech Recognition ──
-  const startListening = useCallback(() => {
+  // ── 1. Start Hardware Microphone Recording via voiceBridge ──
+  const startListening = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) {
-      alert('Speech Recognition is not supported on this browser. Please use Google Chrome, Edge, or text mode.');
+    stopSpeaking();
+    stopAudioPlayback();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+    isListeningRef.current = true;
+    hasSpokenRef.current = false;
+    setVoiceStatus('listening');
+    setLiveTranscript('🎙️ Listening... Speak naturally into your mic!');
+
+    try {
+      let silenceFrames = 0;
+      const session = await startMicRecording({
+        onVolumeChange: (vol) => {
+          setMicAudioLevel(vol);
+          if (vol > 0.05) {
+            hasSpokenRef.current = true;
+            silenceFrames = 0;
+          } else if (hasSpokenRef.current && isListeningRef.current) {
+            silenceFrames++;
+            // Auto stop and process audio after ~1.4s of silence after speaking
+            if (silenceFrames > 60 && !isLoading) {
+              silenceFrames = 0;
+              stopListening();
+            }
+          }
+        }
+      });
+      micSessionRef.current = session;
+    } catch (err) {
+      console.error('[VoiceBridge Mic Error]', err);
+      setLiveTranscript('Microphone permission blocked. Please allow mic in browser.');
+      setVoiceStatus('idle');
+      isListeningRef.current = false;
+    }
+  }, [isLoading]);
+
+  // ── 2. Stop Recording & Send Audio to Gemini Voice Bridge ──
+  const stopListening = useCallback(async () => {
+    if (!isListeningRef.current && voiceStatus !== 'listening') return;
+    isListeningRef.current = false;
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+    if (!micSessionRef.current) {
+      setVoiceStatus('idle');
       return;
     }
 
-    try {
-      // Stop any active utterance first
-      stopSpeaking();
-      clearTimeout(silenceTimeoutRef.current);
-
-      if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch (_) {}
-      }
-
-      const rec = new SpeechRec();
-      rec.continuous = false; // continuous: false is standard across Chrome & Edge to prevent network socket drops
-      rec.interimResults = true;
-      rec.maxAlternatives = 1;
-
-      // Select language code
-      rec.lang = selectedLanguage === 'English' ? 'en-IN' : 'hi-IN';
-
-      rec.onstart = () => {
-        isListeningRef.current = true;
-        setVoiceStatus('listening');
-        currentTranscriptRef.current = '';
-        setLiveTranscript('');
-      };
-
-      rec.onresult = (event) => {
-        let interimText = '';
-        let finalText = '';
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const trans = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalText += trans;
-          } else {
-            interimText += trans;
-          }
-        }
-
-        const currentSoFar = (currentTranscriptRef.current + ' ' + finalText).trim();
-        if (finalText) {
-          currentTranscriptRef.current = currentSoFar;
-        }
-
-        const fullDisplay = (currentSoFar + (interimText ? ' ' + interimText : '')).trim();
-        if (fullDisplay) {
-          setLiveTranscript(fullDisplay);
-        }
-
-        // Auto-submit after 1.4s pause in speech
-        clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = setTimeout(() => {
-          const toSubmit = currentTranscriptRef.current || fullDisplay;
-          if (toSubmit && toSubmit.length > 2 && isListeningRef.current && !isLoading) {
-            try { rec.stop(); } catch (_) {}
-            isListeningRef.current = false;
-            handleVoiceSubmit(toSubmit);
-          }
-        }, 1400);
-      };
-
-      rec.onerror = (event) => {
-        if (event.error === 'not-allowed') {
-          alert('Microphone access was denied. Please click the Lock icon (🔒) in your address bar and Allow Microphone.');
-          setVoiceStatus('idle');
-          isListeningRef.current = false;
-        } else if (event.error === 'network') {
-          // Brave browser blocks Google Speech servers by default, but mic hardware stream is active
-          console.warn('[SpeechRecognition Notice] Brave/Privacy browser protected network mode active.');
-        } else if (event.error !== 'no-speech') {
-          console.warn('[SpeechRecognition Notice]', event.error);
-        }
-      };
-
-      rec.onend = () => {
-        const toSubmit = currentTranscriptRef.current || liveTranscript;
-        if (toSubmit && toSubmit.length > 2 && isListeningRef.current && !isLoading) {
-          isListeningRef.current = false;
-          handleVoiceSubmit(toSubmit);
-        } else if (!mediaStreamRef.current) {
-          isListeningRef.current = false;
-          if (voiceStatus !== 'thinking' && voiceStatus !== 'speaking') {
-            setVoiceStatus('idle');
-          }
-        }
-        // If mediaStream is active (in Brave), keep mic visualizer open so user can speak & tap send
-      };
-
-      recognitionRef.current = rec;
-      rec.start();
-      startAudioVisualizer();
-    } catch (err) {
-      console.warn('[SpeechRecognition Start Error]', err);
-      // Fallback: start mic visualizer anyway for Brave & Firefox
-      startAudioVisualizer();
-      setVoiceStatus('listening');
-      isListeningRef.current = true;
-    }
-  }, [selectedLanguage, liveTranscript, voiceStatus, isLoading, startAudioVisualizer]);
-
-  const stopListening = useCallback(() => {
-    isListeningRef.current = false;
-    clearTimeout(silenceTimeoutRef.current);
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) {}
-    }
-    stopAudioVisualizer();
-    if (voiceStatus === 'listening') {
-      const toSubmit = currentTranscriptRef.current || liveTranscript;
-      if (toSubmit && toSubmit.length > 2) {
-        handleVoiceSubmit(toSubmit);
-      } else {
-        setVoiceStatus('idle');
-      }
-    }
-  }, [liveTranscript, voiceStatus, stopAudioVisualizer]);
-
-  // Submit voice prompt to agent backend
-  const handleVoiceSubmit = useCallback((queryText) => {
-    if (!queryText || !queryText.trim() || isLoading) return;
     setVoiceStatus('thinking');
-    isListeningRef.current = false;
-    clearTimeout(silenceTimeoutRef.current);
-    stopSpeaking();
-    stopAudioVisualizer();
+    setLiveTranscript('⚡ Processing speech with Gemini Voice Bridge...');
 
-    let formattedQuery = queryText.trim();
-    if (selectedLanguage === 'गढ़वाली (Garhwali)') {
-      formattedQuery = `[In Garhwali dialect]: ${formattedQuery}`;
-    } else if (selectedLanguage === 'कुमाऊँनी (Kumaoni)') {
-      formattedQuery = `[In Kumaoni dialect]: ${formattedQuery}`;
+    try {
+      const audioBlob = await micSessionRef.current.stop();
+      micSessionRef.current = null;
+      setMicAudioLevel(0);
+
+      if (audioBlob && audioBlob.size > 500) {
+        const langCode = selectedLanguage === 'English' ? 'en' : 'hi';
+        const data = await sendVoiceAudio(audioBlob, langCode);
+
+        const userSaid = data.user_transcript || '';
+        if (userSaid && userSaid.trim()) {
+          setLiveTranscript(userSaid);
+          
+          let formattedQuery = userSaid.trim();
+          if (selectedLanguage === 'गढ़वाली (Garhwali)') {
+            formattedQuery = `[In Garhwali dialect]: ${formattedQuery}`;
+          } else if (selectedLanguage === 'कुमाऊँनी (Kumaoni)') {
+            formattedQuery = `[In Kumaoni dialect]: ${formattedQuery}`;
+          }
+
+          // If bridge already returned direct Aoede voice audio, play it immediately
+          if (data.audio_base64) {
+            setLiveAiReply(data.response || '');
+            setVoiceStatus('speaking');
+            playBase64Audio(data.audio_base64, {
+              onStart: () => setVoiceStatus('speaking'),
+              onEnd: () => setVoiceStatus('idle'),
+              onError: () => setVoiceStatus('idle')
+            });
+          }
+
+          // Also inject to chat history
+          sendMessage(formattedQuery);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('[VoiceBridge Query Error]', err);
     }
 
-    sendMessage(formattedQuery);
-  }, [isLoading, selectedLanguage, sendMessage, stopAudioVisualizer]);
+    setVoiceStatus('idle');
+    setLiveTranscript('');
+  }, [voiceStatus, selectedLanguage, sendMessage]);
 
   // Toggle voice active mode
   const toggleVoiceMode = useCallback((active) => {
     setIsVoiceActive(active);
     if (active) {
-      // Auto-start listening on entering voice mode
       setTimeout(() => {
         startListening();
       }, 300);
     } else {
       stopSpeaking();
+      stopAudioPlayback();
       stopListening();
       setVoiceStatus('idle');
     }
   }, [startListening, stopListening]);
 
-  // Clean up speech recognition & audio visualizer on unmount or drawer close
+  // Clean up on unmount or drawer close
   useEffect(() => {
     return () => {
       stopSpeaking();
-      stopAudioVisualizer();
-      clearTimeout(silenceTimeoutRef.current);
-      if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch (_) {}
+      stopAudioPlayback();
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (micSessionRef.current) {
+        try { micSessionRef.current.stop(); } catch (_) {}
       }
     };
-  }, [isVoiceActive, isOpen, stopAudioVisualizer]);
+  }, [isVoiceActive, isOpen]);
 
   // Reset conversation handler
   const handleReset = () => {
@@ -328,15 +209,30 @@ export default function ChatWindow({
     setVoiceStatus('idle');
   };
 
-  // Replay voice speech for current AI reply
-  const handleReplayVoice = () => {
+  // Replay voice speech for current AI reply using Aoede Studio Voice
+  const handleReplayVoice = async () => {
     if (!liveAiReply) return;
     stopSpeaking();
+    stopAudioPlayback();
     setVoiceStatus('speaking');
+
     const clean = cleanTextForSpeech(liveAiReply);
-    const langCode = selectedLanguage === 'English' ? 'en-IN' : 'hi-IN';
+    const langCode = selectedLanguage === 'English' ? 'en' : 'hi';
+
+    try {
+      const audioRes = await fetchVoiceAudio(clean, langCode);
+      if (audioRes && audioRes.audio_base64) {
+        playBase64Audio(audioRes.audio_base64, {
+          onStart: () => setVoiceStatus('speaking'),
+          onEnd: () => setVoiceStatus('idle'),
+          onError: () => setVoiceStatus('idle')
+        });
+        return;
+      }
+    } catch (_) {}
+
     speakText(clean, {
-      lang: langCode,
+      lang: selectedLanguage === 'English' ? 'en-IN' : 'hi-IN',
       onStart: () => setVoiceStatus('speaking'),
       onEnd: () => setVoiceStatus('idle'),
       onError: () => setVoiceStatus('idle')
@@ -355,11 +251,12 @@ export default function ChatWindow({
   const handleInterrupt = () => {
     stopGeneration();
     stopSpeaking();
-    clearTimeout(silenceTimeoutRef.current);
-    if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch (_) {}
+    stopAudioPlayback();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (micSessionRef.current) {
+      try { micSessionRef.current.stop(); } catch (_) {}
+      micSessionRef.current = null;
     }
-    stopAudioVisualizer();
     setVoiceStatus('idle');
   };
 

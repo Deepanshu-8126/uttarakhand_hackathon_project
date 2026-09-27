@@ -4,6 +4,7 @@ import AgenticToolCallTimeline from "./AgenticToolCallTimeline";
 import { Sparkles, Volume2, VolumeX } from "lucide-react";
 import { executeAgentAction } from "../../utils/agentActionExecutor";
 import { speakText, stopSpeaking, playAudioStream, isSpeechSynthesisSupported } from "../../utils/speechSynthesis";
+import { fetchVoiceAudio } from "../../lib/voiceBridge";
 import api from "../../api/api";
 
 const TYPE_STYLES = {
@@ -90,9 +91,14 @@ export default function CopilotMessage({ msg, onConfirm, onCancel, onSelectActio
 
       let audioSrc = null;
       try {
-        const res = await api.post('/voice/elevenlabs/tts', { text: msg.text });
-        if (res.data && res.data.success && res.data.audio_base64) {
-          audioSrc = res.data.audio_base64;
+        const liveVoice = await fetchVoiceAudio(msg.text, 'hi');
+        if (liveVoice && liveVoice.audio_base64) {
+          audioSrc = liveVoice.audio_base64;
+        } else {
+          const res = await api.post('/voice/elevenlabs/tts', { text: msg.text });
+          if (res.data && res.data.success && res.data.audio_base64) {
+            audioSrc = res.data.audio_base64;
+          }
         }
       } catch (_) {}
 

@@ -177,6 +177,8 @@ class ApiService {
       'nearestTeam': 'SDRF Joshimath Unit 4 (12 mins away)',
       'timestamp': DateTime.now().toIso8601String(),
     };
+  }
+
   // ── Create Booking ──────────────────────────────────────────────────────────
   static Future<Map<String, dynamic>> createBooking({
     required String type,

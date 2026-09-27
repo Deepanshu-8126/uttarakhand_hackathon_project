@@ -132,94 +132,103 @@ export default function DevbhoomiVoiceStudioModal({
       // User may have denied mic or browser blocked
     }
 
-    // 2. Initialize Browser Speech Recognition (English + Hindi bilingual)
-    initSpeechRecognition();
+    // 2. Start Universal Hardware Audio Recording Pipeline
+    startHardwareAudioListening();
   };
 
-  const initSpeechRecognition = () => {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) {
+  const startHardwareAudioListening = async () => {
+    try {
+      hasSpokenRef.current = false;
+      let silenceFrames = 0;
+      await startAudioRecording({
+        onVolumeChange: (vol) => {
+          setMicAudioLevel(vol);
+          if (vol > 0.05) {
+            hasSpokenRef.current = true;
+            silenceFrames = 0;
+          } else if (hasSpokenRef.current && !isProcessingRef.current && !isMutedRef.current) {
+            silenceFrames++;
+            if (silenceFrames > 55) { // ~1.1s pause
+              silenceFrames = 0;
+              submitRecordedAudio();
+            }
+          }
+        }
+      });
+    } catch (e) {
+      setErrorMessage('Microphone permission blocked. Please allow mic in browser.');
+    }
+  };
+
+  const submitRecordedAudio = async () => {
+    if (isProcessingRef.current || isMutedRef.current) return;
+    const blob = stopAudioRecording();
+    if (!blob || blob.size < 600) {
+      if (isOpen && !isProcessingRef.current) startVoiceSession();
       return;
     }
 
+    isProcessingRef.current = true;
+    setStatus('processing');
+    setLiveAiText('Thinking...');
+    setLiveUserText('🎙️ Transcribing...');
+
     try {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch (_) {}
-        recognitionRef.current = null;
+      const res = await sendAudioToVoiceBridge(blob, { lang: 'hi' });
+      const userText = res.user_transcript || 'उत्तराखंड यात्रा';
+      setLiveUserText(userText);
+      setTranscriptHistory(prev => [...prev, { role: 'user', text: userText, time: getCurrentTimestamp() }]);
+
+      const aiReply = res.response || 'Namaste! Main aapka Devbhoomi companion hoon.';
+      const cleanReply = aiReply.replace(/[*#_~`]/g, '').trim();
+      setLiveAiText(cleanReply);
+      setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
+      setStatus('speaking');
+
+      if (!isSpeakerMuted) {
+        if (res.audio_base64) {
+          playAudioStream(res.audio_base64, {
+            onStart: () => setStatus('speaking'),
+            onEnd: () => {
+              isProcessingRef.current = false;
+              if (isOpen && !isMutedRef.current) startVoiceSession();
+            },
+            onError: () => {
+              speakText(cleanReply, {
+                lang: 'hi-IN',
+                onEnd: () => {
+                  isProcessingRef.current = false;
+                  if (isOpen && !isMutedRef.current) startVoiceSession();
+                }
+              });
+            }
+          });
+        } else {
+          speakText(cleanReply, {
+            lang: 'hi-IN',
+            onEnd: () => {
+              isProcessingRef.current = false;
+              if (isOpen && !isMutedRef.current) startVoiceSession();
+            }
+          });
+        }
+      } else {
+        setTimeout(() => {
+          isProcessingRef.current = false;
+          if (isOpen && !isMutedRef.current) startVoiceSession();
+        }, 2000);
       }
-
-      const rec = new SpeechRec();
-      rec.lang = 'hi-IN';
-      rec.continuous = false;
-      rec.interimResults = true;
-      rec.maxAlternatives = 1;
-
-      rec.onstart = () => {
-        if (!isProcessingRef.current) {
-          setStatus('listening');
-        }
-      };
-
-
-      rec.onresult = (event) => {
-        if (isMutedRef.current || isProcessingRef.current) return;
-
-        let interim = '';
-        let final = '';
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const trans = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            final += trans;
-          } else {
-            interim += trans;
-          }
-        }
-
-        const currentSaid = (final || interim).trim();
-        if (currentSaid) {
-          setLiveUserText(currentSaid);
-        }
-
-        if (final && final.trim().length > 1) {
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          handleProcessVoiceQuery(final.trim());
-        }
-      };
-
-      rec.onerror = (e) => {
-        if (e.error === 'not-allowed') {
-          setErrorMessage('Microphone permission is blocked. Please click the Lock icon (🔒) in your address bar and Allow Microphone.');
-        } else if (e.error === 'no-speech') {
-          // Normal timeout when silence, restart smoothly
-          if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
-            try { rec.start(); } catch (_) {}
-          }
-        }
-      };
-
-      rec.onend = () => {
-        // Auto restart for continuous conversation unless currently speaking
-        if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
-          try { rec.start(); } catch (_) {}
-        }
-      };
-
-      recognitionRef.current = rec;
-      rec.start();
-    } catch (recInitErr) {
-      // SpeechRec fallback
+    } catch (err) {
+      console.warn('[VoiceStudio] Error:', err);
+      isProcessingRef.current = false;
+      if (isOpen && !isMutedRef.current) startVoiceSession();
     }
   };
 
   const handleProcessVoiceQuery = async (queryText) => {
     if (!queryText || queryText.trim().length < 2 || isProcessingRef.current) return;
     isProcessingRef.current = true;
-
-    // Pause recognition to prevent echo
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) {}
-    }
+    stopAudioRecording();
 
     const cleanUserText = queryText.trim();
     setTranscriptHistory(prev => [...prev, { role: 'user', text: cleanUserText, time: getCurrentTimestamp() }]);

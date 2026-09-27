@@ -98,10 +98,17 @@ function getBestNeuralVoice(targetLang, hasHindi) {
  */
 export function playAudioStream(audioSrc, { onStart, onEnd, onError } = {}) {
   stopSpeaking();
+  if (!audioSrc) {
+    if (onEnd) onEnd();
+    return;
+  }
   try {
     let formattedSrc = audioSrc;
     if (!audioSrc.startsWith('data:') && !audioSrc.startsWith('http')) {
-      formattedSrc = `data:audio/mpeg;base64,${audioSrc}`;
+      // Auto-detect WAV (starts with UklGR for RIFF header) vs MP3
+      const isWav = audioSrc.startsWith('UklGR') || !audioSrc.startsWith('SUQz');
+      const mime = isWav ? 'audio/wav' : 'audio/mpeg';
+      formattedSrc = `data:${mime};base64,${audioSrc}`;
     }
     const audio = new Audio(formattedSrc);
     activeAudio = audio;
@@ -125,6 +132,7 @@ export function playAudioStream(audioSrc, { onStart, onEnd, onError } = {}) {
       if (onError) onError(e);
     });
   } catch (err) {
+    activeAudio = null;
     if (onError) onError(err);
   }
 }
