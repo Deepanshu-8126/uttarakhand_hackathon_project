@@ -126,9 +126,6 @@ const DYNAMIC_OCCASION_SLIDES = [
     tag: 'Sacred Alpenglow',
     occasion: 'Golden Sunrise Darshan',
     src: '/assets/yatra_sarthi/adi_kailash.jpg',
-    videoUrl: '/assets/devbhoomi_reel.mp4',
-    startTime: 8,
-    rotate: 90,
     fallbackSrc: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1600&q=85',
     slug: 'adi-kailash',
     subtitle: 'Golden sunrise illuminating the sacred Kumaon pinnacle above Parvati Sarovar.'
@@ -140,9 +137,6 @@ const DYNAMIC_OCCASION_SLIDES = [
     tag: 'Ancient High Pass',
     occasion: 'Himalayan Ridge & Sacred Trails',
     src: '/assets/destinations/om_parvat.jpg',
-    videoUrl: '/assets/devbhoomi_reel.mp4',
-    startTime: 4,
-    rotate: 90,
     fallbackSrc: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85',
     slug: 'om-parvat',
     subtitle: 'Breathtaking high-altitude pass adorned with sacred flags overlooking ancient border valleys.'
@@ -592,58 +586,31 @@ export default function HeroSection() {
                 isActive ? 'opacity-100 z-0' : 'opacity-0 -z-10'
               }`}
             >
-              {media.videoUrl ? (
-                <video
-                  src={media.videoUrl}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  onLoadedMetadata={(e) => {
-                    if (media.startTime) {
-                      e.currentTarget.currentTime = media.startTime;
-                    }
-                  }}
-                  className={`w-full h-full object-cover object-center transition-transform duration-500 ${
-                    media.rotate === 90 ? 'rotate-90 scale-[1.75]' :
-                    media.rotate === -90 || media.rotate === 270 ? '-rotate-90 scale-[1.75]' :
-                    media.rotate === 180 ? 'rotate-180 scale-105' :
-                    'scale-105'
-                  }`}
-                />
-              ) : (
-                <img
-                  src={media.src}
-                  alt={media.name}
-                  onError={(e) => { 
-                    if (media.fallbackSrc && e.currentTarget.src !== media.fallbackSrc) {
-                      e.currentTarget.src = media.fallbackSrc;
-                    } else {
-                      e.currentTarget.src = '/assets/yatra_sarthi/nainital.jpg';
-                    }
-                  }}
-                  className="w-full h-full object-cover object-center ken-burns-hero"
-                />
-              )}
+              <img
+                src={media.src}
+                alt={media.name}
+                onError={(e) => { 
+                  if (media.fallbackSrc && e.currentTarget.src !== media.fallbackSrc) {
+                    e.currentTarget.src = media.fallbackSrc;
+                  } else {
+                    e.currentTarget.src = '/assets/yatra_sarthi/nainital.jpg';
+                  }
+                }}
+                className="w-full h-full object-cover object-center ken-burns-hero"
+              />
             </div>
           );
         })}
 
-        {/* Clean, balanced cinematic gradient overlay (ultra-light on video slides for maximum scenery visibility) */}
-        <div 
-          className={`absolute inset-0 z-1 pointer-events-none transition-all duration-700 ${
-            currentMedia.videoUrl 
-              ? 'bg-gradient-to-t from-black/80 via-transparent to-black/20' 
-              : 'bg-gradient-to-t from-black/85 via-black/35 to-black/55'
-          }`} 
-        />
+        {/* Clean, balanced cinematic gradient overlay */}
+        <div className="absolute inset-0 z-1 pointer-events-none transition-all duration-700 bg-gradient-to-t from-black/85 via-black/35 to-black/55" />
 
         {/* Top Header: Minimal Occasion & Live Spotlight Tag */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-xs font-medium text-stone-200 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
             <span className="truncate max-w-[200px] sm:max-w-none text-emerald-300 font-semibold">
-              {currentMedia.videoUrl ? '🎬 HD Himalayan Motion Reel' : (currentMedia.occasion || timeBasedOccasion.title)}
+              {currentMedia.occasion || timeBasedOccasion.title}
             </span>
           </div>
 
