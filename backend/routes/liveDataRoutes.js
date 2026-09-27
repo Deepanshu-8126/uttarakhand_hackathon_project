@@ -8,13 +8,15 @@ import {
   getTransitStatus,
   evaluateTripAdvisories,
   getCommunityAdvisories,
-  submitCommunityReport
+  submitCommunityReport,
+  getLiveTelemetry
 } from '../controllers/liveDataController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Public routes
+router.get('/telemetry', getLiveTelemetry);
 router.get('/weather', getWeather);
 router.get('/elevation', getElevation);
 router.get('/road-advisories', getRoadAdvisories);

@@ -6,6 +6,7 @@ import {
 import api from '../../api/api';
 import { VoiceVisualizer } from './VoiceVisualizer';
 import { speakText, stopSpeaking, playAudioStream } from '../../utils/speechSynthesis';
+import { startAudioRecording, stopAudioRecording, sendAudioToVoiceBridge } from '../../utils/audioRecorder';
 
 export default function DevbhoomiVoiceStudioModal({
   isOpen = false,
@@ -30,6 +31,7 @@ export default function DevbhoomiVoiceStudioModal({
 
   const isMutedRef = useRef(false);
   const isProcessingRef = useRef(false);
+  const hasSpokenRef = useRef(false);
   const recognitionRef = useRef(null);
   const audioContextRef = useRef(null);
   const mediaStreamRef = useRef(null);

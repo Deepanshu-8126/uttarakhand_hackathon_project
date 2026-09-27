@@ -14,12 +14,10 @@ export class GeminiLiveClient {
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
     const envWs = import.meta.env.VITE_WS_URL || '';
 
-    // Prioritize configured environment WebSocket URL; fallback to single localhost bridge in dev
+    // Production WebSocket on Render + dev fallback
     this.candidateHosts = envWs
       ? [envWs]
-      : (isHttps
-          ? ['wss://uttarakhand-hackathon-project.onrender.com']
-          : ['ws://localhost:8765']);
+      : ['wss://uttarakhand-hackathon-project.onrender.com/ws/voice', 'ws://localhost:8765/ws/voice'];
   }
 
   active() {
@@ -30,7 +28,8 @@ export class GeminiLiveClient {
     if (!this.active()) return;
     try {
       this.ws.send(JSON.stringify({
-        type: 'audio_chunk',
+        type: 'audio',
+        data: base64Pcm,
         chunk: base64Pcm,
         rate: 16000
       }));
@@ -45,8 +44,13 @@ export class GeminiLiveClient {
 
     const apiKey = config.apiKey || '';
     const voice = config.voice || 'Aoede';
-    const model = config.model || 'models/gemini-3.1-flash-live-preview';
-    const systemPrompt = config.systemPrompt || 'You are Devbhoomi AI, an intelligent, low-latency, warm Himalayan mountain guide.';
+    const systemPrompt = config.systemPrompt ||
+      'You are Devbhoomi Companion, the expert AI voice travel guide, mountain safety expert, and local Pahadi friend for Uttarakhand, India, powered by Discover Uttarakhand. ' +
+      'You have authentic, street-smart knowledge of Garhwal & Kumaon tourism, Char Dham pilgrimages, hidden gems, high-altitude treks, weather, transport routes, and backpacker budgeting. ' +
+      'Rules: 1. Warm, encouraging & street-smart spoken voice in friendly Hindi, English, or conversational Hinglish. ' +
+      '2. Low budget DIY backpacker problem solver: never say a trip is impossible for tight budgets (e.g. ₹5,000 for Kedarkantha, Chopta) - give the smart DIY roadmap (UTC early morning 5:30 AM ordinary bus from Dehradun Hill Bus Stand to Sankri ~₹380, train ~₹140, Sankri homestay dorm bed ₹400-₹600, microspikes ₹150, local dhaba meals ₹80-₹100). ' +
+      '3. High-impact spoken responses: keep spoken answers concise (2 to 4 spoken sentences). No raw markdown, asterisks, hashtags, bullet points, or emojis in spoken voice. ' +
+      '4. Mention AMS protocols and mountain elevation safety.';
 
     const params = new URLSearchParams({
       apiKey,
@@ -63,7 +67,8 @@ export class GeminiLiveClient {
       }
 
       let host = this.candidateHosts[hostIdx].replace(/\/ws(\/live|\/voice)?$/, '');
-      const wsUrl = `${host}/ws/live?${params.toString()}`;
+      const wsPath = this.candidateHosts[hostIdx].includes('/ws/voice') ? '/ws/voice' : '/ws/live';
+      const wsUrl = `${host}${wsPath}?${params.toString()}`;
 
       try {
         this.ws = new WebSocket(wsUrl);

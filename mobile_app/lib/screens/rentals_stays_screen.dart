@@ -36,7 +36,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
     'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',
   ];
 
@@ -699,7 +699,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
           ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: CachedNetworkImage(
-              imageUrl: 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1000&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?auto=format&fit=crop&w=1000&q=80',
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,

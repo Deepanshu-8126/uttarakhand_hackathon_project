@@ -100,16 +100,16 @@ export function useChatState({ initialQuery = '', onTripContextChange: _onTripCo
 
       const candidateEndpoints = isHttps
         ? [
+            { url: `${PROD_API}/voice/ask`, format: 'voice_ask' },
             { url: `${API_BASE.startsWith('http:') ? PROD_API : API_BASE}/agent/chat`, format: 'standard' },
             { url: `${PROD_API}/agent/chat`, format: 'standard' },
-            { url: `${PROD_API}/voice/ask`, format: 'voice_ask' },
             { url: `${PROD_API}/chat`, format: 'direct_chat' },
           ]
         : [
+            { url: `${PROD_API}/voice/ask`, format: 'voice_ask' },
             { url: `${API_BASE}/agent/chat`, format: 'standard' },
             { url: `http://localhost:8765/api/chat`, format: 'bridge' },
             { url: `${PROD_API}/agent/chat`, format: 'standard' },
-            { url: `${API_BASE}/voice/ask`, format: 'voice_ask' },
             { url: `${API_BASE}/chat`, format: 'direct_chat' },
           ];
 

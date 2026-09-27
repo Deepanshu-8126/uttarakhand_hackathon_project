@@ -7,6 +7,7 @@ class Destination {
   final String description;
   final String shortDescription;
   final String imageUrl;
+  final List<String> images;
   final double rating;
   final int reviewsCount;
   final int estimatedBudget;
@@ -26,6 +27,7 @@ class Destination {
     required this.description,
     required this.shortDescription,
     required this.imageUrl,
+    this.images = const [],
     required this.rating,
     required this.reviewsCount,
     required this.estimatedBudget,
@@ -38,28 +40,40 @@ class Destination {
   });
 
   factory Destination.fromJson(Map<String, dynamic> json) {
-    String img = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
-    if (json['coverImage'] != null) {
-      if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
-        img = json['coverImage']['url'].toString();
-      } else if (json['coverImage'] is String && json['coverImage'].isNotEmpty) {
-        img = json['coverImage'].toString();
+    final List<String> allImages = [];
+    if (json['images'] is List) {
+      for (final it in (json['images'] as List)) {
+        if (it is Map && it['url'] != null) {
+          final u = it['url'].toString().trim();
+          if (u.isNotEmpty) allImages.add(u);
+        } else if (it is String && it.trim().isNotEmpty) {
+          allImages.add(it.trim());
+        }
       }
-    } else if (json['images'] is List && (json['images'] as List).isNotEmpty) {
-      final first = (json['images'] as List)[0];
-      if (first is Map && first['url'] != null) {
-        img = first['url'].toString();
-      } else if (first is String) {
-        img = first.toString();
-      }
-    } else if (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
-      img = json['imageUrl'].toString();
     }
 
-    if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
+    String img = '';
+    if (json['coverImage'] != null) {
+      if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
+        img = json['coverImage']['url'].toString().trim();
+      } else if (json['coverImage'] is String && json['coverImage'].isNotEmpty) {
+        img = json['coverImage'].toString().trim();
+      }
+    }
+    
+    if (img.isEmpty && allImages.isNotEmpty) {
+      img = allImages.first;
+    } else if (img.isEmpty && json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
+      img = json['imageUrl'].toString().trim();
+    } else if (img.isEmpty && json['image'] != null && json['image'].toString().isNotEmpty) {
+      img = json['image'].toString().trim();
+    }
+
+    // Only if image is genuinely missing or placeholder, use thematic photography fallback
+    if (img.isEmpty || img.contains('placeholder')) {
       final nameStr = (json['name'] ?? json['slug'] ?? json['id'] ?? '').toString().toLowerCase();
       if (nameStr.contains('kedarnath')) {
-        img = 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?auto=format&fit=crop&w=1200&q=80';
+        img = 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80';
       } else if (nameStr.contains('nainital') || nameStr.contains('naini') || nameStr.contains('bhimtal')) {
         img = 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80';
       } else if (nameStr.contains('auli')) {
@@ -125,6 +139,7 @@ class Destination {
       description: json['description'] ?? '',
       shortDescription: json['shortDescription'] ?? json['description'] ?? '',
       imageUrl: img,
+      images: allImages.isNotEmpty ? allImages : [img],
       rating: json['rating'] is num ? (json['rating'] as num).toDouble() : 4.8,
       reviewsCount: json['totalReviews'] ?? json['reviewsCount'] ?? json['reviewCount'] ?? 142,
       estimatedBudget: budget,
@@ -168,7 +183,7 @@ class SpiritualPlace {
   });
 
   factory SpiritualPlace.fromJson(Map<String, dynamic> json) {
-    String img = 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?q=80&w=800&auto=format&fit=crop';
+    String img = 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=800&auto=format&fit=crop';
     if (json['coverImage'] != null) {
       if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
         img = json['coverImage']['url'];
@@ -180,7 +195,7 @@ class SpiritualPlace {
     }
 
     if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
-      img = 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?q=80&w=800&auto=format&fit=crop';
+      img = 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=800&auto=format&fit=crop';
     } else if (img.startsWith('/')) {
       img = 'https://uttarakhand-hackathon-project.onrender.com$img';
     }

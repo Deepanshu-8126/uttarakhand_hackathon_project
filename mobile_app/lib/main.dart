@@ -74,6 +74,32 @@ class DiscoverUttarakhandApp extends StatelessWidget {
       title: 'Discover Uttarakhand',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      builder: (context, child) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        if (screenWidth > 600) {
+          // On desktop/Edge, center mobile app inside flagship device container
+          return Container(
+            color: const Color(0xFF091C14),
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 520),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBF9F4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 32,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRect(child: child!),
+              ),
+            ),
+          );
+        }
+        return child!;
+      },
       home: const MainNavigationScreen(),
     );
   }

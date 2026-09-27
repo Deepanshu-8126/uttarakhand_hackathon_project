@@ -52,7 +52,7 @@ class Rental {
       }
     }
 
-    if (img.isEmpty || img.contains('wikimedia.org') || img.contains('fallback.svg') || img.endsWith('.svg')) {
+    if (img.isEmpty || img.contains('fallback.svg') || img.endsWith('.svg') || img.contains('placeholder')) {
       if (combinedName.contains('apache') || combinedName.contains('tvs')) {
         img = 'https://images.unsplash.com/photo-1609630928811-88d16770f16c?auto=format&fit=crop&w=1200&q=80';
       } else if (combinedName.contains('himalayan') || combinedName.contains('450') || combinedName.contains('adv')) {
@@ -139,31 +139,41 @@ class Stay {
   });
 
   factory Stay.fromJson(Map<String, dynamic> json) {
-    String img = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80';
-    if (json['image'] != null) {
-      if (json['image'] is Map && json['image']['url'] != null) {
-        img = json['image']['url'].toString();
-      } else if (json['image'] is String && json['image'].toString().isNotEmpty) {
-        img = json['image'].toString();
+    final List<String> allImages = [];
+    if (json['images'] is List) {
+      for (final it in (json['images'] as List)) {
+        if (it is Map && it['url'] != null) {
+          final u = it['url'].toString().trim();
+          if (u.isNotEmpty) allImages.add(u);
+        } else if (it is String && it.trim().isNotEmpty) {
+          allImages.add(it.trim());
+        }
       }
-    } else if (json['coverImage'] != null) {
-      if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
-        img = json['coverImage']['url'].toString();
-      } else if (json['coverImage'] is String && json['coverImage'].toString().isNotEmpty) {
-        img = json['coverImage'].toString();
-      }
-    } else if (json['images'] is List && (json['images'] as List).isNotEmpty) {
-      final first = (json['images'] as List)[0];
-      if (first is Map && first['url'] != null) {
-        img = first['url'].toString();
-      } else if (first is String) {
-        img = first.toString();
-      }
-    } else if (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
-      img = json['imageUrl'].toString();
     }
 
-    if (img.startsWith('/assets/')) {
+    String img = '';
+    if (json['coverImage'] != null) {
+      if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
+        img = json['coverImage']['url'].toString().trim();
+      } else if (json['coverImage'] is String && json['coverImage'].isNotEmpty) {
+        img = json['coverImage'].toString().trim();
+      }
+    }
+    if (img.isEmpty && json['image'] != null) {
+      if (json['image'] is Map && json['image']['url'] != null) {
+        img = json['image']['url'].toString().trim();
+      } else if (json['image'] is String && json['image'].toString().isNotEmpty) {
+        img = json['image'].toString().trim();
+      }
+    }
+    if (img.isEmpty && allImages.isNotEmpty) {
+      img = allImages.first;
+    } else if (img.isEmpty && json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
+      img = json['imageUrl'].toString().trim();
+    }
+    if (img.isEmpty) {
+      img = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80';
+    } else if (img.startsWith('/assets/')) {
       img = 'https://uttarakhand-hackathon-project.onrender.com$img';
     }
 
@@ -231,11 +241,14 @@ class Guide {
 
   factory Guide.fromJson(Map<String, dynamic> json) {
     final guideName = json['name'] ?? 'Local Mountain Guide';
-    String img = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(guideName)}&background=0f3d2e&color=ffffff&size=256&bold=true';
+    String img = 'https://api.dicebear.com/7.x/initials/png?seed=${Uri.encodeComponent(guideName)}&backgroundColor=0f3d2e&textColor=ffffff';
     if (json['profileImage'] != null && json['profileImage'].toString().isNotEmpty) {
       img = json['profileImage'].toString();
     } else if (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
       img = json['imageUrl'].toString();
+    }
+    if (img.contains('ui-avatars.com')) {
+      img = 'https://api.dicebear.com/7.x/initials/png?seed=${Uri.encodeComponent(guideName)}&backgroundColor=0f3d2e&textColor=ffffff';
     }
 
     String loc = 'Uttarakhand';

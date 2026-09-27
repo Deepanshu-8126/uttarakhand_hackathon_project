@@ -240,7 +240,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     icon: const Icon(Icons.close, size: 16),
                                     onPressed: () => setState(() => searchQuery = ''),
                                   )
-                                : null,
+                                : IconButton(
+                                    icon: const Icon(Icons.mic, color: Color(0xFF0F3D2E), size: 20),
+                                    tooltip: 'Voice Companion (Aoede)',
+                                    onPressed: () => widget.onNavigateTab(4),
+                                  ),
                             border: InputBorder.none,
                           ),
                         ),
@@ -396,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'title': 'KEDARNATH DHAM',
         'subtitle': 'Sacred High-Altitude Sanctuary at 3,583m',
         'tag': 'WEATHER CLEAR • PILGRIMAGE ACTIVE',
-        'image': 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?auto=format&fit=crop&w=1200&q=80',
+        'image': 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80',
         'dest': 'Mandakini Valley, Garhwal',
       },
       {
@@ -1070,7 +1074,7 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
       'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=800&q=80',
     ],
     [
-      'https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1588096344356-9b5962804364?auto=format&fit=crop&w=800&q=80',
     ],

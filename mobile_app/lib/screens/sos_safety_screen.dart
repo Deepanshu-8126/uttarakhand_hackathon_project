@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
 
 class SosSafetyScreen extends StatefulWidget {
@@ -19,6 +20,56 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
   String? activeIncidentId;
   String selectedIncident = 'GENERAL_SOS';
   final TextEditingController _notesController = TextEditingController();
+
+  // Real GPS State
+  double? _latitude;
+  double? _longitude;
+  double? _altitude;
+  String _locationLabel = 'Acquiring GPS...';
+  bool _gpsLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _acquireRealGPS();
+  }
+
+  Future<void> _acquireRealGPS() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationLabel = 'GPS Permission Denied';
+          _gpsLoading = false;
+        });
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      setState(() {
+        _latitude = pos.latitude;
+        _longitude = pos.longitude;
+        _altitude = pos.altitude;
+        _locationLabel = '${pos.latitude.toStringAsFixed(4)}°N, ${pos.longitude.toStringAsFixed(4)}°E';
+        if (pos.altitude > 0) _locationLabel += ' · ${pos.altitude.toStringAsFixed(0)}m';
+        _gpsLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        // Fallback to Kedarnath area if GPS unavailable
+        _latitude = 30.7352;
+        _longitude = 79.0669;
+        _altitude = 3150;
+        _locationLabel = 'GPS Fallback (Kedarnath)';
+        _gpsLoading = false;
+      });
+    }
+  }
 
   // Emergency Contacts State
   List<Map<String, String>> emergencyContacts = [
@@ -67,13 +118,17 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
   }
 
   Future<void> _triggerFullSOS() async {
+    // Refresh GPS right before sending SOS
+    if (_latitude == null) await _acquireRealGPS();
     setState(() => isTriggering = true);
     final res = await ApiService.triggerSOS(
       emergencyType: selectedIncident,
-      locationName: 'Kedarnath Valley Pass (3,150m)',
-      latitude: 30.7352,
-      longitude: 79.0669,
-      medicalNotes: _notesController.text.isNotEmpty ? _notesController.text : 'Urgent SOS triggered from Himalayan terrain',
+      locationName: _locationLabel,
+      latitude: _latitude ?? 30.7352,
+      longitude: _longitude ?? 79.0669,
+      medicalNotes: _notesController.text.isNotEmpty
+          ? _notesController.text
+          : 'Urgent SOS from $_locationLabel',
     );
 
     if (mounted) {
@@ -153,11 +208,14 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
   }
 
   void _shareOnWhatsApp() async {
+    final lat = _latitude ?? 30.7352;
+    final lon = _longitude ?? 79.0669;
+    final alt = _altitude != null ? '${_altitude!.toStringAsFixed(0)}m' : '~3150m';
     final text = Uri.encodeComponent(
       '🚨 EMERGENCY SOS ALERT from Uttarakhand!\n'
       'Incident: $selectedIncident\n'
-      'Live GPS: https://maps.google.com/?q=30.7352,79.0669\n'
-      'Altitude: 3,150m | Incident Ticket: $activeIncidentId\n'
+      'Live GPS: https://maps.google.com/?q=$lat,$lon\n'
+      'Altitude: $alt | Incident: $activeIncidentId\n'
       'Please notify SDRF Uttarakhand (1070) or Police (112) immediately!',
     );
     final url = Uri.parse('https://wa.me/?text=$text');

@@ -82,7 +82,7 @@ class _SpiritualScreenState extends State<SpiritualScreen> {
                           fit: StackFit.expand,
                           children: [
                             CachedNetworkImage(
-                              imageUrl: 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?q=80&w=1200&auto=format&fit=crop',
+                              imageUrl: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=1200&auto=format&fit=crop',
                               fit: BoxFit.cover,
                             ),
                             Container(

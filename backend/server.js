@@ -141,6 +141,8 @@ app.use('/api/partner', partnerRoutes); // Canonical singular alias
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/live', liveDataRoutes);
+app.use('/api/live-data', liveDataRoutes);
+app.use('/live-data', liveDataRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/chat', chatRoutes);

@@ -14,6 +14,7 @@ import io
 import json
 import logging
 import os
+import re
 import sys
 import wave
 from pathlib import Path
@@ -58,6 +59,7 @@ from voice_demo.devbhoomi import (
     get_homestays,
 )
 from voice_demo.weather import fetch_weather
+from voice_demo.gemini.agent import SYSTEM_PROMPT as AGENT_SYSTEM_PROMPT
 from voice_demo.gemini.agent import DEVBHOOMI_TOOLS
 from voice_demo.gemini.tools import execute_tool
 
@@ -78,14 +80,16 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "
 LIVE_VOICE_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
 LIVE_VOICE_FALLBACK_MODEL = "gemini-3.1-flash-live-preview"
 LIVE_VOICE_NAME = os.getenv("GEMINI_VOICE_NAME", "Aoede")
-TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 # Set SKIP_LIVE_VOICE=false to always use Gemini Live WebSocket (Aoede voice)
 SKIP_LIVE_VOICE = False
 
 FALLBACK_TEXT_MODELS = [
-    "gemini-3.8-flash",
     "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+    "gemini-3-flash-preview",
+    "gemini-3.7-flash",
 ]
 
 async def safe_send(ws: WebSocket, payload: dict) -> bool:
@@ -98,33 +102,9 @@ async def safe_send(ws: WebSocket, payload: dict) -> bool:
         pass
     return False
 
-_SYSTEM_PROMPT = """You are Devbhoomi AI Companion, the ultimate expert travel, mountain safety, and cultural guide for Uttarakhand, India (Devbhoomi), powered by Discover Uttarakhand.
-
-Your Core Persona & Expertise:
-- Deep, authentic knowledge of Garhwal and Kumaon: Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri), Hemkund Sahib, Panch Kedar, Panch Badri.
-- High-altitude treks: Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass, Milam Glacier, Munsiyari.
-- Altitude Sickness (AMS) protocols: Acute Mountain Sickness symptoms, pulse oximeter thresholds, Diamox usage guidance, sonprayag/gaurikund halts, hydration, and acclimatization rules.
-- Local Pahari culture & Backpacker Hacks: Local roadways buses (UTC/HRTC), train routes (Kathgodam-Dehradun Exp), shared Maxx jeeps, village dormitories/homestays (₹400-₹600/bed), temple dharamshalas, campsites, and local dhaba food (₹80-₹100/meal).
-
-CRITICAL SPOKEN VOICE RULES (STRICTLY ENFORCED):
-1. ZERO INTAKE QUESTIONS: NEVER ask "Kitne din ka trip hai?", "Kaise plan karna chahte hain?", "1-day ya multi-day?", "Budget kitna hai?". DO NOT ASK ANY INTAKE QUESTIONS.
-2. IMMEDIATE FACTS & ROUTE FIRST: When the user asks about a destination or trek:
-   - Immediately provide exciting factual details in the FIRST sentence.
-   - Tell them how to reach it via train, roadways bus, or shared taxi.
-   - List key highlights and hidden spots.
-3. LOW BUDGET & BACKPACKER ROADMAP: If the user mentions a tight budget (e.g. ₹3,000 - ₹5,000 for Kedarkantha, Chopta, Nainital):
-   - NEVER reject the budget or say it is impossible.
-   - Enthusiastically break down the smart DIY backpacker roadmap (UTC state buses ~₹350, village homestay dorms/tents ~₹400-₹500/night, local dhabas ~₹300/day, gear rental at base ~₹200).
-   - Show how the trip comfortably fits inside ₹4,500-₹5,000!
-4. SPOKEN VOICE GUIDELINES: Speak naturally, warmly, and authentically in Hindi, English, or friendly Hinglish matching the user's language. Keep spoken responses conversational, clear, concise, and direct (2 to 4 spoken sentences). Do NOT read aloud raw markdown, bullet points, hashtags, asterisks, or emojis."""
-
-_CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand.
-
-CRITICAL DIRECT ANSWER RULES:
-1. ZERO INTAKE FORMS: NEVER respond with an intake question or form (e.g. "Kitne din ka trip?", "Kaise plan karna chahte hain?", "Budget kitna hai?").
-2. IMMEDIATE VALUE FIRST: Provide rich, concrete, exciting travel details and practical routes in the very first response.
-3. BUDGET PROBLEM SOLVER: When a user has a strict or tight budget (e.g. ₹5,000 for Kedarkantha), provide an actionable DIY backpacker breakdown (train/bus fares, shared cabs, GMVN/village dorms, dharamshalas, dhaba meals, gear rental) proving how to execute the trip safely on budget.
-4. CONCISE & HIGH SIGNAL: Keep replies clear, structured, and helpful."""
+# Unified system prompt: 100% parity with voice_demo.gemini.agent SYSTEM_PROMPT
+_SYSTEM_PROMPT = AGENT_SYSTEM_PROMPT
+_CHAT_SYSTEM_PROMPT = AGENT_SYSTEM_PROMPT
 
 GREETING_TEXTS = {
     "hi": "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
@@ -135,13 +115,15 @@ GREETING_TEXTS = {
 _GREETING_CACHE: dict[str, str] = {}
 _RESPONSE_CACHE: dict[str, tuple[str, str]] = {}
 
-UPSTASH_URL = (os.getenv("UPSTASH_REDIS_REST_URL") or "https://capable-drum-295620.upstash.io").strip('"').strip("'")
-UPSTASH_TOKEN = (os.getenv("UPSTASH_REDIS_REST_TOKEN") or "gQAAAAAABILEAAIgcDE5NmRiMDY0NGFmYTI0YWRiOGZhY2NkZjdlNDdjZDNiZQ").strip('"').strip("'")
+UPSTASH_URL = (os.getenv("UPSTASH_REDIS_REST_URL") or "").strip('"').strip("'")
+UPSTASH_TOKEN = (os.getenv("UPSTASH_REDIS_REST_TOKEN") or "").strip('"').strip("'")
 
 _redis_http_client: httpx.AsyncClient | None = None
 
-def get_redis_client() -> httpx.AsyncClient:
+def get_redis_client() -> httpx.AsyncClient | None:
     global _redis_http_client
+    if not UPSTASH_TOKEN or not UPSTASH_URL:
+        return None
     if _redis_http_client is None or _redis_http_client.is_closed:
         _redis_http_client = httpx.AsyncClient(
             headers={"Authorization": f"Bearer {UPSTASH_TOKEN}"},
@@ -167,10 +149,14 @@ async def cache_get_response(query_key: str) -> tuple[str, str] | None:
             return v
 
     # 2. Check Layer 2 Cloud Upstash Redis (<15ms)
+    if not UPSTASH_URL or not UPSTASH_TOKEN:
+        return None
     try:
         q_hash = hashlib.md5(clean_k.encode('utf-8')).hexdigest()
         redis_key = f"voice:tts:{q_hash}"
         client = get_redis_client()
+        if not client:
+            return None
         res = await client.get(f"{UPSTASH_URL}/get/{redis_key}")
         if res.status_code == 200:
             val = res.json().get("result")
@@ -198,11 +184,15 @@ async def cache_set_response(query_key: str, text: str, audio_b64: str, ttl_seco
     _RESPONSE_CACHE[clean_k] = (text, audio_b64)
 
     # 2. Store in Upstash Cloud Redis L2 (TTL: 24h default)
+    if not UPSTASH_URL or not UPSTASH_TOKEN:
+        return
     try:
         q_hash = hashlib.md5(clean_k.encode('utf-8')).hexdigest()
         redis_key = f"voice:tts:{q_hash}"
         payload_str = json.dumps({"text": text, "audio": audio_b64, "query": clean_k})
         client = get_redis_client()
+        if not client:
+            return
         await client.post(
             f"{UPSTASH_URL}/set/{redis_key}?EX={ttl_seconds}",
             content=payload_str,
@@ -247,10 +237,11 @@ async def synthesize_gemini_live_voice(
     try:
         client = _get_genai_client()
         facts_text = ("\nVerified Facts from Devbhoomi DB:\n" + "\n".join(enriched_facts)) if enriched_facts else ""
-        system_instruction = f"{_SYSTEM_PROMPT}{facts_text}\nLanguage preference: {lang}"
+        system_instruction = f"{AGENT_SYSTEM_PROMPT}{facts_text}\nLanguage preference: {lang}"
 
         config = types.LiveConnectConfig(
             response_modalities=[types.Modality.AUDIO],
+            output_audio_transcription=types.AudioTranscriptionConfig(),
             speech_config=types.SpeechConfig(
                 voice_config=types.VoiceConfig(
                     prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=LIVE_VOICE_NAME)
@@ -263,7 +254,7 @@ async def synthesize_gemini_live_voice(
         text_chunks: list[str] = []
         transcription_chunks: list[str] = []
 
-        async with asyncio.timeout(28.0):
+        async with asyncio.timeout(10.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                 await session.send_client_content(
                     turns=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
@@ -303,12 +294,14 @@ async def synthesize_gemini_live_voice(
                 clean_text = " ".join(lines) if lines else raw_text
 
             clean_text = clean_text.replace("*", "").replace("#", "").strip()
-            logger.info(f"[gemini-live] Generated {len(pcm_bytes)} PCM bytes ({len(wav_b64)} b64 chars)")
+            if not clean_text:
+                clean_text = "Namaste! Main aapka Devbhoomi AI guide hoon."
+
+            logger.info(f"[gemini-live] Generated {len(pcm_bytes)} PCM bytes ({len(wav_b64)} b64 chars), transcript: {clean_text[:60]}")
             return clean_text, wav_b64
 
     except Exception as e:
-        import traceback
-        logger.warning(f"[gemini-live] Live voice session timed out or failed: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        logger.warning(f"[gemini-live] Live voice session fallback: {type(e).__name__}: {e}")
 
     return "", ""
 
@@ -644,7 +637,7 @@ Respond as Devbhoomi Companion — helpful, detailed, markdown-formatted with cl
                 model=m,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction=_CHAT_SYSTEM_PROMPT,
+                    system_instruction=AGENT_SYSTEM_PROMPT,
                     temperature=0.7,
                     max_output_tokens=800,
                 ),
@@ -698,7 +691,7 @@ async def chat_stream_endpoint(req: ChatRequest):
                 model=TEXT_MODEL_NAME,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction=_CHAT_SYSTEM_PROMPT,
+                    system_instruction=AGENT_SYSTEM_PROMPT,
                     temperature=0.7
                 )
             )
@@ -788,7 +781,7 @@ Respond as the Devbhoomi Voice Companion in 1-3 spoken, clear, natural sentences
                     model=m,
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction=_SYSTEM_PROMPT,
+                        system_instruction=AGENT_SYSTEM_PROMPT,
                         temperature=0.7,
                         max_output_tokens=250,
                     ),
@@ -884,7 +877,7 @@ async def stream_gemini_live_to_ws(
     """Streams 24kHz PCM audio chunks to the WebSocket client in real-time as they arrive!"""
     client = _get_genai_client()
     facts_text = ("\nVerified Facts from Devbhoomi DB:\n" + "\n".join(enriched_facts)) if enriched_facts else ""
-    system_instruction = f"{_SYSTEM_PROMPT}{facts_text}\nLanguage preference: {lang}"
+    system_instruction = f"{AGENT_SYSTEM_PROMPT}{facts_text}\nLanguage preference: {lang}"
 
     config = types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
@@ -977,7 +970,7 @@ async def stream_gemini_live_to_ws(
                     model=m,
                     contents=contents_text,
                     config=types.GenerateContentConfig(
-                        system_instruction=_SYSTEM_PROMPT,
+                        system_instruction=AGENT_SYSTEM_PROMPT,
                         temperature=0.7,
                         max_output_tokens=220,
                     ),
@@ -1037,7 +1030,7 @@ async def websocket_voice_endpoint(
     active_key = apiKey or GOOGLE_API_KEY
     active_voice = voice or LIVE_VOICE_NAME or "Aoede"
     active_model = model or LIVE_VOICE_MODEL or "gemini-2.5-flash-native-audio-latest"
-    active_system_prompt = system_prompt or _SYSTEM_PROMPT
+    active_system_prompt = system_prompt or AGENT_SYSTEM_PROMPT
 
     await safe_send(websocket, {
         "type": "connected",
@@ -1087,7 +1080,7 @@ async def websocket_voice_endpoint(
                             msg = json.loads(data)
                             msg_type = msg.get("type", "audio")
 
-                            if msg_type in ("audio", "pcm_chunk"):
+                            if msg_type in ("audio", "pcm_chunk", "audio_chunk"):
                                 raw_b64 = msg.get("data") or msg.get("chunk")
                                 if raw_b64:
                                     pcm_data = base64.b64decode(raw_b64)

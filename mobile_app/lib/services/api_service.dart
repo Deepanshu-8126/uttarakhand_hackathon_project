@@ -1,16 +1,23 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/destination.dart';
 import '../models/stay.dart';
 
 class ApiService {
-  // Candidate base URLs (Local Node port 5000 first, Android emulator IP, and live Render backend)
-  static final List<String> candidateBaseUrls = [
-    'http://localhost:5000/api',
-    'http://10.0.2.2:5000/api',
-    'http://127.0.0.1:5000/api',
-    'https://uttarakhand-hackathon-project.onrender.com/api',
-  ];
+  // Candidate base URLs (Render live backend first on Web to prevent timeouts; LAN/Local on Android)
+  static final List<String> candidateBaseUrls = kIsWeb
+      ? [
+          'https://uttarakhand-hackathon-project.onrender.com/api',
+          'http://localhost:5000/api',
+          'http://127.0.0.1:5000/api',
+        ]
+      : [
+          'http://192.168.1.37:5000/api',
+          'http://10.0.2.2:5000/api',
+          'http://localhost:5000/api',
+          'https://uttarakhand-hackathon-project.onrender.com/api',
+        ];
   static String baseUrl = 'https://uttarakhand-hackathon-project.onrender.com/api';
   static String? _activeBaseUrl;
 
@@ -131,18 +138,17 @@ class ApiService {
   // ── Live Telemetry / Weather ───────────────────────────────────────────────
   static Future<Map<String, dynamic>> getLiveTelemetry() async {
     try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/live-data/telemetry'))
-          .timeout(const Duration(seconds: 3));
-      if (response.statusCode == 200) {
+      final response = await _get('/live/telemetry', timeout: const Duration(seconds: 2)) ??
+          await _get('/live-data/telemetry', timeout: const Duration(seconds: 2));
+      if (response != null && response.statusCode == 200) {
         return json.decode(response.body);
       }
     } catch (_) {}
     return {
-      'activeTrekkers': 1842,
+      'activeTrekkers': 1948,
       'weatherAlert': 'Green - Clear Skies across Char Dham Corridor',
-      'escrowSecuredAmount': '₹12,45,000',
-      'meshNodesOnline': 48,
+      'escrowSecuredAmount': '₹14,80,000',
+      'meshNodesOnline': 52,
       'passesOpen': ['Mana Pass', 'Lipulekh Pass', 'Kuari Pass', 'Roopkund Ridge'],
     };
   }
@@ -263,18 +269,16 @@ class ApiService {
     return null;
   }
 
-  // ── Devbhoomi AI Voice Bridge ─────────────────────────
+  // ── Devbhoomi AI Voice Bridge (Gemini Live Aoede Studio Audio) ──
   static Future<Map<String, dynamic>> sendVoiceMessage(
-      String query, {String lang = 'en'}) async {
-    final candidateUrls = [
+      String query, {String lang = 'hi'}) async {
+    final List<String> candidateUrls = [
       '$baseUrl/voice/ask',
-      '$baseUrl/agent/chat',
-      'http://10.0.2.2:8000/api/voice/ask',
-      'http://127.0.0.1:8000/api/voice/ask',
-      'http://localhost:8000/api/voice/ask',
-      'http://10.0.2.2:5000/api/voice/ask',
-      'http://127.0.0.1:5000/api/voice/ask',
-      'http://localhost:5000/api/voice/ask',
+      'https://uttarakhand-hackathon-project.onrender.com/api/voice/ask',
+      if (kIsWeb) 'http://localhost:8765/api/voice/ask',
+      if (!kIsWeb) 'http://192.168.1.37:8765/api/voice/ask',
+      if (!kIsWeb) 'http://10.0.2.2:8765/api/voice/ask',
+      'http://localhost:8765/api/voice/ask',
     ];
 
     for (final url in candidateUrls) {
@@ -285,24 +289,25 @@ class ApiService {
               headers: {'Content-Type': 'application/json'},
               body: json.encode({'query': query, 'lang': lang, 'message': query}),
             )
-            .timeout(const Duration(seconds: 12));
+            .timeout(const Duration(seconds: 10));
         if (res.statusCode == 200) {
           final data = json.decode(res.body) as Map<String, dynamic>;
           final replyObj = data['response'] ?? data['message'] ?? data['text'];
           final replyText = replyObj is Map ? (replyObj['message'] ?? replyObj['text']) : replyObj;
-          if (replyText != null && replyText.toString().isNotEmpty) {
+          if (replyText != null && replyText.toString().trim().isNotEmpty) {
             String audioBase64 = (data['audio_base64'] ?? data['audioBase64'] ?? '').toString();
+            final engine = data['engine']?.toString() ?? 'gemini_live_aoede';
             if (audioBase64.isEmpty) {
-              audioBase64 = await synthesizeElevenLabsVoice(replyText.toString()) ?? '';
+              audioBase64 = await synthesizeVoice(replyText.toString(), lang: lang) ?? '';
             }
             return {
-              'text': replyText.toString(),
+              'text': replyText.toString().trim(),
               'audio_base64': audioBase64,
-              'engine': 'elevenlabs',
-              'toolsUsed': (data['toolsUsed'] as List?)?.map((e) => e.toString()).toList() ?? ['ElevenLabsVoiceBridge'],
+              'engine': engine,
+              'toolsUsed': (data['tools_used'] as List? ?? data['toolsUsed'] as List?)?.map((e) => e.toString()).toList() ?? ['DevbhoomiGeminiLiveVoice'],
               'uiActions': data['uiActions'],
               'confidence': 'grounded',
-              'source': 'elevenlabs-voice-bridge',
+              'source': 'voice-demo-bridge',
             };
           }
         }
@@ -311,18 +316,48 @@ class ApiService {
     return sendCopilotMessage(query, isVoice: true);
   }
 
-  // ── AI Copilot Chat (Live Render Express -> Local Grounded Engine) ──
-  static Future<Map<String, dynamic>> sendCopilotMessage(
-      String message, {String? destination, bool isVoice = false}) async {
-    final candidateUrls = [
-      '$baseUrl/agent/chat',
-      '$baseUrl/chat',
+  /// Synthesizes text into authentic Gemini Live Aoede voice audio
+  static Future<String?> synthesizeVoice(String text, {String lang = 'hi'}) async {
+    final List<String> candidateUrls = [
       '$baseUrl/voice/ask',
-      'http://10.0.2.2:8000/api/chat',
-      'http://127.0.0.1:8000/api/chat',
-      'http://localhost:8000/api/chat',
-      'http://10.0.2.2:8765/api/chat',
-      'http://127.0.0.1:8765/api/chat',
+      'https://uttarakhand-hackathon-project.onrender.com/api/voice/ask',
+      if (kIsWeb) 'http://localhost:8765/api/voice/ask',
+      if (!kIsWeb) 'http://192.168.1.37:8765/api/voice/ask',
+      if (!kIsWeb) 'http://10.0.2.2:8765/api/voice/ask',
+      'http://localhost:8765/api/voice/ask',
+    ];
+    for (final url in candidateUrls) {
+      try {
+        final res = await http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'query': text, 'lang': lang}),
+        ).timeout(const Duration(seconds: 8));
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body) as Map<String, dynamic>;
+          final b64 = (data['audio_base64'] ?? data['audioBase64'] ?? '').toString();
+          if (b64.isNotEmpty) return b64;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // ── AI Copilot Chat (Render Express -> Local Grounded Engine) ──
+  static Future<Map<String, dynamic>> sendCopilotMessage(
+      String message, {
+      List<Map<String, String>>? history,
+      String? destination,
+      bool isVoice = false,
+  }) async {
+    final candidateUrls = [
+      '$baseUrl/chat',
+      'https://uttarakhand-hackathon-project.onrender.com/api/chat',
+      '$baseUrl/voice/ask',
+      if (kIsWeb) 'http://localhost:8765/api/chat',
+      if (!kIsWeb) 'http://192.168.1.37:8765/api/chat',
+      if (!kIsWeb) 'http://10.0.2.2:8765/api/chat',
+      'http://localhost:8765/api/chat',
     ];
 
     for (final apiUrl in candidateUrls) {
@@ -333,13 +368,14 @@ class ApiService {
           body: json.encode({
             'message': message,
             'query': message,
+            'history': history ?? [],
             'pageContext': {
               'pageType': isVoice ? 'VOICE_AGENT' : 'MOBILE_COPILOT',
               'currentPage': isVoice ? 'COPILOT_VOICE' : 'MOBILE_APP',
               if (destination != null) 'destinationName': destination,
             },
           }),
-        ).timeout(const Duration(seconds: 15));
+        ).timeout(const Duration(seconds: 12));
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
@@ -480,7 +516,7 @@ class ApiService {
         category: 'Spiritual',
         description: 'One of the twelve sacred Jyotirlingas of Lord Shiva at 3,583m, crowned by eternal snowfields and the holy Mandakini river.',
         shortDescription: 'Sacred High-Altitude Jyotirlinga at 3,583m in the Garhwal Himalayas.',
-        imageUrl: 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?auto=format&fit=crop&w=1200&q=80',
+        imageUrl: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80',
         rating: 4.9,
         reviewsCount: 650,
         estimatedBudget: 6000,

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../theme/app_theme.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
 import 'destination_detail_screen.dart';
@@ -24,7 +23,24 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   bool isSatelliteMode = false;
   bool showSafetyRadarLayer = true;
   bool showCorridorsLayer = true;
+  bool showAllPins = false; // Default: clean decluttered Key Hubs overview
   String searchQuery = '';
+
+  static const Set<String> _keyHubNames = {
+    'Nainital', 'Kedarnath', 'Badrinath', 'Auli', 'Rishikesh',
+    'Chopta', 'Tungnath', 'Valley of Flowers', 'Munsiyari',
+    'Jim Corbett', 'Haridwar', 'Mussoorie', 'Tehri', 'Gangotri',
+    'Yamunotri', 'Almora', 'Adi Kailash', 'Kausani', 'Ranikhet',
+    'Pithoragarh', 'Dayara Bugyal', 'Kedarkantha', 'Binsar',
+  };
+
+  bool _isKeyHub(Destination d) {
+    final n = d.name.toLowerCase();
+    for (final hub in _keyHubNames) {
+      if (n.contains(hub.toLowerCase()) || hub.toLowerCase().contains(n)) return true;
+    }
+    return d.altitude >= 3200;
+  }
 
   List<Destination> destinations = [];
   List<SpiritualPlace> spirituals = [];
@@ -159,28 +175,39 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
 
       if (!matchesSearch) return false;
 
-      switch (selectedFilter) {
-        case 'Spiritual':
-          return d.category.toLowerCase().contains('spiritual') ||
-              d.name.toLowerCase().contains('temple') ||
-              d.name.toLowerCase().contains('dham') ||
-              d.name.toLowerCase().contains('kedar') ||
-              d.name.toLowerCase().contains('badri');
-        case 'High Altitude':
-          return d.altitude >= 3000;
-        case 'Lakes & Treks':
-          return d.category.toLowerCase().contains('lake') ||
-              d.category.toLowerCase().contains('trek') ||
-              d.name.toLowerCase().contains('lake') ||
-              d.name.toLowerCase().contains('tal') ||
-              d.name.toLowerCase().contains('bugyal');
-        case 'Nature':
-          return d.category.toLowerCase().contains('nature') ||
-              d.category.toLowerCase().contains('wildlife') ||
-              d.category.toLowerCase().contains('sanctuary');
-        default:
-          return true;
+      // Always show searched results
+      if (searchQuery.isNotEmpty) return true;
+
+      if (selectedFilter != 'All') {
+        switch (selectedFilter) {
+          case 'Spiritual':
+            return d.category.toLowerCase().contains('spiritual') ||
+                d.name.toLowerCase().contains('temple') ||
+                d.name.toLowerCase().contains('dham') ||
+                d.name.toLowerCase().contains('kedar') ||
+                d.name.toLowerCase().contains('badri');
+          case 'High Altitude':
+            return d.altitude >= 3000;
+          case 'Lakes & Treks':
+            return d.category.toLowerCase().contains('lake') ||
+                d.category.toLowerCase().contains('trek') ||
+                d.name.toLowerCase().contains('lake') ||
+                d.name.toLowerCase().contains('tal') ||
+                d.name.toLowerCase().contains('bugyal');
+          case 'Nature':
+            return d.category.toLowerCase().contains('nature') ||
+                d.category.toLowerCase().contains('wildlife') ||
+                d.category.toLowerCase().contains('sanctuary');
+          default:
+            return true;
+        }
       }
+
+      // If 'All' is selected, show uncluttered Key Hubs by default unless showAllPins is enabled
+      if (!showAllPins) {
+        return _isKeyHub(d) || selectedLocationId == d.id;
+      }
+      return true;
     }).toList();
   }
 
@@ -441,26 +468,47 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                             },
                           ),
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isSatelliteMode
-                                ? const Color(0xFF064E3B)
-                                : const Color(0xFFECFDF5),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
+                        InkWell(
+                          onTap: () {
+                            setState(() => showAllPins = !showAllPins);
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
                               color: isSatelliteMode
-                                  ? const Color(0xFF059669).withOpacity(0.5)
-                                  : const Color(0xFFA7F3D0),
+                                  ? const Color(0xFF064E3B)
+                                  : (showAllPins ? const Color(0xFFFEF3C7) : const Color(0xFFECFDF5)),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSatelliteMode
+                                    ? const Color(0xFF059669).withOpacity(0.5)
+                                    : (showAllPins ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0)),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            '${visiblePlaces.length} PIN${visiblePlaces.length == 1 ? '' : 'S'}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              color: isSatelliteMode ? const Color(0xFF34D399) : const Color(0xFF065F46),
-                              letterSpacing: 0.5,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  showAllPins ? Icons.grid_view_rounded : Icons.push_pin_rounded,
+                                  size: 11,
+                                  color: isSatelliteMode
+                                      ? const Color(0xFF34D399)
+                                      : (showAllPins ? const Color(0xFFB45309) : const Color(0xFF065F46)),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  showAllPins ? 'ALL (${visiblePlaces.length})' : 'KEY HUBS (${visiblePlaces.length})',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: isSatelliteMode
+                                        ? const Color(0xFF34D399)
+                                        : (showAllPins ? const Color(0xFFB45309) : const Color(0xFF065F46)),
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -893,64 +941,69 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     );
   }
 
-  // Interactive Marker Pin Widget
+  // Interactive Marker Pin Widget with Smart Decluttering
   Widget _buildMarkerWidget(Destination dest, bool isSel, Color color, IconData icon) {
+    final bool isHub = _isKeyHub(dest);
+    final bool shouldShowLabel = isSel || isHub || searchQuery.isNotEmpty || selectedFilter != 'All';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.all(isSel ? 7 : 5),
+          padding: EdgeInsets.all(isSel ? 7 : (isHub ? 5 : 3.5)),
           decoration: BoxDecoration(
             color: isSel ? color : Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: color, width: isSel ? 3 : 2),
+            border: Border.all(color: color, width: isSel ? 3 : (isHub ? 2 : 1.5)),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(isSel ? 0.6 : 0.25),
-                blurRadius: isSel ? 14 : 6,
+                color: color.withOpacity(isSel ? 0.6 : 0.2),
+                blurRadius: isSel ? 14 : (isHub ? 6 : 3),
                 spreadRadius: isSel ? 2 : 0,
               ),
             ],
           ),
           child: Icon(
             icon,
-            size: isSel ? 16 : 12,
+            size: isSel ? 16 : (isHub ? 12 : 9),
             color: isSel ? Colors.white : color,
           ),
         ),
-        const SizedBox(height: 2),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: isSel
-                ? color
-                : (isSatelliteMode ? const Color(0xFF0F241A).withOpacity(0.9) : Colors.white.withOpacity(0.95)),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: isSel ? color : (isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFE2E8F0)),
-              width: 0.8,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 4,
-              ),
-            ],
-          ),
-          child: Text(
-            dest.name,
-            style: TextStyle(
-              fontSize: 8.5,
-              fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
+        if (shouldShowLabel) ...[
+          const SizedBox(height: 2),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+            decoration: BoxDecoration(
               color: isSel
-                  ? Colors.white
-                  : (isSatelliteMode ? Colors.white : const Color(0xFF0F172A)),
+                  ? color
+                  : (isSatelliteMode ? const Color(0xFF0F241A).withOpacity(0.9) : Colors.white.withOpacity(0.95)),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: isSel ? color : (isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFE2E8F0)),
+                width: 0.8,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 4,
+                ),
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            child: Text(
+              dest.name,
+              style: TextStyle(
+                fontSize: isSel ? 9.5 : 8.2,
+                fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
+                color: isSel
+                    ? Colors.white
+                    : (isSatelliteMode ? Colors.white : const Color(0xFF0F172A)),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

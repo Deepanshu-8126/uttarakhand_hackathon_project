@@ -144,31 +144,35 @@ export async function sendAudioToVoiceBridge(audioBlob, { lang = 'hi' } = {}) {
   const cleanBase64 = rawDataUrl.includes(',') ? rawDataUrl.split(',')[1] : rawDataUrl;
   const mimeType = audioBlob.type || 'audio/webm';
 
-  // 1. First candidate: Local Python Voice Bridge (port 8765)
-  try {
-    const bridgeRes = await fetch('http://localhost:8765/api/voice/audio_query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        audio_base64: cleanBase64,
-        mime_type: mimeType,
-        lang
-      }),
-      signal: AbortSignal.timeout(8000)
-    });
+  const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
-    if (bridgeRes.ok) {
-      const data = await bridgeRes.json();
-      return {
-        success: true,
-        user_transcript: data.user_transcript || data.query || '',
-        response: data.response || data.text || data.message || '',
-        audio_base64: data.audio_base64 || '',
-        engine: data.engine || 'gemini_live_bridge'
-      };
+  // 1. First candidate: Local Python Voice Bridge (port 8765) — only tried on localhost
+  if (isLocal) {
+    try {
+      const bridgeRes = await fetch('http://localhost:8765/api/voice/audio_query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audio_base64: cleanBase64,
+          mime_type: mimeType,
+          lang
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+
+      if (bridgeRes.ok) {
+        const data = await bridgeRes.json();
+        return {
+          success: true,
+          user_transcript: data.user_transcript || data.query || '',
+          response: data.response || data.text || data.message || '',
+          audio_base64: data.audio_base64 || '',
+          engine: data.engine || 'gemini_live_bridge'
+        };
+      }
+    } catch (_) {
+      // Python bridge not running -> fallback to Express Backend
     }
-  } catch (_) {
-    // Python bridge not running or port 8765 unreachable -> fallback to Express Backend
   }
 
   // 2. Second candidate: Node.js Express Backend (/api/voice/audio_query)

@@ -49,12 +49,12 @@ export async function sendVoiceAudio(audioBlob, lang = 'hi') {
     lang
   });
 
-  // 1. Try Primary Python Voice Bridge (Port 8765)
+  // 1. Try Production Render Voice Endpoints first, then local bridge
   const candidateUrls = [
+    'https://uttarakhand-hackathon-project.onrender.com/api/voice/audio_query',
     `${VOICE_URL_PRIMARY}/api/voice/audio_query`,
-    'http://localhost:8765/api/voice/audio_query',
     `${BACKEND_API_FALLBACK}/voice/audio_query`,
-    'http://localhost:5000/api/voice/audio_query'
+    'http://localhost:8765/api/voice/audio_query'
   ];
 
   for (const endpoint of candidateUrls) {
@@ -63,7 +63,7 @@ export async function sendVoiceAudio(audioBlob, lang = 'hi') {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload,
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(30000)
       });
 
       if (res.ok) {
@@ -202,10 +202,10 @@ export async function fetchVoiceAudio(text, lang = 'hi') {
   });
 
   const candidateUrls = [
+    'https://uttarakhand-hackathon-project.onrender.com/api/voice/ask',
     `${VOICE_URL_PRIMARY}/api/voice/ask`,
-    'http://localhost:8765/api/voice/ask',
     `${BACKEND_API_FALLBACK}/voice/ask`,
-    'http://localhost:5000/api/voice/ask'
+    'http://localhost:8765/api/voice/ask'
   ];
 
   for (const endpoint of candidateUrls) {
@@ -214,7 +214,7 @@ export async function fetchVoiceAudio(text, lang = 'hi') {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload,
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(30000)
       });
 
       if (res.ok) {
