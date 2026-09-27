@@ -70,7 +70,7 @@ export default function MessageRenderer({ message, onSendPrompt: _onSendPrompt =
         name: d.name,
         slug: d.slug || d.id,
         altitude: d.altitude ? `${d.altitude}m` : 'Himalayas',
-        photo: d.coverImage?.url || d.coverImage || DESTINATION_NAMED_IMAGES[d.slug] || '/assets/yatra_sarthi/nainital.jpg',
+        photo: d.coverImage?.url || d.coverImage || DESTINATION_NAMED_IMAGES[d.slug] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
         tag: d.district || 'Verified Spot'
       }));
     }

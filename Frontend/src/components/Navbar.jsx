@@ -15,7 +15,14 @@ import {
   Map,
   Languages,
   MapPin,
-  Route
+  Route,
+  Mountain,
+  ArrowRight,
+  Globe,
+  Landmark,
+  Footprints,
+  HeartHandshake,
+  PhoneCall
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMapStore } from '../store/mapStore';
@@ -390,91 +397,304 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* ── 5. Mobile & Tablet Full-Screen Overlay (< 1024px) ───────────────── */}
+      {/* ── 5. Luxury Himalayan Alpine Mobile & Tablet Navigation Drawer (< 1024px) ── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center gap-6 p-6 lg:hidden overflow-y-auto animate-in fade-in duration-200">
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(false)}
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xl cursor-pointer"
-            aria-label="Close menu"
+        <div 
+          className="fixed inset-0 z-[100] bg-stone-900/60 backdrop-blur-sm lg:hidden flex justify-end animate-in fade-in duration-200"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div 
+            className="w-full sm:max-w-md h-[100dvh] bg-[#fdfbf7] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300 border-l border-stone-200/80"
+            onClick={(e) => e.stopPropagation()}
           >
-            ✕
-          </button>
+            {/* 1. Drawer Header */}
+            <div className="p-4 sm:p-5 bg-white border-b border-stone-200 flex items-center justify-between shrink-0 shadow-xs">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/logo.png"
+                  alt="Discovery Uttarakhand"
+                  className="w-9 h-9 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
+                />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-black text-base text-[#0f3d2e] leading-tight">Discovery Uttarakhand</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-stone-500 block">AI &amp; Web3 Himalayan Portal</span>
+                </div>
+              </div>
 
-          {/* Brand Logo in Overlay */}
-          <div className="flex items-center gap-3 mb-2 shrink-0">
-            <img
-              src="/logo.png"
-              alt="Discovery Uttarakhand"
-              className="w-10 h-10 object-contain rounded-xl shadow-xs border border-emerald-900/10 bg-white"
-            />
-            <span className="font-extrabold text-xl text-[#0f3d2e]">Discovery Uttarakhand</span>
-          </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  className="px-2.5 py-1 rounded-xl bg-stone-100 hover:bg-emerald-50 border border-stone-200 text-xs font-bold text-stone-700 flex items-center gap-1 transition cursor-pointer"
+                  title="Toggle Language"
+                >
+                  <Globe size={13} className="text-emerald-700" />
+                  <span>{lang === 'en' ? 'हिन्दी' : 'EN'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X size={18} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
 
-          {/* Active Trip Banner if available */}
-          {activeTripDestination && (
-            <Link
-              to={activeTripUrl}
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full max-w-sm p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-[#0f3d2e] text-center shadow-xs"
-            >
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block mb-0.5">
-                🟢 Trip in Progress
-              </span>
-              <span className="font-extrabold text-sm text-emerald-950 block truncate">
-                {activeTripDestination} {activeTripDuration ? `(${activeTripDuration})` : ''}
-              </span>
-            </Link>
-          )}
+            {/* 2. Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-copilot-scrollbar">
+              
+              {/* Active Trip Banner if available */}
+              {activeTripDestination && (
+                <Link
+                  to={activeTripUrl}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950 via-[#0f3d2e] to-stone-900 text-white border border-emerald-500/30 shadow-sm group"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Trip in Progress
+                    </span>
+                    <span className="text-xs text-emerald-300 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      Resume <ArrowRight size={12} />
+                    </span>
+                  </div>
+                  <div className="font-extrabold text-sm text-white truncate">
+                    {activeTripDestination} {activeTripDuration ? `• ${activeTripDuration}` : ''}
+                  </div>
+                </Link>
+              )}
 
-          {/* Navigation Overlay Links */}
-          <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-            {navLinks.map((link) => (
+              {/* Quick 2x2 Feature Grid */}
+              <div>
+                <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 px-1">
+                  MAIN DISCOVERY
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Link
+                    to="/explore"
+                    onClick={(e) => handleNavClick({ label: 'Explore', path: '/explore', isExplore: true }, e)}
+                    className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:border-emerald-500/50 transition-all flex flex-col gap-1.5 group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#0f3d2e] flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Compass size={18} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900 leading-tight">Explore</div>
+                      <div className="text-[10px] text-stone-500 font-medium">106+ Curated Places</div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/map"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:border-blue-500/50 transition-all flex flex-col gap-1.5 group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Map size={18} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900 leading-tight">Live Map</div>
+                      <div className="text-[10px] text-stone-500 font-medium">3D GPS &amp; Corridors</div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/stays"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:border-amber-500/50 transition-all flex flex-col gap-1.5 group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Bed size={18} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900 leading-tight">Stays &amp; KMVN</div>
+                      <div className="text-[10px] text-stone-500 font-medium">Verified Homestays</div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/rentals"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-3 bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:border-purple-500/50 transition-all flex flex-col gap-1.5 group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Car size={18} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900 leading-tight">Bike &amp; Cabs</div>
+                      <div className="text-[10px] text-stone-500 font-medium">Himalayan Fleet</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Exploration Hubs List */}
+              <div className="space-y-1.5 bg-white rounded-2xl p-3 border border-stone-200/80 shadow-xs">
+                <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 px-1">
+                  THEMATIC CIRCUITS
+                </div>
+
+                <Link
+                  to="/trip-planner"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 transition text-stone-800 group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                      <Route size={15} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900">AI Trip Planner</div>
+                      <div className="text-[10px] text-stone-500">Auto-generate day-by-day itineraries</div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    Smart AI
+                  </span>
+                </Link>
+
+                <Link
+                  to="/spiritual"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 transition text-stone-800"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-800 flex items-center justify-center shrink-0">
+                      <Landmark size={15} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900">Spiritual Yatras</div>
+                      <div className="text-[10px] text-stone-500">Char Dham, Panch Kedar &amp; Hemkund</div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/culture"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 transition text-stone-800"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-800 flex items-center justify-center shrink-0">
+                      <HeartHandshake size={15} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900">Culture &amp; Heritage</div>
+                      <div className="text-[10px] text-stone-500">Folk festivals, Pahadi cuisine &amp; art</div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/activities"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 transition text-stone-800"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 flex items-center justify-center shrink-0">
+                      <Footprints size={15} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-stone-900">Treks &amp; Adventure</div>
+                      <div className="text-[10px] text-stone-500">High passes, rafting &amp; camping</div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Critical Safety & Web3 Section */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <Link
+                  to="/rescue-ops"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-3 bg-rose-50/80 border border-rose-200/90 rounded-2xl flex flex-col gap-1 shadow-xs hover:border-rose-400 transition group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
+                      <PhoneCall size={14} />
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                  </div>
+                  <div className="font-extrabold text-xs text-rose-900 mt-1">🚨 Rescue Ops &amp; SOS</div>
+                  <div className="text-[10px] text-rose-700 font-medium">SDRF Emergency Grid</div>
+                </Link>
+
+                <Link
+                  to="/innovations"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-3 bg-emerald-50/80 border border-emerald-200/90 rounded-2xl flex flex-col gap-1 shadow-xs hover:border-emerald-400 transition group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                      <ShieldCheck size={14} />
+                    </div>
+                    <span className="text-[9px] font-bold text-emerald-800 bg-white px-1.5 py-0.5 rounded-full border border-emerald-200">
+                      Web3
+                    </span>
+                  </div>
+                  <div className="font-extrabold text-xs text-emerald-950 mt-1">🛡️ Web3 Verification</div>
+                  <div className="text-[10px] text-emerald-800 font-medium">Proof-of-Trek &amp; Escrow</div>
+                </Link>
+              </div>
+
+              {/* User Profile / Auth Card in Drawer */}
+              <div className="bg-white rounded-2xl p-3 border border-stone-200/80 shadow-xs flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
+                    {isAuthenticated ? (currentUser?.name?.[0]?.toUpperCase() || 'U') : <User size={16} />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-stone-900 truncate">
+                      {isAuthenticated ? (currentUser?.name || currentUser?.email || 'Authenticated Explorer') : 'Guest Explorer'}
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-medium truncate">
+                      {isAuthenticated ? 'DevBhoomi Member' : 'Sign in to sync saved trips'}
+                    </div>
+                  </div>
+                </div>
+
+                {isAuthenticated ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-700 hover:text-rose-600 text-xs font-bold transition shrink-0 cursor-pointer"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition shrink-0"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
+
+            </div>
+
+            {/* 3. Bottom Sticky CTA */}
+            <div className="p-4 bg-white border-t border-stone-200 shrink-0">
               <Link
-                key={link.label}
-                to={link.path}
-                onClick={(e) => handleNavClick(link, e)}
-                className="whitespace-nowrap text-lg font-bold text-stone-800 hover:text-[#0f3d2e] transition-colors py-1"
+                to="/trip-planner"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-3.5 px-6 rounded-2xl bg-[#0f3d2e] hover:bg-[#185340] text-white font-black text-xs sm:text-sm text-center uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-98"
               >
-                {link.label}
+                <Sparkles size={16} className="text-amber-300" />
+                <span>{t('nav_plantrip') || 'Plan Uttarakhand Trip'}</span>
+                <ArrowRight size={16} />
               </Link>
-            ))}
-
-            <Link
-              to="/rescue-ops"
-              onClick={() => setMobileMenuOpen(false)}
-              className="whitespace-nowrap text-lg font-bold text-rose-600 hover:text-rose-700 transition-colors py-1"
-            >
-              🚨 Rescue Ops &amp; SOS
-            </Link>
-
-            <Link
-              to="/innovations"
-              onClick={() => setMobileMenuOpen(false)}
-              className="whitespace-nowrap text-lg font-bold text-emerald-700 hover:text-emerald-900 transition-colors py-1"
-            >
-              🛡️ Web3 Verification
-            </Link>
-
-            {/* Language Switcher in Overlay */}
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="mt-1 px-4 py-2 rounded-full bg-stone-100 hover:bg-emerald-50 border border-stone-200 text-sm font-bold text-stone-800 transition"
-            >
-              {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
-            </button>
-
-            {/* Plan Trip Primary CTA */}
-            <Link
-              to="/trip-planner"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full mt-1 py-3.5 px-6 rounded-full bg-[#0f3d2e] text-white font-extrabold text-sm text-center uppercase tracking-wider shadow-md active:scale-95"
-            >
-              {t('nav_plantrip') || 'Plan Trip Now'}
-            </Link>
+            </div>
           </div>
         </div>
       )}
