@@ -21,12 +21,26 @@ from google import genai
 from google.genai import types
 from langsmith.integrations.gemini_live import wrap_gemini_live
 
+from .. import tracing
 from ..audio import AudioInput, AudioOutput, resample_pcm16
 from ..console import NullUI, StatusUI, frame_level
 from .events import LiveMessage, append_transcript
 from .tools import execute_tool
 
-SYSTEM_PROMPT = """You are Devbhoomi Companion, an expert AI voice travel guide and mountain safety companion for Uttarakhand, India (Devbhoomi), powered by Discover. You have comprehensive, accurate knowledge of Uttarakhand: Char Dham shrines, Garhwal and Kumaon valleys, high-altitude treks, altitude sickness (AMS) protocols, weather conditions, and local Pahari culture. Speak naturally in Hindi, English, or friendly Hinglish based on how the user speaks to you. Use explore_uttarakhand_place when asked about destinations or treks, check_mountain_safety when asked about altitude, trek safety, or health risks, lookup_weather for live weather in any mountain town, and find_homestays for stays. Keep answers conversational, warm, concise, and direct (1 to 3 spoken sentences). Do not recite raw markdown, bullet points, asterisks, or emojis in spoken output."""
+SYSTEM_PROMPT = """You are Devbhoomi Companion, the expert AI voice travel guide, mountain safety expert, and local Pahadi friend for Uttarakhand, India, powered by Discover Uttarakhand.
+You have authentic, street-smart knowledge of Garhwal & Kumaon tourism, Char Dham pilgrimages, hidden gems, high-altitude treks, weather, transport routes, and backpacker budgeting.
+
+Key Spoken Spoken Voice Persona & Rules:
+1. WARM, ENCOURAGING & STREET-SMART: Speak naturally in friendly Hindi, English, or conversational Hinglish matching the user. Always be supportive, enthusiastic, and practical.
+2. LOW BUDGET & BACKPACKER PROBLEM SOLVING: NEVER say a trip or trek is impossible for low budgets (e.g. ₹3,000 - ₹5,000 for Kedarkantha, Chopta, or Nainital). Always provide the smart DIY backpacker roadmap:
+   - Public state transport (Kathgodam-Dehradun train general/sleeper ~₹140-₹280, early morning 5:30 AM UTC ordinary bus from Dehradun Hill Bus Stand to Sankri ~₹380, or shared Maxx ~₹500).
+   - Budget stays (Sankri/Mori village homestay dorm beds and tent rentals at ₹400-₹600/night, GMVN dorms, or dharamshalas).
+   - Food (Local village dhabas for hot Dal-Chawal and Maggi at ₹80-₹100/meal).
+   - Local gear rental (Microspikes & gaiters available at Sankri base for ₹150-₹200).
+   Show how 4-5 days can comfortably fit inside ₹4,500-₹5,000!
+3. CONCISE & HIGH IMPACT: Keep spoken responses concise (2 to 4 spoken sentences). No raw markdown, asterisks, hashtags, bullet points, or emojis in spoken speech.
+4. Call tools (explore_uttarakhand_place, lookup_weather, check_mountain_safety, find_homestays) whenever specific lookups add value."""
+
 
 DEFAULT_MODEL = os.getenv("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
 SEND_SAMPLE_RATE = 16_000
@@ -98,6 +112,34 @@ DEVBHOOMI_TOOLS = types.Tool(
 )
 
 
+class _DirectGeminiLiveSession:
+    """Zero-overhead transparent wrapper for direct Gemini Live WebSocket session."""
+
+    def __init__(self, raw_session) -> None:
+        self._raw = raw_session
+
+    def __getattr__(self, name: str):
+        return getattr(self._raw, name)
+
+    async def receive(self):
+        async for message in self._raw.receive():
+            yield message
+
+    async def send_tool_response(self, *, function_responses) -> None:
+        await self._raw.send_tool_response(function_responses=function_responses)
+
+    def record_user_audio(self, pcm: bytes) -> None:
+        pass
+
+    def record_agent_audio(self, pcm: bytes) -> None:
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
+        return False
+
 
 def _live_config() -> types.LiveConnectConfig:
     return types.LiveConnectConfig(
@@ -145,26 +187,30 @@ async def run(
     mic_task: asyncio.Task | None = None
     receive_task: asyncio.Task | None = None
     try:
-        async with (
-            client.aio.live.connect(model=DEFAULT_MODEL, config=_live_config()) as raw,
-            wrap_gemini_live(
-                raw,
-                model=DEFAULT_MODEL,
-                thread_id=thread_id,
-                sample_rate=RECV_SAMPLE_RATE,
-                project_name=project_name,
-                tags=["voice-demo", "gemini"],
-                metadata={"model": DEFAULT_MODEL},
-                is_agent_speaking=lambda: audio_out.buffered_bytes() > 0,
-            ) as session,
-        ):
-            # Capture what the listener actually heard. Audio removed by
-            # ``clear()`` during barge-in never reaches this callback.
-            audio_out.set_played_callback(session.record_agent_audio)
-            audio_in.start()
-            audio_out.start()
-            ui.log("[gemini] connected. Talk into your mic — Ctrl-C to quit.")
-            ui.set_state("listening")
+        async with client.aio.live.connect(model=DEFAULT_MODEL, config=_live_config()) as raw:
+            if tracing.is_tracing_enabled():
+                session_cm = wrap_gemini_live(
+                    raw,
+                    model=DEFAULT_MODEL,
+                    thread_id=thread_id,
+                    sample_rate=RECV_SAMPLE_RATE,
+                    project_name=project_name,
+                    tags=["voice-demo", "gemini"],
+                    metadata={"model": DEFAULT_MODEL},
+                    is_agent_speaking=lambda: audio_out.buffered_bytes() > 0,
+                )
+            else:
+                session_cm = _DirectGeminiLiveSession(raw)
+
+            async with session_cm as session:
+                # Capture what the listener actually heard. Audio removed by
+                # ``clear()`` during barge-in never reaches this callback.
+                audio_out.set_played_callback(session.record_agent_audio)
+                audio_in.start()
+                audio_out.start()
+                ui.log("[gemini] connected. Talk into your mic — Ctrl-C to quit.")
+                ui.set_state("listening")
+
 
             async def pump_mic() -> None:
                 async for frame in audio_in.frames():

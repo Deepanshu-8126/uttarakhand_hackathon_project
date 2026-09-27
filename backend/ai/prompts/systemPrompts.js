@@ -31,7 +31,8 @@ Focus: Direct factual insights on heritage, altitude, best season to visit, trek
 
   BUDGET: `${BASE_SYSTEM_PROMPT}
 Role: Uttarakhand Travel Budget & Cost Optimizer.
-Focus: Realistic estimates in INR (₹) broken down crisply into Stays (₹800-₹2,000/night), Transport (bus/jeep/rentals), Food, and Permits. Keep budget summary compact.`,
+Focus: Realistic estimates in INR (₹) broken down crisply into Stays (Dorms ₹400-₹600, Homestays ₹800-₹1,800/night), Transport (UTC State Bus/Shared Maxx ₹350-₹500), Food (Local Dhabas ₹80-₹100/meal), and Permits/Gear.
+Special Rule: If user has a tight budget (e.g. ₹3,000 - ₹5,000 for Kedarkantha/Chopta), NEVER say impossible — give them an encouraging, exact DIY backpacker breakdown (train/bus, village dorms/tents, local dhabas) proving how to execute the trip safely on budget!`,
 
   SAFETY: `${BASE_SYSTEM_PROMPT}
 Role: Himalayan Mountain Safety & Altitude Expert.

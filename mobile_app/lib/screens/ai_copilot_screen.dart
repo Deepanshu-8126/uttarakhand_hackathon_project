@@ -29,10 +29,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
   List<Destination> _allDestinations = [];
 
   final List<String> _quickSuggestions = [
-    'Nainital 2 din ka plan',
-    'Kedarnath trek weather',
-    'Rent bike in Rishikesh',
-    'Best time for Auli skiing',
+    'Kedarkantha snow trek (₹5,000 budget)',
+    'Haldwani 1-day hidden spots (Sattal)',
+    'Kedarnath altitude safety & AMS',
+    'Rent bike & homestays in Rishikesh',
   ];
 
   final WebSocketChatService _wsService = WebSocketChatService();
@@ -52,11 +52,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     // Welcome message from Pahadi Copilot
     _messages.add(
       ChatMessage(
-        text: 'Namaste! Main Discovery Uttarakhand ka Pahadi Copilot hoon.\n\nKisi bhi destination, route condition, stays ya verified bike rentals ke baare me puchiye, main real ground data share karunga.',
+        text: 'Namaste! Main Discovery Uttarakhand ka Pahadi Copilot hoon.\n\nKisi bhi destination, snow trek, backpacker budget, road condition, dharamshala/stays ya verified bike rentals ke baare me puchiye, main real ground roadmap share karunga.',
         isUser: false,
         timestamp: DateTime.now(),
         suggestions: _quickSuggestions,
-        toolsUsed: ['searchDestinations', 'getWeather'],
+        toolsUsed: ['searchDestinations', 'getWeather', 'calculateBudget'],
         confidence: 'grounded',
       ),
     );

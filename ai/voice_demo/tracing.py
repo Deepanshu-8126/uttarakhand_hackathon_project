@@ -51,6 +51,17 @@ Backend = Literal[
 ]
 
 
+def is_tracing_enabled() -> bool:
+    """Check if LangSmith tracing is explicitly enabled with a valid API key."""
+    api_key = os.environ.get("LANGSMITH_API_KEY")
+    return bool(
+        api_key
+        and api_key.strip() != ""
+        and os.environ.get("LANGSMITH_TRACING", "").lower() in ("true", "1", "on")
+        and os.environ.get("LANGCHAIN_TRACING_V2", "").lower() in ("true", "1", "on")
+    )
+
+
 def project_name_for(backend: Backend, override: str | None = None) -> str:
     if override:
         return override
@@ -64,18 +75,22 @@ def configure(backend: Backend, project: str | None = None) -> str:
     Returns the resolved project name so callers can pass it to
     `configure_google_adk(project_name=...)` etc.
     """
-    api_key = os.environ.get("LANGSMITH_API_KEY")
+    import logging
+    import warnings
+
+    # Silence any LangSmith beta warnings or background ingest noise
+    warnings.filterwarnings("ignore", module="langsmith")
+    logging.getLogger("langsmith").setLevel(logging.CRITICAL)
+    logging.getLogger("langsmith.client").setLevel(logging.CRITICAL)
+
     project_name = project_name_for(backend, project)
 
-    tracing_enabled = (
-        api_key
-        and api_key.strip() != ""
-        and os.environ.get("LANGSMITH_TRACING", "").lower() not in ("false", "0", "off")
-        and os.environ.get("LANGCHAIN_TRACING_V2", "").lower() not in ("false", "0", "off")
-    )
-    if not tracing_enabled:
+    if not is_tracing_enabled():
         os.environ["LANGSMITH_TRACING"] = "false"
         os.environ["LANGCHAIN_TRACING_V2"] = "false"
+        # Avoid setting empty or invalid API key that triggers LangSmith background worker
+        if not os.environ.get("LANGSMITH_API_KEY"):
+            os.environ.pop("LANGSMITH_API_KEY", None)
         print(
             f"[voice-demo] Running '{backend}' (LangSmith tracing disabled).",
             file=sys.stderr,
@@ -83,28 +98,12 @@ def configure(backend: Backend, project: str | None = None) -> str:
         return project_name
 
     # Used by both the SDK (LANGSMITH_PROJECT) and explicit RunTree(project_name=...) callers.
-    os.environ.setdefault("LANGSMITH_TRACING", "true")
+    os.environ["LANGSMITH_TRACING"] = "true"
     os.environ["LANGSMITH_PROJECT"] = project_name
 
-    # No OTLP env wiring is needed: the OTEL backends (LiveKit, Pipecat) export
-    # through the LangSmith SDK integrations' own exporter, which derives the
-    # endpoint + auth headers from the standard LANGSMITH_* config above. (ADK
-    # and OpenAI are SDK-traced via RunTree and likewise need only the API key.)
-
     if backend in ("livekit-with-langgraph", "pipecat-with-langgraph"):
-        # These backends run a LangGraph agent as their LLM "brain". Put the
-        # LangSmith SDK in OTel mode so the langchain/langgraph runs emit through
-        # the shared global TracerProvider instead of posting straight to the
-        # LangSmith API — so they inherit the active OTel context and nest UNDER
-        # the framework's `llm` span (LiveKit's `llm_node` / Pipecat's `llm`)
-        # rather than forming a separate top-level trace. The framework
-        # integration (`configure_livekit` / `configure_pipecat`) has already
-        # registered that global provider with the LangSmith span processor, so
-        # the graph's spans land in the same project and trace as the voice
-        # pipeline. (Every other backend traces natively — via RunTree, or via a
-        # framework OTel span it doesn't feed langchain runs into — so none needs
-        # this.)
         os.environ.setdefault("LANGSMITH_TRACING_MODE", "otel")
 
     print(f"[voice-demo] LangSmith project: {project_name}", file=sys.stderr)
     return project_name
+

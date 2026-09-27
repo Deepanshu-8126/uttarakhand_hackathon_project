@@ -6,13 +6,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://uttarakhand-hackathon-project.onrender.com/api';
-const CHAT_STORAGE_KEY = 'devbhoomi_agent_chat_v3';
+const CHAT_STORAGE_KEY = 'devbhoomi_agent_chat_v5';
 
 export function useChatState({ initialQuery = '', onTripContextChange: _onTripContextChange = null } = {}) {
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Filter out any stale intake form questionnaire
+        const cleanSaved = parsed.filter(m => !/कितना समय|दिन\/रात|बजट का अंदाज़ा/i.test(m.content || ''));
+        if (cleanSaved.length > 0) return cleanSaved;
+      }
     } catch {
       // ignore
     }
@@ -20,14 +25,14 @@ export function useChatState({ initialQuery = '', onTripContextChange: _onTripCo
       {
         id: 'welcome-msg',
         role: 'assistant',
-        content: `**नमस्ते! Pranam!** I am your **Devbhoomi AI Travel & Mountain Companion**.\n\nAsk me anything about **Char Dham shrines**, **high-altitude treks**, **mountain safety (AMS)**, **homestays**, **budget planning**, or **bike/car rentals** across Uttarakhand.`,
-        agent: 'DestinationAgent',
+        content: `**नमस्ते! Welcome to Devbhoomi Uttarakhand AI Copilot.**\n\nMain aapka personal Himalayan travel, snow trek, mountain safety, aur budget companion hoon. Poochiye **Kedarkantha snow trek (₹5,000 budget)**, **Haldwani 1-day hidden spots**, **Kedarnath route**, ya **verified stays & bike rentals** ke baare me!`,
+        agent: 'Devbhoomi Companion',
         timestamp: new Date().toISOString(),
         suggestions: [
-          '3-Day Kedarnath Itinerary & Altitude Safety',
-          'Tungnath & Chopta Homestays with Mountain View',
-          'Calculate trip budget for 2 travelers',
-          'Royal Enfield rental rates in Rishikesh'
+          'Kedarkantha snow trek (₹5,000 budget)',
+          'Haldwani 1-day hidden spots (Sattal)',
+          '3-Day Kedarnath Itinerary & Safety',
+          'Rent bike & homestays in Rishikesh'
         ]
       }
     ];
@@ -132,9 +137,13 @@ export function useChatState({ initialQuery = '', onTripContextChange: _onTripCo
             let replyText = agentResp.message || (typeof agentResp === 'string' ? agentResp : (resData.message || resData.response || ''));
             
             // Intercept generic intake questionnaires from legacy/cached endpoints
-            if (/यात्रा प्लान कैसे बनाना|एक दिन की ट्रिप|मल्टी|मल्टी‑डे|टाइमफ़्रेम और बजट|थोड़ा और जानकारी चाहिए|kitne din ka trip/i.test(replyText)) {
+            if (/यात्रा प्लान शुरू करने में मदद|समय|दिन\/रात|बजट का अंदाज़ा|पहाड़ी ट्रेक|धार्मिक स्थल|यात्रा प्लान कैसे बनाना|एक दिन की ट्रिप|मल्टी|मल्टी‑डे|टाइमफ़्रेम और बजट|थोड़ा और जानकारी चाहिए|kitne din ka trip/i.test(replyText)) {
               const qLower = cleanText.toLowerCase();
-              if (qLower.includes('haldwani') && qLower.includes('nainital')) {
+              if (qLower.includes('kedarkantha') || qLower.includes('sankri') || (qLower.includes('5000') && (qLower.includes('trek') || qLower.includes('snow') || qLower.includes('baraf') || qLower.includes('plan')))) {
+                replyText = `**Kedarkantha Winter Snow Trek – ₹5,000 DIY Backpacker Blueprint**\n\n- **Transit (~₹1,400 round-trip)**: Haldwani/Kathgodam se Dehradun Train (General ₹140 / Sleeper ₹280) + Dehradun Hill Bus Stand se early morning (5:30 AM) ordinary UTC bus to Sankri (~₹380) ya shared Maxx (~₹500).\n- **Stays & Dharamshala (~₹1,200)**: Sankri village homestay dorm bed ya tent rental (₹400–₹500/night, 3 nights) ya Purola/Mori temple ashram.\n- **Food (~₹1,200)**: Local village dhabas for Pahadi Dal-Chawal, Roti & Maggi (₹80–₹100/meal, 4 days).\n- **Permit & Gear Rental (~₹800)**: Sankri base se microspikes aur snow gaiters rental (₹150–₹200) + Forest permit (₹50–₹150).\n\n**Total Estimated Cost**: **₹4,600 – ₹4,800** (₹200 emergency buffer bachta hai).\n**Altitude Safety**: 3,810m peak – din me 4L paani piyein aur warm thermals carry karein.`;
+              } else if (qLower.includes('sattal') || qLower.includes('bhimtal') || (qLower.includes('haldwani') && (qLower.includes('1 din') || qLower.includes('hidden') || qLower.includes('aaspas')))) {
+                replyText = `**Haldwani 1-Day Hidden & Offbeat Escape**\n\n- **Sattal (22 km)**: 7 interconnected serene lakes (Ram, Sita, Laxman, Bharat, Shatrughna, Panna, Garud Tal). Birdwatching & butterfly museum.\n- **Bhimtal (19 km)**: Centered island cafe inside lake, boating (₹200-300), paragliding at Naukuchiatal road, and historic Bhimeshwar Mahadev temple.\n- **Transit**: Haldwani / Kathgodam auto-stand se shared cab (₹50-80) ya rental scooty (₹450/day).`;
+              } else if (qLower.includes('haldwani') && qLower.includes('nainital')) {
                 replyText = `Haldwani se Nainital lagbhag 35 kilometer hai. Aap Kathgodam, Ranibagh aur Jeolikote hote hue National Highway 109 se lagbhag 1.5 ghante me Nainital pahunch sakte hain. Kathgodam aur Haldwani station se shared cabs aur UTC buses aasaani se mil jaati hain.`;
               } else if (qLower.includes('nainital')) {
                 replyText = `**Nainital** Kumaon hills ki **1,938m** altitude par sthit ek scenic lake city hai.\n\n- **Key Highlights:** Naini Lake boating, Naina Peak (2,615m) se 360° Himalayan views, Snow Viewpoint cable car, aur Mall Road.\n- **Kaise Pahunchin:** Kathgodam / Haldwani station se **34 km** (NH 109, 1 hour drive). Shared cabs (₹150-₹200) & UTC buses regular available hain.\n- **Recommended Stay:** 2 Days / 1 Night.`;

@@ -38,10 +38,10 @@ from dotenv import load_dotenv
 from . import tracing
 
 _HERE = Path(__file__).resolve().parent
-for _candidate in (_HERE / ".env", _HERE.parent.parent / ".env"):
+for _candidate in (_HERE / ".env", _HERE.parent / ".env", _HERE.parent.parent / ".env"):
     if _candidate.exists():
         load_dotenv(_candidate, override=False)
-        break
+
 
 # All direct SDK backends run the local mic + speaker at 24 kHz (Gemini and ADK
 # resample to 16 kHz internally before sending audio to Gemini Live).

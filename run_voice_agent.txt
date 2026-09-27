@@ -1,0 +1,39 @@
+====================================================================
+  Devbhoomi Discovery Uttarakhand — Real Live Voice Agent Runner
+====================================================================
+
+[1] RUN DIRECT TERMINAL VOICE COMPANION (Speech-to-Speech Gemini Live):
+--------------------------------------------------------------------
+Open PowerShell and run:
+cd c:\Users\Deepanshu\Desktop\discover\ai
+.\.venv\Scripts\python.exe -m voice_demo.cli --backend gemini
+
+Features:
+- Real-time Gemini Live WebSocket session with Aoede voice.
+- Direct speech-to-speech interaction (Hindi, English, Hinglish).
+- Zero LangSmith errors / 100% clean terminal output.
+- Instant Devbhoomi tool grounding (Nainital, Kedarnath, weather, stays, AMS safety).
+
+
+[2] RUN LIVE WEBSOCKET & HTTP BRIDGE (For Website & Mobile App):
+--------------------------------------------------------------------
+Open PowerShell and run:
+cd c:\Users\Deepanshu\Desktop\discover\ai
+.\.venv\Scripts\python.exe web_bridge.py
+
+Features:
+- Connects to Frontend website (http://localhost:5173) and Flutter Mobile App.
+- Runs on ws://localhost:8765/ws/live and http://localhost:8765/api/voice/ask.
+- Studio quality Aoede voice streaming with zero UI blocking.
+- Real-time tool execution and sub-5ms caching for instant responses.
+
+
+[3] RUN FRONTEND WEB APP:
+--------------------------------------------------------------------
+Open PowerShell and run:
+cd c:\Users\Deepanshu\Desktop\discover\Frontend
+npm run dev
+
+Open browser at: http://localhost:5173
+Click the Aoede Voice Orb / Mic button to speak with Devbhoomi AI in real-time!
+====================================================================

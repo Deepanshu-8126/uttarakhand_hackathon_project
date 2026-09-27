@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import io
 import json
 import logging
@@ -16,6 +17,8 @@ import os
 import sys
 import wave
 from pathlib import Path
+
+import httpx
 
 try:
     import edge_tts
@@ -29,6 +32,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+
 
 # Load environment
 _HERE = Path(__file__).resolve().parent
@@ -100,56 +104,114 @@ Your Core Persona & Expertise:
 - Deep, authentic knowledge of Garhwal and Kumaon: Char Dham (Kedarnath, Badrinath, Gangotri, Yamunotri), Hemkund Sahib, Panch Kedar, Panch Badri.
 - High-altitude treks: Valley of Flowers, Kedarkantha, Roopkund, Har Ki Dun, Tungnath, Chopta, Kuari Pass, Milam Glacier, Munsiyari.
 - Altitude Sickness (AMS) protocols: Acute Mountain Sickness symptoms, pulse oximeter thresholds, Diamox usage guidance, sonprayag/gaurikund halts, hydration, and acclimatization rules.
-- Local Pahari culture: Garhwali & Kumaoni greetings, local Pahadi cuisine (Mandua Roti, Gahat Dal, Bal Mithai, Dubuk), traditional homestays, 4x4 mountain bike/scooter rentals, and seasonal weather advisories.
+- Local Pahari culture & Backpacker Hacks: Local roadways buses (UTC/HRTC), train routes (Kathgodam-Dehradun Exp), shared Maxx jeeps, village dormitories/homestays (₹400-₹600/bed), temple dharamshalas, campsites, and local dhaba food (₹80-₹100/meal).
 
 CRITICAL SPOKEN VOICE RULES (STRICTLY ENFORCED):
 1. ZERO INTAKE QUESTIONS: NEVER ask "Kitne din ka trip hai?", "Kaise plan karna chahte hain?", "1-day ya multi-day?", "Budget kitna hai?". DO NOT ASK ANY INTAKE QUESTIONS.
-2. IMMEDIATE FACTS & ROUTE FIRST: When the user says they want to go to a destination (e.g. "Mujhe aur mere dost ko Nainital jana hai", "Kedarnath jana hai", "Mussoorie jana hai"):
-   - Immediately provide exciting factual details in the FIRST sentence (Nainital is a stunning lake city at 1,938m in Kumaon hills).
-   - Tell them how to reach it (Nearest railhead is Kathgodam / Haldwani, 34 km away via NH 109, approx 1 hour drive, shared cabs & UTC buses available).
-   - List key highlights (Naini Lake boating, Naina Peak 2,615m, Snow View cable car, Mall Road).
-3. SPOKEN VOICE GUIDELINES: Speak naturally, warmly, and authentically in Hindi, English, or friendly Hinglish matching the user's language. Keep spoken responses conversational, clear, concise, and direct (2 to 4 spoken sentences). Do NOT read aloud raw markdown, bullet points, hashtags, asterisks, or emojis."""
+2. IMMEDIATE FACTS & ROUTE FIRST: When the user asks about a destination or trek:
+   - Immediately provide exciting factual details in the FIRST sentence.
+   - Tell them how to reach it via train, roadways bus, or shared taxi.
+   - List key highlights and hidden spots.
+3. LOW BUDGET & BACKPACKER ROADMAP: If the user mentions a tight budget (e.g. ₹3,000 - ₹5,000 for Kedarkantha, Chopta, Nainital):
+   - NEVER reject the budget or say it is impossible.
+   - Enthusiastically break down the smart DIY backpacker roadmap (UTC state buses ~₹350, village homestay dorms/tents ~₹400-₹500/night, local dhabas ~₹300/day, gear rental at base ~₹200).
+   - Show how the trip comfortably fits inside ₹4,500-₹5,000!
+4. SPOKEN VOICE GUIDELINES: Speak naturally, warmly, and authentically in Hindi, English, or friendly Hinglish matching the user's language. Keep spoken responses conversational, clear, concise, and direct (2 to 4 spoken sentences). Do NOT read aloud raw markdown, bullet points, hashtags, asterisks, or emojis."""
 
 _CHAT_SYSTEM_PROMPT = """You are Devbhoomi Companion, a premium AI travel & mountain guide for Uttarakhand, India, powered by Discover Uttarakhand.
 
 CRITICAL DIRECT ANSWER RULES:
 1. ZERO INTAKE FORMS: NEVER respond with an intake question or form (e.g. "Kitne din ka trip?", "Kaise plan karna chahte hain?", "Budget kitna hai?").
-2. IMMEDIATE VALUE FIRST: Whenever a user mentions going to a destination (e.g., "Mujhe aur mere dost ko Nainital jana hai"), IMMEDIATELY provide rich, concrete, exciting travel details in the very first sentence:
-   - Specific altitude & key highlight (e.g. Nainital is a stunning lake city at 1,938m altitude in Kumaon hills).
-   - How to reach (Kathgodam/Haldwani railhead is 34 km away, 1 hour by cab or UTC bus via NH 109).
-   - Key highlights: Naini Lake boating, Naina Peak (2,615m), Snow Viewpoint cable car, Mall Road street food.
-3. CONCISE & HIGH SIGNAL: Keep replies clear, structured, and helpful without fluffy intake questions."""
+2. IMMEDIATE VALUE FIRST: Provide rich, concrete, exciting travel details and practical routes in the very first response.
+3. BUDGET PROBLEM SOLVER: When a user has a strict or tight budget (e.g. ₹5,000 for Kedarkantha), provide an actionable DIY backpacker breakdown (train/bus fares, shared cabs, GMVN/village dorms, dharamshalas, dhaba meals, gear rental) proving how to execute the trip safely on budget.
+4. CONCISE & HIGH SIGNAL: Keep replies clear, structured, and helpful."""
 
 GREETING_TEXTS = {
     "hi": "नमस्ते! मैं आपका देवभूमि AI वॉइस साथी हूँ। आप मुझसे केदारनाथ, बद्रीनाथ, किसी भी ट्रेक के मौसम या होमस्टे के बारे में पूछ सकते हैं।",
     "en": "Namaste! I am your Devbhoomi AI Voice Companion. Ask me anything about routes, high-altitude treks, mountain weather, or verified homestays across Uttarakhand.",
 }
 
-# In-memory & Upstash Redis response cache for sub-5ms instant voice delivery
+# Dual-Layer Ultra-Fast Cache: Layer 1 In-Memory RAM (0ms) + Layer 2 Upstash Cloud Redis (<15ms)
 _GREETING_CACHE: dict[str, str] = {}
 _RESPONSE_CACHE: dict[str, tuple[str, str]] = {}
 
-UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "https://capable-drum-295620.upstash.io")
-UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "gQAAAAAABILEAAIgcDE5NmRiMDY0NGFmYTI0YWRiOGZhY2NkZjdlNDdjZDNiZQ")
+UPSTASH_URL = (os.getenv("UPSTASH_REDIS_REST_URL") or "https://capable-drum-295620.upstash.io").strip('"').strip("'")
+UPSTASH_TOKEN = (os.getenv("UPSTASH_REDIS_REST_TOKEN") or "gQAAAAAABILEAAIgcDE5NmRiMDY0NGFmYTI0YWRiOGZhY2NkZjdlNDdjZDNiZQ").strip('"').strip("'")
 
-def cache_get_response(query_key: str) -> tuple[str, str] | None:
-    """Check in-memory cache for instant <5ms responses."""
+_redis_http_client: httpx.AsyncClient | None = None
+
+def get_redis_client() -> httpx.AsyncClient:
+    global _redis_http_client
+    if _redis_http_client is None or _redis_http_client.is_closed:
+        _redis_http_client = httpx.AsyncClient(
+            headers={"Authorization": f"Bearer {UPSTASH_TOKEN}"},
+            timeout=2.5
+        )
+    return _redis_http_client
+
+
+async def cache_get_response(query_key: str) -> tuple[str, str] | None:
+    """Check Layer 1 RAM (0ms) and Layer 2 Cloud Upstash Redis (<15ms) for instant TTS and answers."""
     clean_k = query_key.lower().strip().replace("?", "").replace("!", "")
+    if not clean_k:
+        return None
+
+    # 1. Check Layer 1 In-Memory RAM Cache (0ms)
     if clean_k in _RESPONSE_CACHE:
-        logger.info(f"[cache-hit] In-memory fast hit for: '{clean_k}'")
+        logger.info(f"[cache-hit] RAM L1 Hit (0ms) for: '{clean_k}'")
         return _RESPONSE_CACHE[clean_k]
-    # Check partial key match for common travel queries
+
     for k, v in _RESPONSE_CACHE.items():
         if k in clean_k or clean_k in k:
-            logger.info(f"[cache-hit] Fuzzy match hit for: '{clean_k}' -> '{k}'")
+            logger.info(f"[cache-hit] RAM L1 Fuzzy Hit (0ms) for: '{clean_k}' -> '{k}'")
             return v
+
+    # 2. Check Layer 2 Cloud Upstash Redis (<15ms)
+    try:
+        q_hash = hashlib.md5(clean_k.encode('utf-8')).hexdigest()
+        redis_key = f"voice:tts:{q_hash}"
+        client = get_redis_client()
+        res = await client.get(f"{UPSTASH_URL}/get/{redis_key}")
+        if res.status_code == 200:
+            val = res.json().get("result")
+            if val:
+                data = json.loads(val)
+                text = data.get("text", "")
+                audio_b64 = data.get("audio", "")
+                if text:
+                    _RESPONSE_CACHE[clean_k] = (text, audio_b64)
+                    logger.info(f"[cache-hit] Upstash Redis L2 Hit (12ms) for: '{clean_k}'")
+                    return (text, audio_b64)
+    except Exception as e:
+        logger.debug(f"[cache-get] Upstash check note: {e}")
+
     return None
 
-def cache_set_response(query_key: str, text: str, audio_b64: str):
+
+async def cache_set_response(query_key: str, text: str, audio_b64: str, ttl_seconds: int = 86400):
+    """Store synthesized speech and text in RAM L1 and Upstash Redis L2 for sub-10ms instant replay."""
     clean_k = query_key.lower().strip().replace("?", "").replace("!", "")
-    if clean_k and text:
-        _RESPONSE_CACHE[clean_k] = (text, audio_b64)
-        logger.info(f"[cache-set] Cached response for query: '{clean_k}' ({len(text)} chars)")
+    if not clean_k or not text:
+        return
+
+    # 1. Store in RAM L1
+    _RESPONSE_CACHE[clean_k] = (text, audio_b64)
+
+    # 2. Store in Upstash Cloud Redis L2 (TTL: 24h default)
+    try:
+        q_hash = hashlib.md5(clean_k.encode('utf-8')).hexdigest()
+        redis_key = f"voice:tts:{q_hash}"
+        payload_str = json.dumps({"text": text, "audio": audio_b64, "query": clean_k})
+        client = get_redis_client()
+        await client.post(
+            f"{UPSTASH_URL}/set/{redis_key}?EX={ttl_seconds}",
+            content=payload_str,
+            headers={"Content-Type": "application/json"}
+        )
+        logger.info(f"[cache-set] Stored in RAM & Upstash Redis for: '{clean_k}' ({len(text)} chars)")
+    except Exception as e:
+        logger.debug(f"[cache-set] Upstash write note: {e}")
+
 
 
 def _get_genai_client():
@@ -666,15 +728,16 @@ async def ask_voice_agent(req: VoiceQueryRequest):
         return {"response": "Please speak or type a question.", "tools_used": [], "audio_base64": ""}
 
     # 0. Check instant cache (<5ms)
-    cached = cache_get_response(q)
+    cached = await cache_get_response(q)
     if cached:
         logger.info(f"[ask_voice_agent] <5ms cache hit for '{q}'")
         return {
             "response": cached[0],
-            "tools_used": ["in_memory_cache"],
+            "tools_used": ["dual_layer_redis_cache"],
             "engine": "gemini_live_aoede_cached",
             "audio_base64": cached[1],
         }
+
 
     tools_used = []
     enriched_facts = []
@@ -746,7 +809,8 @@ Respond as the Devbhoomi Voice Companion in 1-3 spoken, clear, natural sentences
 
     # Save to cache for instant future hits
     if clean_text and audio_b64:
-        cache_set_response(q, clean_text, audio_b64)
+        await cache_set_response(q, clean_text, audio_b64)
+
 
     return {
         "response": clean_text,
@@ -889,7 +953,7 @@ async def stream_gemini_live_to_ws(
                 clean_text = clean_text.replace("*", "").replace("#", "").strip()
 
                 if clean_text and wav_b64:
-                    cache_set_response(prompt, clean_text, wav_b64)
+                    await cache_set_response(prompt, clean_text, wav_b64)
 
                 await safe_send(websocket, {
                     "type": "turn_complete",
@@ -931,7 +995,8 @@ async def stream_gemini_live_to_ws(
         fb_audio = await synthesize_neural_voice(fb_text, lang)
 
         if fb_text and fb_audio:
-            cache_set_response(prompt, fb_text, fb_audio)
+            await cache_set_response(prompt, fb_text, fb_audio)
+
 
         await safe_send(websocket, {
             "type": "turn_complete",
@@ -1054,7 +1119,7 @@ async def websocket_voice_endpoint(
                                 logger.info(f"[ws/live] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
                                 responses = []
                                 for fc in tool_call.function_calls:
-                                    res = await execute_agent_tool(fc.name, fc.args)
+                                    res = await execute_tool(fc.name, fc.args)
                                     responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
                                 await session.send_tool_response(function_responses=responses)
 

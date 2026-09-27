@@ -118,23 +118,33 @@ router.post('/ask', async (req, res) => {
 
     // 4. Fallback to Python AI Studio Voice Bridge if ElevenLabs is not set or failed
     if (!audio_base64) {
-      const pythonUrl = process.env.PYTHON_AI_URL || 'http://127.0.0.1:8000';
-      try {
-        const pyRes = await fetch(`${pythonUrl}/api/voice/ask`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: userQuery, lang: lang || 'hi' }),
-          signal: AbortSignal.timeout(5000)
-        });
-        if (pyRes.ok) {
-          const pyData = await pyRes.json();
-          if (pyData.audio_base64) {
-            audio_base64 = pyData.audio_base64;
-            engine = pyData.engine || 'gemini_live_aoede';
+      const candidates = [
+        process.env.PYTHON_AI_URL,
+        'http://127.0.0.1:8765',
+        'http://localhost:8765',
+        'http://127.0.0.1:8000'
+      ].filter(Boolean);
+
+      for (const pythonUrl of candidates) {
+        try {
+          const pyRes = await fetch(`${pythonUrl}/api/voice/ask`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: userQuery, lang: lang || 'hi' }),
+            signal: AbortSignal.timeout(4000)
+          });
+          if (pyRes.ok) {
+            const pyData = await pyRes.json();
+            if (pyData.audio_base64) {
+              audio_base64 = pyData.audio_base64;
+              engine = pyData.engine || 'gemini_live_aoede';
+              break;
+            }
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
     }
+
 
     const responsePayload = {
       success: true,

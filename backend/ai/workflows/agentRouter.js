@@ -10,7 +10,8 @@ import { BudgetAgent } from "../agents/BudgetAgent.js";
 import { SafetyAgent } from "../agents/SafetyAgent.js";
 import { RentalAgent } from "../agents/RentalAgent.js";
 import { FestivalAgent } from "../agents/FestivalAgent.js";
-import { OmniRouteProvider } from "../../services/ai/providers/OmniRouteProvider.js";
+import { GroqProvider } from "../../services/ai/providers/GroqProvider.js";
+import { GeminiProvider } from "../../services/ai/providers/GeminiProvider.js";
 
 const AGENT_MAP = {
   PlannerAgent,
@@ -93,20 +94,26 @@ export class AgentRouter {
 
     let synthesizedText = "";
     try {
+      const systemPrompt = `${agentResult.systemPrompt}\n\nGrounding Data:\n${JSON.stringify(agentResult.data, null, 2)}\n\nContext Entities:\n${JSON.stringify(session.entities)}`;
       const messagesForLlm = [
-        { role: "system", content: `${agentResult.systemPrompt}\n\nGrounding Data:\n${JSON.stringify(agentResult.data, null, 2)}\n\nContext Entities:\n${JSON.stringify(session.entities)}` },
-        ...session.history.slice(-4),
+        ...session.history.slice(-4).map(h => ({
+          role: h.role === "assistant" ? "assistant" : "user",
+          content: h.content || ""
+        })),
         { role: "user", content: message }
       ];
 
-      const llmResult = await OmniRouteProvider.generate({
-        messages: messagesForLlm,
-        temperature: 0.7,
-        maxTokens: 600
-      });
-
-      synthesizedText = llmResult.text || "";
+      if (process.env.GROQ_API_KEY && process.env.GROQ_ENABLED !== 'false') {
+        const groq = new GroqProvider();
+        const res = await groq.chat(systemPrompt, messagesForLlm, []);
+        synthesizedText = res.text || "";
+      } else if (process.env.GEMINI_API_KEY) {
+        const gemini = new GeminiProvider();
+        const res = await gemini.chat(systemPrompt, messagesForLlm, []);
+        synthesizedText = res.text || "";
+      }
     } catch (llmErr) {
+      console.warn('[AgentRouter] LLM synthesis warning:', llmErr.message);
       synthesizedText = "";
     }
 

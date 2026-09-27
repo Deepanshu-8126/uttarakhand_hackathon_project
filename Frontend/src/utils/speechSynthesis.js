@@ -135,11 +135,12 @@ export function playAudioStream(audioSrc, { onStart, onEnd, onError } = {}) {
 export function speakText(text, { 
   lang = 'hi-IN', 
   rate = 0.95, 
-  pitch = 1.0, 
+  pitch = 1.0,
   onStart, 
   onEnd, 
   onError 
 } = {}) {
+
   // Cancel any ongoing utterance or audio stream
   stopSpeaking();
 
@@ -187,19 +188,26 @@ export function speakText(text, {
 
     utterance.onerror = (e) => {
       activeUtterance = null;
+      // 'interrupted' or 'canceled' happens normally during new user speech or barge-in
+      if (e.error === 'interrupted' || e.error === 'canceled') {
+        return;
+      }
       if (onError) onError(e);
     };
 
     activeUtterance = utterance;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch (_) {}
       setTimeout(() => {
         try {
           window.speechSynthesis.resume();
           window.speechSynthesis.speak(utterance);
         } catch (_) {}
-      }, 50);
+      }, 60);
     }
+
   } catch (err) {
     if (onError) onError(err);
   }

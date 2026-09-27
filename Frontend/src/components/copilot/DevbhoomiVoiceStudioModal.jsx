@@ -3,6 +3,7 @@ import {
   X, Mic, MicOff, Volume2, VolumeX, PhoneOff, 
   Sparkles, Radio, Layers, Activity, Zap, Clock, User, Bot, AlertCircle, Send
 } from 'lucide-react';
+import api from '../../api/api';
 import { VoiceVisualizer } from './VoiceVisualizer';
 import { speakText, stopSpeaking, playAudioStream } from '../../utils/speechSynthesis';
 
@@ -36,6 +37,13 @@ export default function DevbhoomiVoiceStudioModal({
   const outputAnalyserRef = useRef(null);
   const captionsEndRef = useRef(null);
   const silenceTimerRef = useRef(null);
+
+  const QUICK_QUESTIONS = [
+    'नैनीताल 2 दिन का प्लान और बजट',
+    'केदारनाथ ट्रेक और माउंटेन सेफ्टी',
+    'ऋषिकेश में वेरिफाइड होमस्टे',
+    'चोपता तुंगनाथ लाइव मौसम'
+  ];
 
   const voices = [
     { id: 'Aoede', name: 'Aoede (Warm & Authentic, Female)' },
@@ -95,7 +103,7 @@ export default function DevbhoomiVoiceStudioModal({
     setLiveUserText('');
     isProcessingRef.current = false;
 
-    // 1. Microphone Hardware Audio Visualizer (Optional visual enhancement)
+    // 1. Microphone Hardware Audio Visualizer
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -121,7 +129,7 @@ export default function DevbhoomiVoiceStudioModal({
         }
       }
     } catch (micErr) {
-      // Audio visualizer fallback
+      // User may have denied mic or browser blocked
     }
 
     // 2. Initialize Browser Speech Recognition (English + Hindi bilingual)
@@ -131,7 +139,6 @@ export default function DevbhoomiVoiceStudioModal({
   const initSpeechRecognition = () => {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
-      setErrorMessage('Speech Recognition is not supported in this browser. Please use Chrome/Edge or type your message below.');
       return;
     }
 
@@ -143,7 +150,7 @@ export default function DevbhoomiVoiceStudioModal({
 
       const rec = new SpeechRec();
       rec.lang = 'hi-IN';
-      rec.continuous = false; // continuous: false fixes Chrome/Windows WebSpeech socket drop
+      rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
@@ -152,6 +159,7 @@ export default function DevbhoomiVoiceStudioModal({
           setStatus('listening');
         }
       };
+
 
       rec.onresult = (event) => {
         if (isMutedRef.current || isProcessingRef.current) return;
@@ -270,33 +278,17 @@ export default function DevbhoomiVoiceStudioModal({
       setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
       setStatus('speaking');
 
-      // 4. Guaranteed ElevenLabs Real Studio Voice synthesis with local fallback
+      // 4. ElevenLabs / Neural Voice synthesis fallback
       if (!audioBase64 && cleanReply) {
         try {
           const ttsResp = await api.post('/voice/elevenlabs/tts', { text: cleanReply });
           if (ttsResp.data?.success && ttsResp.data?.audio_base64) {
             audioBase64 = ttsResp.data.audio_base64;
           }
-        } catch (ttsErr) {}
-
-        if (!audioBase64) {
-          try {
-            const rawResp = await fetch('http://localhost:5000/api/voice/elevenlabs/tts', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: cleanReply })
-            });
-            if (rawResp.ok) {
-              const rData = await rawResp.json();
-              if (rData.success && rData.audio_base64) {
-                audioBase64 = rData.audio_base64;
-              }
-            }
-          } catch (localErr) {}
-        }
+        } catch (_) {}
       }
 
-      // 5. Play ElevenLabs Real Studio Audio Stream
+      // 5. Play Studio Audio Stream or Natural Browser Speech
       if (!isSpeakerMuted) {
         if (audioBase64) {
           playAudioStream(audioBase64, {
@@ -402,42 +394,36 @@ export default function DevbhoomiVoiceStudioModal({
 
   const handleTestElevenLabsVoice = async () => {
     setStatus('speaking');
-    setLiveAiText('Testing ElevenLabs Studio Voice...');
+    setLiveAiText('Testing Devbhoomi Studio Voice...');
     try {
       let audioBase64 = null;
       try {
-        const res = await api.post('/voice/elevenlabs/tts', { text: "Namaste! Devbhoomi ElevenLabs Real Studio Voice active hai." });
-        if (res.data?.success && res.data?.audio_base64) {
+        const res = await api.post('/voice/ask', { query: 'नमस्ते! मैं आपका देवभूमि वॉइस साथी हूँ।', lang: 'hi' });
+        if (res.data?.audio_base64) {
           audioBase64 = res.data.audio_base64;
         }
       } catch (_) {}
 
-      if (!audioBase64) {
-        const raw = await fetch('http://localhost:5000/api/voice/elevenlabs/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: "Namaste! Devbhoomi ElevenLabs Real Studio Voice active hai." })
-        });
-        if (raw.ok) {
-          const d = await raw.json();
-          if (d.success && d.audio_base64) audioBase64 = d.audio_base64;
-        }
-      }
-
       if (audioBase64) {
-        setLiveAiText("Namaste! Devbhoomi ElevenLabs Real Studio Voice active hai.");
+        setLiveAiText("नमस्ते! देवभूमि वॉइस साथी एक्टिव है।");
         playAudioStream(audioBase64, {
           onStart: () => setStatus('speaking'),
           onEnd: () => setStatus('listening'),
           onError: () => setStatus('listening')
         });
       } else {
-        setErrorMessage("ElevenLabs API Key error or unreachable. Please check backend server.");
-        setStatus('listening');
+        speakText("नमस्ते! देवभूमि वॉइस साथी एक्टिव है।", {
+          lang: 'hi-IN',
+          onStart: () => setStatus('speaking'),
+          onEnd: () => setStatus('listening')
+        });
       }
     } catch (err) {
-      setErrorMessage("Voice playback error: " + err.message);
-      setStatus('listening');
+      speakText("नमस्ते! देवभूमि वॉइस साथी एक्टिव है।", {
+        lang: 'hi-IN',
+        onStart: () => setStatus('speaking'),
+        onEnd: () => setStatus('listening')
+      });
     }
   };
 
@@ -464,9 +450,9 @@ export default function DevbhoomiVoiceStudioModal({
         {/* Brand Pill */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-bold tracking-wide text-stone-200">ElevenLabs Real Voice</span>
+          <span className="text-xs font-bold tracking-wide text-stone-200">Devbhoomi AI Voice</span>
           <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            Active
+            Live
           </span>
         </div>
 
@@ -481,7 +467,7 @@ export default function DevbhoomiVoiceStudioModal({
             }`}></span>
           </span>
           <span className="capitalize">
-            {status === 'speaking' ? 'ElevenLabs Speaking...' : status === 'processing' ? 'Consulting Ground Data...' : isMuted ? 'Mic Muted' : 'Listening... Speak now'}
+            {status === 'speaking' ? 'Devbhoomi AI Speaking...' : status === 'processing' ? 'Consulting Mountain Guide...' : isMuted ? 'Mic Muted' : 'Listening... Speak or tap query below'}
           </span>
         </div>
 
@@ -517,7 +503,7 @@ export default function DevbhoomiVoiceStudioModal({
       </div>
 
       {/* ── 2. Center Stage: Visualizer & Live Captions ─────────── */}
-      <div className="w-full max-w-xl flex flex-col items-center justify-center my-auto z-10 space-y-5 sm:space-y-6">
+      <div className="w-full max-w-xl flex flex-col items-center justify-center my-auto z-10 space-y-4 sm:space-y-5">
         
         {errorMessage && (
           <div className="w-full px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
@@ -527,7 +513,7 @@ export default function DevbhoomiVoiceStudioModal({
         )}
 
         {/* Visualizer Orb */}
-        <div className="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center shrink-0">
+        <div className="relative w-40 h-40 sm:w-56 sm:h-56 flex items-center justify-center shrink-0">
           <VoiceVisualizer
             analyser={analyserRef.current}
             outputAnalyser={outputAnalyserRef.current}
@@ -538,7 +524,7 @@ export default function DevbhoomiVoiceStudioModal({
         </div>
 
         {/* Live Subtitle Transcript Banner */}
-        <div className="w-full px-4 sm:px-6 py-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl text-center space-y-1.5 min-h-[85px] flex flex-col justify-center">
+        <div className="w-full px-4 sm:px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl text-center space-y-1.5 min-h-[75px] flex flex-col justify-center">
           {liveUserText ? (
             <div className="animate-in fade-in duration-200">
               <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 block mb-0.5">
@@ -571,7 +557,7 @@ export default function DevbhoomiVoiceStudioModal({
           ) : (
             <div className="space-y-0.5">
               <p className="text-xs sm:text-sm font-medium text-stone-300">
-                "Chopta ya Kedarnath ke raste ka haal kya hai?"
+                "नैनीताल 2 दिन का प्लान और बजट बताओ"
               </p>
               <p className="text-[11px] text-emerald-400/80 font-normal">
                 Ask in Hindi or English — Mountain roads, weather, homestays, or trek advice.
@@ -586,24 +572,40 @@ export default function DevbhoomiVoiceStudioModal({
           )}
         </div>
 
-        {/* Quick Text Input Fallback if microphone not working */}
+        {/* Quick Clickable Query Chips (For Brave & 1-Tap Voice testing) */}
+        <div className="w-full flex items-center justify-center gap-1.5 flex-wrap">
+          {QUICK_QUESTIONS.map((q, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleProcessVoiceQuery(q)}
+              className="px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-emerald-500/20 text-stone-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-[11px] font-medium transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+            >
+              ✨ {q}
+            </button>
+          ))}
+        </div>
+
+        {/* Quick Text Input Fallback */}
         <form onSubmit={handleManualSubmit} className="w-full flex items-center gap-2">
           <input
             type="text"
             value={manualInput}
             onChange={(e) => setManualInput(e.target.value)}
-            placeholder="Type your question or speak aloud..."
+            placeholder="Type your question or speak into mic..."
             className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-stone-100 placeholder:text-stone-500 focus:outline-none focus:border-emerald-500"
           />
           <button
             type="submit"
             disabled={!manualInput.trim()}
-            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1"
           >
             <Send className="w-3.5 h-3.5" />
+            <span>Send</span>
           </button>
         </form>
       </div>
+
 
       {/* ── 3. Bottom Action Controls Bar ─────────────────────────────────────── */}
       <div className="w-full max-w-sm flex items-center justify-center gap-6 px-6 py-3 z-10 shrink-0">

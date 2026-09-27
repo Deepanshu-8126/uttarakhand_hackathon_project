@@ -85,41 +85,29 @@ export default function CopilotMessage({ msg, onConfirm, onCancel, onSelectActio
           onEnd: () => setIsSpeaking(false),
           onError: () => fallbackSpeak()
         });
-        let audioSrc = null;
-        try {
-          const res = await api.post('/voice/elevenlabs/tts', { text: msg.text });
-          if (res.data && res.data.success && res.data.audio_base64) {
-            audioSrc = res.data.audio_base64;
-          }
-        } catch (_) {}
+        return;
+      }
 
-        if (!audioSrc) {
-          try {
-            const raw = await fetch('http://localhost:5000/api/voice/elevenlabs/tts', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: msg.text })
-            });
-            if (raw.ok) {
-              const d = await raw.json();
-              if (d.success && d.audio_base64) {
-                audioSrc = d.audio_base64;
-              }
-            }
-          } catch (_) {}
+      let audioSrc = null;
+      try {
+        const res = await api.post('/voice/elevenlabs/tts', { text: msg.text });
+        if (res.data && res.data.success && res.data.audio_base64) {
+          audioSrc = res.data.audio_base64;
         }
+      } catch (_) {}
 
-        if (audioSrc) {
-          playAudioStream(audioSrc, {
-            onStart: () => setIsSpeaking(true),
-            onEnd: () => setIsSpeaking(false),
-            onError: () => fallbackSpeak()
-          });
-          return;
-        }
-        fallbackSpeak();
+      if (audioSrc) {
+        playAudioStream(audioSrc, {
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false),
+          onError: () => fallbackSpeak()
+        });
+        return;
+      }
+      fallbackSpeak();
     }
   };
+
 
   const formatText = (text) => {
     if (!text) return "";

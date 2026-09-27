@@ -231,7 +231,7 @@ def get_altitude_safety_advice(destination_name: str) -> Dict[str, Any]:
     }
 
 def get_homestays(location: str) -> Dict[str, Any]:
-    """Search verified local homestays in Uttarakhand."""
+    """Search verified local homestays and budget backpacker stays in Uttarakhand."""
     q = location.lower().strip()
     stays = _load_json("stays.json")
     matches = []
@@ -247,7 +247,7 @@ def get_homestays(location: str) -> Dict[str, Any]:
                 "name": s.get("name"),
                 "city": s.get("city") or s.get("district"),
                 "category": s.get("category") or "Homestay",
-                "price": f"₹{amount}" if amount else "Affordable",
+                "price": f"Rs. {amount}" if amount else "Rs. 600-1200",
             })
             if len(matches) >= 3:
                 break
@@ -258,7 +258,10 @@ def get_homestays(location: str) -> Dict[str, Any]:
     return {
         "found": True,
         "homestays": [
-            {"name": f"Pahari Community Homestay near {location}", "city": location, "category": "Local Heritage Stay", "price": "₹1500-2500"}
+            {"name": f"Pahari Village Dorm & Homestay ({location})", "city": location, "category": "Budget Backpacker Dorm / Homestay", "price": "Rs. 400-600/bed"},
+            {"name": f"GMVN / KMVN Tourist Rest House & Campsite", "city": location, "category": "Govt Mountain Rest House", "price": "Rs. 500-900"},
+            {"name": f"Local Temple Ashram / Dharamshala", "city": location, "category": "Pilgrim / Backpacker Shelter", "price": "Rs. 200-400 (or voluntary donation)"}
         ]
     }
+
 

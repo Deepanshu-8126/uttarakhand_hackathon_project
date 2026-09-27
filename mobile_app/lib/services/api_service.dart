@@ -362,9 +362,34 @@ class ApiService {
       } catch (_) {}
     }
 
-    // Local Grounded 50+ Scenario Fallback (Offline Proof)
+    // Local Grounded 50+ Scenario Fallback (Offline Proof & Backpacker Intelligence)
     final lower = message.toLowerCase();
-    if (lower.contains('kedarnath') || lower.contains('badrinath') || lower.contains('temple') || lower.contains('char dham')) {
+    if (lower.contains('kedarkantha') || lower.contains('sankri') || (lower.contains('5000') && (lower.contains('trek') || lower.contains('snow') || lower.contains('plan'))) || lower.contains('baraf')) {
+      return {
+        'text':
+            '**Kedarkantha Winter Snow Trek – ₹5,000 DIY Backpacker Blueprint**:\n'
+            '- **Transit (~₹1,400 round-trip)**: Haldwani/Kathgodam se Dehradun Train (General ₹140 / Sleeper ₹280) + Dehradun Hill Bus Stand se early morning (5:30 AM) ordinary UTC bus to Sankri (~₹380) ya shared Maxx (~₹500).\n'
+            '- **Stays & Dharamshala (~₹1,200)**: Sankri village homestay dorm bed ya tent rental (₹400–₹500/night, 3 nights) ya Purola/Mori temple ashram.\n'
+            '- **Food (~₹1,200)**: Local village dhabas for Pahadi Dal-Chawal, Roti & Maggi (₹80–₹100/meal, 4 days).\n'
+            '- **Permit & Gear Rental (~₹800)**: Sankri base se microspikes aur snow gaiters rental (₹150–₹200) + Gov forest entry permit (₹50–₹150).\n'
+            '**Total Estimated Cost**: **₹4,600 – ₹4,800** (₹200 emergency buffer bachta hai).\n'
+            '**Safety Alert**: Elevation 3,810m. Din me 4L paani piyein aur warm thermals carry karein.',
+        'toolsUsed': ['calculateBudget', 'searchDestinations', 'getAltitudeSafetyAdvice'],
+        'confidence': 'grounded',
+        'suggestions': ['Sankri Homestays', 'Dehradun Bus Timetable', 'Gear Checklist', 'Emergency SOS'],
+      };
+    } else if (lower.contains('sattal') || lower.contains('bhimtal') || (lower.contains('haldwani') && (lower.contains('1 din') || lower.contains('hidden') || lower.contains('aaspas')))) {
+      return {
+        'text':
+            '**Haldwani 1-Day Hidden & Offbeat Escape**:\n'
+            '- **Sattal (22 km)**: 7 interconnected pristine freshwater lakes (Ram, Sita, Laxman, Bharat, Shatrughna, Panna, Garud Tal). Dense oak-pine forests, birdwatching & butterfly museum.\n'
+            '- **Bhimtal (19 km)**: Centered island cafe & aquarium inside the lake, boating (₹200-300), paragliding at Naukuchiatal road, and historic Bhimeshwar Mahadev temple.\n'
+            '- **Transit**: Haldwani / Kathgodam auto-stand se shared cab (₹50-80) ya rental scooty (₹450/day).',
+        'toolsUsed': ['searchDestinations', 'getWeather'],
+        'confidence': 'grounded',
+        'suggestions': ['Sattal Kayaking', 'Bhimtal Island Cafe', 'Scooty Rental', 'Garud Tal'],
+      };
+    } else if (lower.contains('kedarnath') || lower.contains('badrinath') || lower.contains('temple') || lower.contains('char dham')) {
       return {
         'text':
             '**Kedarnath & Char Dham Guidelines (Elevation 3,583m)**:\n- **Biometric Yatra Registration**: Mandatory at `registrationandtouristcare.uk.gov.in`.\n- **Route**: Rishikesh -> Devprayag -> Rudraprayag -> Sonprayag -> Gaurikund -> 16km trek.\n- **Daylight Rule**: Sunset ke baad (6 PM) mountain highway driving strictly prohibited.\n- **Stays**: GMVN Cottages aur verified tents Kedarnath Base camp par (₹1,000–₹2,500/night).',
@@ -416,10 +441,10 @@ class ApiService {
 
     return {
       'text':
-          'Namaste! Main Discovery Uttarakhand ka Pahadi AI Copilot hoon. Char Dham, Himalayan treks (Valley of Flowers, Kedarkantha, Chopta), road safety, verified homestays ya bike rentals ke bare me puchiye.',
+          'Namaste! Main Discovery Uttarakhand ka Pahadi AI Copilot hoon. Char Dham, Himalayan treks (Valley of Flowers, Kedarkantha, Chopta), road safety, budget backpacker plans, verified homestays ya bike rentals ke bare me puchiye.',
       'toolsUsed': ['searchDestinations'],
       'confidence': 'grounded',
-      'suggestions': ['Kedarnath Trek', 'Valley of Flowers', 'Auli Skiing', 'Rent Bike'],
+      'suggestions': ['Kedarkantha ₹5,000 Budget', 'Kedarnath Trek', 'Valley of Flowers', 'Rent Bike'],
     };
   }
 
