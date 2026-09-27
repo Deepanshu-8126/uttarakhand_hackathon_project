@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedFilter = 'All';
   String searchQuery = '';
   int activeSlide = 0;
+  Timer? _sliderTimer;
+  final PageController _pageController = PageController();
 
   final List<String> categories = ['All', 'Lakes', 'Spiritual', 'Snow', 'Adventure', 'Wildlife'];
 
@@ -40,6 +43,33 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _startSliderTimer();
+  }
+
+  void _startSliderTimer() {
+    _sliderTimer?.cancel();
+    _sliderTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!mounted) return;
+      final nextPage = (activeSlide + 1) % 4;
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeInOutCubic,
+        );
+      } else {
+        setState(() {
+          activeSlide = nextPage;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sliderTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -385,8 +415,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     ];
 
-    final currentSlide = heroSlides[activeSlide % heroSlides.length];
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -402,26 +430,103 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CachedNetworkImage(
-                imageUrl: currentSlide['image']!,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: const Color(0xFF09261C)),
-                errorWidget: (context, url, error) => Container(color: const Color(0xFF09261C)),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      const Color(0xFF09261C).withOpacity(0.92),
-                      const Color(0xFF09261C).withOpacity(0.35),
-                      Colors.transparent,
+              // 3-Second Auto-sliding PageView
+              PageView.builder(
+                controller: _pageController,
+                itemCount: heroSlides.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    activeSlide = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final slide = heroSlides[index];
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: slide['image']!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(color: const Color(0xFF09261C)),
+                        errorWidget: (context, url, error) => Container(color: const Color(0xFF09261C)),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              const Color(0xFF09261C).withOpacity(0.92),
+                              const Color(0xFF09261C).withOpacity(0.35),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF059669).withOpacity(0.90),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              ),
+                              child: Text(
+                                slide['tag']!,
+                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              slide['title']!,
+                              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                            ),
+                            Text(
+                              slide['subtitle']!,
+                              style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11, fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFF0F3D2E),
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                                  ),
+                                  onPressed: () => widget.onNavigateTab(3),
+                                  icon: const Icon(Icons.luggage, size: 14, color: Color(0xFF0F3D2E)),
+                                  label: const Text('PLAN JOURNEY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                                ),
+                                const SizedBox(width: 8),
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white60),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                                  ),
+                                  onPressed: () => widget.onNavigateTab(2),
+                                  child: const Text('VIEW RADAR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                ),
+                  );
+                },
               ),
-              // Slide Indicators
+
+              // Animated Top-Right Slide Indicators (3s Auto-Sync)
               Positioned(
                 top: 16,
                 right: 16,
@@ -429,76 +534,58 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: List.generate(
                     heroSlides.length,
                     (i) => GestureDetector(
-                      onTap: () => setState(() => activeSlide = i),
-                      child: Container(
+                      onTap: () {
+                        _pageController.animateToPage(
+                          i,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.only(left: 4),
-                        width: activeSlide % heroSlides.length == i ? 18 : 6,
+                        width: activeSlide == i ? 22 : 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: activeSlide % heroSlides.length == i ? const Color(0xFF34D399) : Colors.white54,
+                          color: activeSlide == i ? const Color(0xFF00FF88) : Colors.white54,
                           borderRadius: BorderRadius.circular(3),
+                          boxShadow: activeSlide == i
+                              ? [BoxShadow(color: const Color(0xFF00FF88).withOpacity(0.6), blurRadius: 6)]
+                              : null,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF059669).withOpacity(0.90),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+
+              // Bottom 3-Second Progress Bar Line Animation
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: SizedBox(
+                  height: 3,
+                  child: Stack(
+                    children: [
+                      Container(color: Colors.white.withOpacity(0.15)),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return AnimatedContainer(
+                            duration: const Duration(seconds: 3),
+                            curve: Curves.linear,
+                            width: constraints.maxWidth * ((activeSlide + 1) / heroSlides.length),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00FF88),
+                              boxShadow: [
+                                BoxShadow(color: Color(0xFF00FF88), blurRadius: 6),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                      child: Text(
-                        currentSlide['tag']!,
-                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      currentSlide['title']!,
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
-                    ),
-                    Text(
-                      currentSlide['subtitle']!,
-                      style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF0F3D2E),
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                          ),
-                          onPressed: () => widget.onNavigateTab(3),
-                          icon: const Icon(Icons.luggage, size: 14, color: Color(0xFF0F3D2E)),
-                          label: const Text('PLAN JOURNEY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white60),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                          ),
-                          onPressed: () => widget.onNavigateTab(2),
-                          child: const Text('VIEW RADAR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
