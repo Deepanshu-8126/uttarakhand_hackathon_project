@@ -535,15 +535,18 @@ async function _processAgenticTravelFlow({ message, tripContext, session, user, 
   }
 
   // 6. Trip Planning Flow & Multi-Turn State Machine
-  // Trigger slot-filling when user plans a trip, mentions travel intent, or provides slot answers in an active planning conversation
+  // Trigger slot-filling ONLY when user explicitly asks to generate/create/book a full itinerary or when slot-filling is already active
+  const isDirectRecommendationQuery = /(?:suggest|recommend|best trek|top trek|trek itinerary|best places|where to go|options)/i.test(clean);
   const isInformationalQuery = /(?:tell me about|information|timing|timings|history|kya hai|kaisa hai|baare me|kya dekh|mandir|temple|lake|waterfall|peak|trek guide|best time|story|facts|altitude)/i.test(clean);
-  const isExplicitPlanningIntent = /(?:itinerary banao|trip plan karo|plan my trip|pura plan banao|booking plan|itinerary create)/i.test(clean) ||
-                                   (clean.split(/\s+/).length <= 4 && /(?:plan|itinerary)\b/i.test(clean));
-  const isPlanningLanguage = /(?:trip|plan|jana hai|jaana hai|want to go|ghoomna|travel|bana do|chalo|start|where i can go|visit|itinerary)/i.test(lower);
+  const isExplicitPlanningIntent = /(?:itinerary banao|trip plan karo|plan my trip|pura plan banao|booking plan|itinerary create)/i.test(clean);
+  const isPlanningLanguage = /(?:jana hai|jaana hai|want to go|bana do|start my booking)/i.test(lower);
   const hasExtractedPlanningSlot = !!(entities.origin || entities.startDate || entities.duration || entities.travelers || entities.budget);
   const isSlotFillingInProgress = !!(session?.contextEntities?.destination && (hasExtractedPlanningSlot || session?.contextEntities?.origin || session?.contextEntities?.startDate));
 
-  const isPlanningIntent = ((isPlanningLanguage && !isInformationalQuery) || isExplicitPlanningIntent || isSlotFillingInProgress || (entities.destination && hasExtractedPlanningSlot));
+  // If origin and destination are identical (e.g. "trek starting from Rishikesh"), do not trigger confusing slot question
+  const isSameOriginDest = (entities.origin && entities.destination && entities.origin.toLowerCase() === entities.destination.toLowerCase());
+
+  const isPlanningIntent = !isDirectRecommendationQuery && !isSameOriginDest && ((isPlanningLanguage && !isInformationalQuery) || isExplicitPlanningIntent || isSlotFillingInProgress || (entities.destination && hasExtractedPlanningSlot && !isInformationalQuery));
 
   if (isPlanningIntent && !isInformationalQuery) {
     const dest = entities.destination || activeDest;
