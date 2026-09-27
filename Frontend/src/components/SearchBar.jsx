@@ -3,6 +3,7 @@ import { Search, X, MapPin, Sparkles, Navigation, Globe, CheckCircle2, Coins, Ar
 import { Link, useNavigate } from 'react-router-dom';
 import { placesApi } from '../api/placesApi';
 import UnverifiedPlaceModal from './map/UnverifiedPlaceModal';
+import { DESTINATION_NAMED_IMAGES, getHimalayanFallbackImage } from '../utils/imageHelpers';
 
 // ── Hindi / Transliteration & Category Normalizer ──
 function normalizeSearchQuery(input) {
@@ -353,7 +354,8 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
                   <ul className="divide-y divide-stone-100">
                     {verifiedList.map((dest, idx) => {
                       const loc = locationLabel(dest);
-                      const imageUrl = dest.coverImage?.url || dest.coverImage;
+                      const cleanSlug = dest.slug || (dest.name ? dest.name.toLowerCase().replace(/\s+/g, '-') : '');
+                      const imageUrl = DESTINATION_NAMED_IMAGES[cleanSlug] || DESTINATION_NAMED_IMAGES[dest.name?.toLowerCase()] || dest.coverImage?.url || dest.coverImage || getHimalayanFallbackImage(dest);
 
                       return (
                         <li key={dest._id || dest.id || `v_${idx}`} role="option" aria-selected={idx === activeIndex}>
@@ -364,10 +366,13 @@ const SearchBar = ({ value, onChange, destinations = [], onClear, onSelectPlace 
                           >
                             <div className="h-11 w-14 rounded-xl overflow-hidden bg-[#E8F5E9] shrink-0 border border-emerald-200/60 relative">
                               <img
-                                src={imageUrl || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80'}
+                                src={imageUrl}
                                 alt={dest.name}
                                 loading="lazy"
-                                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80'; }}
+                                onError={(e) => { 
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = getHimalayanFallbackImage(dest); 
+                                }}
                                 className="h-full w-full object-cover"
                               />
                             </div>

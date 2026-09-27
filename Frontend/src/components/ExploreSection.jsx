@@ -8,13 +8,15 @@ import Pagination from './common/Pagination';
 import { useDestinations } from '../hooks/useDestinations';
 import { placesApi } from '../api/placesApi';
 import { useMapStore } from '../store/mapStore';
+import { useFreshImage } from '../utils/images';
 import api from '../api/api';
 
 const ITEMS_PER_PAGE = 12;
 
-// ── Live Radar Place Card (Geoapify Dynamic Discovery) ──────────────────────
+// ── Live Radar Place Card (Geoapify Dynamic Discovery with Fresh Pexels/HD Photography) ──
 const LiveRadarPlaceCard = ({ place }) => {
-  const photo = place.photo_urls?.[0] || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+  const defaultPhoto = place.photo_urls?.[0] || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+  const photo = useFreshImage(place.name || place.slug, defaultPhoto);
   
   const handleAddToTrip = () => {
     useMapStore.getState().openAddToTripModal({
