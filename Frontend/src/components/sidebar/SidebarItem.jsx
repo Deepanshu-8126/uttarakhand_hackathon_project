@@ -3,6 +3,8 @@ import React from 'react';
 export default function SidebarItem({ id, label, icon: Icon, isActive, onClick, badge, count }) {
   return (
     <button
+      type="button"
+      id={id}
       onClick={onClick}
       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
         isActive
@@ -30,7 +32,9 @@ export default function SidebarItem({ id, label, icon: Icon, isActive, onClick, 
           </span>
         )}
         {count !== undefined && count > 0 && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
+          <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${
+            isActive ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-300'
+          }`}>
             {count}
           </span>
         )}
