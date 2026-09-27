@@ -348,24 +348,22 @@ const THEMATIC_PHOTOS = {
   ]
 };
 
-// ── 3. High-Resolution Verified Mountain Stays (Real Local Uttarakhand Assets) ─────────
+// ── 3. High-Resolution Verified Mountain Stays (100% Real Uttarakhand Photography) ─────────
 export const MOUNTAIN_STAY_IMAGES = [
   getAssetUrl('/assets/stay-1.jpg'),
   getAssetUrl('/assets/stay-2.jpg'),
   getAssetUrl('/assets/stay-3.jpg'),
-  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1000&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1000&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=1000&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1000&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=1000&auto=format&fit=crop'
+  getAssetUrl('/assets/stay-4.jpg'),
+  getAssetUrl('/assets/stay-5.jpg'),
+  getAssetUrl('/assets/stay-6.jpg')
 ];
 
 export const VEHICLE_RENTAL_IMAGES = [
   getAssetUrl('/assets/activa.jpg'),
-  getAssetUrl('/assets/activa-2.jpg'),
+  getAssetUrl('/assets/himalayan-bike.jpg'),
   getAssetUrl('/assets/pickup-1.jpg'),
-  getAssetUrl('/assets/pickup-2.jpg')
+  getAssetUrl('/assets/pickup-2.jpg'),
+  getAssetUrl('/assets/activa-2.jpg')
 ];
 
 // ── 4. Deterministic Hash for Unique Image Selection ──────────────────────────
@@ -387,11 +385,11 @@ export function getRealVehicleAsset(name = '', type = '') {
   if (n.includes('thar') || n.includes('scorpio') || n.includes('innova') || n.includes('safari') || n.includes('suv') || n.includes('xuv') || n.includes('fortuner') || n.includes('hector') || n.includes('harrier') || n.includes('duster') || n.includes('marazzo') || n.includes('xylo') || n.includes('ertiga')) {
     return getAssetUrl('/assets/pickup-2.jpg');
   }
-  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('jupiter') || n.includes('access') || n.includes('ntorq') || n.includes('fascino') || n.includes('vespa') || n.includes('burgman')) {
-    return getAssetUrl('/assets/activa.jpg');
+  if (n.includes('himalayan') || n.includes('royal enfield') || n.includes('classic') || n.includes('bullet') || n.includes('meteor') || n.includes('interceptor') || n.includes('xpulse') || n.includes('duke') || n.includes('pulsar') || n.includes('apache') || n.includes('mt-15') || n.includes('r15') || n.includes('bike') || n.includes('motorcycle')) {
+    return getAssetUrl('/assets/himalayan-bike.jpg');
   }
-  if (n.includes('himalayan') || n.includes('royal enfield') || n.includes('classic') || n.includes('bullet') || n.includes('meteor') || n.includes('interceptor') || n.includes('bike') || n.includes('motorcycle') || n.includes('xpulse') || n.includes('duke') || n.includes('pulsar') || n.includes('apache') || n.includes('mt-15') || n.includes('r15') || n.includes('splendor') || n.includes('shine')) {
-    return getAssetUrl('/assets/activa-2.jpg');
+  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('jupiter') || n.includes('access') || n.includes('ntorq') || n.includes('fascino') || n.includes('vespa') || n.includes('burgman') || n.includes('splendor') || n.includes('shine')) {
+    return getAssetUrl('/assets/activa.jpg');
   }
   
   return getAssetUrl('/assets/activa.jpg');

@@ -44,7 +44,7 @@
     "type": "Wildlife Jungle Lodge",
     "pricePerNight": "₹8,000",
     "rating": 4.8,
-    "image": "/assets/stay-1.jpg",
+    "image": "/assets/stay-4.jpg",
     "amenities": ["Kosi Riverbank Access", "Safari Booking Desk", "Swimming Pool", "Spa & Wellness", "Jungle Walks"]
   },
   {
@@ -56,7 +56,7 @@
     "type": "Pilgrim Rest House",
     "pricePerNight": "₹2,500",
     "rating": 4.5,
-    "image": "/assets/stay-2.jpg",
+    "image": "/assets/stay-5.jpg",
     "amenities": ["Walking Distance to Temple", "Pure Vegetarian Meals", "Geyser/Hot Water", "Alaknanda View"]
   },
   {
@@ -68,7 +68,7 @@
     "type": "Heritage Mountain Lodge",
     "pricePerNight": "₹11,000",
     "rating": 4.8,
-    "image": "/assets/stay-3.jpg",
+    "image": "/assets/stay-6.jpg",
     "amenities": ["Colonial Architecture", "Lake Views", "Fireplace Lounge", "Pine Forest Setting", "Live Music"]
   }
 ]

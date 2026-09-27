@@ -41,14 +41,14 @@ const REAL_STAY_PHOTO_BANKS = [
     getAssetUrl('/assets/stay-3.jpg')
   ],
   [
-    getAssetUrl('/assets/stay-2.jpg'),
-    getAssetUrl('/assets/stay-3.jpg'),
-    getAssetUrl('/assets/stay-1.jpg')
+    getAssetUrl('/assets/stay-4.jpg'),
+    getAssetUrl('/assets/stay-5.jpg'),
+    getAssetUrl('/assets/stay-6.jpg')
   ],
   [
-    getAssetUrl('/assets/stay-3.jpg'),
-    getAssetUrl('/assets/stay-1.jpg'),
-    getAssetUrl('/assets/stay-2.jpg')
+    getAssetUrl('/assets/stay-2.jpg'),
+    getAssetUrl('/assets/stay-4.jpg'),
+    getAssetUrl('/assets/stay-1.jpg')
   ]
 ];
 
