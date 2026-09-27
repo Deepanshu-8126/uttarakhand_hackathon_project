@@ -1,9 +1,4 @@
-"""LangGraph Agentic Brain for Devbhoomi Support (Shared between Voice & Text interfaces).
-
-Single source of truth graph: executes a ReAct agent equipped with Himalayan
-ground tools (weather, destinations, mountain safety, homestays, vehicle rentals,
-and favorites vault actions).
-"""
+"""LangGraph Agentic Brain for Devbhoomi Support (ai package)."""
 
 from __future__ import annotations
 
@@ -17,9 +12,8 @@ from typing import Any
 from dotenv import load_dotenv
 import httpx
 
-# Load env variables from root and ai directories
 _HERE = Path(__file__).resolve().parent
-for candidate in (_HERE / ".env", _HERE.parent / ".env", _HERE.parent / "ai" / ".env"):
+for candidate in (_HERE / ".env", _HERE.parent / ".env", _HERE.parent.parent / ".env"):
     if candidate.exists():
         load_dotenv(candidate, override=False)
 
@@ -35,8 +29,6 @@ CRITICAL DIRECT ANSWER RULES (STRICTLY ENFORCED):
    - Key highlights & safety advice (AMS precautions above 3,000m, hydration, daylight driving rules).
 3. ACTION AGENTIC SAVING: If user mentions saving a destination (e.g. Roopkund), guide contact, or bike rental, call `save_to_favorites_vault` tool to confirm vault persistence.
 4. SPOKEN VOICE & CONCISE TEXT: Keep responses clear, structured, natural, and helpful without fluffy intake forms."""
-
-# Grounded Himalayan Tools
 
 async def lookup_weather(location: str) -> dict[str, Any]:
     """Get live weather forecast and mountain road advisory for any Uttarakhand destination."""
@@ -64,7 +56,6 @@ async def lookup_weather(location: str) -> dict[str, Any]:
         "roadStatus": "Highways Operational",
         "safetyNotice": "Safe for travel.",
     }
-
 
 async def search_destinations(query: str) -> dict[str, Any]:
     """Search Uttarakhand destinations, altitudes, routes, and key highlights."""
@@ -101,7 +92,6 @@ async def search_destinations(query: str) -> dict[str, Any]:
         "highlights": ["Panoramic Himalayan Scenery", "Verdant Valleys", "Pahari Culture"],
     }
 
-
 async def save_to_favorites_vault(item_name: str, item_type: str) -> dict[str, Any]:
     """Save a destination, guide contact, trek, or rental into the user's permanent favorites vault."""
     return {
@@ -112,7 +102,6 @@ async def save_to_favorites_vault(item_name: str, item_type: str) -> dict[str, A
         "timestamp": "2026-09-27T19:30:00Z",
         "message": f"Successfully saved {item_name} ({item_type}) to Devbhoomi Favorites Vault.",
     }
-
 
 class DevbhoomiAgenticGraph:
     """Compiled Agentic LangGraph State Graph representation."""
@@ -130,7 +119,6 @@ class DevbhoomiAgenticGraph:
         user_text = last_user_msg.get("content", "") if isinstance(last_user_msg, dict) else getattr(last_user_msg, "content", str(last_user_msg))
         q_lower = user_text.lower()
 
-        # Check for tool / action execution
         tool_results = []
         if "weather" in q_lower:
             w = await lookup_weather(user_text)
@@ -142,10 +130,8 @@ class DevbhoomiAgenticGraph:
             v = await save_to_favorites_vault("Roopkund Trek & Guide Contact", "Trek & Guide")
             tool_results.append(f"Vault Action: {v}")
 
-        # Query LLM (Groq / OpenAI / Gemini)
         groq_key = os.getenv("GROQ_API_KEY")
         openai_key = os.getenv("OPENAI_API_KEY")
-        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
         bot_reply = ""
         context_str = ("\nGround Facts:\n" + "\n".join(tool_results)) if tool_results else ""
@@ -189,7 +175,6 @@ class DevbhoomiAgenticGraph:
         except Exception as e:
             print(f"[LLM Fetch Note] {e}")
 
-        # Fallback grounded responses if offline / API error
         if not bot_reply:
             if "nainital" in q_lower:
                 bot_reply = "Nainital Kumaon ki ek sundar lake city hai jo 1,938m altitude par sthit hai. Kathgodam railway station 34 km dur hai (1 hour cab/bus drive). Naini Lake boating, Naina Peak (2,615m), aur Snow Viewpoint point yahan ki mukhya attractions hain."
@@ -206,8 +191,6 @@ class DevbhoomiAgenticGraph:
 
         return {"messages": raw_msgs + [SimpleMessage(bot_reply)]}
 
-
 def build_graph(system_prompt: str = SYSTEM_PROMPT):
     """Compile the Devbhoomi unified ReAct agent graph."""
     return DevbhoomiAgenticGraph(system_prompt=system_prompt)
-
