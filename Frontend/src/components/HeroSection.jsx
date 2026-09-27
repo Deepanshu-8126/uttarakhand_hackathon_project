@@ -6,6 +6,7 @@ import {
   Compass, Calendar, ShieldCheck, Smartphone, Mountain
 } from 'lucide-react';
 import { getDestinations } from '../api/destinationApi';
+import { startAudioRecording, stopAudioRecording, sendAudioToVoiceBridge } from '../utils/audioRecorder.js';
 
 // Rich, authentic Uttarakhand destinations & occasion-based spotlights
 const DYNAMIC_OCCASION_SLIDES = [
@@ -510,42 +511,37 @@ export default function HeroSection() {
   };
 
   // Toggle Voice Search for AI Concierge
-  const toggleVoiceSearch = (e) => {
+  const toggleVoiceSearch = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
-      return;
-    }
 
     if (isListeningVoice) {
-      if (voiceRecognitionRef.current) {
-        try { voiceRecognitionRef.current.stop(); } catch (err) {}
-      }
       setIsListeningVoice(false);
+      const audioBlob = stopAudioRecording();
+      if (audioBlob) {
+        setAiPrompt("🎙️ Transcribing voice...");
+        try {
+          const res = await sendAudioToVoiceBridge(audioBlob, { lang: 'hi' });
+          if (res.user_transcript) {
+            setAiPrompt(res.user_transcript);
+          } else {
+            setAiPrompt("");
+          }
+        } catch (_) {
+          setAiPrompt("");
+        }
+      }
       return;
     }
 
     try {
-      const rec = new SpeechRecognition();
-      rec.lang = 'hi-IN';
-      rec.interimResults = true;
-      rec.continuous = false;
-
-      rec.onstart = () => setIsListeningVoice(true);
-      rec.onresult = (event) => {
-        const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
-        setAiPrompt(transcript);
-      };
-      rec.onerror = () => setIsListeningVoice(false);
-      rec.onend = () => setIsListeningVoice(false);
-
-      voiceRecognitionRef.current = rec;
-      rec.start();
+      setIsListeningVoice(true);
+      setAiPrompt("🎙️ Listening... Speak your mountain travel question!");
+      await startAudioRecording();
     } catch (err) {
       console.error("[VoiceAI] Failed to start:", err);
       setIsListeningVoice(false);
+      setAiPrompt("");
     }
   };
 
