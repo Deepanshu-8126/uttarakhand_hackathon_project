@@ -233,6 +233,8 @@ export default function DevbhoomiVoiceStudioModal({
       // Direct Live Node / Render API request with 15s timeout
       const candidateUrls = [
         'https://uttarakhand-hackathon-project.onrender.com/api/agent/chat',
+        'https://uttarakhand-hackathon-project.onrender.com/api/chat',
+        'http://localhost:5000/api/agent/chat'
       ];
 
       let replyText = null;
