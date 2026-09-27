@@ -56,7 +56,26 @@ class Destination {
       img = json['imageUrl'].toString();
     }
 
-    if (img.startsWith('/assets/')) {
+    if (img.contains('wikimedia.org') || img.isEmpty || img.contains('placeholder')) {
+      final nameStr = (json['name'] ?? json['slug'] ?? '').toString().toLowerCase();
+      if (nameStr.contains('kedarnath')) {
+        img = 'https://images.unsplash.com/photo-1627882672776-8803eb6dfb92?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('nainital')) {
+        img = 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('auli')) {
+        img = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('rishikesh')) {
+        img = 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('chopta') || nameStr.contains('tungnath')) {
+        img = 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('badrinath')) {
+        img = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+      } else if (nameStr.contains('corbett')) {
+        img = 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=1200&q=80';
+      } else {
+        img = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80';
+      }
+    } else if (img.startsWith('/')) {
       img = 'https://uttarakhand-hackathon-project.onrender.com$img';
     }
 

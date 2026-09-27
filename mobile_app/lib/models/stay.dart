@@ -52,7 +52,7 @@ class Rental {
       }
     }
 
-    if (img.isEmpty || img.contains('fallback.svg') || img.endsWith('.svg')) {
+    if (img.isEmpty || img.contains('wikimedia.org') || img.contains('fallback.svg') || img.endsWith('.svg')) {
       if (combinedName.contains('apache') || combinedName.contains('tvs')) {
         img = 'https://images.unsplash.com/photo-1609630928811-88d16770f16c?auto=format&fit=crop&w=1200&q=80';
       } else if (combinedName.contains('himalayan') || combinedName.contains('450') || combinedName.contains('adv')) {
