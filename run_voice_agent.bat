@@ -1,13 +1,13 @@
 @echo off
-cd /d "%~dp0"
-set "PYTHONPATH=%~dp0;%PYTHONPATH%"
+cd /d "%~dp0ai"
+set "PYTHONPATH=%~dp0ai;%PYTHONPATH%"
 
 :: Auto-detect virtual environment python if present
 set "PYTHON_BIN=python"
 if exist ".venv\Scripts\python.exe" set "PYTHON_BIN=.venv\Scripts\python.exe"
 
 echo ====================================================================
-echo   Devbhoomi AI Unified Chatbot and Live Voice Runtime (discover/ai)
+echo   Devbhoomi AI Unified Chatbot and Live Voice Runtime
 echo ====================================================================
 echo   [1] Start Unified LangGraph Chatbot and Voice Server (Port 8000)
 echo   [2] Start Interactive Terminal Voice Agent (gym_support.voice)
