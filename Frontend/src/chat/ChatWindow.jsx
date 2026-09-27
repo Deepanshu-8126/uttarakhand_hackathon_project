@@ -219,21 +219,28 @@ export default function ChatWindow({
       rec.onerror = (event) => {
         if (event.error === 'not-allowed') {
           alert('Microphone access was denied. Please click the Lock icon (🔒) in your address bar and Allow Microphone.');
-        } else if (event.error !== 'no-speech' && event.error !== 'network') {
+          setVoiceStatus('idle');
+          isListeningRef.current = false;
+        } else if (event.error === 'network') {
+          // Brave browser blocks Google Speech servers by default, but mic hardware stream is active
+          console.warn('[SpeechRecognition Notice] Brave/Privacy browser protected network mode active.');
+        } else if (event.error !== 'no-speech') {
           console.warn('[SpeechRecognition Notice]', event.error);
         }
-        setVoiceStatus('idle');
-        isListeningRef.current = false;
       };
 
       rec.onend = () => {
-        isListeningRef.current = false;
         const toSubmit = currentTranscriptRef.current || liveTranscript;
-        if (toSubmit && toSubmit.length > 2 && voiceStatus === 'listening' && !isLoading) {
+        if (toSubmit && toSubmit.length > 2 && isListeningRef.current && !isLoading) {
+          isListeningRef.current = false;
           handleVoiceSubmit(toSubmit);
-        } else if (voiceStatus !== 'thinking' && voiceStatus !== 'speaking') {
-          setVoiceStatus('idle');
+        } else if (!mediaStreamRef.current) {
+          isListeningRef.current = false;
+          if (voiceStatus !== 'thinking' && voiceStatus !== 'speaking') {
+            setVoiceStatus('idle');
+          }
         }
+        // If mediaStream is active (in Brave), keep mic visualizer open so user can speak & tap send
       };
 
       recognitionRef.current = rec;
@@ -241,8 +248,10 @@ export default function ChatWindow({
       startAudioVisualizer();
     } catch (err) {
       console.warn('[SpeechRecognition Start Error]', err);
-      setVoiceStatus('idle');
-      isListeningRef.current = false;
+      // Fallback: start mic visualizer anyway for Brave & Firefox
+      startAudioVisualizer();
+      setVoiceStatus('listening');
+      isListeningRef.current = true;
     }
   }, [selectedLanguage, liveTranscript, voiceStatus, isLoading, startAudioVisualizer]);
 
