@@ -583,26 +583,27 @@ export default function DestinationDetails() {
         </div>
       </section>
 
-      {/* ── 5. Live Pexels 4K Photography Showcase & Interactive Gallery ── */}
+      {/* ── 5. Photographic Showcase & Dynamic Interactive Gallery ── */}
       <section id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4 w-full">
         
-        {/* Section Header with Pexels Live Badge */}
+        {/* Section Header with Clean Himalayan Archive Badge */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-[#0f3d2e] border border-emerald-300">
-                <Camera size={11} />
-                <span>Pexels 4K Visual Engine</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-[#0f3d2e] border border-emerald-300">
+                <Camera size={11} className="text-emerald-700" />
+                <span>Ultra-HD Himalayan Visuals</span>
               </span>
-              {loadingPexels && (
-                <span className="text-[11px] text-stone-400 font-mono animate-pulse">Streaming fresh 4K satellite photos...</span>
-              )}
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {allGalleryPhotos.length} Curated Photos
+              </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
               Photographic Showcase of {destination.name}
             </h2>
             <p className="text-xs sm:text-sm text-stone-500 font-medium">
-              100% authentic mountain photography, reflections &amp; alpine vistas verified from Pexels &amp; Uttarakhand Archives.
+              100% authentic mountain photography, reflections &amp; alpine vistas from Uttarakhand Tourism Archives.
             </p>
           </div>
 
@@ -612,80 +613,143 @@ export default function DestinationDetails() {
             className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-stone-200 bg-white hover:bg-emerald-50 hover:text-[#0f3d2e] hover:border-emerald-300 text-stone-700 text-xs font-black transition cursor-pointer shadow-xs"
           >
             <Maximize2 size={13} />
-            <span>View All ({allGalleryPhotos.length}) 4K Photos</span>
+            <span>View All ({allGalleryPhotos.length}) HD Photos</span>
           </button>
         </div>
 
-        {/* 5-Photo Mosaic Grid (1 Large Left + 4 Right 2x2) */}
+        {/* 5-Photo Mosaic Grid (1 Interactive Featured Hero Left + 4 Right 2x2) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
           
           {/* Main Large Hero Image (Left 2 columns on desktop) */}
           <div 
-            onClick={() => setActivePhotoIdx(0)}
-            className="md:col-span-2 h-[320px] sm:h-[420px] lg:h-[460px] rounded-3xl overflow-hidden bg-stone-900 shadow-md group cursor-pointer relative"
+            onClick={() => setActivePhotoIdx(heroPhotoIndex)}
+            className="md:col-span-2 h-[320px] sm:h-[420px] lg:h-[460px] rounded-3xl overflow-hidden bg-stone-950 shadow-md group cursor-pointer relative"
           >
             <img
-              src={allGalleryPhotos[0]?.url || CURATED_PEXELS_FALLBACKS[0].url}
-              alt={allGalleryPhotos[0]?.alt || destination.name}
+              key={allGalleryPhotos[heroPhotoIndex]?.url || heroPhotoIndex}
+              src={allGalleryPhotos[heroPhotoIndex]?.url || CURATED_HIMALAYAN_FALLBACKS[0].url}
+              alt={allGalleryPhotos[heroPhotoIndex]?.alt || destination.name}
               loading="eager"
               fetchPriority="high"
-              onError={e => { e.currentTarget.src = CURATED_PEXELS_FALLBACKS[0].url; }}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              onError={e => { e.currentTarget.src = CURATED_HIMALAYAN_FALLBACKS[0].url; }}
+              className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ease-out animate-in fade-in duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/15 to-transparent pointer-events-none" />
             
+            {/* Top Indicator / Slide Badge */}
+            <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+              <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
+                Photo {heroPhotoIndex + 1} of {allGalleryPhotos.length}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAutoPlaying(prev => !prev);
+                }}
+                className="bg-black/60 backdrop-blur-md text-white hover:text-emerald-300 text-[10px] font-bold px-2 py-1 rounded-full border border-white/20 transition cursor-pointer"
+                title={isAutoPlaying ? "Pause Auto-Rotation" : "Resume Auto-Rotation"}
+              >
+                {isAutoPlaying ? "⏸ Auto-Playing" : "▶ Resume Auto"}
+              </button>
+            </div>
+
             {/* Bottom Photo Credit & Tag */}
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-              <div>
-                <p className="text-sm font-black drop-shadow-md">{allGalleryPhotos[0]?.alt || `${destination.name} Panoramic Vista`}</p>
-                <p className="text-[11px] text-emerald-300 font-semibold drop-shadow-md flex items-center gap-1">
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white z-10">
+              <div className="min-w-0 pr-2">
+                <p className="text-sm sm:text-base font-black drop-shadow-md truncate">
+                  {allGalleryPhotos[heroPhotoIndex]?.alt || `${destination.name} Panoramic Vista`}
+                </p>
+                <p className="text-[11px] text-emerald-300 font-semibold drop-shadow-md flex items-center gap-1.5 mt-0.5">
                   <Camera size={11} />
-                  <span>{allGalleryPhotos[0]?.photographer || 'Pexels Verified'}</span>
+                  <span>{allGalleryPhotos[heroPhotoIndex]?.photographer || 'Uttarakhand Tourism Archive'}</span>
                 </p>
               </div>
 
-              <span className="bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition">
-                <Maximize2 size={12} />
-                <span>Fullscreen</span>
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Dot indicators */}
+                <div className="hidden sm:flex items-center gap-1.5 mr-1" onClick={e => e.stopPropagation()}>
+                  {allGalleryPhotos.map((_, dotIdx) => (
+                    <button
+                      key={dotIdx}
+                      type="button"
+                      onClick={() => {
+                        setHeroPhotoIndex(dotIdx);
+                        setIsAutoPlaying(false);
+                      }}
+                      className={`h-2 rounded-full transition-all cursor-pointer ${
+                        heroPhotoIndex === dotIdx 
+                          ? 'w-6 bg-[#00FF88] shadow-xs' 
+                          : 'w-2 bg-white/50 hover:bg-white'
+                      }`}
+                      aria-label={`Jump to photo ${dotIdx + 1}`}
+                    />
+                  ))}
+                </div>
+
+                <span className="bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition">
+                  <Maximize2 size={12} />
+                  <span className="hidden sm:inline">Fullscreen</span>
+                </span>
+              </div>
             </div>
           </div>
 
           {/* 4 Small Photos in 2x2 Grid (Right column) */}
           <div className="grid grid-cols-2 gap-3.5 sm:gap-4 h-[320px] sm:h-[420px] lg:h-[460px]">
-            {allGalleryPhotos.slice(1, 5).map((photo, idx) => (
-              <div
-                key={idx}
-                onClick={() => setActivePhotoIdx(idx + 1)}
-                className="h-[152px] sm:h-[202px] lg:h-[222px] rounded-2xl overflow-hidden bg-stone-900 shadow-sm group cursor-pointer relative"
-              >
-                <img
-                  src={photo.url || CURATED_PEXELS_FALLBACKS[idx % CURATED_PEXELS_FALLBACKS.length].url}
-                  alt={photo.alt || destination.name}
-                  loading="lazy"
-                  onError={e => { e.currentTarget.src = CURATED_PEXELS_FALLBACKS[idx % CURATED_PEXELS_FALLBACKS.length].url; }}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute inset-0 bg-stone-950/20 group-hover:bg-stone-950/40 transition-colors" />
-                
-                <span className="absolute bottom-2 left-2 right-2 text-[10px] text-white font-bold truncate drop-shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  {photo.photographer}
-                </span>
+            {allGalleryPhotos.slice(1, 5).map((photo, idx) => {
+              const actualIdx = idx + 1;
+              const isSelected = heroPhotoIndex === actualIdx;
 
-                {idx === 3 && allGalleryPhotos.length > 5 && (
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAllPhotosModal(true);
-                    }}
-                    className="absolute inset-0 bg-stone-950/75 backdrop-blur-xs flex flex-col items-center justify-center text-white p-2 text-center transition-all group-hover:bg-stone-950/85"
-                  >
-                    <span className="text-xl font-black">+{allGalleryPhotos.length - 4}</span>
-                    <span className="text-[11px] font-bold text-emerald-300">More 4K Photos</span>
-                  </div>
-                )}
-              </div>
-            ))}
+              return (
+                <div
+                  key={actualIdx}
+                  onClick={() => {
+                    setHeroPhotoIndex(actualIdx);
+                    setIsAutoPlaying(false);
+                  }}
+                  className={`h-[152px] sm:h-[202px] lg:h-[222px] rounded-2xl overflow-hidden bg-stone-900 shadow-sm group cursor-pointer relative transition-all duration-300 ${
+                    isSelected 
+                      ? 'ring-3 ring-[#00FF88] shadow-lg scale-[1.02]' 
+                      : 'hover:border-emerald-400 border border-stone-200/50'
+                  }`}
+                >
+                  <img
+                    src={photo.url || CURATED_HIMALAYAN_FALLBACKS[idx % CURATED_HIMALAYAN_FALLBACKS.length].url}
+                    alt={photo.alt || destination.name}
+                    loading="lazy"
+                    onError={e => { e.currentTarget.src = CURATED_HIMALAYAN_FALLBACKS[idx % CURATED_HIMALAYAN_FALLBACKS.length].url; }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <div className={`absolute inset-0 transition-colors ${
+                    isSelected ? 'bg-emerald-950/20' : 'bg-stone-950/20 group-hover:bg-stone-950/40'
+                  }`} />
+                  
+                  {isSelected && (
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#00FF88] text-stone-950 font-black text-[9px] uppercase tracking-wider shadow-xs">
+                      Active
+                    </span>
+                  )}
+
+                  <span className="absolute bottom-2 left-2 right-2 text-[10px] text-white font-bold truncate drop-shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    {photo.photographer}
+                  </span>
+
+                  {idx === 3 && allGalleryPhotos.length > 5 && (
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAllPhotosModal(true);
+                      }}
+                      className="absolute inset-0 bg-stone-950/75 backdrop-blur-xs flex flex-col items-center justify-center text-white p-2 text-center transition-all group-hover:bg-stone-950/85"
+                    >
+                      <span className="text-xl font-black">+{allGalleryPhotos.length - 4}</span>
+                      <span className="text-[11px] font-bold text-emerald-300">More HD Photos</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
         </div>
@@ -1108,7 +1172,7 @@ export default function DestinationDetails() {
         </div>
       )}
 
-      {/* ── 9. View All Photos Modal Drawer (Pexels 4K Gallery) ── */}
+      {/* ── 9. View All Photos Modal Drawer (Himalayan Visual Gallery) ── */}
       {showAllPhotosModal && (
         <div className="fixed inset-0 bg-stone-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-stone-200">
@@ -1117,10 +1181,10 @@ export default function DestinationDetails() {
             <div className="p-5 border-b border-stone-200 flex items-center justify-between bg-stone-50">
               <div>
                 <h3 className="text-lg font-black text-stone-900">
-                  {destination.name} — All 4K Photos ({allGalleryPhotos.length})
+                  {destination.name} — Curated Photo Gallery ({allGalleryPhotos.length})
                 </h3>
                 <p className="text-xs text-stone-500 font-medium">
-                  Verified real photography streamed via Pexels &amp; Uttarakhand Tourism Archive
+                  Verified high-definition mountain photography from Uttarakhand Tourism Archive
                 </p>
               </div>
               <button
