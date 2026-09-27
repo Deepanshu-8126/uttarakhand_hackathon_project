@@ -230,33 +230,49 @@ export default function DevbhoomiVoiceStudioModal({
     setLiveUserText('');
 
     try {
-      // Direct Live Node / Render API request with 15s timeout
-      const candidateUrls = [
-        'https://uttarakhand-hackathon-project.onrender.com/api/agent/chat',
-        'https://uttarakhand-hackathon-project.onrender.com/api/chat',
-        'http://localhost:5000/api/agent/chat'
-      ];
-
       let replyText = null;
 
-      for (const url of candidateUrls) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: cleanUserText,
-              pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
-            }),
-            signal: AbortSignal.timeout(15000),
-          });
+      // 1. Primary Unified Axios Request with automatic failover
+      try {
+        const axiosResp = await api.post('/agent/chat', {
+          message: cleanUserText,
+          pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
+        });
+        const resp = axiosResp.data?.response || axiosResp.data?.data || axiosResp.data;
+        replyText = resp?.message || resp?.text || (typeof resp === 'string' ? resp : null);
+      } catch (axErr) {
+        console.warn('[VoiceStudio] Axios endpoint notice, checking direct endpoints:', axErr.message);
+      }
 
-          if (res.ok) {
-            const data = await res.json();
-            const resp = data.response || data.data || data;
-            replyText = resp.message || resp.text || (typeof resp === 'string' ? resp : null);
-            if (replyText) break;
-          }
+      // 2. Direct Cloud Render API fallback
+      if (!replyText) {
+        const candidateUrls = [
+          'https://uttarakhand-hackathon-project.onrender.com/api/agent/chat',
+          'https://uttarakhand-hackathon-project.onrender.com/api/chat',
+          'http://localhost:5000/api/agent/chat'
+        ];
+
+        for (const url of candidateUrls) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: cleanUserText,
+                pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
+              }),
+              signal: AbortSignal.timeout(8000),
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              const resp = data.response || data.data || data;
+              replyText = resp.message || resp.text || (typeof resp === 'string' ? resp : null);
+              if (replyText) break;
+            }
+          } catch (_) {}
+        }
+      }
         } catch (_) {}
       }
 
