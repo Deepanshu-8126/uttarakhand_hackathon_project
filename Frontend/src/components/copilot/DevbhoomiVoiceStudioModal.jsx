@@ -31,14 +31,13 @@ export default function DevbhoomiVoiceStudioModal({
 
   const isMutedRef = useRef(false);
   const isProcessingRef = useRef(false);
-  const hasSpokenRef = useRef(false);
   const recognitionRef = useRef(null);
   const audioContextRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const analyserRef = useRef(null);
   const outputAnalyserRef = useRef(null);
   const captionsEndRef = useRef(null);
-  const silenceTimerRef = useRef(null);
+  const animFrameRef = useRef(null);
 
   const QUICK_QUESTIONS = [
     'नैनीताल 2 दिन का प्लान और बजट',
@@ -58,41 +57,55 @@ export default function DevbhoomiVoiceStudioModal({
   // Auto scroll captions
   useEffect(() => {
     captionsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [liveUserText, liveAiText, transcriptHistory]);
+  }, [transcriptHistory, liveUserText, liveAiText]);
 
-  // Duration timer
+  // Track call timer
   useEffect(() => {
-    let timer;
+    let timer = null;
+    if (isOpen && status !== 'idle' && status !== 'error') {
+      timer = setInterval(() => setCallDuration(d => d + 1), 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isOpen, status]);
+
+  // Visualizer loop for mic level
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updateAudioLevels = () => {
+      if (analyserRef.current && status === 'listening') {
+        const data = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        const avg = sum / data.length / 255;
+        setMicAudioLevel(Math.min(1, avg * 3.5));
+      } else if (status === 'speaking') {
+        setAiAudioLevel(0.4 + Math.sin(Date.now() / 150) * 0.35);
+      } else {
+        setMicAudioLevel(0.05);
+        setAiAudioLevel(0);
+      }
+      animFrameRef.current = requestAnimationFrame(updateAudioLevels);
+    };
+
+    animFrameRef.current = requestAnimationFrame(updateAudioLevels);
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isOpen, status]);
+
+  // Main lifecycle: open modal -> start voice
+  useEffect(() => {
     if (isOpen) {
-      timer = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-      }, 1000);
-    } else {
       setCallDuration(0);
-    }
-    return () => clearInterval(timer);
-  }, [isOpen]);
-
-  const formatTime = (secs) => {
-    const mins = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const getCurrentTimestamp = () => {
-    const d = new Date();
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
-
-  // Main Life-Cycle Start/Stop
-  useEffect(() => {
-    if (!isOpen) {
+      setTranscriptHistory([]);
+      startVoiceSession();
+    } else {
       cleanupVoice();
-      return;
     }
-
-    startVoiceSession();
-
     return () => {
       cleanupVoice();
     };
@@ -131,41 +144,125 @@ export default function DevbhoomiVoiceStudioModal({
         }
       }
     } catch (micErr) {
-      // User may have denied mic or browser blocked
+      console.warn('[VoiceStudio] Mic visualizer permission:', micErr);
     }
 
-    // 2. Start Universal Hardware Audio Recording Pipeline
+    // 2. Start Speech Recognition (Web Speech API with instant live feedback)
+    startSpeechRecognition();
+  };
+
+  const startSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      try {
+        if (recognitionRef.current) {
+          try { recognitionRef.current.abort(); } catch (_) {}
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'hi-IN';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        let accumulatedFinal = '';
+
+        recognition.onstart = () => {
+          setStatus('listening');
+          setErrorMessage(null);
+        };
+
+        recognition.onresult = (event) => {
+          let interimText = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              accumulatedFinal += transcript + ' ';
+            } else {
+              interimText += transcript;
+            }
+          }
+          const currentText = accumulatedFinal || interimText;
+          if (currentText) {
+            setLiveUserText(currentText);
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.warn('[SpeechRecognition] Event error:', event.error);
+          if (event.error === 'no-speech') {
+            // Restart listening if no speech was heard
+            if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
+              setTimeout(() => {
+                if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
+                  try { recognition.start(); } catch (_) {}
+                }
+              }, 400);
+            }
+          } else if (event.error === 'not-allowed') {
+            setErrorMessage('Microphone access denied. Please allow mic in your browser settings.');
+            setStatus('error');
+          } else {
+            // Fallback to hardware audio recording
+            startHardwareAudioListening();
+          }
+        };
+
+        recognition.onend = () => {
+          const finalQuery = accumulatedFinal.trim() || liveUserText.trim();
+          if (finalQuery && !isProcessingRef.current && !isMutedRef.current) {
+            handleProcessVoiceQuery(finalQuery);
+          } else if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
+            setTimeout(() => {
+              if (isOpen && !isProcessingRef.current && !isMutedRef.current) {
+                try { recognition.start(); } catch (_) {}
+              }
+            }, 300);
+          }
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+        return;
+      } catch (recErr) {
+        console.warn('[SpeechRecognition] Failed to start, fallback to media recorder:', recErr);
+      }
+    }
+
+    // Fallback if browser doesn't have Web Speech API (Firefox, Brave)
     startHardwareAudioListening();
   };
 
   const startHardwareAudioListening = async () => {
     try {
-      hasSpokenRef.current = false;
-      let silenceFrames = 0;
+      let speechDetected = false;
+      let silenceCount = 0;
+
       await startAudioRecording({
         onVolumeChange: (vol) => {
           setMicAudioLevel(vol);
-          if (vol > 0.05) {
-            hasSpokenRef.current = true;
-            silenceFrames = 0;
-          } else if (hasSpokenRef.current && !isProcessingRef.current && !isMutedRef.current) {
-            silenceFrames++;
-            if (silenceFrames > 55) { // ~1.1s pause
-              silenceFrames = 0;
+          if (vol > 0.02) {
+            speechDetected = true;
+            silenceCount = 0;
+          } else if (speechDetected && !isProcessingRef.current && !isMutedRef.current) {
+            silenceCount++;
+            if (silenceCount > 40) { // ~1.0s of silence after speech
+              silenceCount = 0;
               submitRecordedAudio();
             }
           }
         }
       });
     } catch (e) {
-      setErrorMessage('Microphone permission blocked. Please allow mic in browser.');
+      setErrorMessage('Microphone permission required for voice interaction.');
     }
   };
 
   const submitRecordedAudio = async () => {
     if (isProcessingRef.current || isMutedRef.current) return;
     const blob = stopAudioRecording();
-    if (!blob || blob.size < 600) {
+    if (!blob || blob.size < 500) {
       if (isOpen && !isProcessingRef.current) startVoiceSession();
       return;
     }
@@ -173,23 +270,97 @@ export default function DevbhoomiVoiceStudioModal({
     isProcessingRef.current = true;
     setStatus('processing');
     setLiveAiText('Thinking...');
-    setLiveUserText('🎙️ Transcribing...');
+    setLiveUserText('🎙️ Transcribing speech...');
 
     try {
       const res = await sendAudioToVoiceBridge(blob, { lang: 'hi' });
       const userText = res.user_transcript || 'उत्तराखंड यात्रा';
-      setLiveUserText(userText);
-      setTranscriptHistory(prev => [...prev, { role: 'user', text: userText, time: getCurrentTimestamp() }]);
+      handleProcessVoiceQuery(userText, res.response, res.audio_base64);
+    } catch (err) {
+      console.warn('[VoiceStudio] Audio bridge error:', err);
+      isProcessingRef.current = false;
+      if (isOpen && !isMutedRef.current) startVoiceSession();
+    }
+  };
 
-      const aiReply = res.response || 'Namaste! Main aapka Devbhoomi companion hoon.';
-      const cleanReply = aiReply.replace(/[*#_~`]/g, '').trim();
+  const handleProcessVoiceQuery = async (queryText, precomputedReply = null, precomputedAudio = null) => {
+    if (!queryText || queryText.trim().length < 2) {
+      if (isOpen && !isMutedRef.current) startVoiceSession();
+      return;
+    }
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch (_) {}
+    }
+    stopAudioRecording();
+
+    isProcessingRef.current = true;
+    const cleanUserText = queryText.trim();
+    
+    setLiveUserText(cleanUserText);
+    setTranscriptHistory(prev => [...prev, { role: 'user', text: cleanUserText, time: getCurrentTimestamp() }]);
+    setStatus('processing');
+    setLiveAiText('Thinking...');
+
+    if (onTranscriptReceived) {
+      onTranscriptReceived(cleanUserText);
+    }
+
+    try {
+      let replyText = precomputedReply;
+      let audioBase64 = precomputedAudio;
+
+      if (!replyText) {
+        // 1. Dedicated Studio Voice Endpoint (/api/voice/ask)
+        try {
+          const voiceAskResp = await api.post('/voice/ask', {
+            query: cleanUserText,
+            message: cleanUserText,
+            lang: 'hi'
+          });
+          const vData = voiceAskResp.data;
+          replyText = vData?.response || vData?.message || vData?.data?.response;
+          audioBase64 = vData?.audio_base64 || vData?.audioBase64 || vData?.data?.audio_base64 || null;
+        } catch (_) {}
+      }
+
+      // 2. Direct Agent Chat Endpoint Fallback
+      if (!replyText) {
+        try {
+          const axiosResp = await api.post('/agent/chat', {
+            message: cleanUserText,
+            pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
+          });
+          const resp = axiosResp.data?.response || axiosResp.data?.data || axiosResp.data;
+          replyText = resp?.message || resp?.text || (typeof resp === 'string' ? resp : null);
+        } catch (_) {}
+      }
+
+      // 3. Grounded Route Fallback
+      if (!replyText) {
+        const qLower = cleanUserText.toLowerCase();
+        if (qLower.includes('nainital')) {
+          replyText = `Nainital Kumaon hills ki 1938 meter altitude par sthit ek prasiddh lake city hai. Naini Lake boating, Naina Devi Temple aur Snow Viewpoint mukhya attractions hain. Kathgodam railway station se 34 km road route hai.`;
+        } else if (qLower.includes('kedarnath')) {
+          replyText = `Kedarnath Dham 3584 meter uanchai par sthit hai. Haridwar ya Rishikesh se Sonprayag tak road transport hai, jiske baad 16 km ka scenic mountain trek hai. Registration aur weather check anivarya hai.`;
+        } else if (qLower.includes('rishikesh')) {
+          replyText = `Rishikesh World Yoga Capital hai jahan Triveni Ghat Maha Aarti, Laxman Jhula, Shivpuri river rafting aur peaceful ashrams prasiddh hain.`;
+        } else if (qLower.includes('chopta') || qLower.includes('tungnath')) {
+          replyText = `Chopta ko Mini Switzerland kaha jata hai. Wahan se Tungnath (highest Shiva temple) aur Chandrashila peak ka trek shuru hota hai. Abhi weather suhana hai.`;
+        } else {
+          replyText = `Namaste! Devbhoomi Uttarakhand me aapka swagat hai. Aapne ${cleanUserText} ke baare me pucha. Char Dham highways aur Himalayan routes open hain. Main aapko live route, weather aur verified homestays bata sakta hoon.`;
+        }
+      }
+
+      const cleanReply = replyText.replace(/[*#_~`]/g, '').trim();
       setLiveAiText(cleanReply);
       setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
       setStatus('speaking');
 
+      // 4. Play Spoken Speech
       if (!isSpeakerMuted) {
-        if (res.audio_base64) {
-          playAudioStream(res.audio_base64, {
+        if (audioBase64) {
+          playAudioStream(audioBase64, {
             onStart: () => setStatus('speaking'),
             onEnd: () => {
               isProcessingRef.current = false;
@@ -208,7 +379,14 @@ export default function DevbhoomiVoiceStudioModal({
         } else {
           speakText(cleanReply, {
             lang: 'hi-IN',
+            rate: 0.95,
+            pitch: 1.0,
+            onStart: () => setStatus('speaking'),
             onEnd: () => {
+              isProcessingRef.current = false;
+              if (isOpen && !isMutedRef.current) startVoiceSession();
+            },
+            onError: () => {
               isProcessingRef.current = false;
               if (isOpen && !isMutedRef.current) startVoiceSession();
             }
@@ -221,158 +399,21 @@ export default function DevbhoomiVoiceStudioModal({
         }, 2000);
       }
     } catch (err) {
-      console.warn('[VoiceStudio] Error:', err);
+      console.warn('[VoiceStudio] Processing error:', err);
       isProcessingRef.current = false;
       if (isOpen && !isMutedRef.current) startVoiceSession();
     }
   };
 
-  const handleProcessVoiceQuery = async (queryText) => {
-    if (!queryText || queryText.trim().length < 2 || isProcessingRef.current) return;
-    isProcessingRef.current = true;
-    stopAudioRecording();
-
-    const cleanUserText = queryText.trim();
-    setTranscriptHistory(prev => [...prev, { role: 'user', text: cleanUserText, time: getCurrentTimestamp() }]);
-    setStatus('processing');
-    setLiveAiText('Thinking...');
-    setLiveUserText('');
-
-    try {
-      let replyText = null;
-      let audioBase64 = null;
-
-      // 1. Dedicated Studio Voice Endpoint (/api/voice/ask) returning Gemini Live / Edge Neural audio_base64
-      try {
-        const voiceAskResp = await api.post('/voice/ask', {
-          query: cleanUserText,
-          message: cleanUserText,
-          lang: 'hi'
-        });
-        const vData = voiceAskResp.data;
-        replyText = vData?.response || vData?.message || vData?.data?.response;
-        audioBase64 = vData?.audio_base64 || vData?.audioBase64 || vData?.data?.audio_base64 || null;
-      } catch (vErr) {
-        // Fallback to chat endpoint
-      }
-
-      // 2. Direct Agent Chat Endpoint Fallback
-      if (!replyText) {
-        try {
-          const axiosResp = await api.post('/agent/chat', {
-            message: cleanUserText,
-            pageContext: { pageType: 'VOICE_AGENT', currentPage: 'VOICE_STUDIO' }
-          });
-          const resp = axiosResp.data?.response || axiosResp.data?.data || axiosResp.data;
-          replyText = resp?.message || resp?.text || (typeof resp === 'string' ? resp : null);
-        } catch (_) {}
-      }
-
-      // 3. Grounded Local Route Guard (Intercepts generic intake form fallbacks)
-      if (!replyText || /यात्रा प्लान कैसे बनाना|एक दिन की ट्रिप|मल्टी|मल्टी‑डे|कृपया थोड़ा और बताइए|kitne din ka trip/i.test(replyText)) {
-        const qLower = cleanUserText.toLowerCase();
-        if (qLower.includes('haldwani') && qLower.includes('nainital')) {
-          replyText = `Haldwani se Nainital lagbhag 35 kilometer hai. Aap Kathgodam, Ranibagh aur Jeolikote hote hue National Highway 109 se lagbhag 1.5 ghante me Nainital pahunch sakte hain. Kathgodam aur Haldwani station se shared cabs aur UTC buses aasaani se mil jaati hain.`;
-        } else if (qLower.includes('nainital')) {
-          replyText = `Nainital Kumaon hills ki 1938 meter altitude par sthit ek prasiddh lake city hai. Wahan Naini Lake boating, Naina Peak (2615m) aur Snow Viewpoint mukhya attractions hain. Kathgodam railway station se 34 kilometer NH 109 road route hai.`;
-        } else if (qLower.includes('kedarnath')) {
-          replyText = `Kedarnath Dham 3584 meter ki uanchai par sthit hai. Haridwar ya Rishikesh se Sonprayag aur Gaurikund tak road transport hai, jiske baad 16 kilometer ka scenic mountain trek hai.`;
-        } else if (qLower.includes('mussoorie') || qLower.includes('dehradun')) {
-          replyText = `Dehradun se Mussoorie lagbhag 34 kilometer hai jo Rajpur Road aur Malsi Deer Park hote hue lagbhag 1 ghante me pahuncha ja sakta hai.`;
-        } else {
-          replyText = `Namaste! Devbhoomi Uttarakhand me aapka swagat hai. Aapne ${cleanUserText} ke baare me pucha. Uttarakhand ke Char Dham highways aur mountain routes open hain. Main aapko exact road map, weather aur stay options bata sakta hoon.`;
-        }
-      }
-
-      const cleanReply = replyText.replace(/[*#_~`]/g, '').trim();
-      setLiveAiText(cleanReply);
-      setTranscriptHistory(prev => [...prev, { role: 'assistant', text: cleanReply, time: getCurrentTimestamp() }]);
-      setStatus('speaking');
-
-      // 4. ElevenLabs / Neural Voice synthesis fallback
-      if (!audioBase64 && cleanReply) {
-        try {
-          const ttsResp = await api.post('/voice/elevenlabs/tts', { text: cleanReply });
-          if (ttsResp.data?.success && ttsResp.data?.audio_base64) {
-            audioBase64 = ttsResp.data.audio_base64;
-          }
-        } catch (_) {}
-      }
-
-      // 5. Play Studio Audio Stream or Natural Browser Speech
-      if (!isSpeakerMuted) {
-        if (audioBase64) {
-          playAudioStream(audioBase64, {
-            onStart: () => setStatus('speaking'),
-            onEnd: () => {
-              isProcessingRef.current = false;
-              setStatus('listening');
-              restartListening();
-            },
-            onError: () => {
-              speakText(cleanReply, {
-                lang: 'hi-IN',
-                rate: 0.95,
-                pitch: 1.0,
-                onStart: () => setStatus('speaking'),
-                onEnd: () => {
-                  isProcessingRef.current = false;
-                  setStatus('listening');
-                  restartListening();
-                }
-              });
-            }
-          });
-        } else {
-          speakText(cleanReply, {
-            lang: 'hi-IN',
-            rate: 0.95,
-            pitch: 1.0,
-            onStart: () => setStatus('speaking'),
-            onEnd: () => {
-              isProcessingRef.current = false;
-              setStatus('listening');
-              restartListening();
-            },
-            onError: () => {
-              isProcessingRef.current = false;
-              setStatus('listening');
-              restartListening();
-            }
-          });
-        }
-      } else {
-        setTimeout(() => {
-          isProcessingRef.current = false;
-          setStatus('listening');
-          restartListening();
-        }, 2000);
-      }
-    } catch (err) {
-      console.warn('[VoiceStudio] Processing error:', err);
-      isProcessingRef.current = false;
-      setStatus('listening');
-      restartListening();
-    }
-  };
-
-  const restartListening = () => {
-    if (!isOpen || isProcessingRef.current || isMutedRef.current) return;
-    try {
-      if (recognitionRef.current) {
-        recognitionRef.current.start();
-      }
-    } catch (_) {}
-  };
-
   const cleanupVoice = () => {
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     isProcessingRef.current = false;
 
     if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) {}
+      try { recognitionRef.current.abort(); } catch (_) {}
       recognitionRef.current = null;
     }
+
+    stopAudioRecording();
 
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach(t => t.stop());
@@ -394,273 +435,287 @@ export default function DevbhoomiVoiceStudioModal({
     isMutedRef.current = next;
     if (next) {
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (_) {}
+        try { recognitionRef.current.abort(); } catch (_) {}
       }
+      stopAudioRecording();
       setStatus('idle');
     } else {
       setStatus('listening');
-      restartListening();
+      startVoiceSession();
     }
   };
 
-  const handleTestElevenLabsVoice = async () => {
-    setStatus('speaking');
-    setLiveAiText('Testing Devbhoomi Studio Voice...');
-    try {
-      let audioBase64 = null;
-      try {
-        const res = await api.post('/voice/ask', { query: 'नमस्ते! मैं आपका देवभूमि वॉइस साथी हूँ।', lang: 'hi' });
-        if (res.data?.audio_base64) {
-          audioBase64 = res.data.audio_base64;
-        }
-      } catch (_) {}
-
-      if (audioBase64) {
-        setLiveAiText("नमस्ते! देवभूमि वॉइस साथी एक्टिव है।");
-        playAudioStream(audioBase64, {
-          onStart: () => setStatus('speaking'),
-          onEnd: () => setStatus('listening'),
-          onError: () => setStatus('listening')
-        });
-      } else {
-        speakText("नमस्ते! देवभूमि वॉइस साथी एक्टिव है।", {
-          lang: 'hi-IN',
-          onStart: () => setStatus('speaking'),
-          onEnd: () => setStatus('listening')
-        });
-      }
-    } catch (err) {
-      speakText("नमस्ते! देवभूमि वॉइस साथी एक्टिव है।", {
-        lang: 'hi-IN',
-        onStart: () => setStatus('speaking'),
-        onEnd: () => setStatus('listening')
-      });
-    }
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    if (!manualInput.trim()) return;
-    const query = manualInput.trim();
-    setManualInput('');
-    handleProcessVoiceQuery(query);
+  const getCurrentTimestamp = () => {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 bg-[#050c08]/98 backdrop-blur-3xl text-white select-none overflow-hidden animate-in fade-in duration-300">
-      
-      {/* Background Subtle Ambient Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[340px] h-[260px] bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xl animate-fade-in font-sans">
+      <div 
+        className="relative w-full max-w-4xl h-[90vh] max-h-[780px] bg-stone-950 rounded-3xl border border-emerald-500/20 shadow-2xl flex flex-col overflow-hidden text-white select-none"
+      >
+        {/* Background Atmosphere */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f3d2e]/30 via-transparent to-stone-950 pointer-events-none" />
+        <div className="absolute -top-32 -left-32 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* ── 1. Top Bar: Brand, Status & Controls ────────────────────────── */}
-      <div className="w-full max-w-3xl flex items-center justify-between z-10 shrink-0 flex-wrap gap-2">
-        
-        {/* Brand Pill */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-bold tracking-wide text-stone-200">Devbhoomi AI Voice</span>
-          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            Live
-          </span>
-        </div>
-
-        {/* Dynamic Center Status Pill */}
-        <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-stone-300">
-          <span className="relative flex h-2 w-2">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-              status === 'speaking' ? 'bg-emerald-400' : status === 'listening' ? 'bg-cyan-400' : 'bg-amber-400'
-            }`}></span>
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${
-              status === 'speaking' ? 'bg-emerald-500' : status === 'listening' ? 'bg-cyan-500' : 'bg-amber-500'
-            }`}></span>
-          </span>
-          <span className="capitalize">
-            {status === 'speaking' ? 'Devbhoomi AI Speaking...' : status === 'processing' ? 'Consulting Mountain Guide...' : isMuted ? 'Mic Muted' : 'Listening... Speak or tap query below'}
-          </span>
-        </div>
-
-        {/* Right Tools */}
-        <div className="flex items-center gap-2">
-          {/* Test Voice Button */}
-          <button
-            onClick={handleTestElevenLabsVoice}
-            className="px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold transition-colors border border-emerald-500/30 flex items-center gap-1 cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            Test Voice
-          </button>
-
-          {/* Mute Speaker */}
-          <button
-            onClick={() => setIsSpeakerMuted(!isSpeakerMuted)}
-            title={isSpeakerMuted ? 'Unmute AI Voice' : 'Mute AI Voice'}
-            className="p-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-stone-300 hover:text-white transition-colors border border-white/10 cursor-pointer"
-          >
-            {isSpeakerMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-          </button>
-
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-stone-400 hover:text-white transition-colors border border-white/10 cursor-pointer"
-            aria-label="Close studio"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* ── 2. Center Stage: Visualizer & Live Captions ─────────── */}
-      <div className="w-full max-w-xl flex flex-col items-center justify-center my-auto z-10 space-y-4 sm:space-y-5">
-        
-        {errorMessage && (
-          <div className="w-full px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <p className="flex-1">{errorMessage}</p>
-          </div>
-        )}
-
-        {/* Visualizer Orb */}
-        <div className="relative w-40 h-40 sm:w-56 sm:h-56 flex items-center justify-center shrink-0">
-          <VoiceVisualizer
-            analyser={analyserRef.current}
-            outputAnalyser={outputAnalyserRef.current}
-            isActive={status !== 'idle' && status !== 'error'}
-            status={status}
-            mode={visualMode}
-          />
-        </div>
-
-        {/* Live Subtitle Transcript Banner */}
-        <div className="w-full px-4 sm:px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl text-center space-y-1.5 min-h-[75px] flex flex-col justify-center">
-          {liveUserText ? (
-            <div className="animate-in fade-in duration-200">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 block mb-0.5">
-                You (Listening...)
-              </span>
-              <p className="text-sm sm:text-base font-semibold text-white leading-relaxed">
-                "{liveUserText}"
-              </p>
+        {/* ── Top App Bar ── */}
+        <div className="relative z-10 px-5 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02] backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-400/30">
+              <Radio size={20} className="text-white animate-pulse" />
             </div>
-          ) : liveAiText ? (
-            <div className="animate-in fade-in duration-200">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">
-                Devbhoomi AI
-              </span>
-              <p className="text-sm sm:text-base font-semibold text-emerald-100 leading-relaxed">
-                {liveAiText}
-              </p>
-            </div>
-          ) : transcriptHistory.length > 0 ? (
             <div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider block mb-0.5 ${
-                transcriptHistory[transcriptHistory.length - 1].role === 'user' ? 'text-cyan-400' : 'text-emerald-400'
-              }`}>
-                {transcriptHistory[transcriptHistory.length - 1].role === 'user' ? 'You' : 'Devbhoomi AI'}
-              </span>
-              <p className="text-xs sm:text-sm font-medium text-stone-200 leading-relaxed line-clamp-2">
-                {transcriptHistory[transcriptHistory.length - 1].text}
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black tracking-wide text-white">Devbhoomi AI Voice</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Live
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-stone-400 font-mono mt-0.5">
+                <Clock size={11} className="text-emerald-400" />
+                <span>{formatDuration(callDuration)}</span>
+                <span>•</span>
+                <span className="capitalize text-emerald-400 font-bold">{status}</span>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-0.5">
-              <p className="text-xs sm:text-sm font-medium text-stone-300">
-                "नैनीताल 2 दिन का प्लान और बजट बताओ"
-              </p>
-              <p className="text-[11px] text-emerald-400/80 font-normal">
-                Ask in Hindi or English — Mountain roads, weather, homestays, or trek advice.
-              </p>
-            </div>
-          )}
+          </div>
 
-          {callDuration > 0 && (
-            <div className="text-[10px] font-mono text-stone-500 pt-0.5">
-              {formatTime(callDuration)}
+          <div className="flex items-center gap-2">
+            {/* Visualizer Mode Switcher */}
+            <div className="hidden sm:flex items-center bg-white/5 rounded-xl p-1 border border-white/10">
+              <button
+                type="button"
+                onClick={() => setVisualMode('orb')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  visualMode === 'orb' ? 'bg-emerald-500 text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                Orb
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisualMode('wave')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  visualMode === 'wave' ? 'bg-emerald-500 text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                Wave
+              </button>
             </div>
-          )}
-        </div>
 
-        {/* Quick Clickable Query Chips (For Brave & 1-Tap Voice testing) */}
-        <div className="w-full flex items-center justify-center gap-1.5 flex-wrap">
-          {QUICK_QUESTIONS.map((q, idx) => (
+            {/* Close Button */}
             <button
-              key={idx}
               type="button"
-              onClick={() => handleProcessVoiceQuery(q)}
-              className="px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-emerald-500/20 text-stone-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 text-[11px] font-medium transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+              onClick={() => {
+                cleanupVoice();
+                onClose();
+              }}
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
             >
-              ✨ {q}
+              <X size={18} />
             </button>
-          ))}
+          </div>
         </div>
 
-        {/* Quick Text Input Fallback */}
-        <form onSubmit={handleManualSubmit} className="w-full flex items-center gap-2">
-          <input
-            type="text"
-            value={manualInput}
-            onChange={(e) => setManualInput(e.target.value)}
-            placeholder="Type your question or speak into mic..."
-            className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-stone-100 placeholder:text-stone-500 focus:outline-none focus:border-emerald-500"
-          />
-          <button
-            type="submit"
-            disabled={!manualInput.trim()}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Send</span>
-          </button>
-        </form>
+        {/* ── Main Interactive Center Stage ── */}
+        <div className="relative z-10 flex-1 grid grid-cols-1 md:grid-cols-12 overflow-hidden">
+          
+          {/* Left / Center Visualizer Column (7 cols) */}
+          <div className="md:col-span-7 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-white/10 relative overflow-hidden">
+            
+            {/* Live Audio Visualizer Canvas */}
+            <div className="w-full max-w-sm h-56 sm:h-64 flex items-center justify-center relative">
+              <VoiceVisualizer
+                mode={visualMode}
+                status={status}
+                audioLevel={status === 'speaking' ? aiAudioLevel : micAudioLevel}
+              />
+            </div>
+
+            {/* Live Subtitle HUD */}
+            <div className="w-full max-w-md mt-4 text-center min-h-[70px] flex flex-col items-center justify-center px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md">
+              {status === 'processing' ? (
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold animate-pulse">
+                  <Sparkles size={14} />
+                  <span>Devbhoomi AI is analyzing mountain route data...</span>
+                </div>
+              ) : status === 'speaking' ? (
+                <p className="text-xs sm:text-sm text-emerald-200 font-medium leading-relaxed line-clamp-3">
+                  "{liveAiText || 'Speaking...'}"
+                </p>
+              ) : (
+                <p className="text-xs sm:text-sm text-stone-300 font-medium leading-relaxed">
+                  {liveUserText ? (
+                    <span className="text-white font-bold">"{liveUserText}"</span>
+                  ) : (
+                    <span className="text-stone-400">🎙️ Listening... Speak naturally in Hindi, English or Pahadi</span>
+                  )}
+                </p>
+              )}
+            </div>
+
+            {/* Quick Tap Question Chips */}
+            <div className="w-full max-w-md mt-4 flex flex-wrap items-center justify-center gap-1.5">
+              {QUICK_QUESTIONS.map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleProcessVoiceQuery(q)}
+                  disabled={status === 'processing'}
+                  className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-emerald-500/20 text-stone-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/30 text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap active:scale-95"
+                >
+                  ⚡ {q}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Live Transcript Feed Column (5 cols) */}
+          <div className="md:col-span-5 flex flex-col h-full bg-white/[0.01] overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-400">Live Transcript</span>
+              <span className="text-[10px] text-emerald-400 font-mono">{transcriptHistory.length} messages</span>
+            </div>
+
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 custom-scrollbar text-xs">
+              {transcriptHistory.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-4 text-stone-500">
+                  <Activity size={24} className="mb-2 text-stone-600" />
+                  <p className="font-bold">Real-time Spoken Conversation</p>
+                  <p className="text-[11px] mt-1 text-stone-600">Your questions and AI responses will stream here in real time.</p>
+                </div>
+              ) : (
+                transcriptHistory.map((item, index) => (
+                  <div 
+                    key={index}
+                    className={`flex flex-col gap-1 ${item.role === 'user' ? 'items-end' : 'items-start'}`}
+                  >
+                    <div className="flex items-center gap-1 text-[10px] text-stone-400">
+                      {item.role === 'user' ? <User size={10} /> : <Bot size={10} className="text-emerald-400" />}
+                      <span>{item.role === 'user' ? 'You' : 'Devbhoomi AI'}</span>
+                      <span>•</span>
+                      <span>{item.time}</span>
+                    </div>
+                    <div 
+                      className={`p-3 rounded-2xl max-w-[88%] leading-relaxed ${
+                        item.role === 'user'
+                          ? 'bg-[#0f3d2e] text-white rounded-tr-none border border-emerald-500/30'
+                          : 'bg-white/10 text-stone-200 rounded-tl-none border border-white/10'
+                      }`}
+                    >
+                      {item.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={captionsEndRef} />
+            </div>
+
+            {/* Quick Text Input inside Voice Studio */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (manualInput.trim()) {
+                  handleProcessVoiceQuery(manualInput.trim());
+                  setManualInput('');
+                }
+              }}
+              className="p-3 border-t border-white/10 bg-white/[0.02] flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+                placeholder="Type question or speak..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-emerald-400"
+              />
+              <button
+                type="submit"
+                disabled={!manualInput.trim() || status === 'processing'}
+                className="p-2 rounded-xl bg-emerald-500 text-stone-950 hover:bg-emerald-400 font-bold transition-all cursor-pointer disabled:opacity-40"
+              >
+                <Send size={14} />
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* ── Bottom Control Deck ── */}
+        <div className="relative z-10 px-6 py-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 bg-white/[0.02] backdrop-blur-md">
+          
+          {/* Status Badge */}
+          <div className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${
+              status === 'speaking' ? 'bg-teal-400 animate-ping' :
+              status === 'processing' ? 'bg-amber-400 animate-pulse' :
+              status === 'listening' ? 'bg-[#00FF88] shadow-[0_0_10px_rgba(0,255,136,0.8)]' :
+              'bg-stone-500'
+            }`} />
+            <span className="text-xs font-bold text-stone-300 capitalize">
+              {status === 'listening' ? 'Mic Active • Ready' : status}
+            </span>
+          </div>
+
+          {/* Action Button Deck */}
+          <div className="flex items-center gap-3">
+            {/* Mic Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleMute}
+              className={`p-3.5 rounded-2xl transition-all cursor-pointer flex items-center gap-2 text-xs font-bold active:scale-95 shadow-lg ${
+                isMuted
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                  : 'bg-emerald-500 text-stone-950 hover:bg-emerald-400 shadow-emerald-500/20'
+              }`}
+            >
+              {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+              <span>{isMuted ? 'Unmute Mic' : 'Mute Mic'}</span>
+            </button>
+
+            {/* Speaker Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isSpeakerMuted;
+                setIsSpeakerMuted(next);
+                if (next) stopSpeaking();
+              }}
+              className={`p-3.5 rounded-2xl transition-all cursor-pointer flex items-center gap-2 text-xs font-bold active:scale-95 border ${
+                isSpeakerMuted
+                  ? 'bg-white/5 border-white/10 text-stone-400 hover:text-white'
+                  : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+              }`}
+            >
+              {isSpeakerMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              <span>{isSpeakerMuted ? 'Muted' : 'Audio On'}</span>
+            </button>
+
+            {/* End Session Button */}
+            <button
+              type="button"
+              onClick={() => {
+                cleanupVoice();
+                onClose();
+              }}
+              className="p-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold active:scale-95 shadow-md shadow-rose-900/30"
+            >
+              <PhoneOff size={16} />
+              <span>End Call</span>
+            </button>
+          </div>
+        </div>
+
       </div>
-
-
-      {/* ── 3. Bottom Action Controls Bar ─────────────────────────────────────── */}
-      <div className="w-full max-w-sm flex items-center justify-center gap-6 px-6 py-3 z-10 shrink-0">
-        
-        {/* Mute Mic */}
-        <button
-          type="button"
-          onClick={toggleMute}
-          className={`flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full transition-all border cursor-pointer active:scale-95 ${
-            isMuted
-              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm'
-              : 'bg-white/[0.05] hover:bg-white/[0.1] text-stone-300 hover:text-white border-white/10'
-          }`}
-          title={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
-        >
-          {isMuted ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5" />}
-        </button>
-
-        {/* Center Main Action (Clean Emerald Mic / Status) */}
-        <button
-          type="button"
-          onClick={toggleMute}
-          className={`flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-all active:scale-95 cursor-pointer ${
-            isMuted 
-              ? 'bg-stone-700 text-stone-400 border border-stone-600'
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] border border-emerald-400/40'
-          }`}
-          title={isMuted ? 'Microphone Muted (Tap to speak)' : 'Microphone Active'}
-        >
-          <Mic className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-        </button>
-
-        {/* End Call Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-950/60 border border-rose-400/30 transition-all active:scale-95 cursor-pointer"
-          title="End Voice Session"
-        >
-          <PhoneOff className="w-5 h-5 text-white" />
-        </button>
-
-      </div>
-
     </div>
   );
 }

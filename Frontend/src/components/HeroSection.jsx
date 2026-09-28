@@ -517,8 +517,12 @@ export default function HeroSection() {
 
     if (isListeningVoice) {
       setIsListeningVoice(false);
+      if (voiceRecognitionRef.current) {
+        try { voiceRecognitionRef.current.abort(); } catch (_) {}
+        voiceRecognitionRef.current = null;
+      }
       const audioBlob = stopAudioRecording();
-      if (audioBlob) {
+      if (audioBlob && (!aiPrompt || aiPrompt.startsWith('🎙️'))) {
         setAiPrompt("🎙️ Transcribing voice...");
         try {
           const res = await sendAudioToVoiceBridge(audioBlob, { lang: 'hi' });
@@ -532,6 +536,44 @@ export default function HeroSection() {
         }
       }
       return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'hi-IN';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+
+        recognition.onstart = () => {
+          setIsListeningVoice(true);
+          setAiPrompt("🎙️ Listening... Speak your query!");
+        };
+
+        recognition.onresult = (event) => {
+          let text = '';
+          for (let i = 0; i < event.results.length; i++) {
+            text += event.results[i][0].transcript;
+          }
+          if (text) {
+            setAiPrompt(text);
+          }
+        };
+
+        recognition.onerror = () => {
+          setIsListeningVoice(false);
+        };
+
+        recognition.onend = () => {
+          setIsListeningVoice(false);
+          voiceRecognitionRef.current = null;
+        };
+
+        voiceRecognitionRef.current = recognition;
+        recognition.start();
+        return;
+      } catch (_) {}
     }
 
     try {
