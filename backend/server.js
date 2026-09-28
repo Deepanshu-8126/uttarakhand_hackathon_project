@@ -159,7 +159,8 @@ app.use('/voice', voiceRoutes);
 
 // Express WebSocket Native Endpoint for Voice Companion
 const handleExpressVoiceWs = (ws, req) => {
-  console.log('[Express WS Voice] Client connected via WebSocket');
+  const clientIp = req.socket.remoteAddress || '127.0.0.1';
+  console.log(`[Express WS Voice] Client connected from ${clientIp}`);
   try {
     ws.send(JSON.stringify({
       type: 'connected',
@@ -178,18 +179,25 @@ const handleExpressVoiceWs = (ws, req) => {
       if (msg.type === 'query' || msg.type === 'text' || msg.type === 'audio') {
         let transcript = (msg.query || msg.text || '').trim();
         if (!transcript) transcript = 'Uttarakhand tourism destinations';
+        console.log(`[Express WS Voice] Received query: "${transcript}"`);
 
+        const responseText = `Namaste! Welcome to Devbhoomi Uttarakhand travel guide. You asked about: ${transcript}.`;
         ws.send(JSON.stringify({
           type: 'turn_complete',
-          text: `Namaste! Welcome to Devbhoomi Uttarakhand travel guide. You asked about: ${transcript}.`,
-          response: `Namaste! Welcome to Devbhoomi Uttarakhand travel guide. You asked about: ${transcript}.`,
+          text: responseText,
+          response: responseText,
           audio_base64: '',
           user_transcript: transcript
         }));
+        console.log(`[Express WS Voice] Sent response packet for "${transcript}"`);
       }
     } catch (err) {
-      console.warn('[Express WS Voice Msg Error]', err.message);
+      console.error('[Express WS Voice Error]', err);
     }
+  });
+
+  ws.on('close', () => {
+    console.log(`[Express WS Voice] Client ${clientIp} disconnected`);
   });
 };
 

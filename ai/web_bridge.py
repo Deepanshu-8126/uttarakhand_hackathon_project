@@ -1184,15 +1184,17 @@ async def websocket_voice_endpoint(
                     q = (msg.get("query") or msg.get("text", "")).strip()
                     lang = msg.get("lang", "en")
                     if q:
+                        logger.info(f"[ws/voice] Received WebSocket query: '{q}' (lang: {lang})")
                         await stream_gemini_live_to_ws(websocket, q, [], lang)
+                        logger.info(f"[ws/voice] Finished response stream for: '{q}'")
                 elif mtype == "ping":
                     await safe_send(websocket, {"type": "pong"})
         except WebSocketDisconnect:
-            pass
+            logger.info("[ws/voice] WebSocket client disconnected normally")
         except Exception as ex:
-            logger.error(f"[ws/fallback] Error: {ex}")
+            logger.error(f"[ws/voice] WebSocket error: {ex}", exc_info=True)
     finally:
-        logger.info("[ws] Client disconnected")
+        logger.info("[ws/voice] Cleaned up WebSocket connection")
 
 
 
