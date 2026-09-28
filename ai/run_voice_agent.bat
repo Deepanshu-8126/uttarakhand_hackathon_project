@@ -5,6 +5,7 @@ set "PYTHONPATH=%~dp0;%PYTHONPATH%"
 :: Auto-detect virtual environment python if present
 set "PYTHON_BIN=python"
 if exist ".venv\Scripts\python.exe" set "PYTHON_BIN=.venv\Scripts\python.exe"
+if exist "..\.venv\Scripts\python.exe" set "PYTHON_BIN=..\.venv\Scripts\python.exe"
 
 echo ====================================================================
 echo   Devbhoomi AI Voice Demo & Live Voice Runtime (discover/ai)

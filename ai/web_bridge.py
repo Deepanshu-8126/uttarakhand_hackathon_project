@@ -60,8 +60,12 @@ for _candidate in (
     if _candidate.exists():
         load_dotenv(_candidate, override=True)
 
-from google import genai
-from google.genai import types
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
 
 from voice_demo.devbhoomi import (
     search_destination_info,
@@ -215,6 +219,8 @@ async def cache_set_response(query_key: str, text: str, audio_b64: str, ttl_seco
 
 
 def _get_genai_client():
+    if genai is None:
+        return None
     key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or GOOGLE_API_KEY
     if not key:
         return None
@@ -267,7 +273,7 @@ async def synthesize_gemini_live_voice(
         text_chunks: list[str] = []
         transcription_chunks: list[str] = []
 
-        async with asyncio.timeout(10.0):
+        async with asyncio.timeout(4.0):
             async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
                 await session.send_client_content(
                     turns=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
