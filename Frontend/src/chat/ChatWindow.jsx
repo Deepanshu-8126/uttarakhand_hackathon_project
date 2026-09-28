@@ -48,14 +48,19 @@ export default function ChatWindow({
   const silenceTimerRef = useRef(null);
   const isListeningRef = useRef(false);
 
-  // Auto-scroll on new tokens or messages in text mode
+  const [isInlineListening, setIsInlineListening] = useState(false);
+  const speechRecognitionRef = useRef(null);
+  const inlineRecognitionRef = useRef(null);
+  const lastSpokenMsgIdRef = useRef(null);
+
+  // Auto-scroll on new tokens or messages in text mode (skip initial welcome message to prevent jump)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 1 || isStreaming) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isStreaming]);
 
-  // Sync latest assistant message with Voice Companion live reply
-  // IMPORTANT: Do NOT trigger any browser TTS (speakText) here.
-  // Voice output is exclusively handled by playBase64Audio from the Gemini Live Aoede bridge.
+  // Sync latest assistant message with Voice Companion live reply & natural neural speech
   useEffect(() => {
     if (!isVoiceActive || messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
@@ -64,18 +69,32 @@ export default function ChatWindow({
       if (content) {
         setLiveAiReply(content);
 
-        // Only update status to 'thinking' if we're NOT already playing Aoede audio
-        if ((isLoading || isStreaming) && voiceStatus !== 'speaking') {
+        // When assistant finishes replying in Voice Mode and audio is unmuted, speak aloud
+        if (!isLoading && !isStreaming) {
+          if (!isVoiceMuted && lastMsg.id && lastMsg.id !== lastSpokenMsgIdRef.current) {
+            lastSpokenMsgIdRef.current = lastMsg.id;
+            if (voiceStatus !== 'speaking') {
+              const clean = cleanTextForSpeech(content);
+              const hasHindi = /[\u0900-\u097F]/.test(clean);
+              const targetLang = selectedLanguage === 'English' ? 'en-IN' : (hasHindi ? 'hi-IN' : 'hi-IN');
+              speakText(clean, {
+                lang: targetLang,
+                onStart: () => setVoiceStatus('speaking'),
+                onEnd: () => setVoiceStatus('idle'),
+                onError: () => setVoiceStatus('idle')
+              });
+            }
+          } else if (voiceStatus === 'thinking') {
+            setVoiceStatus('idle');
+          }
+        } else if ((isLoading || isStreaming) && voiceStatus !== 'speaking') {
           setVoiceStatus('thinking');
-        } else if (!isLoading && !isStreaming && voiceStatus === 'thinking') {
-          // Streaming finished, go idle (Aoede playback handles its own speaking→idle)
-          setVoiceStatus('idle');
         }
       }
     }
-  }, [messages, isLoading, isStreaming, isVoiceActive, voiceStatus]);
+  }, [messages, isLoading, isStreaming, isVoiceActive, isVoiceMuted, voiceStatus, selectedLanguage]);
 
-  // ── 1. Start Hardware Microphone Recording via voiceBridge ──
+  // ── 1. Start Voice Companion Listening (Web Speech API + Hardware Level Visualizer) ──
   const startListening = useCallback(async () => {
     if (typeof window === 'undefined') return;
     stopSpeaking();
@@ -85,8 +104,89 @@ export default function ChatWindow({
     isListeningRef.current = true;
     hasSpokenRef.current = false;
     setVoiceStatus('listening');
-    setLiveTranscript('🎙️ Listening... Speak naturally into your mic!');
+    setLiveTranscript('🎙️ Listening... Speak naturally in Hindi or English');
 
+    // 1A. Ultra-responsive Web Speech Recognition
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let webSpeechActive = false;
+
+    if (SpeechRecognitionClass) {
+      try {
+        if (speechRecognitionRef.current) {
+          try { speechRecognitionRef.current.abort(); } catch (_) {}
+        }
+        const recognition = new SpeechRecognitionClass();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        recognition.lang = selectedLanguage === 'English' ? 'en-IN' : 'hi-IN';
+
+        recognition.onstart = () => {
+          setVoiceStatus('listening');
+          setMicAudioLevel(0.4);
+        };
+
+        recognition.onresult = (event) => {
+          hasSpokenRef.current = true;
+          let interimTranscript = '';
+          let finalTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          const currentText = finalTranscript || interimTranscript;
+          if (currentText) {
+            setLiveTranscript(currentText);
+            setMicAudioLevel(0.7);
+          }
+
+          if (finalTranscript && finalTranscript.trim()) {
+            isListeningRef.current = false;
+            setVoiceStatus('thinking');
+            setMicAudioLevel(0);
+
+            let query = finalTranscript.trim();
+            if (selectedLanguage === 'गढ़वाली (Garhwali)') {
+              query = `[In Garhwali dialect]: ${query}`;
+            } else if (selectedLanguage === 'कुमाऊँनी (Kumaoni)') {
+              query = `[In Kumaoni dialect]: ${query}`;
+            }
+
+            sendMessage(query);
+          }
+        };
+
+        recognition.onerror = (err) => {
+          console.warn('[WebSpeech Recognizer Warning]', err?.error || err);
+          if (err.error === 'not-allowed') {
+            setLiveTranscript('Microphone permission blocked. Please allow mic in browser settings.');
+            setVoiceStatus('idle');
+            isListeningRef.current = false;
+          }
+        };
+
+        recognition.onend = () => {
+          if (isListeningRef.current && !hasSpokenRef.current) {
+            setVoiceStatus('idle');
+            isListeningRef.current = false;
+          }
+        };
+
+        recognition.start();
+        speechRecognitionRef.current = recognition;
+        webSpeechActive = true;
+      } catch (wsErr) {
+        console.warn('[WebSpeech startup error, using hardware fallback]', wsErr);
+      }
+    }
+
+    // 1B. Microphone audio level tracker & Hardware fallback session
     try {
       let silenceFrames = 0;
       const session = await startMicRecording({
@@ -97,7 +197,6 @@ export default function ChatWindow({
             silenceFrames = 0;
           } else if (hasSpokenRef.current && isListeningRef.current) {
             silenceFrames++;
-            // Auto stop and process audio after ~1.4s of silence after speaking
             if (silenceFrames > 60 && !isLoading) {
               silenceFrames = 0;
               stopListening();
@@ -107,18 +206,25 @@ export default function ChatWindow({
       });
       micSessionRef.current = session;
     } catch (err) {
-      console.error('[VoiceBridge Mic Error]', err);
-      setLiveTranscript('Microphone permission blocked. Please allow mic in browser.');
-      setVoiceStatus('idle');
-      isListeningRef.current = false;
+      if (!webSpeechActive) {
+        console.error('[VoiceBridge Mic Error]', err);
+        setLiveTranscript('Microphone permission blocked. Please allow mic in browser.');
+        setVoiceStatus('idle');
+        isListeningRef.current = false;
+      }
     }
-  }, [isLoading]);
+  }, [isLoading, selectedLanguage, sendMessage]);
 
-  // ── 2. Stop Recording & Send Audio to Gemini Voice Bridge ──
+  // ── 2. Stop Recording & Send Audio Fallback ──
   const stopListening = useCallback(async () => {
     if (!isListeningRef.current && voiceStatus !== 'listening') return;
     isListeningRef.current = false;
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+    if (speechRecognitionRef.current) {
+      try { speechRecognitionRef.current.stop(); } catch (_) {}
+      speechRecognitionRef.current = null;
+    }
 
     if (!micSessionRef.current) {
       setVoiceStatus('idle');
@@ -126,7 +232,7 @@ export default function ChatWindow({
     }
 
     setVoiceStatus('thinking');
-    setLiveTranscript('⚡ Processing speech with Gemini Voice Bridge...');
+    setLiveTranscript('⚡ Processing speech with Devbhoomi AI...');
 
     try {
       const audioBlob = await micSessionRef.current.stop();
@@ -148,7 +254,6 @@ export default function ChatWindow({
             formattedQuery = `[In Kumaoni dialect]: ${formattedQuery}`;
           }
 
-          // If bridge already returned direct Aoede voice audio, play it immediately
           if (data.audio_base64) {
             setLiveAiReply(data.response || '');
             setVoiceStatus('speaking');
@@ -159,7 +264,6 @@ export default function ChatWindow({
             });
           }
 
-          // Also inject to chat history
           sendMessage(formattedQuery);
           return;
         }
@@ -187,6 +291,65 @@ export default function ChatWindow({
     }
   }, [startListening, stopListening]);
 
+  // Inline Voice-to-Text Dictation in bottom input bar
+  const toggleInlineDictation = useCallback(() => {
+    if (isInlineListening) {
+      if (inlineRecognitionRef.current) {
+        try { inlineRecognitionRef.current.stop(); } catch (_) {}
+        inlineRecognitionRef.current = null;
+      }
+      setIsInlineListening(false);
+      return;
+    }
+
+    const SpeechRecognitionClass = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+    if (!SpeechRecognitionClass) {
+      // Fallback: switch directly to full Voice Companion
+      toggleVoiceMode(true);
+      return;
+    }
+
+    try {
+      stopSpeaking();
+      stopAudioPlayback();
+      const recognition = new SpeechRecognitionClass();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = selectedLanguage === 'English' ? 'en-IN' : 'hi-IN';
+
+      recognition.onstart = () => {
+        setIsInlineListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript) {
+          setInputText((prev) => {
+            const base = prev.trim();
+            return base ? `${base} ${transcript}` : transcript;
+          });
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsInlineListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsInlineListening(false);
+      };
+
+      recognition.start();
+      inlineRecognitionRef.current = recognition;
+    } catch (e) {
+      console.warn('[Inline Speech Dictation Error]', e);
+      toggleVoiceMode(true);
+    }
+  }, [isInlineListening, selectedLanguage, toggleVoiceMode]);
+
   // Clean up on unmount or drawer close
   useEffect(() => {
     return () => {
@@ -195,6 +358,15 @@ export default function ChatWindow({
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (micSessionRef.current) {
         try { micSessionRef.current.stop(); } catch (_) {}
+        micSessionRef.current = null;
+      }
+      if (speechRecognitionRef.current) {
+        try { speechRecognitionRef.current.abort(); } catch (_) {}
+        speechRecognitionRef.current = null;
+      }
+      if (inlineRecognitionRef.current) {
+        try { inlineRecognitionRef.current.abort(); } catch (_) {}
+        inlineRecognitionRef.current = null;
       }
     };
   }, [isVoiceActive, isOpen]);
@@ -395,9 +567,19 @@ export default function ChatWindow({
           {!embedded && (
             <button
               type="button"
-              onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Close Drawer"
+              onClick={(e) => {
+                if (e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+                if (typeof onClose === 'function') onClose();
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('du_close_copilot'));
+                }
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200/90 transition-all cursor-pointer shrink-0 ml-1 shadow-2xs"
+              title="Close Devbhoomi AI Copilot (Escape)"
+              aria-label="Close Devbhoomi AI Copilot"
             >
               <X size={18} strokeWidth={2.5} />
             </button>
@@ -767,62 +949,62 @@ export default function ChatWindow({
         // ═════════════════════════════════════════════════════════════════════
         <>
           {/* Drawer Scrollable Content Body */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 space-y-6 custom-copilot-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 sm:py-5 space-y-4 custom-copilot-scrollbar">
             
-            {/* Welcome Empty State */}
-            {messages.length <= 1 && (
-              <>
-                <div className="rounded-2xl bg-gradient-to-b from-slate-50 to-white p-5 border border-slate-100 text-center flex flex-col items-center shadow-xs">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shadow-xs mb-3.5">
+            {/* Quick Starter State (Only if message list is completely empty) */}
+            {messages.length === 0 && (
+              <div className="space-y-4 pt-2">
+                <div className="rounded-2xl bg-gradient-to-b from-emerald-50/60 to-white p-5 border border-emerald-100 text-center flex flex-col items-center shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shadow-xs mb-3">
                     <Mountain size={24} className="text-emerald-800" />
                   </div>
-                  <h2 className="font-bold text-slate-900 text-xl tracking-tight">
+                  <h2 className="font-bold text-slate-900 text-lg tracking-tight">
                     Welcome to Devbhoomi AI
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-sm leading-relaxed">
+                  <p className="text-xs text-slate-600 mt-1 max-w-sm leading-relaxed">
                     Your intelligent Uttarakhand yatra navigator. Ask for instant trek itineraries, live route alerts, weather forecasts, or sacred temple timings.
                   </p>
                 </div>
 
                 {/* 2-Column Action Cards */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div
                     onClick={() => sendMessage('Mujhe 4-day Uttarakhand mountain trek plan bana do customized routes aur stay stops ke saath')}
-                    className="p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-emerald-500/40 hover:shadow-md transition-all cursor-pointer group"
+                    className="p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-500/40 hover:bg-emerald-50/30 hover:shadow-md transition-all cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
-                      <Route size={16} />
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Route size={15} />
                     </div>
                     <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
                       Plan 4-Day Trek
                     </h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
                       Customized day-wise routes &amp; stay stops
                     </p>
                   </div>
 
                   <div
                     onClick={() => sendMessage('Kedarnath aur Mandakini valley ka live road condition aur weather kaisa hai?')}
-                    className="p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-emerald-500/40 hover:shadow-md transition-all cursor-pointer group"
+                    className="p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-500/40 hover:bg-emerald-50/30 hover:shadow-md transition-all cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
-                      <CloudSun size={16} />
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <CloudSun size={15} />
                     </div>
                     <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
                       Live Road &amp; Weather
                     </h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
                       Mandakini valley alerts &amp; temperature
                     </p>
                   </div>
                 </div>
 
                 {/* Suggested Queries */}
-                <div className="space-y-2.5">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="space-y-2 pt-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     Suggested Queries
                   </span>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {[
                       { label: 'Kedarnath Dham Route', prompt: 'Kedarnath Dham trek route details, distance from Gaurikund, and safety tips' },
                       { label: 'Auli Skiing Season', prompt: 'Auli skiing season timings, cable car tickets, and weather conditions' },
@@ -833,17 +1015,15 @@ export default function ChatWindow({
                         key={idx}
                         type="button"
                         onClick={() => sendMessage(item.prompt)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100/90 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200/50 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 text-slate-700 transition-colors border border-slate-200 cursor-pointer"
                       >
-                        <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2L14.39 8.26L21 9.27L16.2 13.97L17.34 20.73L12 17.27L6.66 20.73L7.8 13.97L3 9.27L9.61 8.26L12 2Z" />
-                        </svg>
+                        <Sparkles size={11} className="text-emerald-600 shrink-0" />
                         <span>{item.label}</span>
                       </button>
                     ))}
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {/* Message History */}
@@ -869,11 +1049,16 @@ export default function ChatWindow({
             <div className="flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
               <button
                 type="button"
-                onClick={() => toggleVoiceMode(true)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition-colors shrink-0 cursor-pointer"
-                title="Open Voice Companion"
+                onClick={toggleInlineDictation}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                  isInlineListening 
+                    ? 'text-white bg-rose-600 animate-pulse shadow-md ring-2 ring-rose-400' 
+                    : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
+                }`}
+                title={isInlineListening ? "Listening... Tap to finish voice typing" : "Tap to speak (Voice to text)"}
+                aria-label={isInlineListening ? "Stop voice input" : "Start voice input"}
               >
-                <Mic size={17} className="text-emerald-700" />
+                <Mic size={17} className={isInlineListening ? "text-white" : "text-emerald-700"} />
               </button>
               
               <input

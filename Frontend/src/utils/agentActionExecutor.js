@@ -440,8 +440,14 @@ export function executeAgentAction(action, context = {}) {
     }
 
     case 'OPEN_MAP': {
-      const dest = action.destination || action.filters?.destination || action.filters?.location;
-      const target = dest ? `/map?destination=${encodeURIComponent(dest)}` : '/map';
+      const dest = action.destination || action.filters?.destination || action.filters?.location || '';
+      const orig = action.origin || action.filters?.origin || '';
+      const mode = action.mode || action.travelMode || '';
+      const params = new URLSearchParams();
+      if (dest) params.set('destination', dest);
+      if (orig) params.set('origin', orig);
+      if (mode) params.set('mode', mode);
+      const target = `/map${params.toString() ? `?${params.toString()}` : ''}`;
       if (navigate) {
         navigate(target);
         return { executed: true, target };

@@ -26,7 +26,6 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
   double? _longitude;
   double? _altitude;
   String _locationLabel = 'Acquiring GPS...';
-  bool _gpsLoading = true;
 
   @override
   void initState() {
@@ -43,7 +42,6 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _locationLabel = 'GPS Permission Denied';
-          _gpsLoading = false;
         });
         return;
       }
@@ -57,7 +55,6 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
         _altitude = pos.altitude;
         _locationLabel = '${pos.latitude.toStringAsFixed(4)}°N, ${pos.longitude.toStringAsFixed(4)}°E';
         if (pos.altitude > 0) _locationLabel += ' · ${pos.altitude.toStringAsFixed(0)}m';
-        _gpsLoading = false;
       });
     } catch (e) {
       setState(() {
@@ -66,7 +63,6 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
         _longitude = 79.0669;
         _altitude = 3150;
         _locationLabel = 'GPS Fallback (Kedarnath)';
-        _gpsLoading = false;
       });
     }
   }
@@ -79,13 +75,13 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
   ];
 
   final List<Map<String, dynamic>> incidentTypes = [
-    {'id': 'GENERAL_SOS', 'label': 'General SOS', 'icon': Icons.shield_outlined, 'color': Color(0xFFE11D48)},
-    {'id': 'MEDICAL', 'label': 'Medical Emergency', 'icon': Icons.medical_services_outlined, 'color': Color(0xFFDC2626)},
-    {'id': 'AMS_ALTITUDE', 'label': 'Altitude / AMS', 'icon': Icons.terrain_outlined, 'color': Color(0xFFD97706)},
-    {'id': 'LANDSLIDE_STRANDED', 'label': 'Landslide Blocked', 'icon': Icons.warning_amber_rounded, 'color': Color(0xFFEA580C)},
-    {'id': 'LOST_TRAIL', 'label': 'Lost on Trail', 'icon': Icons.explore_off_outlined, 'color': Color(0xFF2563EB)},
-    {'id': 'WOMEN_SAFETY', 'label': 'Women Solo Alert', 'icon': Icons.verified_user_outlined, 'color': Color(0xFFDB2777)},
-    {'id': 'VEHICLE_BREAKDOWN', 'label': 'Vehicle Breakdown', 'icon': Icons.two_wheeler_outlined, 'color': Color(0xFF059669)},
+    {'id': 'GENERAL_SOS', 'label': 'General SOS', 'icon': Icons.shield_outlined, 'color': const Color(0xFFE11D48)},
+    {'id': 'MEDICAL', 'label': 'Medical Emergency', 'icon': Icons.medical_services_outlined, 'color': const Color(0xFFDC2626)},
+    {'id': 'AMS_ALTITUDE', 'label': 'Altitude / AMS', 'icon': Icons.terrain_outlined, 'color': const Color(0xFFD97706)},
+    {'id': 'LANDSLIDE_STRANDED', 'label': 'Landslide Blocked', 'icon': Icons.warning_amber_rounded, 'color': const Color(0xFFEA580C)},
+    {'id': 'LOST_TRAIL', 'label': 'Lost on Trail', 'icon': Icons.explore_off_outlined, 'color': const Color(0xFF2563EB)},
+    {'id': 'WOMEN_SAFETY', 'label': 'Women Solo Alert', 'icon': Icons.verified_user_outlined, 'color': const Color(0xFFDB2777)},
+    {'id': 'VEHICLE_BREAKDOWN', 'label': 'Vehicle Breakdown', 'icon': Icons.two_wheeler_outlined, 'color': const Color(0xFF059669)},
   ];
 
   void _startHold() {
@@ -146,8 +142,8 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF0C130F),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: const BorderSide(color: Color(0xFFE11D48), width: 1.5)),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.shield_rounded, color: Color(0xFFE11D48), size: 24),
             SizedBox(width: 8),
             Text('SOS BEACON LIVE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white)),
@@ -169,10 +165,10 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1014),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE11D48).withOpacity(0.4)),
+                border: Border.all(color: const Color(0xFFE11D48).withValues(alpha: 0.4)),
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.radar, color: Color(0xFFE11D48), size: 20),
                   SizedBox(width: 8),
                   Expanded(
@@ -238,8 +234,8 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
       appBar: AppBar(
         backgroundColor: const Color(0xFF080D0A),
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.shield_outlined, color: Color(0xFFE11D48), size: 20),
             SizedBox(width: 8),
             Text(
@@ -275,20 +271,20 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
               decoration: BoxDecoration(
                 color: const Color(0xFF101B15),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF059669).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.3)),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                    children: const [
+                    children: [
                       Icon(Icons.satellite_alt, color: Color(0xFF34D399), size: 16),
                       SizedBox(width: 8),
                       Text('SDRF Satellite Link: Online', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.w800)),
                     ],
                   ),
                   Row(
-                    children: const [
+                    children: [
                       Icon(Icons.battery_charging_full, color: Color(0xFFFBBF24), size: 16),
                       SizedBox(width: 4),
                       Text('92%', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.bold)),
@@ -382,7 +378,7 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFE11D48).withOpacity(isHolding ? 0.8 : 0.4),
+                                color: const Color(0xFFE11D48).withValues(alpha: isHolding ? 0.8 : 0.4),
                                 blurRadius: isHolding ? 35 : 20,
                                 spreadRadius: isHolding ? 4 : 1,
                               ),
@@ -471,9 +467,9 @@ class _SosSafetyScreenState extends State<SosSafetyScreen> with SingleTickerProv
             const SizedBox(height: 20),
 
             // Emergency Contacts Management
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Text(
                   'NOTIFIED GUARDIANS & CONTACTS',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: Color(0xFF94A3B8)),

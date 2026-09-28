@@ -4,7 +4,6 @@ import {
   ShieldAlert, Sparkles, Compass, MapPin, 
   ChevronUp, AlertCircle, ArrowUpRight, Activity 
 } from 'lucide-react';
-import AICopilotDrawer from './copilot/AICopilotDrawer';
 import { useMapStore } from '../store/mapStore';
 
 /**
@@ -17,7 +16,6 @@ export default function AdaptiveMountainDock() {
   const navigate = useNavigate();
   const { plannerForm } = useMapStore();
 
-  const [copilotOpen, setCopilotOpen] = useState(false);
   const [alertExpanded, setAlertExpanded] = useState(false);
 
   // Hidden on full-screen admin or copilot standalone views to avoid interference

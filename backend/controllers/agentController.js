@@ -12,6 +12,7 @@ import Chat from "../models/Chat.js";
 import { getOrCreateSession, addTurn, updateContextEntities } from "../services/agentSessionStore.js";
 import { runAgent } from "../services/agentService.js";
 import { resolveDestination } from "../services/destinationResolver.js";
+import { executeAgentActions } from "../services/agentActionExecutor.js";
 import { cacheGet, cacheSet } from "../config/redis.js";
 
 const MAX_MESSAGE_LENGTH = 2000;
@@ -126,23 +127,37 @@ export function extractEntitiesFromText(text, sessionEntities = {}) {
   }
 
   // 6. Budget extraction (e.g., "5000", "₹5000", "₹5,000", "5k", "5 K", "5000 rupees", "budget 5000", "around 35000 rs")
-  const budgetKMatch = clean.match(/(?:budget\s*)?(\d+)\s*(?:k|hazar|thousand)\b/i);
+  let constraint = 'EXACT';
+  if (/ke\s+andar|under|within|maximum|max|zyada\s+nahi|kam\s*karo/i.test(clean)) {
+    constraint = 'MAXIMUM';
+  } else if (/around|approx|approximately|karib|kareeb|lagbhag/i.test(clean)) {
+    constraint = 'APPROXIMATE';
+  }
+
+  const budgetKMatch = clean.match(/(?:budget\s*)?(\d+(?:\.\d+)?)\s*(?:k|hazar|hazaar|thousand)\b/i);
   if (budgetKMatch) {
-    entities.budget = parseInt(budgetKMatch[1], 10) * 1000;
+    entities.budget = Math.round(parseFloat(budgetKMatch[1]) * 1000);
+    entities.budgetAmount = entities.budget;
+    entities.budgetConstraint = constraint;
   } else {
-    const explicitBudgetMatch = clean.match(/(?:budget|cost|₹|rs\.?|inr)\s*[:=]?\s*([0-9,]+)/i) ||
-                                clean.match(/([0-9,]+)\s*(?:rupees?|rs\.?|inr)\b/i);
+    const explicitBudgetMatch = clean.match(/(?:budget|cost|kharcha|₹|rs\.?|inr)\s*[:=]?\s*([0-9,]+)/i) ||
+                                clean.match(/([0-9,]+)\s*(?:rupees?|rupaye?|rs\.?|inr|budget)\b/i) ||
+                                clean.match(/(?:paas|ke\s+andar|mein|tak)\s*([0-9,]{4,7})\b/i);
     if (explicitBudgetMatch) {
       const num = parseInt(explicitBudgetMatch[1].replace(/,/g, ""), 10);
       if (!isNaN(num) && num >= 500) {
         entities.budget = num;
+        entities.budgetAmount = num;
+        entities.budgetConstraint = constraint;
       }
     } else {
-      const standaloneMatch = clean.match(/\b([1-9]\d{3,6})\b/);
+      const standaloneMatch = clean.match(/\b([1-9]\d{3,5})\b/);
       if (standaloneMatch) {
         const num = parseInt(standaloneMatch[1], 10);
         if (!isNaN(num) && num >= 1000 && num !== 2026 && num !== 2027) {
           entities.budget = num;
+          entities.budgetAmount = num;
+          entities.budgetConstraint = constraint;
         }
       }
     }
@@ -532,6 +547,34 @@ export const agentChat = async (req, res) => {
       });
     }
     const tAgent = Date.now() - tAgentStart;
+
+    // 8b. Execute allowlisted agent actions (Favorites, Explore Later, Saved Trips)
+    const userId = user?.id || user?._id;
+    if (userId) {
+      let actionsToExecute = agentResponse.actions || [];
+      const isExplicitSave = /save\s*(?:kar|kardo|krdo|for|later)?|baad\s*mein|explore\s*later/i.test(sanitizedMessage);
+      const isNotSavingOnly = !/bas\s*batao|only\s*tell|just\s*info/i.test(sanitizedMessage);
+
+      if (actionsToExecute.length === 0 && isExplicitSave && isNotSavingOnly) {
+        const targetDest = extractedEntities.destination || "Panchachuli";
+        actionsToExecute.push({
+          type: "SAVE_EXPLORE_LATER",
+          destinationName: targetDest,
+          activityType: "Trek",
+          saveGuide: true,
+          requestedGuide: true,
+          rawIntentText: sanitizedMessage
+        });
+      }
+
+      if (actionsToExecute.length > 0) {
+        const actionResult = await executeAgentActions(userId, actionsToExecute);
+        if (actionResult.voiceSummary && !agentResponse.message.includes("Explore Later")) {
+          agentResponse.message = `${actionResult.voiceSummary}\n\n${agentResponse.message || ''}`.trim();
+        }
+        agentResponse.actionResults = actionResult;
+      }
+    }
 
     // 9. Persist turns to Chat if user is authenticated (with safe failure handling)
     const tSaveStart = Date.now();

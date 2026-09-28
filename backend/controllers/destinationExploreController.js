@@ -2,9 +2,11 @@ import Destination from '../models/Destination.js';
 import Activity from '../models/Activity.js';
 import Stay from '../models/Stay.js';
 import Rental from '../models/Rental.js';
+import PartnerListing from '../models/PartnerListing.js';
 import Guide from '../models/Guide.js';
 import Spiritual from '../models/Spiritual.js';
 import Culture from '../models/Culture.js';
+import { cacheGet, cacheSet } from '../config/redis.js';
 
 // Haversine distance strictly in km
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
@@ -45,6 +47,13 @@ export const getDestinationExplore = async (req, res) => {
   try {
     const { slug } = req.params;
     const requestedInterest = (req.query.interest || req.query.category || '').toLowerCase().trim();
+    const cacheKey = `explore:${slug.toLowerCase()}:${requestedInterest}`;
+
+    // 0. Check Ultra-Fast Redis / RAM Cache (0ms response)
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.status(200).json({ ...cached, fromCache: true });
+    }
 
     // 1. Resolve Destination
     const destination = await Destination.findOne({
@@ -71,7 +80,7 @@ export const getDestinationExplore = async (req, res) => {
         }
       : null;
 
-    // 2. Fetch Activities strictly within verified radius (NO arbitrary far-away fallback for trekking/boating)
+    // 2. Fetch Activities strictly within verified radius or district / DB fallback
     let rawActivities = [];
     if (geoQuery50km) {
       try {
@@ -79,6 +88,17 @@ export const getDestinationExplore = async (req, res) => {
       } catch (geoErr) {
         console.warn('Geo query error for activities:', geoErr.message);
       }
+    }
+    if (rawActivities.length === 0 && district) {
+      rawActivities = await Activity.find({
+        $or: [
+          { district: new RegExp(district, 'i') },
+          { locationNotes: new RegExp(district, 'i') }
+        ]
+      }).limit(6).lean();
+    }
+    if (rawActivities.length === 0) {
+      rawActivities = await Activity.find({}).limit(6).lean();
     }
 
     // Annotate activities with distance and price provenance
@@ -116,6 +136,20 @@ export const getDestinationExplore = async (req, res) => {
       } catch (err) {
         console.warn('Geo query error for places:', err.message);
       }
+    }
+
+    // Fallbacks if geo-query returns empty
+    if (rawSpiritual.length === 0) {
+      rawSpiritual = await Spiritual.find(district ? { district: new RegExp(district, 'i') } : {}).limit(6).lean();
+      if (rawSpiritual.length === 0) rawSpiritual = await Spiritual.find({}).limit(6).lean();
+    }
+    if (rawCulture.length === 0) {
+      rawCulture = await Culture.find(district ? { district: new RegExp(district, 'i') } : {}).limit(6).lean();
+      if (rawCulture.length === 0) rawCulture = await Culture.find({}).limit(6).lean();
+    }
+    if (rawNearbyDest.length === 0) {
+      rawNearbyDest = await Destination.find({ slug: { $ne: destination.slug }, ...(district ? { district: new RegExp(district, 'i') } : {}) }).limit(6).lean();
+      if (rawNearbyDest.length === 0) rawNearbyDest = await Destination.find({ slug: { $ne: destination.slug } }).limit(6).lean();
     }
 
     // Annotate Places
@@ -165,7 +199,7 @@ export const getDestinationExplore = async (req, res) => {
       })
     ].sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999));
 
-    // 4. Fetch Stays (Local priority with sensible District fallback)
+    // 4. Fetch Stays (Local priority with sensible District fallback + Partner Stays)
     let rawStays = [];
     if (geoQuery50km) {
       try {
@@ -176,8 +210,42 @@ export const getDestinationExplore = async (req, res) => {
     }
     if (rawStays.length < 4 && district) {
       const existingStayIds = rawStays.map((s) => s._id);
-      const districtStays = await Stay.find({ district, _id: { $nin: existingStayIds } }).limit(8 - rawStays.length).lean();
+      const districtStays = await Stay.find({
+        district: new RegExp(district, 'i'),
+        _id: { $nin: existingStayIds }
+      }).limit(8 - rawStays.length).lean();
       rawStays = [...rawStays, ...districtStays];
+    }
+
+    // Query active partner homestays
+    try {
+      const partnerStays = await PartnerListing.find({
+        listingType: { $in: ['Stay', 'stay', 'Homestay', 'homestay', 'Hotel', 'hotel'] },
+        status: { $in: ['ACTIVE', 'VERIFIED'] },
+        ...(district ? { district: new RegExp(district, 'i') } : {})
+      }).limit(4).lean();
+
+      const normalizedPartnerStays = partnerStays.map((pl) => ({
+        _id: pl._id,
+        name: pl.title,
+        slug: pl.slug,
+        category: pl.category || 'Homestay',
+        city: pl.city,
+        district: pl.district,
+        address: pl.address,
+        rating: 4.9,
+        price: { amount: pl.pricing?.amount || 1500 },
+        pricePerNight: pl.pricing?.amount || 1500,
+        images: pl.images || [],
+        image: pl.images?.[0]?.url || (typeof pl.images?.[0] === 'string' ? pl.images[0] : null) || null,
+        location: pl.location,
+        isPartnerListing: true
+      }));
+      rawStays = [...normalizedPartnerStays, ...rawStays];
+    } catch (_) {}
+
+    if (rawStays.length === 0) {
+      rawStays = await Stay.find({}).limit(6).lean();
     }
 
     const stays = rawStays.map((s) => {
@@ -210,11 +278,38 @@ export const getDestinationExplore = async (req, res) => {
       };
     }).sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999));
 
-    // 5. Fetch Rentals (District / locality based)
+    // 5. Fetch Rentals (District / locality based + Partner Rentals)
     let rawRentals = [];
     if (district) {
-      rawRentals = await Rental.find({ district }).limit(6).lean();
+      rawRentals = await Rental.find({ district: new RegExp(district, 'i') }).limit(6).lean();
     }
+    try {
+      const partnerRentals = await PartnerListing.find({
+        listingType: { $in: ['Rental', 'rental', 'Vehicle', 'vehicle', 'Bike', 'Car'] },
+        status: { $in: ['ACTIVE', 'VERIFIED'] },
+        ...(district ? { district: new RegExp(district, 'i') } : {})
+      }).limit(4).lean();
+
+      const normalizedPartnerRentals = partnerRentals.map((pl) => ({
+        _id: pl._id,
+        name: pl.title,
+        slug: pl.slug,
+        category: pl.category || 'Vehicle Rental',
+        city: pl.city,
+        district: pl.district,
+        vehicles: [{ name: pl.title, type: pl.category || 'Vehicle', pricePerDay: pl.pricing?.amount || 1200 }],
+        price: { amount: pl.pricing?.amount || 1200 },
+        images: pl.images || [],
+        image: pl.images?.[0]?.url || (typeof pl.images?.[0] === 'string' ? pl.images[0] : null) || null,
+        isPartnerListing: true
+      }));
+      rawRentals = [...normalizedPartnerRentals, ...rawRentals];
+    } catch (_) {}
+
+    if (rawRentals.length === 0) {
+      rawRentals = await Rental.find({}).limit(6).lean();
+    }
+
     const rentals = rawRentals.map((r) => {
       const lowestVehiclePrice = Array.isArray(r.vehicles) && r.vehicles.length > 0
         ? Math.min(...r.vehicles.map((v) => v.pricePerDay).filter(Boolean))
@@ -227,9 +322,9 @@ export const getDestinationExplore = async (req, res) => {
         category: r.category || 'Vehicle Rental',
         city: r.city,
         district: r.district,
-        price: Number.isFinite(lowestVehiclePrice) ? lowestVehiclePrice : null,
+        price: Number.isFinite(lowestVehiclePrice) ? lowestVehiclePrice : (r.price?.amount || null),
         priceProvenance: Number.isFinite(lowestVehiclePrice) ? 'PARTNER_CLAIMED' : 'PRICE NOT VERIFIED',
-        image: r.images?.[0]?.url || r.vehicles?.[0]?.image?.url || null,
+        image: r.images?.[0]?.url || r.vehicles?.[0]?.image?.url || (typeof r.image === 'string' ? r.image : r.image?.url) || null,
         itemType: 'rental',
         isBookable: true
       };
@@ -410,7 +505,7 @@ export const getDestinationExplore = async (req, res) => {
       }
     }
 
-    return res.status(200).json({
+    const responsePayload = {
       success: true,
       destination: {
         _id: destination._id,
@@ -436,7 +531,12 @@ export const getDestinationExplore = async (req, res) => {
       activeInterest: requestedInterest || null,
       matchingResults,
       emptyStateMessage
-    });
+    };
+
+    // Store in Redis / RAM cache for 10 minutes (600s)
+    await cacheSet(cacheKey, responsePayload, 600);
+
+    return res.status(200).json(responsePayload);
   } catch (error) {
     console.error('Error in getDestinationExplore:', error);
     return res.status(500).json({ success: false, message: 'Server error exploring destination', error: error.message });

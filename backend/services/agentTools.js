@@ -440,16 +440,34 @@ async function _getRecommendations(args, session) {
       budget: args.budget || "Balanced", pace: args.pace || "Balanced", travelers: args.travelers || 2 }),
     TOOL_TIMEOUT_MS, "getRecommendations");
   const data = recResult?.data || recResult || {};
-  const stays = (data.stays || []).slice(0, 5).map(s => ({
-    id: String(s._id || s.id), name: s.name, district: s.district, pricePerNight: s.pricePerNight || null,
-    provenance: (s.isKMVN || s.isGMVN) ? "VERIFIED" : (s.pricePerNight ? "ESTIMATED" : "UNKNOWN")
-  }));
-  const activities = (data.activities || []).slice(0, 5).map(a => ({
-    id: String(a._id || a.id), name: a.name, category: a.category, difficulty: a.difficulty
-  }));
-  const guides = (data.guides || []).slice(0, 5).map(g => ({
-    id: String(g._id || g.id), name: g.name, specialty: g.specialties?.[0] || "General", verified: g.verifiedByGovt || false
-  }));
+  const stays = (data.stays || []).slice(0, 5).map(s => {
+    const item = s.item || s;
+    return {
+      id: String(s.entityId || item._id || item.id),
+      name: item.name,
+      district: item.district,
+      pricePerNight: item.pricePerNight || item.price?.amount || null,
+      provenance: (item.isKMVN || item.isGMVN) ? "VERIFIED" : (item.pricePerNight ? "ESTIMATED" : "UNKNOWN")
+    };
+  });
+  const activities = (data.activities || []).slice(0, 5).map(a => {
+    const item = a.item || a;
+    return {
+      id: String(a.entityId || item._id || item.id),
+      name: item.name,
+      category: item.category,
+      difficulty: item.difficulty
+    };
+  });
+  const guides = (data.guides || []).slice(0, 5).map(g => {
+    const item = g.item || g;
+    return {
+      id: String(g.entityId || item._id || item.id),
+      name: item.name,
+      specialty: item.specialties?.[0] || "General",
+      verified: item.verifiedByGovt || false
+    };
+  });
   if (session) mergeAllowlist(session, { stays: stays.map(s => s.id), activities: activities.map(a => a.id), guides: guides.map(g => g.id) });
   return successResult({ stays, activities, guides }, "recommendation_engine",
     [{ source: "Discovery Uttarakhand Recommendation Engine", freshness: "VERIFIED" }]);

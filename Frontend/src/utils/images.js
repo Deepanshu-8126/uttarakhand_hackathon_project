@@ -1,18 +1,14 @@
 /**
  * Discovery Uttarakhand - Authentic Real Photography Engine
- * Guaranteed 100% Geographic & Cultural Accuracy:
- * - Priority 1: Verified Real Uttarakhand Photography Dataset (Zero fake/foreign Alps images)
- * - Priority 2: Geographically Anchored Pexels API ("Uttarakhand India Himalayas")
- * - Priority 3: 24h Smart LocalStorage/RAM Caching with zero credit burn
- * - 100% Fastly/Cloudflare CDN Cached (Zero Wikimedia 429/403 Hotlinking Blocks)
+ * 
+ * STRICT RULES ENFORCED:
+ * 1. ZERO cross-destination substitution (No Kuari Pass -> Auli, No Vishnuprayag -> Badrinath).
+ * 2. ZERO random external photo fetching (No Pexels/Unsplash random stock image fallback).
+ * 3. Exact entity match -> Authentic Photo. Missing -> Entity-Specific Placeholder.
  */
 
 import { useState, useEffect } from 'react';
-import { DESTINATION_NAMED_IMAGES, getHimalayanFallbackImage } from './imageHelpers';
-
-const PEXELS_KEY = import.meta.env.VITE_PEXELS_KEY || '';
-const CACHE_PREFIX = 'devbhoomi_auth_photo_v3_';
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 Hours TTL
+import { DESTINATION_NAMED_IMAGES, getEntityPlaceholderSvg } from './imageHelpers';
 
 // ── Verified 100% Authentic Real Uttarakhand Photos ──────────────────────────
 export const AUTHENTIC_LOCAL_PHOTOS = {
@@ -21,32 +17,32 @@ export const AUTHENTIC_LOCAL_PHOTOS = {
   "kedarnath-temple": "/assets/destinations/kedarnath/temple.jpg",
   "badrinath": "/assets/badrinath.jpg",
   "badrinath-temple": "/assets/badrinath.jpg",
-  "gangotri": "/assets/destinations/kedarnath/temple.jpg",
-  "gangotri-temple": "/assets/destinations/kedarnath/temple.jpg",
-  "yamunotri": "/assets/destinations/kedarnath/temple.jpg",
-  "yamunotri-temple": "/assets/destinations/kedarnath/temple.jpg",
+  "gangotri": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Gangotri_%28ganga_river%29.jpg/1920px-Gangotri_%28ganga_river%29.jpg",
+  "gangotri-temple": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Gangotri_%28ganga_river%29.jpg/1920px-Gangotri_%28ganga_river%29.jpg",
+  "yamunotri": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Yamunotri_shrine.jpg/1920px-Yamunotri_shrine.jpg",
+  "yamunotri-temple": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Yamunotri_shrine.jpg/1920px-Yamunotri_shrine.jpg",
   "tungnath": "/assets/tungnath_summit.jpg",
   "tungnath-temple": "/assets/tungnath_summit.jpg",
-  "rudranath": "/assets/chandrashila_sunset_snow.jpg",
-  "rudranath-temple": "/assets/chandrashila_sunset_snow.jpg",
-  "madhyamaheshwar": "/assets/himalayan_basecamp_village.jpg",
-  "madhyamaheshwar-temple": "/assets/himalayan_basecamp_village.jpg",
-  "kalpeshwar": "/assets/jageshwar.jpg",
-  "kalpeshwar-temple": "/assets/jageshwar.jpg",
+  "rudranath": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Rudranath_temple.jpg",
+  "rudranath-temple": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Rudranath_temple.jpg",
+  "madhyamaheshwar": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Madhyamaheshwar_Temple%2C_Uttarakhand.JPG/1920px-Madhyamaheshwar_Temple%2C_Uttarakhand.JPG",
+  "madhyamaheshwar-temple": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Madhyamaheshwar_Temple%2C_Uttarakhand.JPG/1920px-Madhyamaheshwar_Temple%2C_Uttarakhand.JPG",
+  "kalpeshwar": "https://upload.wikimedia.org/wikipedia/commons/0/01/Kalpehswar.jpg",
+  "kalpeshwar-temple": "https://upload.wikimedia.org/wikipedia/commons/0/01/Kalpehswar.jpg",
   "jageshwar": "/assets/jageshwar.jpg",
   "jageshwar-dham": "/assets/jageshwar.jpg",
-  "kainchi-dham": "/assets/jageshwar.jpg",
+  "kainchi-dham": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Early_morning_Glimpse_of_Kainchi_Dham_Nainital_2023.jpg",
   "hemkund-sahib": "/assets/hemkund.jpg",
   "hemkund": "/assets/hemkund.jpg",
-  "baijnath": "/assets/jageshwar.jpg",
-  "baijnath-temple": "/assets/jageshwar.jpg",
-  "dhari-devi": "/assets/destinations/kedarnath/temple.jpg",
-  "dhari-devi-temple": "/assets/destinations/kedarnath/temple.jpg",
-  "triyuginarayan": "/assets/destinations/kedarnath/temple.jpg",
-  "triyuginarayan-temple": "/assets/destinations/kedarnath/temple.jpg",
+  "baijnath": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Temples_of_Baijnath%2C_Uttarakhand%2C_India.jpg",
+  "baijnath-temple": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Temples_of_Baijnath%2C_Uttarakhand%2C_India.jpg",
+  "dhari-devi": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Dhari_Devi_Temple_Srinagar_Uttarakhand.jpg/1280px-Dhari_Devi_Temple_Srinagar_Uttarakhand.jpg",
+  "dhari-devi-temple": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Dhari_Devi_Temple_Srinagar_Uttarakhand.jpg/1280px-Dhari_Devi_Temple_Srinagar_Uttarakhand.jpg",
+  "triyuginarayan": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/Triyuginarayan_Temple.jpg/960px-Triyuginarayan_Temple.jpg",
+  "triyuginarayan-temple": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/Triyuginarayan_Temple.jpg/960px-Triyuginarayan_Temple.jpg",
   "kasar-devi": "/assets/destinations/almora/gallery-1.jpg",
   "kasar-devi-temple": "/assets/destinations/almora/gallery-1.jpg",
-  "patal-bhuvaneshwar": "/assets/destinations/pithoragarh/cover.jpg",
+  "patal-bhuvaneshwar": "https://upload.wikimedia.org/wikipedia/commons/a/a4/PATAL_BHUBNESWAR.jpg",
   
   // High Treks & Meadows
   "valley-of-flowers": "/assets/valley_of_flowers.jpg",
@@ -58,21 +54,14 @@ export const AUTHENTIC_LOCAL_PHOTOS = {
   "om-parvat": "/assets/om_parvat.jpg",
   "om_parvat": "/assets/om_parvat.jpg",
   "dayara-bugyal": "/assets/uttarakhand_bugyal_panoramic.jpg",
-  "kuari-pass": "/assets/auli.jpg",
   "kedarkantha": "/assets/kedarkantha_summit_view.jpg",
-  "har-ki-dun": "/assets/himalayan_basecamp_village.jpg",
-  "roopkund": "/assets/brahmatal_snow_trek.jpg",
   "brahmatal": "/assets/brahmatal_snow_trek.jpg",
-  "gaumukh": "/assets/brahmatal_snow_trek.jpg",
+  "chandrashila": "/assets/chandrashila_sunset_snow.jpg",
 
   // Rivers & Ghats
   "rishikesh": "/assets/rishikesh.jpg",
   "haridwar": "/assets/haridwar.jpg",
-  "devprayag": "/assets/rishikesh.jpg",
-  "rudraprayag": "/assets/chandrashila_sunset_snow.jpg",
-  "karnaprayag": "/assets/himalayan_basecamp_village.jpg",
-  "nandaprayag": "/assets/himalayan_basecamp_village.jpg",
-  "vishnuprayag": "/assets/badrinath.jpg",
+  "devprayag": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/AjitHota_BirthPlaceOfGanges.jpg/1920px-AjitHota_BirthPlaceOfGanges.jpg",
 
   // Lakes & Hill Stations
   "nainital": "/assets/nainital.jpg",
@@ -82,44 +71,24 @@ export const AUTHENTIC_LOCAL_PHOTOS = {
   "mussoorie": "/assets/mussoorie.jpg",
   "dhanaulti": "/assets/destinations/dhanaulti/cover.jpg",
   "kanatal": "/assets/destinations/kanatal/cover.jpg",
-  "tehri": "/assets/destinations/bhimtal/lake.jpg",
+  "tehri": "https://upload.wikimedia.org/wikipedia/commons/3/33/Tehri_dam_india.jpg",
   "lansdowne": "/assets/destinations/lansdowne/gallery-2.jpg",
   "ranikhet": "/assets/destinations/ranikhet/cover.jpg",
   "kausani": "/assets/destinations/kausani/cover.jpg",
   "almora": "/assets/destinations/almora/cover.jpg",
   "mukteshwar": "/assets/destinations/mukteshwar/cover.jpg",
   "pithoragarh": "/assets/destinations/pithoragarh/cover.jpg",
-  "bageshwar": "/assets/destinations/kausani/cover.jpg",
   "champawat": "/assets/destinations/champawat/cover.jpg",
   "lohaghat": "/assets/destinations/lohaghat/cover.jpg",
   "chakrata": "/assets/destinations/chakrata/cover.jpg",
-  "dehradun": "/assets/mussoorie.jpg",
+  "dehradun": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Dehradun_view_from_maggi_point.jpg/960px-Dehradun_view_from_maggi_point.jpg",
 
   // Wildlife
   "jim-corbett-national-park": "/assets/corbett.jpg",
   "corbett": "/assets/corbett.jpg",
-  "rajaji-national-park": "/assets/corbett.jpg"
+  "corbett-dhikala-zone": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Morning_Mist_Dhikala_Corbett_Reserve_Dec2019_R16_02285.jpg",
+  "rajaji-national-park": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Asian_Elephant_herd_in_Rajaji_National_Park.jpg/1280px-Asian_Elephant_herd_in_Rajaji_National_Park.jpg"
 };
-
-// Explicit Geographically Anchored Pexels Queries
-export const DESTINATION_SEARCH_QUERIES = {
-  "kedarnath": "Kedarnath temple Uttarakhand India Himalayas",
-  "badrinath": "Badrinath temple Alaknanda Uttarakhand India",
-  "gangotri": "Gangotri temple Bhagirathi Uttarakhand",
-  "yamunotri": "Yamunotri temple thermal springs Uttarakhand",
-  "adi-kailash": "Om Parvat Pithoragarh Himalaya Uttarakhand",
-  "valley-of-flowers": "Valley of flowers Chamoli Uttarakhand blossom",
-  "auli": "Auli ski meadows Nanda Devi Uttarakhand",
-  "chopta": "Chopta Tungnath Chandrashila Uttarakhand",
-  "rishikesh": "Rishikesh Ganges Triveni Ghat Uttarakhand",
-  "haridwar": "Haridwar Har Ki Pauri Ganga Aarti Uttarakhand",
-  "nainital": "Nainital Naini lake boats Uttarakhand",
-  "munsiyari": "Munsiyari Panchachuli peaks Uttarakhand",
-  "jim-corbett-national-park": "Jim Corbett National Park tiger Uttarakhand"
-};
-
-const memoryCache = new Map();
-const inFlightRequests = new Map();
 
 function getVerifiedLocalPhoto(key) {
   if (!key) return null;
@@ -134,129 +103,49 @@ function getVerifiedLocalPhoto(key) {
 }
 
 /**
- * Get authentic, verified high-resolution photograph for any place in Uttarakhand
- * Prioritizes verified local assets so NO foreign/irrelevant mountain ever shows up.
+ * Returns strictly authentic photograph for the specific destination.
+ * If not present in verified dataset, returns neutral entity placeholder.
+ * NEVER returns another destination's photo.
  */
 export async function getFreshImage(destinationKey = '', fallbackUrl = null) {
   if (!destinationKey) {
-    return fallbackUrl || AUTHENTIC_LOCAL_PHOTOS['nainital'];
+    return fallbackUrl || getEntityPlaceholderSvg({ name: 'Destination' });
   }
 
   const cleanKey = String(destinationKey).toLowerCase().trim().replace(/[\s_]+/g, '-');
-
-  // 1. PRIORITY 1: Check verified authentic local photography first
   const verifiedLocal = getVerifiedLocalPhoto(cleanKey);
+
   if (verifiedLocal) {
     return verifiedLocal;
   }
 
-  const localFallback = fallbackUrl || getHimalayanFallbackImage({ slug: cleanKey, name: destinationKey });
-
-  // 2. If no Pexels API key configured, use local fallback
-  if (!PEXELS_KEY || PEXELS_KEY.trim() === '') {
-    return localFallback;
-  }
-
-  // 3. Check memory & localStorage cache
-  if (memoryCache.has(cleanKey)) {
-    const cached = memoryCache.get(cleanKey);
-    if (cached && cached.length > 0) return cached[Math.floor(Math.random() * cached.length)];
-  }
-
-  try {
-    const raw = localStorage.getItem(CACHE_PREFIX + cleanKey);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.urls?.length > 0) {
-        memoryCache.set(cleanKey, parsed.urls);
-        return parsed.urls[Math.floor(Math.random() * parsed.urls.length)];
-      }
-    }
-  } catch (e) {}
-
-  // 4. Geographically anchored Pexels API query (strictly Uttarakhand Himalayas)
-  const query = DESTINATION_SEARCH_QUERIES[cleanKey] || `${destinationKey.replace(/-/g, ' ')} Uttarakhand India mountains`;
-
-  if (inFlightRequests.has(cleanKey)) {
-    try {
-      const urls = await inFlightRequests.get(cleanKey);
-      if (urls && urls.length > 0) return urls[Math.floor(Math.random() * urls.length)];
-    } catch (e) {
-      return localFallback;
-    }
-  }
-
-  const fetchPromise = (async () => {
-    try {
-      const res = await fetch(
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape&size=large`,
-        { headers: { Authorization: PEXELS_KEY } }
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data.photos || data.photos.length === 0) return null;
-
-      const urls = data.photos.map(p => p.src?.large2x || p.src?.large).filter(Boolean);
-      if (urls.length > 0) {
-        memoryCache.set(cleanKey, urls);
-        try {
-          localStorage.setItem(CACHE_PREFIX + cleanKey, JSON.stringify({ timestamp: Date.now(), urls }));
-        } catch (e) {}
-        return urls;
-      }
-      return null;
-    } catch (err) {
-      return null;
-    } finally {
-      inFlightRequests.delete(cleanKey);
-    }
-  })();
-
-  inFlightRequests.set(cleanKey, fetchPromise);
-  const result = await fetchPromise;
-  if (result && result.length > 0) {
-    return result[Math.floor(Math.random() * result.length)];
-  }
-
-  return localFallback;
+  return fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey, category: 'Destination', slug: cleanKey });
 }
 
 /**
- * React hook to auto-load 100% authentic photograph for any card or component
+ * React hook to safely resolve verified photograph or entity placeholder.
  */
 export function useFreshImage(destinationKey, fallbackUrl = null) {
-  const initialLocal = getVerifiedLocalPhoto(destinationKey) || fallbackUrl || '/assets/yatra_sarthi/nainital.jpg';
+  const placeholder = fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey || 'Destination' });
+  const initialLocal = getVerifiedLocalPhoto(destinationKey) || placeholder;
   const [imageSrc, setImageSrc] = useState(initialLocal);
 
   useEffect(() => {
-    let isMounted = true;
     if (destinationKey) {
       const local = getVerifiedLocalPhoto(destinationKey);
       if (local) {
         setImageSrc(local);
       } else {
-        getFreshImage(destinationKey, fallbackUrl)
-          .then((url) => {
-            if (isMounted && url) {
-              setImageSrc(url);
-            }
-          })
-          .catch(() => {
-            if (isMounted) {
-              setImageSrc(fallbackUrl || '/assets/yatra_sarthi/nainital.jpg');
-            }
-          });
+        setImageSrc(fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey, category: 'Destination' }));
       }
     }
-    return () => { isMounted = false; };
   }, [destinationKey, fallbackUrl]);
 
-  return imageSrc || fallbackUrl || '/assets/yatra_sarthi/nainital.jpg';
+  return imageSrc;
 }
 
 export default {
   getFreshImage,
   useFreshImage,
-  AUTHENTIC_LOCAL_PHOTOS,
-  DESTINATION_SEARCH_QUERIES
+  AUTHENTIC_LOCAL_PHOTOS
 };

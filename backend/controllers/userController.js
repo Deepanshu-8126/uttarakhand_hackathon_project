@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Favorite from '../models/Favorite.js';
+import ExploreLater from '../models/ExploreLater.js';
 import Booking from '../models/Booking.js';
 import Review from '../models/Review.js';
 import SavedTrip from '../models/SavedTrip.js';
@@ -26,7 +27,21 @@ export const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    res.json({ success: true, data: user });
+    res.json({ 
+      success: true, 
+      data: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        role: user.role,
+        profileImage: user.profileImage || null,
+        location: user.location || '',
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
   } catch (error) {
     console.error('[GetUserProfile Error]', error);
     res.status(500).json({ success: false, message: error.message || 'Server error' });
@@ -34,10 +49,11 @@ export const getUserProfile = async (req, res) => {
 };
 
 // @desc    Update user profile
-// @route   PUT /api/users/profile
+// @route   PUT/PATCH /api/users/profile
 // @access  Private
 export const updateUserProfile = async (req, res) => {
   try {
+    // 1. Strict Identity from JWT Middleware (req.user.id) — never client body
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
@@ -48,36 +64,64 @@ export const updateUserProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Check for email uniqueness if changing email
-    if (req.body.email && req.body.email !== user.email) {
-      const emailExists = await User.findOne({ email: req.body.email });
-      if (emailExists && emailExists._id.toString() !== userId.toString()) {
-        return res.status(400).json({ success: false, message: 'Email is already registered to another account.' });
+    // 2. Email Immutability Protection (Section 4)
+    if (req.body.email && req.body.email.trim().toLowerCase() !== user.email.toLowerCase()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email address is linked to your account credentials and cannot be changed here.' 
+      });
+    }
+
+    // 3. Name Validation
+    if (req.body.name !== undefined) {
+      const trimmedName = String(req.body.name).trim();
+      if (trimmedName.length < 2) {
+        return res.status(400).json({ success: false, message: 'Full name must be at least 2 characters long.' });
       }
-      user.email = req.body.email.trim();
+      user.name = trimmedName;
     }
 
-    if (req.body.name) {
-      user.name = req.body.name.trim();
-    }
-
+    // 4. Server-Side Phone Validation (Section 5)
     if (req.body.phone !== undefined) {
-      user.phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : String(req.body.phone || '');
+      const rawPhone = String(req.body.phone).trim();
+      if (rawPhone.length > 0) {
+        const digitsOnly = rawPhone.replace(/\D/g, '');
+        if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Please provide a valid mobile number (10 to 15 digits).' 
+          });
+        }
+        user.phone = rawPhone;
+      } else {
+        user.phone = '';
+      }
     }
 
+    // 5. Location
     if (req.body.location !== undefined) {
       user.location = typeof req.body.location === 'string' 
         ? req.body.location.trim() 
         : (req.body.location?.address || req.body.location?.name || '');
     }
 
+    // 6. Profile Photo (Section 6: No huge base64 in MongoDB)
     if (req.body.profileImage) {
-      if (typeof req.body.profileImage === 'string' && req.body.profileImage.trim()) {
-        user.profileImage = {
-          url: req.body.profileImage.trim(),
-          source: 'User Upload',
-          alt: `${user.name} Profile Photo`
-        };
+      if (typeof req.body.profileImage === 'string') {
+        const imgStr = req.body.profileImage.trim();
+        if (imgStr.startsWith('data:image') && imgStr.length > 2048) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Direct base64 photo storage is not allowed. Please upload via Cloudinary or standard photo URL.' 
+          });
+        }
+        if (imgStr) {
+          user.profileImage = {
+            url: imgStr,
+            source: 'User Upload',
+            alt: `${user.name} Profile Photo`
+          };
+        }
       } else if (typeof req.body.profileImage === 'object' && req.body.profileImage.url) {
         user.profileImage = {
           url: req.body.profileImage.url,
@@ -88,32 +132,31 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
+    // 7. Password update only if explicitly provided with length >= 6
     if (req.body.password && typeof req.body.password === 'string' && req.body.password.length >= 6) {
       user.password = req.body.password;
     }
 
-    // Role safety normalization
-    const VALID_ROLES = ['user', 'citizen', 'tourist', 'trekker', 'local', 'partner', 'owner', 'guide', 'admin'];
-    if (req.body.role) {
-      const targetRole = String(req.body.role).toLowerCase().trim();
-      if (VALID_ROLES.includes(targetRole)) {
-        user.role = targetRole;
-      }
-    }
-    const currentRole = String(user.role || 'user').toLowerCase().trim();
-    user.role = VALID_ROLES.includes(currentRole) ? currentRole : 'user';
+    // 8. STRICT ROLE PROTECTION (Section 13: Normal user cannot elevate role or privileges)
+    // user.role is intentionally NOT updated from req.body
 
     const updatedUser = await user.save();
+
+    // 9. Safe User DTO (Section 11: Never return password or passwordHash)
     res.json({
       success: true,
+      message: 'Profile updated successfully',
       data: {
         _id: updatedUser._id,
+        id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
-        phone: updatedUser.phone,
+        phone: updatedUser.phone || '',
         role: updatedUser.role,
-        profileImage: updatedUser.profileImage,
-        location: updatedUser.location
+        profileImage: updatedUser.profileImage || null,
+        location: updatedUser.location || '',
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt
       }
     });
   } catch (error) {
@@ -234,3 +277,102 @@ export const getUserTrips = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get all user saved items (3 Sections: Explore Later, Favorites, Saved Trips)
+// @route   GET /api/users/saved-items
+// @access  Private
+export const getSavedItems = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Explore Later Items
+    const exploreLater = await ExploreLater.find({ user: userId })
+      .populate('destination')
+      .populate('savedGuideIds')
+      .populate('savedStays')
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // 2. Favorites (Categorized)
+    const favoritesRaw = await Favorite.find({ user: userId })
+      .populate('item')
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const validFavs = favoritesRaw.filter(f => f.item != null);
+
+    // 3. Saved Trips
+    const savedTrips = await SavedTrip.find({ user: userId })
+      .populate('destinations')
+      .populate('activities')
+      .populate('stays')
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: {
+        exploreLater,
+        favorites: validFavs,
+        savedTrips
+      }
+    });
+  } catch (error) {
+    console.error('[getSavedItems Error]', error);
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
+  }
+};
+
+// @desc    Create or update Explore Later item
+// @route   POST /api/users/explore-later
+// @access  Private
+export const createExploreLater = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { destinationId, destinationName, activityType, date, notes, guideIds, placeIds } = req.body;
+
+    if (!destinationName) {
+      return res.status(400).json({ success: false, message: 'destinationName is required' });
+    }
+
+    const filter = { user: userId, destinationName, activityType: activityType || 'Trek' };
+    const update = {
+      $set: {
+        user: userId,
+        destinationId: destinationId || destinationName.toLowerCase().replace(/\s+/g, '-'),
+        destinationName,
+        activityType: activityType || 'Trek',
+        status: 'PLANNING_LATER',
+        date: date || null,
+        notes: notes || `Saved for explore later`
+      }
+    };
+
+    if (Array.isArray(guideIds) && guideIds.length > 0) {
+      update.$addToSet = { savedGuideIds: { $each: guideIds } };
+    }
+    if (Array.isArray(placeIds) && placeIds.length > 0) {
+      update.$addToSet = { ...(update.$addToSet || {}), savedPlaceIds: { $each: placeIds } };
+    }
+
+    const item = await ExploreLater.findOneAndUpdate(filter, update, { upsert: true, new: true });
+    res.status(201).json({ success: true, data: item });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete Explore Later item
+// @route   DELETE /api/users/explore-later/:id
+// @access  Private
+export const deleteExploreLater = async (req, res) => {
+  try {
+    const item = await ExploreLater.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Explore Later item not found' });
+    }
+    res.json({ success: true, message: 'Removed from Explore Later' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

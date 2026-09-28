@@ -228,10 +228,22 @@ export const createBooking = async (req, res) => {
         location: listing.city ? `${listing.city}, ${listing.district}` : listing.district
       };
 
-    // 5. Static Verified Stay Flow (Backward Compatibility)
+    // 5. Static Verified Stay Flow (Backward Compatibility & Partner Merge)
     } else if (normalizedType === 'stay') {
       if (!stayRef) return res.status(400).json({ success: false, message: 'Stay reference required' });
-      const stayDoc = await Stay.findById(stayRef);
+      let stayDoc = await Stay.findById(stayRef);
+      if (!stayDoc) {
+        const partnerDoc = await PartnerListing.findById(stayRef);
+        if (partnerDoc) {
+          stayDoc = {
+            name: partnerDoc.title,
+            category: partnerDoc.category || 'Homestay',
+            district: partnerDoc.district,
+            location: partnerDoc.city ? `${partnerDoc.city}, ${partnerDoc.district}` : partnerDoc.district,
+            price: { amount: partnerDoc.pricing?.amount || partnerDoc.pricing?.basePrice || 1500 }
+          };
+        }
+      }
       if (!stayDoc) return res.status(404).json({ success: false, message: 'Stay not found' });
       
       const rate = stayDoc.price?.amount || 0;
@@ -268,10 +280,22 @@ export const createBooking = async (req, res) => {
         location: stayDoc.location
       };
 
-    // 6. Static Rental Flow
+    // 6. Static Rental Flow (Backward Compatibility & Partner Merge)
     } else if (normalizedType === 'rental') {
       if (!rentalRef) return res.status(400).json({ success: false, message: 'Rental reference required' });
-      const rentalDoc = await Rental.findById(rentalRef);
+      let rentalDoc = await Rental.findById(rentalRef);
+      if (!rentalDoc) {
+        const partnerDoc = await PartnerListing.findById(rentalRef);
+        if (partnerDoc) {
+          rentalDoc = {
+            vehicles: [{
+              name: partnerDoc.title,
+              type: partnerDoc.category || 'Adventure Bike',
+              pricePerDay: partnerDoc.pricing?.amount || partnerDoc.pricing?.basePrice || 1200
+            }]
+          };
+        }
+      }
       if (!rentalDoc) return res.status(404).json({ success: false, message: 'Rental not found' });
       
       const v = (rentalDoc.vehicles || []).find(veh => veh.name === vehicleName) || (rentalDoc.vehicles && rentalDoc.vehicles[0]);
@@ -393,7 +417,7 @@ export const createBooking = async (req, res) => {
       listingSnapshot,
       specialRequest: specialRequest || notes || null,
       notes,
-      status: 'CONFIRMED',
+      status: normalizedType === 'partner_listing' ? 'PENDING' : 'CONFIRMED',
       escrowStatus: 'HELD_IN_ESCROW',
       checkInOtp: generateCheckInOtp(),
       checkInOtpExpiresAt: getOtpExpiration(sDate),

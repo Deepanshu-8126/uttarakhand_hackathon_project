@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           color: !isPartner ? Colors.white : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: !isPartner ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4)] : null,
+                          boxShadow: !isPartner ? [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4)] : null,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -184,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           color: isPartner ? const Color(0xFF0F3D2E) : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: isPartner ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4)] : null,
+                          boxShadow: isPartner ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4)] : null,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -224,8 +224,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 18),
 
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Expanded(child: Divider()),
                 Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('OR EMAIL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)))),
                 Expanded(child: Divider()),

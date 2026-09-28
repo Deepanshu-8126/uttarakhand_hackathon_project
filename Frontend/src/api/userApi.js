@@ -18,3 +18,19 @@ export const uploadImage = async (file) => {
   });
   return response.data;
 };
+
+export const getSavedItems = async () => {
+  const response = await api.get('/users/saved-items');
+  return response.data;
+};
+
+export const createExploreLater = async (payload) => {
+  const response = await api.post('/users/explore-later', payload);
+  return response.data;
+};
+
+export const deleteExploreLater = async (id) => {
+  const response = await api.delete(`/users/explore-later/${id}`);
+  return response.data;
+};
+

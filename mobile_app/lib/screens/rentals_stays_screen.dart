@@ -80,7 +80,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
 
       // 2. Region Filter
       if (selectedRegion != 'All') {
-        final loc = (stay.location + ' ' + stay.name).toLowerCase();
+        final loc = ('${stay.location} ${stay.name}').toLowerCase();
         final isKumaon = loc.contains('nainital') ||
             loc.contains('almora') ||
             loc.contains('munsiyari') ||
@@ -112,7 +112,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
 
       // 3. Stay Type Filter
       if (selectedStayType != 'All') {
-        final type = (stay.stayType + ' ' + stay.name).toLowerCase();
+        final type = ('${stay.stayType} ${stay.name}').toLowerCase();
         if (!type.contains(selectedStayType.toLowerCase().replaceAll(' ', ''))) {
           return false;
         }
@@ -150,10 +150,10 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
               child: const Text('DU', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
             ),
             const SizedBox(width: 8),
-            Column(
+            const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Text('Discovery', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F4C3A), height: 1.1)),
                 Text('UTTARAKHAND', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 8, color: Color(0xFF64748B), letterSpacing: 1.2)),
               ],
@@ -220,9 +220,9 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.verified_user, size: 13, color: Color(0xFF0F4C3A)),
                       SizedBox(width: 5),
                       Text(
@@ -261,7 +261,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 3)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
                     ],
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -303,10 +303,10 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                 const SizedBox(height: 12),
 
                 // Trust Checklist Badges
-                Wrap(
+                const Wrap(
                   spacing: 12,
                   runSpacing: 6,
-                  children: const [
+                  children: [
                     _TrustBadgeItem(text: '86 GPS-Verified'),
                     _TrustBadgeItem(text: 'Escrow Protected'),
                     _TrustBadgeItem(text: 'Video KYC Verified'),
@@ -330,7 +330,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: const Color(0xFFFDE68A)),
               boxShadow: [
-                BoxShadow(color: Colors.amber.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2)),
+                BoxShadow(color: Colors.amber.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2)),
               ],
             ),
             child: Column(
@@ -348,10 +348,10 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                       child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'ACTIVE ROAD ADVISORY • 5 VALLEY SENTINELS',
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E), letterSpacing: 0.5),
@@ -491,7 +491,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: Column(
@@ -525,7 +525,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                               decoration: BoxDecoration(
                                 color: const Color(0xFF059669),
                                 borderRadius: BorderRadius.circular(999),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)],
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                               ),
                               child: const Text(
                                 'Escrow Protected',
@@ -540,7 +540,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.65),
+                                color: Colors.black.withValues(alpha: 0.65),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -691,7 +691,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
         ],
       ),
       child: Stack(
@@ -713,8 +713,8 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.4),
-                  Colors.black.withOpacity(0.9),
+                  Colors.black.withValues(alpha: 0.4),
+                  Colors.black.withValues(alpha: 0.9),
                 ],
               ),
             ),
@@ -742,9 +742,9 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F4C3A).withOpacity(0.85),
+                    color: const Color(0xFF0F4C3A).withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFF34D399).withOpacity(0.4)),
+                    border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.4)),
                   ),
                   child: const Text('FEATURED PROPERTY', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
                 ),
@@ -760,9 +760,9 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                       ),
                       child: const Text('100% Verified', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
@@ -787,7 +787,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
         color: const Color(0xFF0F4C3A),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF0F4C3A).withOpacity(0.3), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(color: const Color(0xFF0F4C3A).withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -847,9 +847,9 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
             ),
             child: Column(
               children: [
@@ -1082,7 +1082,7 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4)),
             ],
           ),
           child: Column(
@@ -1124,13 +1124,13 @@ class _RentalsStaysScreenState extends State<RentalsStaysScreen> with SingleTick
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                          color: const Color(0xFF0F3D2E).withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.verified, size: 12, color: Color(0xFF34D399)),
                             SizedBox(width: 4),
                             Text('3-Layer Verified Partner', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),

@@ -1,0 +1,111 @@
+/**
+ * 5 Himalayan Corridors & Highways Data
+ */
+export const HIMALAYAN_CORRIDORS = {
+  badrinath: {
+    id: 'badrinath',
+    name: 'NH-07 Badrinath & Auli Corridor',
+    code: 'L1',
+    color: '#0f3d2e',
+    duration: '9-10 hrs drive',
+    totalKm: '298 km',
+    highway: 'NH-07 (All-Weather Highway)',
+    description: 'Haridwar/Rishikesh railheads to Devprayag, Joshimath, Auli & Badrinath.',
+    altitudeRange: '314m → 3,300m',
+    status: '🟢 Open & Clear',
+    stations: [
+      { name: 'Haridwar Railhead Hub', coords: [29.9457, 78.1642], role: 'Entry Railhead & UTC Bus Base', distance: '0 km', altitude: '314m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Rishikesh Yog Nagari', coords: [30.0869, 78.2676], role: 'Gateway Hub & Taxi Stand', distance: '24 km', altitude: '372m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Devprayag Sangam', coords: [30.1459, 78.5990], role: 'Bhagirathi & Alaknanda Meet', distance: '70 km', altitude: '618m', amenities: ['fuel', 'stay'] },
+      { name: 'Srinagar Garhwal', coords: [30.2227, 78.7844], role: 'Regional Hospital & Fuel Stop', distance: '105 km', altitude: '560m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Rudraprayag Junction', coords: [30.2858, 78.9811], role: 'Kedarnath / Badrinath Fork', distance: '140 km', altitude: '895m', amenities: ['fuel', 'stay'] },
+      { name: 'Karnaprayag & Chamoli', coords: [30.4070, 79.3364], role: 'Mid-Valley Transit Station', distance: '190 km', altitude: '1,150m', amenities: ['fuel', 'medical'] },
+      { name: 'Joshimath & Auli Base', coords: [30.5564, 79.5661], role: 'Cable Car & Military Base', distance: '253 km', altitude: '1,890m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Govindghat (Valley Base)', coords: [30.6250, 79.5480], role: 'Valley of Flowers Trek Gate', distance: '272 km', altitude: '1,828m', amenities: ['stay'] },
+      { name: 'Badrinath Dham', coords: [30.7465, 79.4942], role: 'Sacred Alaknanda Shrine & Mana', distance: '298 km', altitude: '3,300m', amenities: ['medical', 'stay'] },
+    ],
+    polyline: [[29.9457, 78.1642],[30.0869, 78.2676],[30.1459, 78.5990],[30.2227, 78.7844],[30.2858, 78.9811],[30.2605, 79.2173],[30.4070, 79.3364],[30.5564, 79.5661],[30.6250, 79.5480],[30.7465, 79.4942]]
+  },
+  kedarnath: {
+    id: 'kedarnath',
+    name: 'NH-107 Mandakini Kedarnath Highway',
+    code: 'L2',
+    color: '#0f3d2e',
+    duration: '8 hrs drive + 6 hrs trek',
+    totalKm: '235 km',
+    highway: 'NH-107 Mandakini River Corridor',
+    description: 'Haridwar to Rudraprayag, Guptkashi, Sonprayag checkpost & Kedarnath.',
+    altitudeRange: '314m → 3,583m',
+    status: '🟢 Open — Sonprayag gate operating normally',
+    stations: [
+      { name: 'Haridwar / Rishikesh', coords: [29.9457, 78.1642], role: 'Base Entry Railhead', distance: '0 km', altitude: '314m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Devprayag Sangam', coords: [30.1459, 78.5990], role: 'Sacred River Confluence', distance: '70 km', altitude: '618m', amenities: ['fuel', 'stay'] },
+      { name: 'Rudraprayag Junction', coords: [30.2858, 78.9811], role: 'Turn onto NH-107 Mandakini', distance: '140 km', altitude: '895m', amenities: ['fuel', 'stay'] },
+      { name: 'Guptkashi & Phata', coords: [30.5200, 79.0800], role: 'Helipads, Homestays & Fuel', distance: '180 km', altitude: '1,320m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Sonprayag Barrier', coords: [30.6040, 79.0990], role: 'Biometric Checkpost & Shuttle Terminus', distance: '210 km', altitude: '1,829m', amenities: ['medical', 'stay'] },
+      { name: 'Gaurikund Trek Base', coords: [30.6510, 79.1040], role: 'Hot Springs & 16km Trek Start', distance: '215 km', altitude: '1,982m', amenities: ['medical', 'stay'] },
+      { name: 'Kedarnath Dham', coords: [30.7352, 79.0669], role: 'Sacred Jyotirlinga Shrine & Camps', distance: '231 km', altitude: '3,583m', amenities: ['medical', 'stay'] },
+    ],
+    polyline: [[29.9457, 78.1642],[30.1459, 78.5990],[30.2858, 78.9811],[30.3950, 79.0230],[30.4900, 79.0600],[30.5200, 79.0800],[30.5560, 79.0960],[30.6040, 79.0990],[30.6510, 79.1040],[30.7352, 79.0669]]
+  },
+  kumaon: {
+    id: 'kumaon',
+    name: 'NH-309 Kumaon Lakes & Heights Route',
+    code: 'L3',
+    color: '#0284c7',
+    duration: '10 hrs scenic drive',
+    totalKm: '280 km',
+    highway: 'NH-309 Kumaon Ridge Highway',
+    description: 'Kathgodam railhead to Nainital, Almora, Kausani and Munsiyari.',
+    altitudeRange: '554m → 2,200m',
+    status: '🟢 All Routes Clear & Scenic',
+    stations: [
+      { name: 'Kathgodam Railhead', coords: [29.2182, 79.5267], role: 'Kumaon Entry Railhead', distance: '0 km', altitude: '554m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Nainital / Bhimtal', coords: [29.3437, 79.5677], role: 'Lake District Hub', distance: '34 km', altitude: '1,370m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Almora Cultural Hub', coords: [29.5971, 79.6591], role: 'Heritage Ridge & Crafts', distance: '90 km', altitude: '1,638m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Kausani Sunrise Vista', coords: [29.8390, 79.5970], role: 'Panoramic Himalayan Vista', distance: '142 km', altitude: '1,890m', amenities: ['stay'] },
+      { name: 'Bageshwar Sangam', coords: [29.8380, 79.7720], role: 'Saryu-Gomti Sacred Junction', distance: '180 km', altitude: '960m', amenities: ['fuel', 'stay'] },
+      { name: 'Munsiyari Panchachuli', coords: [30.0670, 80.2390], role: '5 Peaks Vista & Trek Base', distance: '280 km', altitude: '2,200m', amenities: ['fuel', 'medical', 'stay'] },
+    ],
+    polyline: [[29.2182, 79.5267],[29.3437, 79.5677],[29.5971, 79.6591],[29.8390, 79.5970],[29.8380, 79.7720],[30.0670, 80.2390]]
+  },
+  glacier: {
+    id: 'glacier',
+    name: 'NH-108 Gangotri & Yamunotri Glacier Route',
+    code: 'L4',
+    color: '#d97706',
+    duration: '8-9 hrs mountain drive',
+    totalKm: '260 km',
+    highway: 'NH-108 Bhagirathi Valley Corridor',
+    description: 'Dehradun capital to Mussoorie, Uttarkashi, Harsil and Gangotri origin.',
+    altitudeRange: '447m → 3,048m',
+    status: '🟢 Open — Normal Traffic',
+    stations: [
+      { name: 'Dehradun Capital Hub', coords: [30.3165, 78.0322], role: 'ISBT & Airport Gateway', distance: '0 km', altitude: '447m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Mussoorie Queen of Hills', coords: [30.4539, 78.0644], role: 'Mountain Ridge Gateway', distance: '35 km', altitude: '2,000m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Uttarkashi Base', coords: [30.7248, 78.4464], role: 'District HQ & NIM Base', distance: '145 km', altitude: '1,165m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Harsil Apple Valley', coords: [31.1400, 78.7200], role: 'Alpine Hamlet & Pine Forest', distance: '215 km', altitude: '2,620m', amenities: ['stay'] },
+      { name: 'Gangotri Glacier Source', coords: [30.9940, 79.0706], role: 'Sacred Origin of River Ganga', distance: '260 km', altitude: '3,048m', amenities: ['medical', 'stay'] },
+    ],
+    polyline: [[30.3165, 78.0322],[30.4539, 78.0644],[30.7248, 78.4464],[31.1400, 78.7200],[30.9940, 79.0706]]
+  },
+  adikailash: {
+    id: 'adikailash',
+    name: 'NH-9 Adi Kailash & Om Parvat Border Route',
+    code: 'L5',
+    color: '#ca8a04',
+    duration: '14 hrs (Inner Line Permit Req.)',
+    totalKm: '325 km',
+    highway: 'NH-9 Pithoragarh Border Highway',
+    description: 'Tanakpur to Pithoragarh, Dharchula ILP checkpost and Gunji.',
+    altitudeRange: '280m → 3,050m',
+    status: '🟡 Open (ILP Permit Required)',
+    stations: [
+      { name: 'Tanakpur Railhead', coords: [29.0700, 80.1100], role: 'Eastern Railhead Gateway', distance: '0 km', altitude: '280m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Pithoragarh District Hub', coords: [29.5820, 80.2180], role: 'Permit Office & Base', distance: '150 km', altitude: '1,814m', amenities: ['fuel', 'medical', 'stay'] },
+      { name: 'Dharchula ILP Checkpost', coords: [29.8570, 80.5280], role: 'Border Verification Gate', distance: '240 km', altitude: '915m', amenities: ['medical', 'stay'] },
+      { name: 'Gunji Adi Kailash Jnc', coords: [30.2700, 80.9900], role: 'Om Parvat & Sacred Base', distance: '325 km', altitude: '3,050m', amenities: ['medical', 'stay'] },
+    ],
+    polyline: [[29.0700, 80.1100],[29.5820, 80.2180],[29.8570, 80.5280],[30.2700, 80.9900]]
+  }
+};

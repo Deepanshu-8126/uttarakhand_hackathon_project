@@ -27,7 +27,7 @@ const VERIFIED_LOCATION_PHOTOS = {
     { url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80', photographer: 'Nainital Yacht Club', alt: 'Naini Lake Pear-Shaped Emerald Waters', source: 'Verified Uttarakhand Archive' },
   ],
   rishikesh: [
-    { url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80', photographer: 'Ganga Action Parivar', alt: 'Lakshman Jhula and Ganga River Rapids', source: 'Verified Uttarakhand Archive' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Ram_Jhula_Rishikesh.jpg/1280px-Ram_Jhula_Rishikesh.jpg', photographer: 'Ganga Action Parivar', alt: 'Lakshman Jhula and Ganga River Rapids', source: 'Verified Uttarakhand Archive' },
   ],
   haridwar: [
     { url: 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=1200&q=80', photographer: 'Ganga Sabha Haridwar', alt: 'Har Ki Pauri Evening Ganga Aarti', source: 'Verified Uttarakhand Archive' },
@@ -102,14 +102,6 @@ export async function searchRealHimalayanPhotos(query = 'Uttarakhand Himalayas',
     }
   }
 
-  // 4. Fallback to Verified Destination Photos
-  const fallbackResults = [
-    { url: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80', photographer: 'Devbhoomi Mandir Trust', alt: `${query} — Kedarnath Peak`, source: 'Verified Uttarakhand Archive' },
-    { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', photographer: 'Badri Kedar Committee', alt: `${query} — Badrinath Dham`, source: 'Verified Uttarakhand Archive' },
-    { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80', photographer: 'GMVN Ski Reserve', alt: `${query} — Auli Meadows`, source: 'Verified Uttarakhand Archive' },
-    { url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80', photographer: 'Kumaon Lakes Trust', alt: `${query} — Naini Lake`, source: 'Verified Uttarakhand Archive' },
-    { url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80', photographer: 'Ganga Heritage', alt: `${query} — Rishikesh Ganga`, source: 'Verified Uttarakhand Archive' }
-  ].slice(0, perPage);
-
-  return fallbackResults;
+  // 4. If no verified photo matches the specific query, return empty list (strict zero cross-destination fallback)
+  return [];
 }

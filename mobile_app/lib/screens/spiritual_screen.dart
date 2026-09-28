@@ -73,7 +73,7 @@ class _SpiritualScreenState extends State<SpiritualScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: AppTheme.forestGreen.withOpacity(0.12), blurRadius: 16, offset: const Offset(0, 6)),
+                          BoxShadow(color: AppTheme.forestGreen.withValues(alpha: 0.12), blurRadius: 16, offset: const Offset(0, 6)),
                         ],
                       ),
                       child: ClipRRect(
@@ -91,18 +91,18 @@ class _SpiritualScreenState extends State<SpiritualScreen> {
                                   begin: Alignment.bottomCenter,
                                   end: Alignment.topCenter,
                                   colors: [
-                                    const Color(0xFF09261C).withOpacity(0.92),
+                                    const Color(0xFF09261C).withValues(alpha: 0.92),
                                     Colors.transparent,
                                   ],
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(18),
+                            const Padding(
+                              padding: EdgeInsets.all(18),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text(
                                     'SACRED HIMALAYAS',
                                     style: TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
@@ -136,10 +136,10 @@ class _SpiritualScreenState extends State<SpiritualScreen> {
                         ),
                         child: TextField(
                           onChanged: (v) => setState(() => searchQuery = v),
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: 'Search Kedarnath, Badrinath, Jageshwar...',
-                            hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                            prefixIcon: const Icon(Icons.search, color: AppTheme.forestGreen, size: 20),
+                            hintStyle: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            prefixIcon: Icon(Icons.search, color: AppTheme.forestGreen, size: 20),
                             border: InputBorder.none,
                           ),
                         ),
@@ -200,7 +200,7 @@ class _SpiritualScreenState extends State<SpiritualScreen> {
                             borderRadius: BorderRadius.circular(22),
                             border: Border.all(color: const Color(0xFFE2E8F0)),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
                             ],
                           ),
                           child: Column(

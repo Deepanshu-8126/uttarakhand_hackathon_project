@@ -50,8 +50,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         builder: (_) => AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.check_circle, color: Color(0xFF059669), size: 24),
               SizedBox(width: 8),
               Text('Escrow Secured!', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
@@ -110,8 +110,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 color: const Color(0xFF0F3D2E),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.lock_clock, color: Color(0xFF34D399), size: 22),
                   SizedBox(width: 12),
                   Expanded(
@@ -202,7 +202,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   Switch(
                     value: usePahadiCoins,
-                    activeColor: const Color(0xFF0F3D2E),
+                    activeThumbColor: const Color(0xFF0F3D2E),
                     onChanged: (val) => setState(() => usePahadiCoins = val),
                   ),
                 ],

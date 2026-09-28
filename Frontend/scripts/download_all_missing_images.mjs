@@ -40,22 +40,8 @@ async function getWikiImages(query, count) {
 }
 
 async function downloadPollinationImage(prompt, filepath) {
-    if (fs.existsSync(filepath)) return true;
-    let retries = 3;
-    while(retries > 0) {
-        try {
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=600&nologo=true`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const buffer = await res.arrayBuffer();
-            fs.writeFileSync(filepath, Buffer.from(buffer));
-            await delay(1000); // 1s delay
-            return true;
-        } catch (e) {
-            retries--;
-            await delay(2000);
-        }
-    }
+    // HARD PROMPT REQUIREMENT: AI GENERATED IMAGES ARE STRICTLY FORBIDDEN (Rule 14)
+    console.error(`[DISCOVERY UTTARAKHAND] AI image generation is strictly forbidden by project laws. Skipping: ${prompt}`);
     return false;
 }
 

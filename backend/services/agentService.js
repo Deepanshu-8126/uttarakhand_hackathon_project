@@ -330,6 +330,213 @@ async function _processAgenticTravelFlow({ message, tripContext, session, user, 
     };
   }
 
+  // 0b. Trip Planning Conversational Intake State Machine
+  // Triggers when user expresses trip planning intent or answers sequential intake parameters
+  const isSpecificQuery = /(?:weather|temperature|mausam|rain|snow|stay|hotel|homestay|resort|route|road|highway|kaise jaa?u|how to reach|show map|map dikhao|trekking|wahan|uske paas|save|bookmark|favorite|budget\s*kam|kam\s*karo|thoda\s*sasta|sasta|reduce\s*budget|kya kar sakta|explore|things to do)/i.test(clean);
+  
+  const hasOrigin = !!entities.origin;
+  const hasDate = !!entities.startDate;
+  const hasDuration = !!entities.duration;
+  const hasTravelers = !!entities.travelers;
+  const hasBudget = !!entities.budget;
+
+  const allPlanningEntitiesPresent = hasOrigin && hasDate && hasDuration && hasTravelers && hasBudget;
+  const isTripPlanningIntent = !isSpecificQuery && !session?.contextEntities?.hasGeneratedPlan && (
+    /(?:mujhe|humko|i want to go|where i can go|jana hai|jaana hai|ghoomna hai|plan a trip|trip plan|visit|going to)\b/i.test(clean) ||
+    allPlanningEntitiesPresent ||
+    (!hasOrigin || !hasDate || !hasDuration || !hasTravelers || !hasBudget)
+  );
+
+  if (isTripPlanningIntent) {
+    const dest = entities.destination || matchedDest || activeDest || "Badrinath";
+    const hasDuration = !!entities.duration;
+    const hasTravelers = !!entities.travelers;
+    const hasBudget = !!entities.budget;
+
+    // Step 1: Missing Origin
+    if (!hasOrigin) {
+      let durText = entities.duration ? ` 3–4 din` : (entities.durationDays ? ` ${entities.durationDays} din` : "");
+      let budText = entities.budget ? ` ₹${entities.budget.toLocaleString()} budget` : "";
+      let ackParts = [];
+      if (durText) ackParts.push(durText.trim());
+      if (budText) ackParts.push(budText.trim());
+      const extraAck = ackParts.length > 0 ? ` (${ackParts.join(', ')})` : "";
+
+      const msg = `Maine **${dest}**${extraAck} travel plan note kar liya hai! Aap kahan se travel start karoge? (Jaise Delhi, Dehradun, Haridwar)`;
+      if (onEvent) onEvent({ type: "chunk", text: msg });
+      addTurn(session, { role: "user", content: message });
+      addTurn(session, { role: "assistant", content: msg });
+      trace.totalDurationMs = Date.now() - startTime;
+      return {
+        type: "answer",
+        message: msg,
+        toolsUsed: [],
+        citations: [],
+        suggestedActions: [
+          { label: "From Delhi", action: "FROM_DELHI" },
+          { label: "From Dehradun", action: "FROM_DEHRADUN" }
+        ],
+        uiActions: [],
+        tripContext: { destination: dest },
+        confidence: "grounded",
+        meta: { provider: "agentic_planner_intake", step: "ASK_ORIGIN", sessionId: session.sessionId, requestId }
+      };
+    }
+
+    // Step 2: Has Origin, Missing Date
+    if (!hasDate) {
+      const msg = `Great! ${entities.origin} se **${dest}** ke liye kab jaana chahte ho? (Travel date bataiye, jaise 15 October ya kal)`;
+      if (onEvent) onEvent({ type: "chunk", text: msg });
+      addTurn(session, { role: "user", content: message });
+      addTurn(session, { role: "assistant", content: msg });
+      trace.totalDurationMs = Date.now() - startTime;
+      return {
+        type: "answer",
+        message: msg,
+        toolsUsed: [],
+        citations: [],
+        suggestedActions: [
+          { label: "Tomorrow", action: "TOMORROW" },
+          { label: "Next Weekend", action: "NEXT_WEEKEND" }
+        ],
+        uiActions: [],
+        tripContext: { destination: dest, origin: entities.origin },
+        confidence: "grounded",
+        meta: { provider: "agentic_planner_intake", step: "ASK_DATE", sessionId: session.sessionId, requestId }
+      };
+    }
+
+    // Step 3: Has Date, Missing Travelers or Duration
+    if (!hasTravelers || !hasDuration) {
+      let promptText = "Noted. Kitne log travel kar rahe hain? (Jaise 2 log ya solo)";
+      if (!hasDuration && !hasTravelers) {
+        promptText = "Noted. Kitne log travel kar rahe hain aur kitne din ka plan hai? (Jaise 2 log, 5 din)";
+      } else if (!hasDuration) {
+        promptText = "Noted. Kitne din ka plan banana hai? (Jaise 3 din ya 5 din)";
+      }
+      const msg = promptText;
+      if (onEvent) onEvent({ type: "chunk", text: msg });
+      addTurn(session, { role: "user", content: message });
+      addTurn(session, { role: "assistant", content: msg });
+      trace.totalDurationMs = Date.now() - startTime;
+      return {
+        type: "answer",
+        message: msg,
+        toolsUsed: [],
+        citations: [],
+        suggestedActions: [
+          { label: "2 travelers", action: "2_PEOPLE" },
+          { label: "Solo", action: "SOLO" }
+        ],
+        uiActions: [],
+        tripContext: { destination: dest, origin: entities.origin, startDate: entities.startDate },
+        confidence: "grounded",
+        meta: { provider: "agentic_planner_intake", step: "ASK_TRAVELERS_DURATION", sessionId: session.sessionId, requestId }
+      };
+    }
+
+    // Step 4: Has Travelers & Duration, Missing Budget
+    if (!hasBudget) {
+      const msg = `Perfect! ${entities.duration} din ke trip ke liye aapka estimated budget kitna hai? (Jaise ₹15,000, ₹20,000, ya Balanced)`;
+      if (onEvent) onEvent({ type: "chunk", text: msg });
+      addTurn(session, { role: "user", content: message });
+      addTurn(session, { role: "assistant", content: msg });
+      trace.totalDurationMs = Date.now() - startTime;
+      return {
+        type: "answer",
+        message: msg,
+        toolsUsed: [],
+        citations: [],
+        suggestedActions: [
+          { label: "₹15,000", action: "BUDGET_15K" },
+          { label: "₹20,000", action: "BUDGET_20K" }
+        ],
+        uiActions: [],
+        tripContext: { destination: dest, origin: entities.origin, startDate: entities.startDate, duration: entities.duration, travelers: entities.travelers },
+        confidence: "grounded",
+        meta: { provider: "agentic_planner_intake", step: "ASK_BUDGET", sessionId: session.sessionId, requestId }
+      };
+    }
+
+    // Step 5: Complete details collected! Execute parallel verified tools and prefill Trip Planner!
+    const orig = entities.origin || "Delhi";
+    const dur = entities.duration || 5;
+    const trav = entities.travelers || 2;
+    const bud = entities.budget || 20000;
+    const tier = bud < 15000 ? "Budget" : (bud > 40000 ? "Luxury" : "Balanced");
+
+    const navAction = { type: "NAVIGATE", routeKey: "TRIP_PLANNER", url: "/trip-planner" };
+    const prefillAction = {
+      type: "PREFILL_TRIP_PLANNER",
+      fields: {
+        origin: orig,
+        destination: dest,
+        startDate: entities.startDate || new Date().toISOString().split('T')[0],
+        duration: dur,
+        travelers: trav,
+        budget: bud
+      }
+    };
+
+    if (onEvent) {
+      onEvent({ type: "ui_action", action: navAction, requestId });
+      onEvent({ type: "ui_action", action: prefillAction, requestId });
+    }
+
+    // Execute parallel verified tools
+    const [routeRes, weatherRes, roadRes, budgetRes, staysRes] = await Promise.all([
+      executeTool("planRoute", { from: orig, to: dest }, { session, user }),
+      executeTool("getWeather", { location: dest }, { session, user }),
+      executeTool("getRoadAdvisory", { destination: dest, corridor: `${orig} -> ${dest}` }, { session, user }),
+      executeTool("calculateBudget", { destination: dest, durationDays: dur, travelers: trav, budgetTier: tier }, { session, user }),
+      executeTool("findStays", { destination: dest }, { session, user })
+    ]);
+
+    const toolsUsed = ["planRoute", "getWeather", "getRoadAdvisory", "calculateBudget", "findStays"];
+    const allCitations = [
+      ...(routeRes.citations || []),
+      ...(weatherRes.citations || []),
+      ...(budgetRes.citations || []),
+      ...(staysRes.citations || [])
+    ];
+
+    const msg = `**${dest} trip plan ready hai!** Maine Trip Planner mein route, live weather, verified stays aur ₹${bud.toLocaleString()} budget prefill kar diya hai.\n\n` +
+      `- **Origin**: ${orig}\n` +
+      `- **Destination**: ${dest}\n` +
+      `- **Dates & Duration**: ${dur} din (${entities.startDate || 'Upcoming'})\n` +
+      `- **Travelers**: ${trav} log\n` +
+      `- **Budget**: ₹${bud.toLocaleString()} (${tier} Tier)\n\n` +
+      `*Aapka itinerary auto-generate ho chuka hai. Trip Planner form mein saari details save hain.*`;
+
+    if (onEvent) onEvent({ type: "chunk", text: msg });
+    if (session?.contextEntities) session.contextEntities.hasGeneratedPlan = true;
+    addTurn(session, { role: "user", content: message });
+    addTurn(session, { role: "assistant", content: msg });
+    trace.totalDurationMs = Date.now() - startTime;
+    return {
+      type: "answer",
+      message: msg,
+      toolsUsed,
+      citations: allCitations,
+      uiActions: [navAction, prefillAction],
+      structuredCards: {
+        budget: budgetRes.data || null,
+        weather: weatherRes.data?.data || null,
+        stays: (staysRes.data?.stays || []).slice(0, 3)
+      },
+      tripContext: {
+        destination: dest,
+        origin: orig,
+        startDate: entities.startDate,
+        duration: dur,
+        travelers: trav,
+        budget: bud
+      },
+      confidence: "grounded",
+      meta: { provider: "agentic_planner_generator", toolCallCount: toolsUsed.length, sessionId: session.sessionId, requestId }
+    };
+  }
+
   // 1. Weather Query (e.g., "mujhe nainital jana hey aaj ka weather kaisa hey", "nainital tempreature", "weather tell me")
   const isWeatherQuery = /weather|temperature|tempreature|mausam|rain|snow|climate/i.test(clean);
   if (isWeatherQuery) {

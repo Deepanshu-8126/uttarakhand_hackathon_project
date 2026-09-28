@@ -2,6 +2,7 @@ import express from 'express';
 import { 
   getDestinations, 
   getDestinationBySlug, 
+  getDestinationImages,
   createDestination, 
   updateDestination, 
   deleteDestination 
@@ -18,6 +19,7 @@ router.get('/', getDestinations);
 router.post('/', protect, adminOnly, createDestination);
 router.get('/:slug/explore', getDestinationExplore);
 router.get('/:slug/related', getRelatedBySlug(Destination, 'Destination'));
+router.get('/:idOrSlug/images', getDestinationImages);
 router.get('/:slug', getDestinationBySlug);
 router.patch('/:id', protect, adminOnly, updateDestination);
 router.delete('/:id', protect, adminOnly, deleteDestination);

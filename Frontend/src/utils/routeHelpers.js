@@ -43,54 +43,60 @@ export const fetchOSRMRoute = async (destinations) => {
     .map(dest => `${dest.coordinates[1]},${dest.coordinates[0]}`)
     .join(';');
 
-  try {
-    const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`);
-    const data = await response.json();
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`);
+      const data = await response.json();
 
-    if (data.code === 'Ok' && data.routes.length > 0) {
-      const route = data.routes[0];
-      const distanceKm = Math.round(route.distance / 1000);
-      
-      // OSRM duration is in seconds. Convert to hours/mins
-      const totalHours = route.duration / 3600;
-      const hours = Math.floor(totalHours);
-      const minutes = Math.round((totalHours - hours) * 60);
-      
-      let estimatedTime = '';
-      if (hours === 0) estimatedTime = `${minutes} mins`;
-      else if (minutes === 0) estimatedTime = `${hours} hrs`;
-      else estimatedTime = `${hours}h ${minutes}m`;
+      if (data.code === 'Ok' && data.routes.length > 0) {
+        const route = data.routes[0];
+        const distanceKm = Math.round(route.distance / 1000);
+        
+        // OSRM duration is in seconds. Convert to hours/mins
+        const totalHours = route.duration / 3600;
+        const hours = Math.floor(totalHours);
+        const minutes = Math.round((totalHours - hours) * 60);
+        
+        let estimatedTime = '';
+        if (hours === 0) estimatedTime = `${minutes} mins`;
+        else if (minutes === 0) estimatedTime = `${hours} hrs`;
+        else estimatedTime = `${hours}h ${minutes}m`;
 
-      // Extract each leg between consecutive destinations
-      const legs = (route.legs || []).map(leg => {
-        const legDist = Math.round(leg.distance / 1000);
-        const lHours = Math.floor(leg.duration / 3600);
-        const lMins = Math.round((leg.duration % 3600) / 60);
-        let lTime = '';
-        if (lHours === 0) lTime = `${lMins} mins`;
-        else if (lMins === 0) lTime = `${lHours} hrs`;
-        else lTime = `${lHours}h ${lMins}m`;
+        // Extract each leg between consecutive destinations
+        const legs = (route.legs || []).map(leg => {
+          const legDist = Math.round(leg.distance / 1000);
+          const lHours = Math.floor(leg.duration / 3600);
+          const lMins = Math.round((leg.duration % 3600) / 60);
+          let lTime = '';
+          if (lHours === 0) lTime = `${lMins} mins`;
+          else if (lMins === 0) lTime = `${lHours} hrs`;
+          else lTime = `${lHours}h ${lMins}m`;
+          return {
+            distanceKm: legDist,
+            estimatedTime: lTime
+          };
+        });
+
+        // Return flipped geometry (Leaflet expects Lat,Lng)
+        const latLngs = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+
         return {
-          distanceKm: legDist,
-          estimatedTime: lTime
+          isRoadRoute: true,
+          totalDistanceKm: distanceKm,
+          estimatedTime,
+          stopsCount: destinations.length,
+          geometry: latLngs,
+          legs,
+          routeStatus: 'OK'
         };
-      });
-
-      // Return flipped geometry (Leaflet expects Lat,Lng)
-      const latLngs = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-
-      return {
-        isRoadRoute: true,
-        totalDistanceKm: distanceKm,
-        estimatedTime,
-        stopsCount: destinations.length,
-        geometry: latLngs,
-        legs,
-        routeStatus: 'OK'
-      };
+      }
+    } catch (error) {
+      if (attempt === 2) {
+        console.error("OSRM Route Fetch Error:", error);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
     }
-  } catch (error) {
-    console.error("OSRM Route Fetch Error:", error);
   }
 
   // Honest failure state: Do NOT draw straight lines across peaks as if they were roads

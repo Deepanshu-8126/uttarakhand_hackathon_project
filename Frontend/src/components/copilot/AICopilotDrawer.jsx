@@ -1,33 +1,49 @@
 import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
 import ChatWindow from '../../chat/ChatWindow.jsx';
 import './AICopilotDrawer.css';
 
-// Fix 1: unused props removed — tripId/pageContext passed directly to ChatWindow if needed
 export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }) {
 
-  // Fix 4: Body scroll lock when drawer is open
+  // Body scroll lock when drawer is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  // Close on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose?.();
+        window.dispatchEvent(new CustomEvent('du_close_copilot'));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <div
       id="devbhoomi-ai-drawer-container"
       className={`fixed inset-0 z-[9990] overflow-hidden transition-all duration-300 ${
-        isOpen ? 'pointer-events-auto' : 'pointer-events-none'
+        isOpen ? 'pointer-events-auto opacity-100 visible' : 'pointer-events-none opacity-0 invisible'
       }`}
+      aria-hidden={!isOpen}
     >
       {/* Subtle backdrop scrim overlay matching user mockup */}
       <div
-        className={`absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300 cursor-pointer ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
-        onClick={onClose}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose?.();
+          window.dispatchEvent(new CustomEvent('du_close_copilot'));
+        }}
       />
 
-      {/* Fix 2: aside is now `absolute` — parent div is already `fixed inset-0` */}
-      {/* Fix 3: removed pl-0 sm:pl-10 gap — drawer shows flush to right edge */}
       <aside
         aria-label="Devbhoomi AI Copilot"
         className={`
@@ -36,11 +52,26 @@ export default function AICopilotDrawer({ isOpen, onClose, tripId, pageContext }
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
-        {/* Fix 5: removed justify-between — ChatWindow controls its own layout */}
+        {/* Floating Close Button Tab on Drawer edge for instant accessibility */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose?.();
+            window.dispatchEvent(new CustomEvent('du_close_copilot'));
+          }}
+          className="hidden sm:flex absolute top-4 -left-10 w-10 h-10 rounded-l-xl bg-white border-y border-l border-slate-200/90 shadow-xl items-center justify-center text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer z-[9999]"
+          title="Close Devbhoomi AI (Escape)"
+          aria-label="Close Devbhoomi AI"
+        >
+          <X size={18} strokeWidth={2.5} />
+        </button>
+
         <div
           className="
             w-screen max-w-[480px] bg-white shadow-2xl flex flex-col
-            border-l border-slate-200/80 h-[100dvh] overflow-hidden
+            border-l border-slate-200/80 h-[100dvh] overflow-hidden relative
           "
         >
           <ChatWindow isOpen={isOpen} onClose={onClose} tripId={tripId} pageContext={pageContext} />

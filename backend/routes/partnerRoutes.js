@@ -5,8 +5,10 @@
  */
 
 import express from 'express';
+import fs from 'fs';
 import { protect, partnerOnly } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
+import cloudinary from '../config/cloudinary.js';
 import {
   registerPartner,
   getMyPartnerProfile,
@@ -120,18 +122,50 @@ router.get('/reviews', protect, partnerOnly, getPartnerReviews);
 router.post('/me/reviews/:id/reply', protect, partnerOnly, replyToReview);
 router.post('/reviews/:id/reply', protect, partnerOnly, replyToReview);
 
-// ── 8. Image Upload (Cloudinary Multi-Photo) ────────────────────────
-router.post('/me/upload', protect, partnerOnly, upload.array('images', 10), (req, res) => {
+// ── 8. Image Upload (Cloudinary Multi-Photo with Partner Provenance) ──
+const handlePartnerUpload = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ success: false, message: 'No image files uploaded.' });
     }
-    const uploadedImages = req.files.map(f => ({
-      url: f.path,
-      publicId: f.filename,
-      source: 'Partner Upload',
-      alt: f.originalname
-    }));
+
+    const uploadedImages = [];
+
+    for (const file of req.files) {
+      let imageUrl = null;
+      let publicId = null;
+
+      // 1. Cloudinary Direct Upload
+      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: `discovery-uttarakhand/partners/${req.user?._id || 'general'}`,
+            public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+          });
+          imageUrl = result.secure_url;
+          publicId = result.public_id;
+          try { fs.unlinkSync(file.path); } catch (_) {}
+        } catch (cErr) {
+          console.warn('[Cloudinary] Upload failed, falling back to local:', cErr.message);
+        }
+      }
+
+      // 2. Local Fallback with canonical public URL
+      if (!imageUrl) {
+        const host = req.get('host');
+        const protocol = req.protocol;
+        imageUrl = `${protocol}://${host}/uploads/${file.filename}`;
+        publicId = file.filename;
+      }
+
+      uploadedImages.push({
+        url: imageUrl,
+        publicId,
+        source: 'PARTNER_UPLOADED',
+        alt: file.originalname || 'Partner Property Photo'
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: uploadedImages,
@@ -141,28 +175,10 @@ router.post('/me/upload', protect, partnerOnly, upload.array('images', 10), (req
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
-});
-router.post('/upload', protect, partnerOnly, upload.array('images', 10), (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: 'No image files uploaded.' });
-    }
-    const uploadedImages = req.files.map(f => ({
-      url: f.path,
-      publicId: f.filename,
-      source: 'Partner Upload',
-      alt: f.originalname
-    }));
-    res.status(200).json({
-      success: true,
-      data: uploadedImages,
-      urls: uploadedImages.map(img => img.url),
-      message: `${uploadedImages.length} image(s) uploaded successfully.`
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+};
+
+router.post('/me/upload', protect, partnerOnly, upload.array('images', 10), handlePartnerUpload);
+router.post('/upload', protect, partnerOnly, upload.array('images', 10), handlePartnerUpload);
 
 export default router;
 

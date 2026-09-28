@@ -34,47 +34,19 @@ import {
   Car,
   Activity as ActivityIcon,
   Camera,
-  ExternalLink,
   ShieldCheck,
-  Layers,
   Maximize2
 } from 'lucide-react';
-import { getHimalayanFallbackImage, getRealDestinationPhotos, getAssetUrl, getCardImages } from '../utils/imageHelpers';
+import { 
+  getHimalayanFallbackImage, 
+  getRealDestinationPhotos, 
+  getAssetUrl, 
+  getCardImages,
+  getEntityPlaceholderSvg,
+  handleEntityImageError
+} from '../utils/imageHelpers';
 
-// Fallback high-res alpine photos in case API is offline or slow
-const CURATED_HIMALAYAN_FALLBACKS = [
-  {
-    url: 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=1200&auto=format&fit=crop',
-    photographer: 'Himalayan Visual Archive',
-    alt: 'Scenic Himalayan Mountain Lake & Valleys in Uttarakhand'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?q=80&w=1200&auto=format&fit=crop',
-    photographer: 'Alpine Expedition Archive',
-    alt: 'Lush Pine Valleys and Pristine Waters'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=1200&auto=format&fit=crop',
-    photographer: 'Verified Himalayan Traveler',
-    alt: 'Misty Forest Ridges of Kumaon'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop',
-    photographer: 'Mountain Heritage Project',
-    alt: 'High Alpine Meadows and Snow Horizons'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200&auto=format&fit=crop',
-    photographer: 'Devbhoomi Visual Archive',
-    alt: 'Sunset Glow over Sacred Uttarakhand Peaks'
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop',
-    photographer: 'Starry Himalayan Sky Archive',
-    alt: 'Milky Way Night View over Himalayan Ranges'
-  }
-];
-
+// Destination Details component
 export default function DestinationDetails() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -93,10 +65,6 @@ export default function DestinationDetails() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [copiedShare, setCopiedShare] = useState(false);
   const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
-
-  // Live Photography State
-  const [pexelsPhotos, setPexelsPhotos] = useState([]);
-  const [loadingPexels, setLoadingPexels] = useState(false);
 
   const tripIds = useMemo(
     () => new Set((Array.isArray(tripDestinations) ? tripDestinations : []).map((d) => d._id || d.id || d.slug)),
@@ -122,8 +90,6 @@ export default function DestinationDetails() {
       .then((res) => {
         if (res && res.success && res.data) {
           setDestination(res.data);
-          // Once destination loads, fetch live HD photography
-          fetchLivePexelsPhotos(res.data.name, res.data.district);
         } else {
           setDestError('Destination not found');
         }
@@ -150,28 +116,6 @@ export default function DestinationDetails() {
         setRelated({ thingsToDo: [], placesToVisit: [], stays: [], guides: [] });
       });
   }, [slug]);
-
-  // Fetch Live Real 4K Photography from Backend API
-  const fetchLivePexelsPhotos = async (destName, district) => {
-    setLoadingPexels(true);
-    try {
-      const query = `${destName} ${district || ''} Uttarakhand India nature landscape`.trim();
-      const res = await api.get(`/photos/search?query=${encodeURIComponent(query)}&count=6`);
-      if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-        setPexelsPhotos(res.data.data);
-      } else {
-        // Fallback search with broader terms
-        const fallbackRes = await api.get(`/photos/search?query=${encodeURIComponent(destName + ' Uttarakhand')}&count=6`);
-        if (fallbackRes.data?.success && Array.isArray(fallbackRes.data.data) && fallbackRes.data.data.length > 0) {
-          setPexelsPhotos(fallbackRes.data.data);
-        }
-      }
-    } catch (err) {
-      console.warn('Live photo search error:', err.message);
-    } finally {
-      setLoadingPexels(false);
-    }
-  };
 
   // Toggle Favorite
   const handleFavorite = (e) => {
@@ -225,6 +169,7 @@ export default function DestinationDetails() {
 
     const addPhoto = (url, photographer = 'Himalayan Visual Archive', alt = '') => {
       if (!url || typeof url !== 'string' || seenUrls.has(url)) return;
+      if (/luhut|pandjaitan|kuyper|indonesia/i.test(url)) return;
       seenUrls.add(url);
       const cleanPhotographer = (photographer || 'Himalayan Visual Archive')
         .replace(/Pexels\s*•?\s*/gi, '')
@@ -259,24 +204,17 @@ export default function DestinationDetails() {
       });
     }
 
-    // 4. High-res Photography from live search (supplement if needed)
-    if (list.length < 6 && pexelsPhotos.length > 0) {
-      pexelsPhotos.forEach((p) => {
-        if (list.length < 6) {
-          addPhoto(p.url, p.photographer, p.alt);
-        }
-      });
+    // 4. Strict Entity-Specific Placeholder if zero images exist
+    if (list.length === 0 && destination) {
+      addPhoto(
+        getEntityPlaceholderSvg(destination),
+        'Discovery Uttarakhand Archive',
+        `${destination.name} — Photo Unavailable`
+      );
     }
 
-    // 5. Fillers from Curated Himalayan Fallbacks (ensure 5-6 photos total)
-    CURATED_HIMALAYAN_FALLBACKS.forEach((fb) => {
-      if (list.length < 6) {
-        addPhoto(fb.url, fb.photographer, fb.alt);
-      }
-    });
-
     return list.slice(0, 6);
-  }, [destination, pexelsPhotos, slug]);
+  }, [destination, slug]);
 
   // Dynamic Auto-Rotation: rotate main featured photo every 6 seconds
   useEffect(() => {
@@ -299,7 +237,7 @@ export default function DestinationDetails() {
           <h2 className="text-2xl font-black text-white uppercase tracking-wider">
             Loading {(slug || 'Destination').replace(/-/g, ' ')}…
           </h2>
-          <p className="text-emerald-300/80 text-xs mt-2 font-mono">Fetching 4K Pexels satellite &amp; Himalayan data</p>
+          <p className="text-emerald-300/80 text-xs mt-2 font-mono">Loading verified mountain imagery &amp; telemetry</p>
         </main>
         <Footer />
       </div>
@@ -336,14 +274,18 @@ export default function DestinationDetails() {
   const isLongAbout = aboutText.length > 340;
   const bestTime = destination.bestTimeToVisit || 'April – November';
   const durationText = destination.idealDuration || destination.duration || '2 - 4 Days';
-  const ratingVal = destination.rating && destination.rating > 0 ? destination.rating : '4.8';
-  const reviewCount = destination.reviewCount || destination.totalReviews || 1240;
+  const ratingVal = destination?.rating && destination.rating > 0 ? destination.rating : '4.8';
+  const reviewCount = destination?.reviewCount || destination?.totalReviews || (Array.isArray(destination?.reviews) ? destination.reviews.length : null);
+  const reviews = Array.isArray(destination?.reviews) ? destination.reviews : [];
 
   const tags = destination.experiences?.length > 0
     ? destination.experiences
     : [destination.category || 'Mountain Oasis', 'Pilgrimage', 'Lake Basin', 'Alpine Serenity'];
 
   const CANONICAL_ALTITUDES = {
+    'binsar': '2,412',
+    'binsar-wildlife-sanctuary': '2,412',
+    'binsar wildlife sanctuary': '2,412',
     'adi-kailash': '5,945',
     'adi kailash': '5,945',
     'om-parvat': '5,590',
@@ -367,11 +309,11 @@ export default function DestinationDetails() {
     ? `${destination.altitude.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}m`
     : (CANONICAL_ALTITUDES[destination.slug] || CANONICAL_ALTITUDES[destination.name?.toLowerCase()]
         ? `${CANONICAL_ALTITUDES[destination.slug] || CANONICAL_ALTITUDES[destination.name?.toLowerCase()]}m`
-        : '2,084m');
+        : (destination.district ? `${destination.district} Elevation` : 'Himalayan Elevation'));
 
   const numericAltitude = destination.altitude 
     ? parseInt(destination.altitude, 10) 
-    : parseInt((CANONICAL_ALTITUDES[destination.slug] || '2000').replace(/,/g, ''), 10);
+    : parseInt((CANONICAL_ALTITUDES[destination.slug] || CANONICAL_ALTITUDES[destination.name?.toLowerCase()] || '2000').replace(/,/g, ''), 10);
 
   const thingsToDo = related?.thingsToDo || [];
   const stays = related?.stays || [];
@@ -399,17 +341,17 @@ export default function DestinationDetails() {
 
           {/* Quick Jump Anchors */}
           <div className="hidden md:flex items-center gap-1.5 text-xs font-bold text-stone-600">
-            <a href="#overview" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Overview</a>
-            <a href="#gallery" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition flex items-center gap-1">
-              <Camera size={13} className="text-emerald-600" />
+            <a href="#overview" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition whitespace-nowrap">Overview</a>
+            <a href="#gallery" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition flex items-center gap-1 whitespace-nowrap">
+              <Camera size={13} className="text-emerald-600 shrink-0" />
               <span>Photo Gallery ({allGalleryPhotos.length})</span>
             </a>
-            <a href="#stays" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Stays ({stays.length})</a>
-            <a href="#activities" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Adventures</a>
-            <a href="#radar" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">Radar</a>
-            <a href="#map" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition">GIS Map</a>
-            <a href="#reviews" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition flex items-center gap-1">
-              <Star size={13} className="text-amber-500 fill-amber-500" />
+            <a href="#stays" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition whitespace-nowrap">Stays ({stays.length})</a>
+            <a href="#activities" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition whitespace-nowrap">Adventures</a>
+            <a href="#radar" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition whitespace-nowrap">Radar</a>
+            <a href="#map" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition whitespace-nowrap">GIS Map</a>
+            <a href="#reviews" className="px-3 py-1.5 rounded-full hover:bg-stone-100 hover:text-stone-900 transition flex items-center gap-1 whitespace-nowrap">
+              <Star size={13} className="text-amber-500 fill-amber-500 shrink-0" />
               <span>Verified Reviews</span>
             </a>
           </div>
@@ -419,13 +361,13 @@ export default function DestinationDetails() {
             <button
               type="button"
               onClick={handleToggleTrip}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 isInTrip
                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                   : 'bg-stone-100 hover:bg-emerald-50 text-stone-800 hover:text-[#0f3d2e] border border-stone-200'
               }`}
             >
-              {isInTrip ? <Check size={13} /> : <Mountain size={13} />}
+              {isInTrip ? <Check size={13} className="shrink-0" /> : <Mountain size={13} className="shrink-0" />}
               <span>{isInTrip ? 'In Trip Day' : '+ Add to Trip'}</span>
             </button>
 
@@ -439,9 +381,9 @@ export default function DestinationDetails() {
                 });
                 navigate(`/trip-planner?destination=${encodeURIComponent(destination.name)}`);
               }}
-              className="px-4 py-1.5 rounded-xl text-xs font-black bg-[#0f3d2e] hover:bg-[#165540] text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              className="px-4 py-1.5 rounded-xl text-xs font-black bg-[#0f3d2e] hover:bg-[#165540] text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
             >
-              <Sparkles size={13} className="text-emerald-300" />
+              <Sparkles size={13} className="text-emerald-300 shrink-0" />
               <span>Plan Trip</span>
             </button>
           </div>
@@ -459,7 +401,7 @@ export default function DestinationDetails() {
             alt={destination.name}
             loading="eager"
             fetchPriority="high"
-            onError={e => { e.currentTarget.src = CURATED_PEXELS_FALLBACKS[0].url; }}
+            onError={e => handleEntityImageError(e, destination, allGalleryPhotos.map(p => p.url))}
             className="w-full h-full object-cover object-center scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/70 to-stone-950/40" />
@@ -514,7 +456,13 @@ export default function DestinationDetails() {
                 <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
                   <Star size={14} className="fill-amber-400 text-amber-400" />
                   <span className="text-white font-bold">{ratingVal} / 5</span>
-                  <span className="text-stone-400">({reviewCount.toLocaleString()} reviews)</span>
+                  {reviewCount ? (
+                    <span className="text-stone-400">({reviewCount.toLocaleString()} reviews)</span>
+                  ) : reviews.length > 0 ? (
+                    <span className="text-stone-400">({reviews.length} community reviews)</span>
+                  ) : (
+                    <span className="text-emerald-300 text-[11px] font-semibold">Verified Destination</span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 text-emerald-400 font-bold">
@@ -557,9 +505,9 @@ export default function DestinationDetails() {
                   });
                   navigate(`/trip-planner?destination=${encodeURIComponent(destination.name)}`);
                 }}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-[#00FF88] text-stone-950 font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-[#00FF88] text-stone-950 font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition cursor-pointer whitespace-nowrap"
               >
-                <Sparkles size={16} className="text-stone-950" />
+                <Sparkles size={16} className="text-stone-950 shrink-0" />
                 <span>Craft AI Itinerary</span>
               </button>
             </div>
@@ -659,11 +607,11 @@ export default function DestinationDetails() {
           >
             <img
               key={allGalleryPhotos[heroPhotoIndex]?.url || heroPhotoIndex}
-              src={allGalleryPhotos[heroPhotoIndex]?.url || CURATED_HIMALAYAN_FALLBACKS[0].url}
+              src={allGalleryPhotos[heroPhotoIndex]?.url || getHimalayanFallbackImage(destination)}
               alt={allGalleryPhotos[heroPhotoIndex]?.alt || destination.name}
               loading="eager"
               fetchPriority="high"
-              onError={e => { e.currentTarget.src = CURATED_HIMALAYAN_FALLBACKS[0].url; }}
+              onError={e => handleEntityImageError(e, destination, allGalleryPhotos.map(p => p.url))}
               className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ease-out animate-in fade-in duration-500"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/15 to-transparent pointer-events-none" />
@@ -747,10 +695,10 @@ export default function DestinationDetails() {
                   }`}
                 >
                   <img
-                    src={photo.url || CURATED_HIMALAYAN_FALLBACKS[idx % CURATED_HIMALAYAN_FALLBACKS.length].url}
+                    src={photo.url || getHimalayanFallbackImage(destination)}
                     alt={photo.alt || destination.name}
                     loading="lazy"
-                    onError={e => { e.currentTarget.src = CURATED_HIMALAYAN_FALLBACKS[idx % CURATED_HIMALAYAN_FALLBACKS.length].url; }}
+                    onError={e => handleEntityImageError(e, destination, allGalleryPhotos.map(p => p.url))}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                   <div className={`absolute inset-0 transition-colors ${
@@ -827,7 +775,16 @@ export default function DestinationDetails() {
             </div>
             <div>
               <span className="text-[10px] font-black text-stone-400 uppercase tracking-wider block">Traveler Verdict</span>
-              <p className="text-sm font-extrabold text-stone-900">{ratingVal} / 5 <span className="text-xs text-stone-400 font-normal">({reviewCount.toLocaleString()})</span></p>
+              <p className="text-sm font-extrabold text-stone-900">
+                {ratingVal} / 5{' '}
+                {reviewCount ? (
+                  <span className="text-xs text-stone-400 font-normal">({reviewCount.toLocaleString()})</span>
+                ) : reviews.length > 0 ? (
+                  <span className="text-xs text-stone-400 font-normal">({reviews.length})</span>
+                ) : (
+                  <span className="text-xs text-emerald-600 font-semibold">(Verified)</span>
+                )}
+              </p>
             </div>
           </div>
 
@@ -919,7 +876,7 @@ export default function DestinationDetails() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {stays.slice(0, 4).map((stay, idx) => {
                     const price = stay.price?.amount || stay.pricePerNight || '2,400';
-                    const cardImg = getCardImages(stay, '/assets/stay-1.jpg', idx)[0] || 'https://images.unsplash.com/photo-1542157675-99d949ad5f23?q=80&w=800&auto=format&fit=crop';
+                    const cardImg = getCardImages(stay)[0];
                     return (
                       <div
                         key={stay._id || stay.slug || idx}
@@ -930,10 +887,7 @@ export default function DestinationDetails() {
                             <img
                               src={cardImg}
                               alt=""
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = 'https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=800&auto=format&fit=crop';
-                              }}
+                              onError={(e) => handleEntityImageError(e, stay)}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                             <span className="absolute top-2 left-2 z-10 bg-[#0f3d2e]/90 text-emerald-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs backdrop-blur-md">
@@ -997,8 +951,9 @@ export default function DestinationDetails() {
                     >
                       <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-200 shrink-0">
                         <img
-                          src={act.images?.[0] || act.coverImage || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop'}
+                          src={getCardImages(act)[0]}
                           alt={act.name}
+                          onError={(e) => handleEntityImageError(e, act)}
                           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                         />
                       </div>
@@ -1247,6 +1202,7 @@ export default function DestinationDetails() {
                   <img
                     src={photo.url}
                     alt={photo.alt}
+                    onError={e => handleEntityImageError(e, destination)}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-stone-950/20 group-hover:bg-stone-950/50 transition-colors" />

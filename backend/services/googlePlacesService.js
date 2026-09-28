@@ -1,7 +1,4 @@
-/**
- * Live Places & Geo Service (Geoapify + Google Places Dual Engine)
- * Fetches live real-world mountain spots, dhabas, viewpoints, campsites, and routes.
- */
+import { getEntityPlaceholderSvg } from '../utils/imageValidator.js';
 
 const memoryCache = new Map();
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -27,34 +24,16 @@ function setCache(key, data) {
   });
 }
 
-// Visual photo pools for authentic Himalayan mountain categories
-const PHOTO_POOLS = {
-  viewpoint: [
-    'https://images.unsplash.com/photo-1542157675-99d949ad5f23?auto=format&fit=crop&w=1000&q=80', // Nanda Devi & Garhwal range
-    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80', // High Himalayan Peaks
-    'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1000&q=80', // Kumaon Pine Valley
-    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80'  // High Alpine Pass
-  ],
-  dhaba: [
-    'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1000&q=80', // Authentic Himalayan roadside tea stall
-    'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=1000&q=80', // Indian roadside kadak chai & snacks
-    'https://images.unsplash.com/photo-1505253758473-96b3015f27eb?auto=format&fit=crop&w=1000&q=80'  // Mountain hot beverage stall
-  ],
-  stay: [
-    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=80', // Himalayan wooden cottage
-    'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1000&q=80', // Alpine mountain campsite tent
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80'  // Mountain resort lodge
-  ],
-  spiritual: [
-    'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1000&q=80', // Ancient Himalayan stone temple (Kedarnath/Tungnath architecture)
-    'https://images.unsplash.com/photo-1609342122563-a43ac8917a3a?auto=format&fit=crop&w=1000&q=80'  // Himalayan holy temple bells
-  ],
-  rental: [
-    'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80', // Himalayan Adventure Royal Enfield
-    'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=80', // Classic 350
-    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80', // Thar 4x4 Mountain Cruiser
-    'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80'  // SUV Mountain Vehicle
-  ]
+// Known verified entity-specific photography
+const VERIFIED_POIS = {
+  'gauri kund': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Gauri_Kund%2C_Adi_Kailash.jpg',
+  'gaurikund': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Gauri_Kund%2C_Adi_Kailash.jpg',
+  'parvati kund': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Parvati_Kund_at_Adi-Kailash.jpg/1920px-Parvati_Kund_at_Adi-Kailash.jpg',
+  'parvati sarovar': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Parvati_Kund_at_Adi-Kailash.jpg/1920px-Parvati_Kund_at_Adi-Kailash.jpg',
+  'adi kailash': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/ADI_KAILASH.jpg',
+  'om parvat': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Om_Parvat.jpg/1280px-Om_Parvat.jpg',
+  'raj bhavan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',
+  'governor house': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg'
 };
 
 const UTTARAKHAND_FALLBACK_GEMS = [
@@ -66,7 +45,7 @@ const UTTARAKHAND_FALLBACK_GEMS = [
     types: ['restaurant', 'food', 'point_of_interest'],
     vicinity: 'Chopta-Tungnath Base Camp Road, Rudraprayag',
     location: { lat: 30.4856, lng: 79.1764 },
-    photo_urls: PHOTO_POOLS.dhaba,
+    photo_urls: [getEntityPlaceholderSvg({ name: 'Monal Pahadi Maggi & Herbal Tea Hut', category: 'Dhaba' })],
     is_hidden_gem: true,
     highlight: 'Famous for buransh flower squash, hot ginger lemon honey tea and wood-fired rotis.',
     open_now: true,
@@ -80,7 +59,7 @@ const UTTARAKHAND_FALLBACK_GEMS = [
     types: ['tourist_attraction', 'cafe', 'point_of_interest'],
     vicinity: 'Mana Village, 3km ahead of Badrinath, Chamoli',
     location: { lat: 30.7712, lng: 79.4953 },
-    photo_urls: PHOTO_POOLS.spiritual,
+    photo_urls: [getEntityPlaceholderSvg({ name: "India's Last Tea Stall", category: 'Tea Stall' })],
     is_hidden_gem: false,
     highlight: 'Iconic border milestone stall overlooking Saraswati River gorge and Bhim Pul.',
     open_now: true,
@@ -94,7 +73,7 @@ const UTTARAKHAND_FALLBACK_GEMS = [
     types: ['natural_feature', 'tourist_attraction'],
     vicinity: 'Above Auli Ropeway Top Station, Chamoli',
     location: { lat: 30.5333, lng: 79.5700 },
-    photo_urls: PHOTO_POOLS.viewpoint,
+    photo_urls: [getEntityPlaceholderSvg({ name: 'Gorson Bugyal Twilight Ridge Viewpoint', category: 'Viewpoint' })],
     is_hidden_gem: true,
     highlight: 'Unobstructed 360-degree sunset panoramic views of Nanda Devi, Trishul, and Dunagiri.',
     open_now: true,
@@ -215,13 +194,27 @@ class GooglePlacesService {
         const data = await res.json();
 
         if (Array.isArray(data.features) && data.features.length > 0) {
-          const formatted = data.features
+          const rawFormatted = data.features
             .filter(f => f.properties?.name || f.properties?.address_line1 || f.properties?.formatted)
             .map((f, i) => this.formatGeoapifyFeature(f, i));
 
-          if (formatted.length > 0) {
-            setCache(cacheKey, formatted);
-            return formatted;
+          // Deterministic deduplication by canonical identity, slug, and normalized name + vicinity
+          const seen = new Set();
+          const uniqueFormatted = [];
+          for (const item of rawFormatted) {
+            const normName = (item.name || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+            const normVic = (item.vicinity || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+            const compositeKey = `${normName}__${normVic}`;
+            if (!seen.has(compositeKey) && !seen.has(item.place_id)) {
+              seen.add(compositeKey);
+              seen.add(item.place_id);
+              uniqueFormatted.push(item);
+            }
+          }
+
+          if (uniqueFormatted.length > 0) {
+            setCache(cacheKey, uniqueFormatted);
+            return uniqueFormatted;
           }
         }
       } catch (err) {
@@ -292,35 +285,50 @@ class GooglePlacesService {
   }
 
   /**
-   * Format Geoapify Feature into Unified Radar Model
+   * Format Geoapify Feature into Unified Radar Model with Real Entity Image Mapping
    */
   formatGeoapifyFeature(f, index = 0) {
     const p = f.properties || {};
     const coords = f.geometry?.coordinates || [79.0193, 30.0667];
     const lng = coords[0];
     const lat = coords[1];
+    const name = p.name || p.formatted || 'Local Himalayan Spot';
+    const normName = name.toLowerCase().trim();
 
     const cats = Array.isArray(p.categories) ? p.categories : [];
-    const isRental = cats.some(c => c.includes('rental') || c.includes('vehicle') || c.includes('bicycle')) || /rental|bike|car|taxi|scooter|wheels/i.test(p.name || '');
-    const isFood = cats.some(c => c.includes('catering') || c.includes('restaurant'));
-    const isStay = cats.some(c => c.includes('accommodation') || c.includes('hotel'));
-    const isViewpoint = cats.some(c => c.includes('mountain') || c.includes('natural') || c.includes('sights'));
+    const isRental = cats.some(c => c.includes('rental') || c.includes('vehicle') || c.includes('bicycle')) || /rental|bike|car|taxi|scooter|wheels/i.test(name);
+    const isFood = cats.some(c => c.includes('catering') || c.includes('restaurant')) || /dhaba|chai|coffee|tea|cafe|restaurant|bhojanalaya/i.test(name);
+    const isStay = cats.some(c => c.includes('accommodation') || c.includes('hotel')) || /homestay|resort|camp|lodge|guest/i.test(name);
+    const isViewpoint = cats.some(c => c.includes('mountain') || c.includes('natural') || c.includes('sights')) || /kund|lake|tal|peak|glacier|pass|temple/i.test(name);
 
-    const photoPool = isRental ? PHOTO_POOLS.rental : isFood ? PHOTO_POOLS.dhaba : isStay ? PHOTO_POOLS.stay : PHOTO_POOLS.viewpoint;
-    const photoUrl = photoPool[index % photoPool.length];
+    // Entity-Specific Authentic Image Mapping (No AI, No Randomness, No Foreign Mismatches)
+    let photoUrl = null;
+    for (const [key, vUrl] of Object.entries(VERIFIED_POIS)) {
+      if (normName.includes(key)) {
+        photoUrl = vUrl;
+        break;
+      }
+    }
 
-    const isHidden = isViewpoint || (p.distance && p.distance < 8000) || /waterfall|bugyal|peak|cave|pass|ghat|dhaba/i.test(p.name || '');
+    if (!photoUrl) {
+      photoUrl = getEntityPlaceholderSvg({
+        name,
+        category: isStay ? 'Stay' : isFood ? 'Food & Dhaba' : isRental ? 'Rental' : 'Mountain Spot'
+      });
+    }
+
+    const isHidden = isViewpoint || (p.distance && p.distance < 8000) || /waterfall|bugyal|peak|cave|pass|ghat|dhaba/i.test(name);
 
     return {
       place_id: p.place_id || `geoapify_${lat}_${lng}_${index}`,
-      name: p.name || p.formatted || 'Local Himalayan Spot',
+      name: name,
       rating: null,
       user_ratings_total: null,
       vicinity: p.street || p.suburb || p.city || p.county || p.state || 'Uttarakhand, India',
       location: { lat, lng },
       photo_urls: [photoUrl],
-      types: cats.length > 0 ? cats : ['point_of_interest'],
-      open_now: null,
+      types: cats.length > 0 ? cats : [isFood ? 'food' : isStay ? 'lodging' : 'point_of_interest'],
+      open_now: true,
       distance_approx_km: p.distance ? Math.round(p.distance / 1000) : null,
       is_hidden_gem: isHidden,
       is_google_verified: false,
@@ -338,14 +346,22 @@ class GooglePlacesService {
       });
     }
     if (photos.length === 0) {
-      photos.push(PHOTO_POOLS.viewpoint[0]);
+      const norm = (raw.name || '').toLowerCase().trim();
+      let matched = null;
+      for (const [key, vUrl] of Object.entries(VERIFIED_POIS)) {
+        if (norm.includes(key)) {
+          matched = vUrl;
+          break;
+        }
+      }
+      photos.push(matched || getEntityPlaceholderSvg({ name: raw.name, category: 'Place' }));
     }
 
     return {
       place_id: raw.place_id || `place_${Math.random().toString(36).substr(2, 9)}`,
       name: raw.name || 'Unnamed Spot',
-      rating: raw.rating || 4.8,
-      user_ratings_total: raw.user_ratings_total || 120,
+      rating: typeof raw.rating === 'number' && raw.rating > 0 ? raw.rating : null,
+      user_ratings_total: typeof raw.user_ratings_total === 'number' && raw.user_ratings_total > 0 ? raw.user_ratings_total : null,
       vicinity: raw.vicinity || raw.formatted_address || 'Uttarakhand, India',
       location: {
         lat: raw.geometry?.location?.lat || 30.0667,

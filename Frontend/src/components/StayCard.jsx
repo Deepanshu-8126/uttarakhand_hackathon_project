@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Star, Wifi, Car, Coffee, Mountain, Eye, ShieldCheck, CheckCircle2, ChevronRight, X, Lock, Plus } from 'lucide-react';
+import { Heart, Star, Wifi, Car, Coffee, Mountain, Eye, ShieldCheck, CheckCircle2, ChevronRight, X, Lock, Plus, Phone } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
 import ImageCarousel from './common/ImageCarousel';
 import { getCardImages } from '../utils/imageHelpers';
+import { getStayImages } from '../utils/getStayImage';
 import { useMapStore } from '../store/mapStore';
 
 export default function StayCard({ stay }) {
   const navigate = useNavigate();
   const [showTooltip, setShowTooltip] = useState(false);
   const [showMobileSheet, setShowMobileSheet] = useState(false);
+  const [dynamicImages, setDynamicImages] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getStayImages(stay, 3).then(res => {
+      if (isMounted && Array.isArray(res) && res.length > 0) {
+        setDynamicImages(res);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, [stay]);
 
   const getFormattedPrice = (price, pricePerNight) => {
     if (!price && !pricePerNight) return null;
@@ -25,13 +37,15 @@ export default function StayCard({ stay }) {
     return null;
   };
 
-  const formattedPrice = getFormattedPrice(stay.price, stay.pricePerNight);
+  const formattedPrice = getFormattedPrice(stay.price, stay.pricePerNight || stay.price_per_night);
   const locationText = typeof stay.location === 'string' 
     ? stay.location 
     : (stay.city ? `${stay.city}${stay.district ? `, ${stay.district}` : ''}` : (stay.district || 'Uttarakhand'));
 
-  const images = getCardImages(stay, (stay.isGovt || stay.name?.includes('KMVN')) ? '/assets/kmvn-stay.svg' : '/assets/fallback.svg');
+  const baseCardImages = getCardImages(stay, (stay.isGovt || stay.name?.includes('KMVN')) ? '/assets/kmvn-stay.svg' : '/assets/fallback.svg');
+  const images = dynamicImages.length > 0 ? dynamicImages : baseCardImages;
   const stayId = stay._id || stay.slug || stay.id;
+  const stayContact = stay.contact || stay.phone;
 
   const handleBadgeClick = (e) => {
     e.stopPropagation();
@@ -151,6 +165,18 @@ export default function StayCard({ stay }) {
             </div>
 
             <div className="flex items-center gap-1.5">
+              {stayContact && (
+                <a
+                  href={`tel:${stayContact}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="min-h-[44px] px-2.5 rounded-xl border border-emerald-600/30 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition shadow-2xs flex items-center justify-center gap-1 text-xs font-bold cursor-pointer"
+                  title={`Call host: ${stayContact}`}
+                >
+                  <Phone size={14} className="text-emerald-700" />
+                  <span className="hidden sm:inline">Call</span>
+                </a>
+              )}
+
               <button
                 type="button"
                 onClick={() => {

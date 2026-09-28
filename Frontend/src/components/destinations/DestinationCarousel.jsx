@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { MdChevronLeft, MdChevronRight, MdAutoAwesome, MdClose } from 'react-icons/md';
 import { useMapStore } from '../../store/mapStore';
 import DestinationCard from './DestinationCard';

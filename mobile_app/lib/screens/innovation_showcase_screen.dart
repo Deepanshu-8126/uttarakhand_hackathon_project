@@ -117,7 +117,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F3D2E).withOpacity(0.08),
+                color: const Color(0xFF0F3D2E).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.psychology, color: Color(0xFF0F3D2E), size: 20),
@@ -143,9 +143,9 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
             icon: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFDC2626).withOpacity(0.12),
+                color: const Color(0xFFDC2626).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFDC2626).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.3)),
               ),
               child: const Row(
                 children: [
@@ -175,9 +175,9 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F3D2E).withOpacity(0.08),
+                      color: const Color(0xFF0F3D2E).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFF0F3D2E).withOpacity(0.2)),
+                      border: Border.all(color: const Color(0xFF0F3D2E).withValues(alpha: 0.2)),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -226,7 +226,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                           color: isSel ? const Color(0xFF0F3D2E) : Colors.white,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: isSel ? const Color(0xFF0F3D2E) : const Color(0xFFE2E8F0)),
-                          boxShadow: isSel ? [BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.2), blurRadius: 6)] : null,
+                          boxShadow: isSel ? [BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.2), blurRadius: 6)] : null,
                         ),
                         child: Row(
                           children: [
@@ -288,7 +288,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -429,7 +429,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(sub, style: TextStyle(fontSize: 9, color: color.withOpacity(0.85), fontWeight: FontWeight.w700)),
+          Text(sub, style: TextStyle(fontSize: 9, color: color.withValues(alpha: 0.85), fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -466,7 +466,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -527,9 +527,9 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                     onChanged: (val) => setState(() => _simulatedAltitude = val),
                   ),
                 ),
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
+                  children: [
                     Text('1,000m (Rishikesh)', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
                     Text('3,583m (Kedarnath)', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
                     Text('5,545m (Mana Pass)', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
@@ -545,9 +545,9 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: badgeColor.withOpacity(0.08),
+              color: badgeColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: badgeColor.withOpacity(0.3)),
+              border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,7 +560,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                       : (isModerate
                           ? 'Acclimatization threshold reached. Drink 4-5 liters of water daily. Avoid rapid vehicular ascent without an overnight acclimatization halt.'
                           : 'Elevation is safe for normal activity and hiking. Maintain hydration and keep warm mountain layers handy.'),
-                  style: TextStyle(fontSize: 11, color: badgeColor.withOpacity(0.9), height: 1.35),
+                  style: TextStyle(fontSize: 11, color: badgeColor.withValues(alpha: 0.9), height: 1.35),
                 ),
               ],
             ),
@@ -651,7 +651,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -670,7 +670,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF059669).withOpacity(0.12),
+                  color: const Color(0xFF059669).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text('ZERO-SIGNAL PROOF', style: TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.w900, fontSize: 9.5)),
@@ -720,7 +720,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10),
                     ],
                   ),
                   child: Center(
@@ -798,7 +798,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -829,7 +829,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
               ),
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
-                BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.3), blurRadius: 14, offset: const Offset(0, 6)),
+                BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6)),
               ],
             ),
             child: Column(
@@ -845,7 +845,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text('WEB3 ESCROW LINKED', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900)),
@@ -863,8 +863,8 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
                   style: const TextStyle(color: Color(0xFF86EFAC), fontSize: 11, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.nfc, color: Colors.white70, size: 18),
                     SizedBox(width: 8),
                     Text('0% Platform Commission • 100% Host Payout', style: TextStyle(color: Colors.white70, fontSize: 10)),
@@ -904,7 +904,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(width: 12),
@@ -943,7 +943,7 @@ class _InnovationShowcaseScreenState extends State<InnovationShowcaseScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(

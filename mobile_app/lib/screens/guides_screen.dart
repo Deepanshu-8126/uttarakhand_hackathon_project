@@ -75,26 +75,26 @@ class _GuidesScreenState extends State<GuidesScreen> {
                         color: const Color(0xFF0F3D2E),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.2), blurRadius: 16, offset: const Offset(0, 6)),
+                          BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.2), blurRadius: 16, offset: const Offset(0, 6)),
                         ],
                       ),
-                      child: Column(
+                      child: const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            children: const [
+                            children: [
                               Icon(Icons.verified_user, color: Color(0xFF34D399), size: 16),
                               SizedBox(width: 6),
                               Text('100% LOCAL HIMALAYAN RESIDENTS', style: TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: 8),
+                          Text(
                             'Explore with Someone Who Knows the Terrain',
                             style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
+                          SizedBox(height: 4),
+                          Text(
                             'Government certified, first-aid trained, and high-altitude emergency ready.',
                             style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 11),
                           ),
@@ -179,7 +179,7 @@ class _GuidesScreenState extends State<GuidesScreen> {
                             borderRadius: BorderRadius.circular(22),
                             border: Border.all(color: const Color(0xFFE2E8F0)),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
                             ],
                           ),
                           child: Column(

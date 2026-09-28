@@ -1,15 +1,29 @@
 import api from './api';
+import { getEntityPlaceholderSvg, DESTINATION_NAMED_IMAGES } from '../utils/imageHelpers';
 
 const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '';
 
-const HIMALAYAN_BACKUP_PHOTOS = [
-  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',
-  'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1000&q=80',
-  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80',
-  'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1000&q=80',
-  'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1000&q=80',
-  'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1000&q=80'
-];
+const VERIFIED_LANDMARK_MAP = {
+  'gauri kund': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Gauri_Kund%2C_Adi_Kailash.jpg',
+  'gaurikund': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Gauri_Kund%2C_Adi_Kailash.jpg',
+  'parvati kund': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Parvati_Kund_at_Adi-Kailash.jpg/1920px-Parvati_Kund_at_Adi-Kailash.jpg',
+  'parvati sarovar': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Parvati_Kund_at_Adi-Kailash.jpg/1920px-Parvati_Kund_at_Adi-Kailash.jpg',
+  'raj bhavan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',
+  'governor house': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',
+  'naina devi': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Naina_Devi_Temple%2C_Nainital.jpg/1920px-Naina_Devi_Temple%2C_Nainital.jpg',
+  'tiffin top': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Tiffin_Top%2C_Nainital.jpg/1920px-Tiffin_Top%2C_Nainital.jpg'
+};
+
+function resolvePoiPhoto(name, category = 'Spot') {
+  const n = String(name || '').toLowerCase().trim();
+  for (const [key, url] of Object.entries(VERIFIED_LANDMARK_MAP)) {
+    if (n.includes(key)) return url;
+  }
+  for (const [key, url] of Object.entries(DESTINATION_NAMED_IMAGES)) {
+    if (n === key) return url;
+  }
+  return getEntityPlaceholderSvg({ name, category });
+}
 
 /**
  * Direct Client-Side Geoapify Geocoding Fallback:
@@ -25,25 +39,32 @@ async function directGeoapifySearch(query) {
     if (!res.ok) return { count: 0, data: [] };
     const json = await res.json();
     
-    const places = (json.features || []).map((f, idx) => {
+    const seen = new Set();
+    const places = [];
+
+    (json.features || []).forEach((f, idx) => {
       const p = f.properties || {};
       const [lng, lat] = f.geometry?.coordinates || [null, null];
       const name = p.name || p.street || p.city || cleanQ;
       const vicinity = [p.county, p.state_district, p.city, p.state].filter(Boolean).join(', ') || p.formatted || 'Uttarakhand';
       
-      return {
+      const normKey = `${name.toLowerCase().trim().replace(/[^a-z0-9]/g, '')}__${vicinity.toLowerCase().trim().replace(/[^a-z0-9]/g, '')}`;
+      if (seen.has(normKey)) return;
+      seen.add(normKey);
+
+      const photoUrl = resolvePoiPhoto(name, p.categories?.[0] || 'Landmark');
+
+      places.push({
         place_id: p.place_id || `geo_${lat}_${lng}_${idx}`,
         name: name,
         vicinity: vicinity,
         location: { lat, lng },
-        rating: 4.7,
-        user_ratings_total: 45 + (idx * 12),
-        photo_urls: [
-          HIMALAYAN_BACKUP_PHOTOS[idx % HIMALAYAN_BACKUP_PHOTOS.length]
-        ],
-        is_google_verified: true,
+        rating: null,
+        user_ratings_total: null,
+        photo_urls: [photoUrl],
+        is_google_verified: false,
         provider: 'Geoapify Live Satellite Radar (Direct Web GIS)'
-      };
+      });
     });
 
     return {
@@ -68,7 +89,7 @@ export const placesApi = {
       }
       if (radius) params.radius = radius;
       
-      const res = await api.get('/places/search', { params, timeout: 3500 });
+      const res = await api.get('/places/search', { params, timeout: 8000 });
       if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
         return res.data;
       }
@@ -84,7 +105,7 @@ export const placesApi = {
   getNearbyPlaces: async ({ lat, lng, type = 'all', radius = 15000, keyword = '' } = {}) => {
     try {
       const params = { lat, lng, type, radius, keyword };
-      const res = await api.get('/places/nearby', { params, timeout: 3500 });
+      const res = await api.get('/places/nearby', { params, timeout: 8000 });
       if (res.data?.data) return res.data;
     } catch (err) {
       // Direct Geoapify POI fallback
@@ -94,18 +115,36 @@ export const placesApi = {
         const res = await fetch(url);
         if (res.ok) {
           const json = await res.json();
-          const items = (json.features || []).map((f, idx) => ({
-            place_id: f.properties?.place_id || `geo_${idx}`,
-            name: f.properties?.name || 'Scenic Mountain Spot',
-            vicinity: f.properties?.formatted || 'Uttarakhand',
-            location: {
-              lat: f.geometry?.coordinates[1],
-              lng: f.geometry?.coordinates[0]
-            },
-            rating: 4.8,
-            photo_urls: [HIMALAYAN_BACKUP_PHOTOS[idx % HIMALAYAN_BACKUP_PHOTOS.length]],
-            provider: 'Geoapify Live Radar'
-          }));
+          const seen = new Set();
+          const items = [];
+
+          (json.features || []).forEach((f, idx) => {
+            const p = f.properties || {};
+            const name = p.name || 'Scenic Mountain Spot';
+            const vicinity = p.formatted || p.street || 'Uttarakhand, India';
+            const normKey = `${name.toLowerCase().trim().replace(/[^a-z0-9]/g, '')}__${vicinity.toLowerCase().trim().replace(/[^a-z0-9]/g, '')}`;
+            
+            if (seen.has(normKey) || (p.place_id && seen.has(p.place_id))) return;
+            seen.add(normKey);
+            if (p.place_id) seen.add(p.place_id);
+
+            const photoUrl = resolvePoiPhoto(name, p.categories?.[0] || 'Scenic Spot');
+
+            items.push({
+              place_id: p.place_id || `geo_${idx}`,
+              name: name,
+              vicinity: vicinity,
+              location: {
+                lat: f.geometry?.coordinates?.[1],
+                lng: f.geometry?.coordinates?.[0]
+              },
+              rating: null,
+              user_ratings_total: null,
+              photo_urls: [photoUrl],
+              provider: 'Geoapify Live Radar'
+            });
+          });
+
           return { count: items.length, data: items };
         }
       } catch (e) {}
@@ -119,16 +158,18 @@ export const placesApi = {
       const params = {};
       if (placeId) params.placeId = placeId;
       if (name) params.name = name;
-      const res = await api.get('/places/details', { params, timeout: 3500 });
+      const res = await api.get('/places/details', { params, timeout: 8000 });
       return res.data;
     } catch (err) {
+      const pPhoto = resolvePoiPhoto(name || 'Himalayan Landmark', 'Landmark');
       return {
         success: true,
         data: {
           name: name || 'Himalayan Landmark',
-          rating: 4.8,
-          photo_urls: HIMALAYAN_BACKUP_PHOTOS.slice(0, 3),
-          provider: 'Geoapify Fallback'
+          rating: null,
+          user_ratings_total: null,
+          photo_urls: [pPhoto],
+          provider: 'Himalayan Radar'
         }
       };
     }

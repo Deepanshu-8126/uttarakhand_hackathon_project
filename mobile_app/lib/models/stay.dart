@@ -24,10 +24,6 @@ class Rental {
   });
 
   factory Rental.fromJson(Map<String, dynamic> json) {
-    String nameStr = (json['name'] ?? json['title'] ?? '').toString();
-    String typeStr = (json['category'] ?? json['type'] ?? json['vehicleType'] ?? '').toString();
-    String combinedName = '$nameStr $typeStr'.toLowerCase();
-
     String img = '';
     if (json['coverImage'] != null) {
       if (json['coverImage'] is Map && json['coverImage']['url'] != null) {
@@ -52,22 +48,7 @@ class Rental {
       }
     }
 
-    if (img.isEmpty || img.contains('fallback.svg') || img.endsWith('.svg') || img.contains('placeholder')) {
-      if (combinedName.contains('apache') || combinedName.contains('tvs')) {
-        img = 'https://images.unsplash.com/photo-1609630928811-88d16770f16c?auto=format&fit=crop&w=1200&q=80';
-      } else if (combinedName.contains('himalayan') || combinedName.contains('450') || combinedName.contains('adv')) {
-        img = 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80';
-      } else if (combinedName.contains('classic') || combinedName.contains('350') || combinedName.contains('cruiser')) {
-        img = 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80';
-      } else if (combinedName.contains('activa') || combinedName.contains('jupiter') || combinedName.contains('scooty') || combinedName.contains('scooter')) {
-        img = 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=80';
-      } else if (combinedName.contains('thar') || combinedName.contains('innova') || combinedName.contains('car') || combinedName.contains('taxi') || combinedName.contains('4x4')) {
-        img = 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80';
-      } else {
-        img = 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80';
-      }
-    }
-
+    // Absolute Rule: NO Unsplash or cross-entity image substitution in mobile client.
     if (img.startsWith('/assets/')) {
       img = 'https://uttarakhand-hackathon-project.onrender.com$img';
     }

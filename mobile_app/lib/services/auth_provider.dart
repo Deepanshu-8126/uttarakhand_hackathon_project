@@ -12,6 +12,7 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   bool get isAuthenticated => _token != null && _user != null;
   bool get isPartner => _user?['role'] == 'partner' || _user?['isPartner'] == true;
+  bool get isAdmin => _user?['role'] == 'admin' || _user?['role'] == 'superadmin' || _user?['email']?.toString().contains('admin') == true;
   bool get isLoading => _isLoading;
 
   AuthProvider() {
@@ -135,6 +136,60 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return {'success': true, 'user': _user};
+  }
+
+  Future<void> updateUserProfile(Map<String, dynamic> updatedFields) async {
+    if (_user != null) {
+      _user = {..._user!, ...updatedFields};
+      await _saveSession();
+      notifyListeners();
+    }
+  }
+
+  Future<void> loginAsDemoRole(String role) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _token = 'jwt-demo-$role-${DateTime.now().millisecondsSinceEpoch}';
+    if (role == 'admin') {
+      _user = {
+        'name': 'Devbhoomi Uttarakhand Admin',
+        'email': 'admin@devbhoomi.gov.in',
+        'role': 'admin',
+        'isVerified': true,
+        'pahadiCoins': 12500,
+        'verifiedPartners': 42,
+        'pendingKYC': 5,
+        'activeFleet': 68,
+        'escrowPool': 248000,
+      };
+    } else if (role == 'partner') {
+      _user = {
+        'name': 'Deepanshu (KMVN Certified Partner)',
+        'email': 'partner@pahadi.in',
+        'role': 'partner',
+        'businessType': 'Homestays & 4x4 Fleet',
+        'isVerified': true,
+        'pahadiCoins': 1200,
+        'listingsCount': 4,
+        'verifiedBikes': 8,
+        'activeBookings': 6,
+      };
+    } else {
+      _user = {
+        'name': 'Deepanshu (Pahadi Explorer)',
+        'email': 'deepanshukapri4@gmail.com',
+        'role': 'traveler',
+        'isVerified': true,
+        'pahadiCoins': 450,
+        'tripsCount': 3,
+        'tier': 'Gold Tier',
+      };
+    }
+
+    await _saveSession();
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> logout() async {

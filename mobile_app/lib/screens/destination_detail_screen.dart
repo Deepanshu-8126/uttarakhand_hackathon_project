@@ -21,7 +21,7 @@ class DestinationDetailScreen extends StatelessWidget {
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.4),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                   onPressed: () => Navigator.pop(context),
@@ -32,7 +32,7 @@ class DestinationDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.4),
+                  backgroundColor: Colors.black.withValues(alpha: 0.4),
                   child: IconButton(
                     icon: const Icon(Icons.favorite_border, color: Colors.white, size: 20),
                     onPressed: () {
@@ -60,7 +60,7 @@ class DestinationDetailScreen extends StatelessWidget {
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
                         colors: [
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.7),
                           Colors.transparent,
                         ],
                       ),
@@ -182,18 +182,18 @@ class DestinationDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
+                      const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            children: const [
+                            children: [
                               Icon(Icons.verified, color: AppTheme.forestGreen, size: 16),
                               SizedBox(width: 6),
                               Text('Verified Traveler Reviews', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.textDark)),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          const Text('GPS Tracked • Zero Fake Reviews', style: TextStyle(fontSize: 11, color: AppTheme.mutedText)),
+                          SizedBox(height: 2),
+                          Text('GPS Tracked • Zero Fake Reviews', style: TextStyle(fontSize: 11, color: AppTheme.mutedText)),
                         ],
                       ),
                       TextButton.icon(
@@ -219,7 +219,7 @@ class DestinationDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppTheme.borderLight),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2)),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
                       ],
                     ),
                     child: Row(
@@ -245,8 +245,8 @@ class DestinationDetailScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: const Color(0xFFFDE68A)),
                           ),
-                          child: Row(
-                            children: const [
+                          child: const Row(
+                            children: [
                               Icon(Icons.monetization_on, color: Color(0xFFD97706), size: 14),
                               SizedBox(width: 4),
                               Text('+50 DevBhoomi Coins', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF92400E))),
@@ -400,8 +400,8 @@ class DestinationDetailScreen extends StatelessWidget {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Row(
-                children: const [
+              title: const Row(
+                children: [
                   Icon(Icons.rate_review, color: AppTheme.forestGreen, size: 20),
                   SizedBox(width: 8),
                   Text('Write Verified Review', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
@@ -447,8 +447,8 @@ class DestinationDetailScreen extends StatelessWidget {
                         color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           Icon(Icons.shield_outlined, color: Color(0xFF059669), size: 14),
                           SizedBox(width: 6),
                           Expanded(

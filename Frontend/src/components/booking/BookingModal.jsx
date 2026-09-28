@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   X, 
   Calendar, 
@@ -25,6 +26,7 @@ export default function BookingModal({
   tripId = null,
   onSuccess
 }) {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -239,13 +241,23 @@ export default function BookingModal({
                 You can manage and view this reservation anytime under your Profile → My Bookings.
               </p>
 
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate('/profile?tab=bookings');
+                  }}
+                  className="flex-1 py-3 bg-forest-green hover:bg-dark-green text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm cursor-pointer"
+                >
+                  View in My Bookings
+                </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full py-3 bg-forest-green hover:bg-dark-green text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm"
+                  className="px-5 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
                 >
-                  Close & View Trip
+                  Done
                 </button>
               </div>
             </div>

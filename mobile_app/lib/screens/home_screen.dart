@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../models/destination.dart';
 import '../models/stay.dart';
+import '../models/hidden_location.dart';
 import '../services/api_service.dart';
 import '../services/auth_provider.dart';
 import 'destination_detail_screen.dart';
@@ -27,6 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Destination> destinations = [];
+  List<HiddenLocation> hiddenLocations = [];
   List<Rental> rentals = [];
   List<Stay> stays = [];
   List<Guide> guides = [];
@@ -77,12 +79,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final r = await ApiService.getRentals();
     final s = await ApiService.getStays();
     final g = await ApiService.getGuides();
+    final hl = await ApiService.getHiddenLocations();
     if (mounted) {
       setState(() {
         destinations = d;
         rentals = r;
         stays = s;
         guides = g;
+        hiddenLocations = hl;
         isLoading = false;
       });
     }
@@ -133,9 +137,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            Column(
+            const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'DISCOVER',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1, color: AppTheme.textDark),
@@ -223,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: Colors.black.withValues(alpha: 0.03),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -277,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: isSelected ? const Color(0xFF0F3D2E) : const Color(0xFFE2E8F0),
                                   ),
                                   boxShadow: isSelected
-                                      ? [BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 2))]
+                                      ? [BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))]
                                       : null,
                                 ),
                                 child: Text(
@@ -306,6 +310,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildSectionHeader('Explore Uttarakhand', 'Pristine valleys, sacred shrines, and authentic mountain life', () {}),
                     const SizedBox(height: 12),
                     _buildDestinationsGrid(),
+
+                    const SizedBox(height: 28),
+
+                    // ── Hidden Uttarakhand Gems (12 Zero-Tourism Sanctuaries) ────────
+                    _buildHiddenLocationsSection(),
 
                     const SizedBox(height: 28),
 
@@ -351,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -414,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'title': 'RISHIKESH & GANGA',
         'subtitle': 'Emerald Rapids & Sacred Evening Aarti',
         'tag': 'VERIFIED FLEET • ACTIVE CORRIDOR',
-        'image': 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80',
+        'image': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Ram_Jhula_Rishikesh.jpg/1280px-Ram_Jhula_Rishikesh.jpg',
         'dest': 'Gateway to Devbhoomi',
       },
     ];
@@ -426,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
-            BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.18), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.18), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: ClipRRect(
@@ -460,8 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
                             colors: [
-                              const Color(0xFF09261C).withOpacity(0.92),
-                              const Color(0xFF09261C).withOpacity(0.35),
+                              const Color(0xFF09261C).withValues(alpha: 0.92),
+                              const Color(0xFF09261C).withValues(alpha: 0.35),
                               Colors.transparent,
                             ],
                           ),
@@ -476,9 +485,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF059669).withOpacity(0.90),
+                                color: const Color(0xFF059669).withValues(alpha: 0.90),
                                 borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                               ),
                               child: Text(
                                 slide['tag']!,
@@ -554,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: activeSlide == i ? const Color(0xFF00FF88) : Colors.white54,
                           borderRadius: BorderRadius.circular(3),
                           boxShadow: activeSlide == i
-                              ? [BoxShadow(color: const Color(0xFF00FF88).withOpacity(0.6), blurRadius: 6)]
+                              ? [BoxShadow(color: const Color(0xFF00FF88).withValues(alpha: 0.6), blurRadius: 6)]
                               : null,
                         ),
                       ),
@@ -572,7 +581,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 3,
                   child: Stack(
                     children: [
-                      Container(color: Colors.white.withOpacity(0.15)),
+                      Container(color: Colors.white.withValues(alpha: 0.15)),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return AnimatedContainer(
@@ -609,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
@@ -624,9 +633,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.shield_outlined, size: 13, color: Color(0xFF0F3D2E)),
                       SizedBox(width: 4),
                       Text(
@@ -659,9 +668,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text('100%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
                         Text('Escrow Protected', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
                       ],
@@ -677,9 +686,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text('3-Layer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
                         Text('Verified Fleet', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
                       ],
@@ -780,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: const Color(0xFFE2E8F0)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
@@ -808,12 +817,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                          color: const Color(0xFF0F3D2E).withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.verified, size: 10, color: Color(0xFF34D399)),
                             SizedBox(width: 3),
                             Text('3-Layer Verified', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -908,7 +917,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: const Color(0xFFE2E8F0)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
@@ -936,12 +945,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F3D2E).withOpacity(0.92),
+                          color: const Color(0xFF0F3D2E).withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.shield, size: 10, color: Color(0xFF34D399)),
                             SizedBox(width: 3),
                             Text('Verified Stay', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -1012,7 +1021,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
             ),
             child: Row(
               children: [
@@ -1048,6 +1057,153 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  Widget _buildHiddenLocationsSection() {
+    if (hiddenLocations.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          'Hidden Uttarakhand Gems',
+          '12 pristine sanctuaries with live Open-Meteo weather telemetry',
+          () {},
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 275,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: hiddenLocations.length,
+            itemBuilder: (context, index) {
+              final loc = hiddenLocations[index];
+              return Container(
+                width: 240,
+                margin: const EdgeInsets.only(right: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        SizedBox(
+                          height: 130,
+                          width: double.infinity,
+                          child: CachedNetworkImage(
+                            imageUrl: loc.imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(color: Colors.grey[200]),
+                            errorWidget: (_, __, ___) => Container(
+                              color: const Color(0xFF0F3D2E),
+                              child: const Icon(Icons.landscape, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F3D2E).withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: const Color(0xFF00FF88).withValues(alpha: 0.5)),
+                            ),
+                            child: Text(
+                              loc.tag,
+                              style: const TextStyle(color: Color(0xFF00FF88), fontSize: 9, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                        if (loc.temperature != null)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.75),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '${loc.temperature!.toStringAsFixed(0)}°C',
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          bottom: 6,
+                          left: 8,
+                          child: Text(
+                            '⛰️ ${loc.altitude}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, size: 12, color: Color(0xFF0F3D2E)),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  '${loc.district}, ${loc.region}',
+                                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            loc.name,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            loc.description,
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
 }
 
 class _InteractiveDestinationCard extends StatefulWidget {
@@ -1062,33 +1218,21 @@ class _InteractiveDestinationCard extends StatefulWidget {
 class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard> {
   int _photoIndex = 0;
 
-  static const List<List<String>> destinationPhotoBanks = [
-    [
-      'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
-    ],
-    [
-      'https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=800&q=80',
-    ],
-    [
-      'https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1588096344356-9b5962804364?auto=format&fit=crop&w=800&q=80',
-    ],
-  ];
-
   @override
   Widget build(BuildContext context) {
     final dest = widget.destination;
-    final fallbackList = destinationPhotoBanks[widget.index % destinationPhotoBanks.length];
-    final imgUrl = (dest.imageUrl.isNotEmpty && !dest.imageUrl.contains('placeholder'))
-        ? dest.imageUrl
-        : fallbackList[0];
-
-    final photos = [imgUrl, ...fallbackList.where((p) => p != imgUrl)];
+    final List<String> photos = [];
+    if (dest.imageUrl.isNotEmpty && !dest.imageUrl.contains('placeholder')) {
+      photos.add(dest.imageUrl);
+    }
+    for (final m in dest.images) {
+      if (m.isNotEmpty && !photos.contains(m) && !m.contains('placeholder')) {
+        photos.add(m);
+      }
+    }
+    if (photos.isEmpty) {
+      photos.add('https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80');
+    }
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -1103,7 +1247,7 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
@@ -1120,7 +1264,7 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(color: const Color(0xFF09261C)),
                     errorWidget: (context, url, error) => CachedNetworkImage(
-                      imageUrl: fallbackList[0],
+                      imageUrl: photos[0],
                       height: 150,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -1143,7 +1287,7 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
                               height: 3,
                               margin: const EdgeInsets.symmetric(horizontal: 2),
                               decoration: BoxDecoration(
-                                color: idx == _photoIndex ? Colors.white : Colors.white.withOpacity(0.4),
+                                color: idx == _photoIndex ? Colors.white : Colors.white.withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1159,9 +1303,9 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F3D2E).withOpacity(0.9),
+                      color: const Color(0xFF0F3D2E).withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                     ),
                     child: Text(
                       dest.category.isNotEmpty ? dest.category : 'Himalayan',
@@ -1179,9 +1323,9 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
                       color: const Color(0xFF059669),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.verified, size: 9, color: Colors.white),
                         SizedBox(width: 3),
                         Text('GPS EXIF ✓', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)),
@@ -1252,4 +1396,5 @@ class _InteractiveDestinationCardState extends State<_InteractiveDestinationCard
       ),
     );
   }
+
 }

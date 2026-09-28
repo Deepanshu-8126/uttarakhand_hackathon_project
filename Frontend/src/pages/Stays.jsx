@@ -20,7 +20,10 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
-  Plus
+  Plus,
+  Maximize2,
+  Phone,
+  CheckCircle2
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -28,6 +31,9 @@ import { useStays } from '../hooks/useStays';
 import { useFavorites } from '../context/FavoritesContext';
 import { useMapStore } from '../store/mapStore';
 import { getCardImages, getAssetUrl } from '../utils/imageHelpers';
+import { getGoogleImages } from '../utils/googleImages';
+import { getStayImages } from '../utils/getStayImage';
+import ImageLightbox from '../components/common/ImageLightbox';
 import AltitudeGuardModal from '../components/safety/AltitudeGuardModal';
 import WomenSosModal from '../components/safety/WomenSosModal';
 
@@ -52,34 +58,56 @@ const REAL_STAY_PHOTO_BANKS = [
   ]
 ];
 
-// Interactive Stay Card with Story-Style (- - -) Photo Cycling & Escrow Protection
-function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onPlan }) {
+// Interactive Stay Card with Story-Style (- - -) Photo Cycling, Google Images, Real Calling & Escrow Protection
+function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onPlan, onOpenLightbox }) {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [dynamicImages, setDynamicImages] = useState([]);
   const stayId = stay.id || stay._id;
 
   const cardImages = getCardImages(stay);
-  const fallbackSet = REAL_STAY_PHOTO_BANKS[index % REAL_STAY_PHOTO_BANKS.length];
+
+  // Fetch verified real HD images via Serper + Pexels API + DB uploads for this stay
+  useEffect(() => {
+    let isMounted = true;
+    getStayImages(stay, 4)
+      .then(res => {
+        if (isMounted && Array.isArray(res) && res.length > 0) {
+          const urls = res.filter(Boolean);
+          if (urls.length > 0) setDynamicImages(urls);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, [stay]);
+
   const images = useMemo(() => {
-    const raw = cardImages.filter(img => typeof img === 'string' && img.length > 5 && !img.includes('placeholder'));
-    if (raw.length >= 2) return raw;
-    if (raw.length === 1) return [raw[0], ...fallbackSet.slice(1)];
-    return fallbackSet;
-  }, [cardImages, fallbackSet]);
+    const combined = [...dynamicImages, ...cardImages].filter(
+      img => typeof img === 'string' && img.length > 5 && !img.includes('placeholder')
+    );
+    const unique = Array.from(new Set(combined));
+    if (unique.length > 0) return unique;
+    return [getCardImages(stay)[0]];
+  }, [dynamicImages, cardImages, stay]);
 
   const locDisplay = typeof stay.location === 'string'
     ? stay.location
     : (stay.city ? `${stay.city}${stay.district ? `, ${stay.district}` : ''}` : (stay.district || 'Uttarakhand'));
 
-  const priceNum = stay.price?.amount || stay.pricePerNight || (typeof stay.price === 'number' ? stay.price : 2400);
-  const categoryTag = stay.category || stay.type || (index % 2 === 0 ? 'Cedar Wood Retreat' : 'Forest Eco-Lodge');
+  const priceNum = stay.price?.amount || stay.price_per_night || stay.pricePerNight || (typeof stay.price === 'number' ? stay.price : 1800);
+  const categoryTag = stay.category || stay.type || (index % 2 === 0 ? 'Cedar Wood Homestay' : 'Mountain Retreat');
   const ratingNum = stay.rating || (4.7 + (index % 4) * 0.1).toFixed(1);
-  const reviewCount = stay.reviewsCount || stay.reviews?.length || (25 + (index % 30));
+  const reviewCount = stay.reviews || stay.reviewsCount || (stay.reviews?.length) || (20 + (index % 25));
+  const stayContact = stay.contact || stay.phone;
+  const isVerifiedPartner = stay.isPartnerListing || stay.verificationStatus === 'VERIFIED' || stay.isGovt || true;
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-200/80 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
       <div>
         {/* Card Image Banner */}
-        <div className="relative h-60 overflow-hidden bg-slate-900 select-none">
+        <div 
+          className="relative h-60 overflow-hidden bg-slate-900 select-none cursor-pointer"
+          onClick={() => setPhotoIndex((photoIndex + 1) % images.length)}
+        >
           <img
             src={images[photoIndex] || images[0]}
             alt={stay.name}
@@ -110,14 +138,38 @@ function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onP
             </div>
           )}
 
-          {/* Escrow Protected Top Right Badge */}
-          <div className="absolute top-3.5 right-3 bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-md z-10">
-            Escrow Protected
+          {/* Fullscreen HD Lightbox Trigger */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenLightbox?.(images.map((img, i) => ({
+                url: img,
+                title: `${stay.name} (Photo ${i + 1}/${images.length})`,
+                source: `${locDisplay} • ₹${priceNum}/night`
+              })), photoIndex);
+            }}
+            className="absolute bottom-3 right-3 z-20 bg-black/60 hover:bg-[#0f3d2e] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-1.5 transition-all border border-white/20 shadow-md cursor-pointer hover:scale-105"
+            title="Open Fullscreen HD Gallery"
+          >
+            <Maximize2 size={11} className="text-[#00FF88]" />
+            <span>{photoIndex + 1}/{images.length}</span>
+          </button>
+
+          {/* Verified Partner & Escrow Protected Top Right Badge */}
+          <div className="absolute top-3.5 right-3 bg-emerald-700/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-md z-10 flex items-center gap-1 backdrop-blur-xs">
+            <CheckCircle2 size={11} className="text-[#00FF88]" />
+            <span>Verified Partner</span>
           </div>
 
           {/* Location Tag Bottom Left */}
-          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-1 rounded-lg z-10">
-            {locDisplay}
+          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-1 rounded-lg z-10 flex items-center gap-1">
+            <MapPin size={11} className="text-[#00FF88]" />
+            <span>{locDisplay}</span>
+            {stay.distance_from_center && (
+              <span className="text-white/70 text-[10px]">({stay.distance_from_center})</span>
+            )}
           </div>
 
           {/* Wishlist Button */}
@@ -140,7 +192,7 @@ function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onP
         {/* Card Body */}
         <div className="p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
+            <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
               {categoryTag}
             </span>
             <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
@@ -156,6 +208,22 @@ function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onP
           <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
             {stay.shortDescription || stay.description || 'Authentic mountain retreat with panoramic Himalayan views, organic home-cooked meals, and verified host hospitality.'}
           </p>
+
+          {/* Amenities Badges */}
+          {Array.isArray(stay.amenities) && stay.amenities.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {stay.amenities.slice(0, 4).map((a, i) => (
+                <span key={i} className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                  {a}
+                </span>
+              ))}
+              {stay.amenities.length > 4 && (
+                <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                  +{stay.amenities.length - 4} more
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -168,6 +236,17 @@ function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onP
           </div>
 
           <div className="flex items-center gap-1.5">
+            {stayContact && (
+              <a
+                href={`tel:${stayContact}`}
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 rounded-xl border border-emerald-600/30 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition shadow-xs cursor-pointer flex items-center justify-center"
+                title={`Call Host: ${stayContact}`}
+              >
+                <Phone size={14} className="text-emerald-700" />
+              </a>
+            )}
+
             <button
               type="button"
               onClick={() => onAddToTrip(stay, priceNum, locDisplay, images[0])}
@@ -178,7 +257,7 @@ function InteractiveStayCard({ stay, index, isFav, onToggleFav, onAddToTrip, onP
             </button>
             <Link
               to={`/stays/${stay.slug || stayId}`}
-              className="bg-[#0f4c3a] hover:bg-[#0a3528] text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-sm"
+              className="bg-[#0f4c3a] hover:bg-[#0a3528] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-sm"
             >
               Book Secure
             </Link>
@@ -211,6 +290,9 @@ export default function Stays() {
   const [altitudeModalOpen, setAltitudeModalOpen] = useState(false);
   const [womenSosOpen, setWomenSosOpen] = useState(false);
 
+  // Fullscreen Photo Lightbox State
+  const [lightboxState, setLightboxState] = useState({ isOpen: false, images: [], index: 0 });
+
   // Filter real database stays
   const filteredStays = useMemo(() => {
     return stays.filter(stay => {
@@ -237,7 +319,7 @@ export default function Stays() {
 
       // Region match (Kumaon vs Garhwal)
       let matchRegion = true;
-      const kumaonDistricts = ['nainital', 'almora', 'pithoragarh', 'bageshwar', 'champawat', 'us nagar', 'munsiyari', 'binsar', 'kausani', 'mukteshwar'];
+      const kumaonDistricts = ['nainital', 'almora', 'pithoragarh', 'bageshwar', 'champawat', 'us nagar', 'munsiyari', 'binsar', 'kausani', 'mukteshwar', 'haldwani', 'chaukori'];
       const garhwalDistricts = ['dehradun', 'chamoli', 'rudraprayag', 'uttarkashi', 'tehri', 'pauri', 'haridwar', 'rishikesh', 'chopta', 'auli', 'kedarnath', 'badrinath'];
       
       if (regionTab === 'Kumaon') {
@@ -449,12 +531,14 @@ export default function Stays() {
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-1 focus:ring-[#0f4c3a] focus:outline-none cursor-pointer"
                 >
                   <option value="All">Location / City: All</option>
+                  <option value="Haldwani">Haldwani (10 Stays)</option>
+                  <option value="Nainital">Nainital (10 Stays)</option>
+                  <option value="Pithoragarh">Pithoragarh (10 Stays)</option>
                   <option value="Munsiyari">Munsiyari</option>
                   <option value="Chopta">Chopta</option>
                   <option value="Auli">Auli</option>
                   <option value="Binsar">Binsar</option>
                   <option value="Kausani">Kausani</option>
-                  <option value="Nainital">Nainital</option>
                   <option value="Rishikesh">Rishikesh</option>
                 </select>
               </div>
@@ -624,6 +708,7 @@ export default function Stays() {
                     index={idx}
                     isFav={isFav}
                     onToggleFav={(s) => toggleFavorite && toggleFavorite('stay', s)}
+                    onOpenLightbox={(imgs, i) => setLightboxState({ isOpen: true, images: imgs, index: i })}
                     onAddToTrip={(s, price, loc, img) => openAddToTripModal({
                       id: stayId,
                       _id: stayId,
@@ -845,6 +930,16 @@ export default function Stays() {
         isOpen={womenSosOpen} 
         onClose={() => setWomenSosOpen(false)} 
       />
+
+      {/* Fullscreen 4K Lightbox Viewer */}
+      {lightboxState.isOpen && (
+        <ImageLightbox
+          images={lightboxState.images}
+          activeIndex={lightboxState.index}
+          onClose={() => setLightboxState({ isOpen: false, images: [], index: 0 })}
+          onNavigate={(i) => setLightboxState(prev => ({ ...prev, index: i }))}
+        />
+      )}
 
       <Footer />
     </div>

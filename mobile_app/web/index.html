@@ -31,6 +31,11 @@
 
   <title>discovery_uttarakhand</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Preload Noto fonts for Devanagari & Hindi multilingual rendering in Flutter Web -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <!--
@@ -41,6 +46,7 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script src="voice_interop.js"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

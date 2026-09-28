@@ -3,6 +3,8 @@
  * Automatically fetches real HD photographs, GPS coordinates, and descriptions for any searched spot.
  */
 
+import { getEntityPlaceholderSvg } from '../utils/imageValidator.js';
+
 const photoCache = new Map();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -123,41 +125,22 @@ export class LivePlacePhotoService {
   }
 
   /**
-   * Thematic fallback generator based on natural landscape keywords
+   * Safe entity placeholder generator (Strict zero cross-destination / zero Unsplash substitution)
    */
   generateThematicPhoto(query, address = '') {
-    const text = `${query} ${address}`.toLowerCase();
-    
-    let photoUrl = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80'; // Grand Himalayan Peak
-    let category = 'Mountain';
-
-    if (/waterfall|falls|fall|cascade|stream/i.test(text)) {
-      photoUrl = 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80';
-      category = 'Waterfall';
-    } else if (/temple|mandir|dham|shrine|spiritual|ashram|ghat|kund/i.test(text)) {
-      photoUrl = 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80';
-      category = 'Spiritual Heritage';
-    } else if (/lake|tal|water|reservoir|dam/i.test(text)) {
-      photoUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Naini_lake_nainital_uttarakhand.jpg/1280px-Naini_lake_nainital_uttarakhand.jpg';
-      category = 'Himalayan Lake';
-    } else if (/snow|ski|bugyal|meadow|pass|glacier/i.test(text)) {
-      photoUrl = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80';
-      category = 'Snow & Alpine Bugyal';
-    } else if (/cave|gupha/i.test(text)) {
-      photoUrl = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80';
-      category = 'Cave & Natural Feature';
-    } else if (/dhaba|cafe|food|restaurant|tea/i.test(text)) {
-      photoUrl = 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1200&q=80';
-      category = 'Mountain Cafe & Dhaba';
-    }
+    const placeholderUrl = getEntityPlaceholderSvg({
+      name: query,
+      category: 'Place'
+    });
 
     return {
       title: query,
-      imageUrl: photoUrl,
-      thumbnailUrl: photoUrl,
-      source: 'Thematic Landscape Satellite Match',
+      imageUrl: null,
+      thumbnailUrl: null,
+      placeholderUrl,
+      source: 'Discovery Uttarakhand Entity Registry',
       summary: `${query} is located in the Himalayan region of Uttarakhand, India.`,
-      category
+      category: 'Place'
     };
   }
 }

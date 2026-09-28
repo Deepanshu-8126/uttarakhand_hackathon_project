@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
-class VerificationProofScreen extends StatelessWidget {
+class VerificationProofScreen extends StatefulWidget {
   final String title;
   final String identifier;
   final String category;
@@ -27,7 +28,42 @@ class VerificationProofScreen extends StatelessWidget {
   });
 
   @override
+  State<VerificationProofScreen> createState() => _VerificationProofScreenState();
+}
+
+class _VerificationProofScreenState extends State<VerificationProofScreen> {
+  Map<String, dynamic>? _liveProof;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProof();
+  }
+
+  Future<void> _fetchProof() async {
+    try {
+      final res = await ApiService.getVerificationProof(widget.identifier);
+      if (mounted) {
+        setState(() {
+          _liveProof = res;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final title = _liveProof?['title'] ?? _liveProof?['model'] ?? _liveProof?['businessName'] ?? widget.title;
+    final registrationNumber = _liveProof?['vehicleNumber'] ?? _liveProof?['registrationNumber'] ?? widget.registrationNumber;
+    final operatorName = _liveProof?['operator'] ?? _liveProof?['owner'] ?? _liveProof?['businessName'] ?? widget.operatorName;
+    final txHash = _liveProof?['txHash'] ?? _liveProof?['blockchainTx'] ?? _liveProof?['signature'] ?? widget.txHash;
+    final location = _liveProof?['location'] ?? _liveProof?['district'] ?? widget.location;
+    final isVerified = _liveProof?['verified'] ?? _liveProof?['isVerified'] ?? widget.isVerified;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
       appBar: AppBar(
@@ -42,10 +78,12 @@ class VerificationProofScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0F3D2E)),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          children: [
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0F3D2E)))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                children: [
             // ── Main Certificate Container ──────────────────────────
             Container(
               decoration: BoxDecoration(
@@ -54,7 +92,7 @@ class VerificationProofScreen extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFE2E8F0)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F3D2E).withOpacity(0.04),
+                    color: const Color(0xFF0F3D2E).withValues(alpha: 0.04),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -84,9 +122,9 @@ class VerificationProofScreen extends StatelessWidget {
                               child: const Icon(Icons.verified, color: Colors.white, size: 20),
                             ),
                             const SizedBox(width: 12),
-                            Column(
+                            const Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   '3-LAYER VERIFIED FLEET',
                                   style: TextStyle(
@@ -107,12 +145,12 @@ class VerificationProofScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
+                            color: Colors.white.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
                           ),
-                          child: const Text(
-                            'VALID',
-                            style: TextStyle(color: Color(0xFF86EFAC), fontSize: 9, fontWeight: FontWeight.w900),
+                          child: Text(
+                            isVerified ? 'VALID' : 'PENDING',
+                            style: const TextStyle(color: Color(0xFF86EFAC), fontSize: 9, fontWeight: FontWeight.w900),
                           ),
                         ),
                       ],
@@ -127,7 +165,7 @@ class VerificationProofScreen extends StatelessWidget {
                       children: [
                         // Title & Identifier
                         Text(
-                          title,
+                          title.toString(),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -140,7 +178,7 @@ class VerificationProofScreen extends StatelessWidget {
                           children: [
                             const Icon(Icons.location_on, size: 13, color: Color(0xFF059669)),
                             const SizedBox(width: 4),
-                            Text(location, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                            Text(location.toString(), style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
                           ],
                         ),
 
@@ -180,17 +218,17 @@ class VerificationProofScreen extends StatelessWidget {
                         const SizedBox(height: 18),
 
                         // Metadata Grid
-                        _buildMetaItem('VEHICLE REGISTRATION', registrationNumber),
+                        _buildMetaItem('VEHICLE REGISTRATION', registrationNumber.toString()),
                         const SizedBox(height: 10),
-                        _buildMetaItem('AUTHORIZED OPERATOR', operatorName),
+                        _buildMetaItem('AUTHORIZED OPERATOR', operatorName.toString()),
                         const SizedBox(height: 10),
-                        _buildMetaItem('BLOCKCHAIN TX HASH', txHash, isMono: true),
+                        _buildMetaItem('BLOCKCHAIN TX HASH', txHash.toString(), isMono: true),
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            Expanded(child: _buildMetaItem('ISSUED ON', issueDate)),
+                            Expanded(child: _buildMetaItem('ISSUED ON', widget.issueDate)),
                             const SizedBox(width: 10),
-                            Expanded(child: _buildMetaItem('EXPIRY DATE', validityDate)),
+                            Expanded(child: _buildMetaItem('EXPIRY DATE', widget.validityDate)),
                           ],
                         ),
 
@@ -210,7 +248,7 @@ class VerificationProofScreen extends StatelessWidget {
                                 const Icon(Icons.qr_code_scanner, size: 84, color: Color(0xFF0F3D2E)),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'SCAN TO AUDIT ON-CHAIN: $identifier',
+                                  'SCAN TO AUDIT ON-CHAIN: ${widget.identifier}',
                                   style: const TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,

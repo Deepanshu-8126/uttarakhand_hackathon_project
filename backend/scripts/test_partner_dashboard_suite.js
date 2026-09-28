@@ -363,8 +363,11 @@ async function runDashboardSuite() {
   // Test 12: Partner A bookings query only returns bookings for Partner A listings
   const bookingsARes = await fetch(`${BASE_URL}/api/partner/bookings`, { headers: headersA });
   const bookingsAData = await bookingsARes.json();
-  const allBelongToA = bookingsAData.data.every(b => String(b.partnerListing?._id || b.partnerListing) === String(pendingListing._id));
-  const doesNotContainB = !bookingsAData.data.some(b => String(b._id) === String(bookingB._id));
+  if (!bookingsAData.data) {
+    console.error('bookingsAData debug:', bookingsARes.status, bookingsAData);
+  }
+  const allBelongToA = Array.isArray(bookingsAData.data) && bookingsAData.data.every(b => String(b.partnerListing?._id || b.partnerListing) === String(pendingListing._id));
+  const doesNotContainB = Array.isArray(bookingsAData.data) && !bookingsAData.data.some(b => String(b._id) === String(bookingB._id));
   assert(
     allBelongToA && doesNotContainB,
     'Rule 12: Partner A bookings list is strictly isolated from Partner B bookings'

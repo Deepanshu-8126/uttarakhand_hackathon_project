@@ -5,6 +5,7 @@
  */
 
 import { RECOMMENDATION_CONFIG } from '../config/recommendationConfig.js';
+import { normalizeEntityImage } from '../utils/imageValidator.js';
 import Stay from '../models/Stay.js';
 import Guide from '../models/Guide.js';
 import Activity from '../models/Activity.js';
@@ -238,10 +239,14 @@ export class RecommendationEngine {
       score += 15;
       reasons.push(`Compatible with your ${pace} travel rhythm`);
 
-      // E. Availability Confidence (10%)
-      score += 10;
+      const normImg = normalizeEntityImage({ ...stay, entityType: 'stay' });
+      stay.image = normImg;
+      stay.coverImage = normImg.url;
 
       scored.push({
+        entityId: stay._id?.toString() || stay.id || stay.slug || stay.name,
+        entityType: 'stay',
+        image: normImg,
         item: stay,
         itemType: 'Stay',
         score: Math.min(100, score),
@@ -324,15 +329,21 @@ export class RecommendationEngine {
         }
 
         score += 15; // Pace match
-        score += 10; // Availability confidence
+        const stayItem = {
+          ...pStay,
+          name: pStay.title,
+          price: { amount: priceAmt, currency: pStay.pricing?.currency || 'INR' },
+          priceProvenance: pStay.pricing?.provenance || 'PARTNER_CLAIMED'
+        };
+        const normImg = normalizeEntityImage({ ...stayItem, entityType: 'stay' });
+        stayItem.image = normImg;
+        stayItem.coverImage = normImg.url;
 
         scored.push({
-          item: {
-            ...pStay,
-            name: pStay.title,
-            price: { amount: priceAmt, currency: pStay.pricing?.currency || 'INR' },
-            priceProvenance: pStay.pricing?.provenance || 'PARTNER_CLAIMED'
-          },
+          entityId: stayItem._id?.toString() || stayItem.id || stayItem.name,
+          entityType: 'stay',
+          image: normImg,
+          item: stayItem,
           itemType: 'Stay',
           score: Math.min(100, score),
           reasons,
@@ -417,7 +428,14 @@ export class RecommendationEngine {
         reasons.push(`Fluent in ${guide.languages.slice(0, 2).join(', ')}`);
       }
 
+      const normImg = normalizeEntityImage({ ...guide, entityType: 'guide' });
+      guide.image = normImg;
+      guide.coverImage = normImg.url;
+
       scored.push({
+        entityId: guide._id?.toString() || guide.id || guide.name,
+        entityType: 'guide',
+        image: normImg,
         item: guide,
         itemType: 'Guide',
         score: Math.min(100, score),
@@ -505,7 +523,14 @@ export class RecommendationEngine {
         reasons.push('Optimal for current seasonal weather conditions');
       }
 
+      const normImg = normalizeEntityImage({ ...act, entityType: 'activity' });
+      act.image = normImg;
+      act.coverImage = normImg.url;
+
       scored.push({
+        entityId: act._id?.toString() || act.id || act.slug || act.name,
+        entityType: 'activity',
+        image: normImg,
         item: act,
         itemType: 'Activity',
         score: Math.max(0, Math.min(100, score)),
@@ -550,7 +575,14 @@ export class RecommendationEngine {
         reasons.push('Central to pilgrimage and spiritual circuit');
       }
 
+      const normImg = normalizeEntityImage({ ...site, entityType: 'spiritual' });
+      site.image = normImg;
+      site.coverImage = normImg.url;
+
       scored.push({
+        entityId: site._id?.toString() || site.id || site.slug || site.name,
+        entityType: 'spiritual',
+        image: normImg,
         item: site,
         itemType: 'Spiritual',
         score: Math.min(100, score),
@@ -575,16 +607,24 @@ export class RecommendationEngine {
     const cultures = await Culture.find(query).lean();
     if (!cultures || cultures.length === 0) return [];
 
-    const scored = cultures.map(c => ({
-      item: c,
-      itemType: 'Culture',
-      score: 80,
-      reasons: [`Authentic Pahadi culture & folklore of ${c.district || 'Uttarakhand'}`],
-      distanceKm: 0,
-      estimatedTimeFit: 'Flexible community immersion',
-      budgetFit: 'Cultural experience',
-      confidence: 0.9
-    }));
+    const scored = cultures.map(c => {
+      const normImg = normalizeEntityImage({ ...c, entityType: 'culture' });
+      c.image = normImg;
+      c.coverImage = normImg.url;
+      return {
+        entityId: c._id?.toString() || c.id || c.slug || c.name,
+        entityType: 'culture',
+        image: normImg,
+        item: c,
+        itemType: 'Culture',
+        score: 80,
+        reasons: [`Authentic Pahadi culture & folklore of ${c.district || 'Uttarakhand'}`],
+        distanceKm: 0,
+        estimatedTimeFit: 'Flexible community immersion',
+        budgetFit: 'Cultural experience',
+        confidence: 0.9
+      };
+    });
 
     return scored.sort((a, b) => a.item.name.localeCompare(b.item.name)).slice(0, 4);
   }
@@ -600,7 +640,13 @@ export class RecommendationEngine {
     const scored = rentals.map(r => {
       const vehicles = r.vehicles || [];
       const hasSUV = vehicles.some(v => v.type === 'SUV');
+      const normImg = normalizeEntityImage({ ...r, entityType: 'rental' });
+      r.image = normImg;
+      r.coverImage = normImg.url;
       return {
+        entityId: r._id?.toString() || r.id || r.name,
+        entityType: 'rental',
+        image: normImg,
         item: r,
         itemType: 'Rental',
         score: hasSUV ? 85 : 75,
@@ -631,13 +677,20 @@ export class RecommendationEngine {
 
       for (const pr of partnerRentals) {
         const isBike = pr.category?.toLowerCase().includes('bike') || pr.title.toLowerCase().includes('bike') || pr.title.toLowerCase().includes('enfield');
+        const rItem = {
+          ...pr,
+          name: pr.title,
+          priceNotes: pr.pricing?.amount ? `₹${pr.pricing.amount}/${pr.pricing.unit || 'day'}` : null,
+          provenance: pr.pricing?.provenance || 'PARTNER_CLAIMED'
+        };
+        const normImg = normalizeEntityImage({ ...rItem, entityType: 'rental' });
+        rItem.image = normImg;
+        rItem.coverImage = normImg.url;
         scored.push({
-          item: {
-            ...pr,
-            name: pr.title,
-            priceNotes: pr.pricing?.amount ? `₹${pr.pricing.amount}/${pr.pricing.unit || 'day'}` : null,
-            provenance: pr.pricing?.provenance || 'PARTNER_CLAIMED'
-          },
+          entityId: rItem._id?.toString() || rItem.id || rItem.name,
+          entityType: 'rental',
+          image: normImg,
+          item: rItem,
           itemType: 'Rental',
           score: isBike ? 88 : 80,
           reasons: [

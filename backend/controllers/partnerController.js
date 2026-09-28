@@ -16,6 +16,8 @@ import User from '../models/User.js';
 import Booking from '../models/Booking.js';
 import PartnerExpense from '../models/PartnerExpense.js';
 import Review from '../models/Review.js';
+import Stay from '../models/Stay.js';
+import Rental from '../models/Rental.js';
 import Destination from '../models/Destination.js';
 import { resolveDestination } from '../services/destinationResolver.js';
 import cloudinary from '../config/cloudinary.js';
@@ -362,16 +364,18 @@ export const createListingDraft = async (req, res) => {
         blockedDates: []
       },
       pricing: normalizedPricing,
-      status: 'ACTIVE',
-      submittedAt: new Date(),
-      verifiedAt: new Date(),
+      status: req.body.submitForVerification ? 'PENDING_VERIFICATION' : 'DRAFT',
+      submittedAt: req.body.submitForVerification ? new Date() : null,
+      verifiedAt: null,
       verificationVersion: 1
     });
 
     res.status(201).json({
       success: true,
       data: listing,
-      message: 'Listing published and activated successfully.'
+      message: req.body.submitForVerification
+        ? 'Listing created and submitted for platform verification.'
+        : 'Listing draft saved successfully.'
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -1396,7 +1400,7 @@ export const uploadListingImages = async (req, res) => {
       uploadedImages.push({
         url: imageUrl,
         publicId,
-        source: 'Partner Upload',
+        source: 'PARTNER_UPLOADED',
         alt: file.originalname || listing.title
       });
     }

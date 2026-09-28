@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Star, ShieldCheck, CheckCircle2, Sparkles, Award, Coins, 
-  MapPin, ExternalLink, ArrowRight, Lock, Check
+  MapPin, ArrowRight
 } from 'lucide-react';
 
 const VERIFIED_SPOTLIGHT_REVIEWS = [
@@ -32,7 +32,7 @@ const VERIFIED_SPOTLIGHT_REVIEWS = [
   }
 ];
 
-export default function ReviewSection({ targetId = 'general', targetType = 'site' }) {
+export default function ReviewSection({ targetId: _targetId = 'general', targetType: _targetType = 'site' }) {
   const [reviews] = useState(VERIFIED_SPOTLIGHT_REVIEWS);
 
   return (

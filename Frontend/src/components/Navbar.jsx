@@ -90,11 +90,11 @@ export default function Navbar() {
     : '/my-trip';
 
   const navLinks = [
-    { label: t('nav_explore') || 'Explore', path: '/explore', icon: Compass, isExplore: true },
-    { label: t('nav_planner') || 'Trip Planner', path: '/trip-planner', icon: Route },
-    { label: t('nav_stays') || 'Stays', path: '/stays', icon: Bed },
-    { label: t('nav_rentals') || 'Rentals', path: '/rentals', icon: Car },
-    { label: t('nav_map') || 'Map', path: '/map', icon: Map },
+    { label: 'Explore', path: '/explore', icon: Compass, isExplore: true },
+    { label: 'Trip Planner', path: '/trip-planner', icon: Route },
+    { label: 'Stays & Hotels', path: '/stays', icon: Bed },
+    { label: 'Rentals', path: '/rentals', icon: Car },
+    { label: 'Map', path: '/map', icon: Map },
     { label: 'Web3 & Tech', path: '/innovations', icon: ShieldCheck, badge: 'Web3' },
   ];
 
@@ -147,7 +147,7 @@ export default function Navbar() {
                 <span className={`text-[9px] sm:text-[10px] font-extrabold tracking-widest uppercase block whitespace-nowrap mt-0.5 ${
                   isDark ? 'text-emerald-400' : 'text-emerald-700'
                 }`}>
-                  {lang === 'hi' ? 'उत्तराखंड' : 'Uttarakhand'}
+                  Uttarakhand
                 </span>
               </div>
             </Link>

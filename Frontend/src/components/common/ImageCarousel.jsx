@@ -106,14 +106,29 @@ const ImageCarousel = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Active Image */}
-      <img
-        src={currentSrc}
-        alt={`${alt} — image ${currentIndex + 1} of ${validImages.length}`}
-        loading="lazy"
-        onError={() => setImgErrorMap((prev) => ({ ...prev, [currentIndex]: true }))}
-        className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${imageClassName}`}
-      />
+      {/* Active Images with Smooth Blend / Transition */}
+      {validImages.map((src, idx) => {
+        const isActive = idx === currentIndex;
+        const actualSrc = imgErrorMap[idx] ? fallback : src;
+        return (
+          <div
+            key={actualSrc || idx}
+            className={`absolute inset-0 transition-all duration-700 ease-in-out pointer-events-none will-change-[opacity,transform] ${
+              isActive 
+                ? 'opacity-100 scale-100 z-10' 
+                : 'opacity-0 scale-105 z-0'
+            }`}
+          >
+            <img
+              src={actualSrc}
+              alt={`${alt} — image ${idx + 1} of ${validImages.length}`}
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              onError={() => setImgErrorMap((prev) => ({ ...prev, [idx]: true }))}
+              className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${imageClassName}`}
+            />
+          </div>
+        );
+      })}
 
       {/* Subtle overlay gradient at bottom for indicator legibility */}
       {isMultiple && (

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'services/auth_provider.dart';
+import 'services/api_service.dart';
 import 'screens/main_navigation_screen.dart';
 
 void main() {
@@ -58,6 +59,9 @@ void main() {
     // Pre-load auth session before runApp to avoid splash async gap
     final authProvider = AuthProvider();
     await authProvider.loadStoredSession();
+
+    // Pre-warm database & Redis disk/RAM cache in background for 0ms instant open
+    unawaited(ApiService.warmupCache());
 
     runApp(
       MultiProvider(

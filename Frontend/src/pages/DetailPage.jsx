@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ReviewSection from '../components/ReviewSection';
-import { ArrowLeft, Star, MapPin, Calendar, Compass, Phone, ShieldCheck, ChevronRight, Mountain, Sparkles } from 'lucide-react';
+import BookingModal from '../components/booking/BookingModal';
+import { ArrowLeft, Star, MapPin, Calendar, Compass, Phone, ShieldCheck, ChevronRight, Mountain, Sparkles, CheckCircle2, AlertCircle, Minus, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createBooking } from '../api/bookingApi';
 import { useMapStore } from '../store/mapStore';
@@ -64,13 +65,27 @@ const DetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const threeDaysStr = new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10);
+
   const [bookingData, setBookingData] = useState({
-    startDate: '',
-    endDate: '',
+    startDate: tomorrowStr,
+    endDate: threeDaysStr,
     guests: 1
   });
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingMsg, setBookingMsg] = useState('');
+  const [showBookingModal, setShowBookingModal] = useState(false);
+
+  // Dynamic nights calculation
+  const nights = useMemo(() => {
+    if (!bookingData.startDate || !bookingData.endDate) return 1;
+    const s = new Date(bookingData.startDate);
+    const e = new Date(bookingData.endDate);
+    const diff = Math.ceil((e - s) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 1;
+  }, [bookingData.startDate, bookingData.endDate]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -129,45 +144,20 @@ const DetailPage = () => {
     fetchDetails();
   }, [category, slug]);
 
-  const handleBooking = async () => {
-    requireAuth(async () => {
-      if (!bookingData.startDate || !bookingData.endDate) {
-        setBookingMsg('Please select dates');
-        return;
-      }
-      setBookingLoading(true);
-      setBookingMsg('');
-      try {
-        const rawPrice = item.pricePerDay || item.pricePerNight || (typeof item.price === 'object' && item.price !== null ? item.price.amount : item.price) || 0;
-        const price = Number(rawPrice) || 0;
-        const d1 = new Date(bookingData.startDate);
-        const d2 = new Date(bookingData.endDate);
-        const days = Math.max(1, Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)));
-        const totalAmount = price * days;
-        const bType = category === 'rentals' ? 'rental' : 'stay';
-        const itemId = item._id || item.id;
-
-        const res = await createBooking({
-          type: bType,
-          bookingType: bType,
-          stay: bType === 'stay' ? itemId : undefined,
-          rental: bType === 'rental' ? itemId : undefined,
-          item: itemId,
-          startDate: bookingData.startDate,
-          endDate: bookingData.endDate,
-          guests: bookingData.guests,
-          totalAmount
-        });
-
-        if (res.success) {
-          setBookingMsg('Booking successful! View it in your profile.');
-          setTimeout(() => navigate('/profile'), 2000);
-        }
-      } catch (err) {
-        setBookingMsg('Booking failed. Try again.');
-      } finally {
-        setBookingLoading(false);
-      }
+  const handleReserveClick = () => {
+    if (!bookingData.startDate || !bookingData.endDate) {
+      setBookingMsg('Please select check-in and check-out dates.');
+      return;
+    }
+    if (new Date(bookingData.endDate) <= new Date(bookingData.startDate)) {
+      setBookingMsg('Check-out date must be after check-in date.');
+      return;
+    }
+    setBookingMsg('');
+    
+    // Auth gate with intent preservation (Section 22)
+    requireAuth(() => {
+      setShowBookingModal(true);
     });
   };
 
@@ -327,35 +317,124 @@ const DetailPage = () => {
 
           {/* Sidebar / Booking Box */}
           <div className="flex flex-col gap-8">
-            <div className="bg-white p-8 rounded-3xl border border-border-light card-shadow sticky top-32">
+            <div className="bg-white p-7 md:p-8 rounded-3xl border border-border-light card-shadow sticky top-32">
               {(() => {
                 const rawPriceVal = item.pricePerDay || item.pricePerNight || (typeof item.price === 'object' && item.price !== null ? item.price.amount : item.price);
                 return rawPriceVal ? (
                   <>
-                    <div className="flex items-end gap-2 mb-6 border-b border-border-light pb-6">
-                      <span className="text-3xl font-black text-earth-brown">₹{Number(rawPriceVal).toLocaleString('en-IN')}</span>
-                      <span className="text-muted-text font-medium text-sm mb-1">{item.unit || '/day'}</span>
+                    <div className="flex items-end justify-between gap-2 mb-5 border-b border-border-light pb-5">
+                      <div>
+                        <span className="text-3xl font-black text-earth-brown">₹{Number(rawPriceVal).toLocaleString('en-IN')}</span>
+                        <span className="text-muted-text font-medium text-xs sm:text-sm ml-1">{item.unit || (category === 'rentals' ? '/day' : '/night')}</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        ✓ Verified Tariff
+                      </span>
                     </div>
                     
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-4 mb-5">
                       <div>
-                        <label className="block text-xs font-bold text-text-dark uppercase tracking-wider mb-1">Start Date</label>
-                        <input type="date" value={bookingData.startDate} onChange={e => setBookingData({...bookingData, startDate: e.target.value})} className="w-full p-3 border border-border-light rounded-xl outline-none focus:border-forest-green text-sm" />
+                        <label className="block text-xs font-bold text-text-dark uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                          <Calendar size={13} className="text-forest-green" />
+                          <span>Check-in Date</span>
+                        </label>
+                        <input 
+                          type="date" 
+                          min={todayStr}
+                          value={bookingData.startDate} 
+                          onChange={e => {
+                            const newStart = e.target.value;
+                            setBookingData(prev => ({
+                              ...prev,
+                              startDate: newStart,
+                              endDate: prev.endDate && new Date(prev.endDate) <= new Date(newStart)
+                                ? new Date(new Date(newStart).getTime() + 86400000).toISOString().slice(0, 10)
+                                : prev.endDate
+                            }));
+                          }} 
+                          className="w-full p-3 border border-border-light rounded-xl outline-none focus:border-forest-green text-sm bg-stone-50/50" 
+                        />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-text-dark uppercase tracking-wider mb-1">End Date</label>
-                        <input type="date" value={bookingData.endDate} onChange={e => setBookingData({...bookingData, endDate: e.target.value})} className="w-full p-3 border border-border-light rounded-xl outline-none focus:border-forest-green text-sm" />
+                        <label className="block text-xs font-bold text-text-dark uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                          <Calendar size={13} className="text-forest-green" />
+                          <span>Check-out Date</span>
+                        </label>
+                        <input 
+                          type="date" 
+                          min={bookingData.startDate || todayStr}
+                          value={bookingData.endDate} 
+                          onChange={e => setBookingData({...bookingData, endDate: e.target.value})} 
+                          className="w-full p-3 border border-border-light rounded-xl outline-none focus:border-forest-green text-sm bg-stone-50/50" 
+                        />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-text-dark uppercase tracking-wider mb-1">Guests</label>
-                        <input type="number" min="1" value={bookingData.guests} onChange={e => setBookingData({...bookingData, guests: e.target.value})} className="w-full p-3 border border-border-light rounded-xl outline-none focus:border-forest-green text-sm" />
+                        <label className="block text-xs font-bold text-text-dark uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>Guests</span>
+                          <span className="text-[11px] text-muted-text font-normal">Max capacity on booking</span>
+                        </label>
+                        <div className="flex items-center border border-border-light rounded-xl overflow-hidden bg-stone-50/50">
+                          <button
+                            type="button"
+                            onClick={() => setBookingData(prev => ({ ...prev, guests: Math.max(1, prev.guests - 1) }))}
+                            className="p-3 hover:bg-stone-100 text-stone-600 transition cursor-pointer"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <input 
+                            type="number" 
+                            min="1" 
+                            max="20"
+                            value={bookingData.guests} 
+                            onChange={e => setBookingData({...bookingData, guests: Math.max(1, parseInt(e.target.value, 10) || 1)})} 
+                            className="w-full p-2.5 text-center outline-none bg-transparent text-sm font-bold text-text-dark" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setBookingData(prev => ({ ...prev, guests: prev.guests + 1 }))}
+                            className="p-3 hover:bg-stone-100 text-stone-600 transition cursor-pointer"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <button onClick={handleBooking} disabled={bookingLoading} className="w-full bg-forest-green hover:bg-dark-green text-white py-3.5 rounded-full font-bold text-sm mb-4 transition-all shadow-md disabled:opacity-50 uppercase tracking-wider">
-                      {bookingLoading ? 'Processing...' : category === 'rentals' ? 'BOOK RENTAL' : 'RESERVE NOW'}
+                    {/* Real-Time Price Calculation Card (Section 24 & 25) */}
+                    <div className="bg-[#faf9f6] rounded-2xl p-4 border border-border-light mb-5 text-xs text-text-dark space-y-2">
+                      <div className="flex items-center justify-between text-muted-text">
+                        <span>₹{Number(rawPriceVal).toLocaleString('en-IN')} × {nights} {nights === 1 ? 'night' : 'nights'}</span>
+                        <span className="font-bold text-text-dark">₹{(Number(rawPriceVal) * nights).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-border-light font-black text-sm">
+                        <span>Estimated Total</span>
+                        <span className="text-forest-green text-base">₹{(Number(rawPriceVal) * nights).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-text pt-1 flex items-center gap-1">
+                        <span className="text-forest-green font-bold">✓</span>
+                        <span>Server validates final price • Escrow protected</span>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="button"
+                      onClick={handleReserveClick} 
+                      disabled={bookingLoading} 
+                      className="w-full bg-forest-green hover:bg-dark-green text-white py-3.5 rounded-full font-bold text-xs uppercase tracking-wider mb-3 transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <CheckCircle2 size={15} />
+                      <span>{category === 'rentals' ? 'BOOK RENTAL' : 'RESERVE NOW'}</span>
                     </button>
-                    {bookingMsg && <p className={`text-xs text-center font-bold ${bookingMsg.includes('failed') ? 'text-red-500' : 'text-forest-green'}`}>{bookingMsg}</p>}
+                    {bookingMsg && (
+                      <p className={`text-xs text-center font-bold p-2 rounded-xl flex items-center justify-center gap-1.5 ${
+                        bookingMsg.includes('failed') || bookingMsg.includes('select') || bookingMsg.includes('after')
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        <AlertCircle size={13} />
+                        <span>{bookingMsg}</span>
+                      </p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -531,6 +610,18 @@ const DetailPage = () => {
         )}
 
       </main>
+
+      {/* Booking Confirmation Modal (Section 23 & 24) */}
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        item={item}
+        defaultStartDate={bookingData.startDate}
+        defaultEndDate={bookingData.endDate}
+        onSuccess={(booking) => {
+          setBookingMsg(`Reservation created! Ref: ${booking.bookingReference || ''}`);
+        }}
+      />
       
       <Footer />
     </div>

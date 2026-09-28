@@ -1,5 +1,6 @@
 import { calculateDistanceKm, estimateDriveTime } from './routeHelpers.js';
 import { VERIFIED_TRANSPORTS } from '../data/verifiedTransports.js';
+import { getEntityPlaceholderSvg } from './imageHelpers.js';
 
 /**
  * Searches the verified transport registry for a corridor matching origin and destination keywords.
@@ -389,7 +390,7 @@ export function generatePersonalizedTripPlan({
 
   const destName = destination.name || 'Munsiyari';
   const destDistrict = destination.district || 'Pithoragarh';
-  const destImage = destination.image || destination.coverImage?.url || '/assets/badrinath.jpg';
+  const destImage = destination.image || destination.coverImage?.url || (Array.isArray(destination.images) && destination.images[0]?.url) || getEntityPlaceholderSvg(destination);
   const destCoords = Array.isArray(destination.coordinates) && destination.coordinates.length === 2
     ? destination.coordinates
     : [30.1225, 80.2415];

@@ -46,9 +46,10 @@ import VerificationAuditLog from '../models/VerificationAuditLog.js';
 import Stay from '../models/Stay.js';
 import Guide from '../models/Guide.js';
 
+dotenv.config();
 dotenv.config({ path: 'backend/.env' });
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/discovery_uttarakhand';
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/discovery_uttarakhand';
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
 
 let totalTests = 0;

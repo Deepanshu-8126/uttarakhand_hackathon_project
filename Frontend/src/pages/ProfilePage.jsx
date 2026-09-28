@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useMapStore } from '../store/mapStore';
-import { updateProfile, uploadImage } from '../api/userApi';
+import { updateProfile, uploadImage, getSavedItems, deleteExploreLater } from '../api/userApi';
 import { getMyBookings } from '../api/bookingApi';
 import { getMyReviews } from '../api/reviewApi';
 import { getTrips } from '../api/tripApi';
@@ -30,7 +30,10 @@ import {
   Layers,
   ChevronLeft,
   ChevronRight,
-  Building
+  Building,
+  Phone,
+  Lock,
+  Mail
 } from 'lucide-react';
 import PartnerListingsManager from '../components/partner/PartnerListingsManager';
 import MyBookings from '../components/booking/MyBookings';
@@ -86,10 +89,23 @@ const ProfilePage = () => {
   const { currentUser, logout, updateUser } = useAuth();
   const { favorites, favoriteCount, loading: favLoading, removeFavorite, refreshFavorites } = useFavorites();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Navigation tab state
-  const [activeTab, setActiveTab] = useState('favorites');
+  // Navigation tab state synced with URL search parameter
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'personal');
   const [favCategory, setFavCategory] = useState('all');
+
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   // Trip planner integration state
   const [addedTripIds, setAddedTripIds] = useState(new Set());
@@ -98,49 +114,42 @@ const ProfilePage = () => {
   const [bookings, setBookings] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [trips, setTrips] = useState([]);
+  const [exploreLater, setExploreLater] = useState([]);
 
   // Loading states
   const [dataLoading, setDataLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  // Edit Profile Modal
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: ''
-  });
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileSaveMsg, setProfileSaveMsg] = useState({ text: '', type: '' });
+  const handlePlanNow = (item) => {
+    navigate('/trip-planner', {
+      state: {
+        destination: item.destinationName,
+        activity: item.activityType,
+        exploreLaterId: item._id,
+        savedGuides: item.savedGuideIds
+      }
+    });
+  };
 
-  // Init form on user change
-  useEffect(() => {
-    if (currentUser) {
-      setProfileForm({
-        name: currentUser.name || '',
-        email: currentUser.email || '',
-        phone: currentUser.phone || '',
-        location: typeof currentUser.location === 'string' ? currentUser.location : (currentUser.location?.address || currentUser.location?.name || '')
-      });
-      setPreviewUrl(
-        currentUser.profileImage?.url ||
-        (typeof currentUser.profileImage === 'string' ? currentUser.profileImage : null)
-      );
+  const handleRemoveExploreLaterItem = async (id) => {
+    try {
+      await deleteExploreLater(id);
+      setExploreLater(prev => prev.filter(i => i._id !== id));
+    } catch (err) {
+      console.error('Error removing explore later item', err);
     }
-  }, [currentUser, showEditModal]);
+  };
 
-  // Load secondary data (bookings, reviews, saved trips)
+  // Load secondary data (bookings, reviews, saved trips, saved items)
   const loadUserData = async () => {
     setDataLoading(true);
     setFetchError(null);
     try {
-      const [bookRes, revRes, tripRes] = await Promise.allSettled([
+      const [bookRes, revRes, tripRes, savedRes] = await Promise.allSettled([
         getMyBookings(),
         getMyReviews(),
-        getTrips()
+        getTrips(),
+        getSavedItems()
       ]);
 
       if (bookRes.status === 'fulfilled' && bookRes.value?.success) {
@@ -151,6 +160,9 @@ const ProfilePage = () => {
       }
       if (tripRes.status === 'fulfilled' && tripRes.value?.success) {
         setTrips(tripRes.value.data || []);
+      }
+      if (savedRes.status === 'fulfilled' && savedRes.value?.success) {
+        setExploreLater(savedRes.value.data?.exploreLater || []);
       }
     } catch (err) {
       console.error('Error fetching user dashboard data', err);
@@ -211,14 +223,30 @@ const ProfilePage = () => {
   // Profile update submission
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setIsSavingProfile(true);
     setProfileSaveMsg({ text: '', type: '' });
+
+    const trimmedName = (profileForm.name || '').trim();
+    if (trimmedName.length < 2) {
+      setProfileSaveMsg({ text: 'Full name must be at least 2 characters long.', type: 'error' });
+      return;
+    }
+
+    const trimmedPhone = (profileForm.phone || '').trim();
+    if (trimmedPhone.length > 0) {
+      const digits = trimmedPhone.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 15) {
+        setProfileSaveMsg({ text: 'Please enter a valid 10 to 15 digit mobile number.', type: 'error' });
+        return;
+      }
+    }
+
+    setIsSavingProfile(true);
 
     try {
       let uploadedImageUrl = null;
 
       if (selectedFile) {
-        setProfileSaveMsg({ text: 'Uploading profile photo to Cloudinary...', type: 'info' });
+        setProfileSaveMsg({ text: 'Uploading profile photo...', type: 'info' });
         try {
           const uploadRes = await uploadImage(selectedFile);
           if (uploadRes?.success && uploadRes?.image?.url) {
@@ -229,25 +257,21 @@ const ProfilePage = () => {
             uploadedImageUrl = uploadRes.url;
           }
         } catch (uploadErr) {
-          console.warn('Cloudinary upload endpoint fallback:', uploadErr);
-        }
-
-        if (!uploadedImageUrl) {
-          // Client-side encoding fallback
-          const reader = new FileReader();
-          uploadedImageUrl = await new Promise((resolve) => {
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(selectedFile);
+          console.warn('Upload endpoint error:', uploadErr);
+          setProfileSaveMsg({ 
+            text: 'Unable to upload photo to server. Please try a different photo or keep existing.', 
+            type: 'error' 
           });
+          setIsSavingProfile(false);
+          return;
         }
       }
 
-      setProfileSaveMsg({ text: 'Saving your profile details...', type: 'info' });
+      setProfileSaveMsg({ text: 'Saving your profile...', type: 'info' });
 
       const payload = {
-        name: (profileForm.name || '').trim(),
-        phone: (profileForm.phone || '').trim(),
+        name: trimmedName,
+        phone: trimmedPhone,
         location: (profileForm.location || '').trim()
       };
 
@@ -256,16 +280,23 @@ const ProfilePage = () => {
       }
 
       const res = await updateProfile(payload);
-      if (res?.success) {
+      if (res?.success && res.data) {
         setProfileSaveMsg({ text: 'Profile updated successfully!', type: 'success' });
-        if (res.data && updateUser) {
+        if (updateUser) {
           updateUser(res.data);
         }
+        setProfileForm({
+          name: res.data.name || '',
+          email: res.data.email || '',
+          phone: res.data.phone || '',
+          location: res.data.location || ''
+        });
         setTimeout(() => {
           setShowEditModal(false);
           setProfileSaveMsg({ text: '', type: '' });
           setSelectedFile(null);
-        }, 1000);
+          setPreviewUrl(null);
+        }, 1200);
       } else {
         setProfileSaveMsg({ text: res?.message || 'Failed to update profile.', type: 'error' });
       }
@@ -470,6 +501,25 @@ const ProfilePage = () => {
             {/* Horizontal Tabs Header */}
             <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
               <button
+                onClick={() => setActiveTab('explore-later')}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 shadow-sm ${
+                  activeTab === 'explore-later'
+                    ? 'bg-forest-green text-white shadow-md'
+                    : 'bg-white text-text-dark hover:bg-beige/60 border border-border-light/70'
+                }`}
+              >
+                <Compass size={16} />
+                <span>Explore Later</span>
+                <span
+                  className={`ml-1 text-[11px] px-2 py-0.5 rounded-full font-black ${
+                    activeTab === 'explore-later' ? 'bg-white/20 text-white' : 'bg-beige text-text-dark'
+                  }`}
+                >
+                  {exploreLater.length}
+                </span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('favorites')}
                 className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 shadow-sm ${
                   activeTab === 'favorites'
@@ -574,6 +624,80 @@ const ProfilePage = () => {
                 >
                   Retry
                 </button>
+              </div>
+            )}
+
+            {/* ── TAB 0: EXPLORE LATER ────────────────────────────────────────── */}
+            {activeTab === 'explore-later' && (
+              <div className="bg-white rounded-3xl p-6 md:p-8 card-shadow border border-border-light/60">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-border-light/60">
+                  <div>
+                    <h2 className="text-xl font-black text-text-dark flex items-center gap-2">
+                      <Compass className="text-forest-green" size={22} />
+                      <span>Explore Later (Future Intent)</span>
+                    </h2>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      Your future trip intents saved by Devbhoomi AI. Click "Plan Now" to start planning anytime.
+                    </p>
+                  </div>
+                  <span className="self-start sm:self-auto text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-forest-green border border-emerald-200">
+                    {exploreLater.length} {exploreLater.length === 1 ? 'Intent' : 'Intents'} Saved
+                  </span>
+                </div>
+
+                {exploreLater.length === 0 ? (
+                  <div className="text-center py-12 px-4 rounded-2xl bg-beige/30 border border-border-light/50">
+                    <Compass size={40} className="mx-auto text-text-muted/60 mb-3" />
+                    <h3 className="font-bold text-text-dark text-base">No Future Intent Saved Yet</h3>
+                    <p className="text-xs text-text-muted max-w-sm mx-auto mt-1">
+                      Tell Devbhoomi AI in chat or voice: "Mujhe Panchachuli trek baad mein karna hai, save kar do" and it will appear here!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {exploreLater.map((item) => (
+                      <div key={item._id} className="bg-white border border-emerald-200/80 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col justify-between hover:border-emerald-400 transition-all">
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                              🏔️ Explore Later
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">{item.date || 'Date not decided'}</span>
+                          </div>
+                          <h3 className="text-lg font-extrabold text-slate-900">{item.destinationName} {item.activityType || 'Trek'}</h3>
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">{item.notes || item.rawIntentText || 'Saved for future trip'}</p>
+
+                          {item.savedGuideIds && item.savedGuideIds.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-slate-100">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">SAVED VERIFIED GUIDES</span>
+                              {item.savedGuideIds.map((g) => (
+                                <div key={g._id || g} className="flex items-center justify-between text-xs font-semibold text-slate-800 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 mb-1">
+                                  <span>👤 {g.name || 'Panchachuli Certified Guide'}</span>
+                                  <span className="text-emerald-700 font-bold">⭐ {g.rating || 4.8}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2">
+                          <button
+                            onClick={() => handlePlanNow(item)}
+                            className="flex-1 py-2.5 rounded-xl bg-[#0b533e] hover:bg-[#073c2c] text-white font-bold text-xs transition-colors shadow-xs cursor-pointer text-center"
+                          >
+                            Plan Now
+                          </button>
+                          <button
+                            onClick={() => handleRemoveExploreLaterItem(item._id)}
+                            className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-semibold text-xs transition-colors cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

@@ -49,21 +49,30 @@ export async function sendVoiceAudio(audioBlob, lang = 'hi') {
     lang
   });
 
-  // 1. Try Production Render Voice Endpoints first, then local bridge
-  const candidateUrls = [
-    'https://uttarakhand-hackathon-project.onrender.com/api/voice/audio_query',
-    `${VOICE_URL_PRIMARY}/api/voice/audio_query`,
-    `${BACKEND_API_FALLBACK}/voice/audio_query`,
-    'http://localhost:8765/api/voice/audio_query'
-  ];
+  // 1. Prioritize fast local endpoints on localhost
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const candidateUrls = isLocal
+    ? [
+        `${BACKEND_API_FALLBACK}/voice/audio_query`,
+        'http://localhost:5000/api/voice/audio_query',
+        'http://localhost:8765/api/voice/audio_query',
+        `${VOICE_URL_PRIMARY}/api/voice/audio_query`,
+        'https://uttarakhand-hackathon-project.onrender.com/api/voice/audio_query'
+      ]
+    : [
+        'https://uttarakhand-hackathon-project.onrender.com/api/voice/audio_query',
+        `${BACKEND_API_FALLBACK}/voice/audio_query`,
+        `${VOICE_URL_PRIMARY}/api/voice/audio_query`
+      ];
 
   for (const endpoint of candidateUrls) {
     try {
+      const timeoutMs = endpoint.includes('localhost') ? 5000 : 12000;
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload,
-        signal: AbortSignal.timeout(30000)
+        signal: AbortSignal.timeout(timeoutMs)
       });
 
       if (res.ok) {

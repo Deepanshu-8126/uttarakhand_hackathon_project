@@ -7,8 +7,25 @@ import 'sos_safety_screen.dart';
 import 'checkout_screen.dart';
 import 'destination_detail_screen.dart';
 
+import 'my_trip_screen.dart';
+
 class TripPlannerScreen extends StatefulWidget {
-  const TripPlannerScreen({super.key});
+  final String? initialDestination;
+  final int? initialDays;
+  final int? initialTravelers;
+  final double? initialBudget;
+  final String? initialOrigin;
+  final String? initialTransport;
+
+  const TripPlannerScreen({
+    super.key,
+    this.initialDestination,
+    this.initialDays,
+    this.initialTravelers,
+    this.initialBudget,
+    this.initialOrigin,
+    this.initialTransport,
+  });
 
   @override
   State<TripPlannerScreen> createState() => _TripPlannerScreenState();
@@ -59,6 +76,19 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialDestination != null && widget.initialDestination!.trim().isNotEmpty) {
+      _selectedDestinationName = widget.initialDestination!.trim();
+    }
+    if (widget.initialDays != null && widget.initialDays! > 0) {
+      _durationDays = widget.initialDays!;
+    }
+    if (widget.initialTravelers != null && widget.initialTravelers! > 0) {
+      _travelers = widget.initialTravelers!;
+    }
+    if (widget.initialBudget != null && widget.initialBudget! > 0) {
+      _budget = widget.initialBudget!;
+      _budgetController.text = widget.initialBudget!.round().toString();
+    }
     _loadRealDatabaseData();
   }
 
@@ -94,6 +124,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             _selectedDestinationName = match.name;
           }
         });
+
+        // If prefilled from AI Copilot or Destination Details, generate plan immediately!
+        if (widget.initialDestination != null) {
+          _generateSmartItinerary();
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -299,7 +334,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F3D2E).withOpacity(0.08),
+                color: const Color(0xFF0F3D2E).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.auto_awesome, color: Color(0xFF0F3D2E), size: 20),
@@ -325,9 +360,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             icon: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFDC2626).withOpacity(0.12),
+                color: const Color(0xFFDC2626).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFDC2626).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.3)),
               ),
               child: const Row(
                 children: [
@@ -407,7 +442,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.18), blurRadius: 18, offset: const Offset(0, 6)),
+          BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.18), blurRadius: 18, offset: const Offset(0, 6)),
         ],
       ),
       child: ClipRRect(
@@ -427,8 +462,8 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    const Color(0xFF09261C).withOpacity(0.94),
-                    const Color(0xFF09261C).withOpacity(0.45),
+                    const Color(0xFF09261C).withValues(alpha: 0.94),
+                    const Color(0xFF09261C).withValues(alpha: 0.45),
                   ],
                 ),
               ),
@@ -486,9 +521,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -584,9 +619,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F3D2E).withOpacity(0.04),
+                  color: const Color(0xFF0F3D2E).withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF0F3D2E).withOpacity(0.1)),
+                  border: Border.all(color: const Color(0xFF0F3D2E).withValues(alpha: 0.1)),
                 ),
                 child: Row(
                   children: [
@@ -654,9 +689,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF059669).withOpacity(0.3), width: 1.5),
+        border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF059669).withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: const Color(0xFF059669).withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -678,7 +713,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00FF88).withOpacity(0.15),
+                  color: const Color(0xFF00FF88).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -780,7 +815,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               activeTrackColor: const Color(0xFF0F3D2E),
               inactiveTrackColor: const Color(0xFFE2E8F0),
               thumbColor: const Color(0xFF059669),
-              overlayColor: const Color(0xFF059669).withOpacity(0.15),
+              overlayColor: const Color(0xFF059669).withValues(alpha: 0.15),
               trackHeight: 6,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
             ),
@@ -843,7 +878,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Column(
         children: [
@@ -925,7 +960,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -964,7 +999,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
               child: Icon(icon, size: 14, color: color),
             ),
             const SizedBox(width: 10),
@@ -988,9 +1023,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF059669).withOpacity(0.4), width: 1.5),
+        border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.4), width: 1.5),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF0F3D2E).withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 8)),
+          BoxShadow(color: const Color(0xFF0F3D2E).withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -1309,9 +1344,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F3D2E).withOpacity(0.06),
+              color: const Color(0xFF0F3D2E).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF0F3D2E).withOpacity(0.12)),
+              border: Border.all(color: const Color(0xFF0F3D2E).withValues(alpha: 0.12)),
             ),
             child: const Row(
               children: [
@@ -1324,6 +1359,70 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          // Action 1: View Full Expedition Workspace
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MyTripScreen(tripPlan: _generatedPlan),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.map_outlined, color: Colors.white, size: 18),
+              label: const Text('Open Full Expedition Workspace', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F3D2E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 3,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Action 2: Save Trip to My Account (Backend API)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final tripData = {
+                  'title': '$_selectedDestinationName $_durationDays-Day Mountain Expedition',
+                  'destination': _selectedDestinationName,
+                  'duration': '$_durationDays Days',
+                  'numDays': _durationDays,
+                  'travelers': '$_travelers',
+                  'budget': '₹${_budget.round()}',
+                  'transport': 'Mountain Ride',
+                  'status': 'Planning',
+                  'generatedItinerary': _generatedPlan,
+                };
+                final saved = await ApiService.saveTrip(tripData);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(saved != null ? '✅ Trip saved to your account!' : '✅ Trip saved locally to workspace!'),
+                      backgroundColor: const Color(0xFF0F3D2E),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.bookmark_add_outlined, color: Color(0xFF0F3D2E), size: 18),
+              label: const Text('Save Expedition to Account', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F3D2E))),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF0F3D2E), width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
           ),
         ],
@@ -1345,7 +1444,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
         Expanded(
           child: Text(
             desc,
-            style: TextStyle(fontSize: 11.5, color: const Color(0xFF334155), height: 1.3),
+            style: const TextStyle(fontSize: 11.5, color: Color(0xFF334155), height: 1.3),
           ),
         ),
       ],

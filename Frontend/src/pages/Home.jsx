@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import ProblemStatement from '../components/home/ProblemStatement';
 import ExploreSection from '../components/ExploreSection';
+import HiddenLocationsSection from '../components/destinations/HiddenLocationsSection';
 import ThankYouSection from '../components/ThankYouSection';
 import ReviewSection from '../components/ReviewSection';
 import Footer from '../components/Footer';
@@ -12,7 +13,8 @@ const Home = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === '/explore' || location.hash === '#explore' || window.location.hash === '#explore') {
+    // 1. If explicit /explore route or #explore anchor, scroll to explore section
+    if (location.pathname === '/explore' || location.hash === '#explore') {
       const scrollTimer = setTimeout(() => {
         const el = document.getElementById('explore');
         if (el) {
@@ -20,6 +22,14 @@ const Home = () => {
         }
       }, 150);
       return () => clearTimeout(scrollTimer);
+    }
+
+    // 2. If navigating to main Home / dashboard route without an anchor, ensure page starts at top
+    if (location.pathname === '/' && !location.hash) {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
   }, [location.pathname, location.hash]);
 
@@ -29,6 +39,7 @@ const Home = () => {
       <main className="flex-grow flex flex-col pb-28 md:pb-36">
         <HeroSection />
         <ExploreSection />
+        <HiddenLocationsSection />
         <ProblemStatement />
         <ThankYouSection />
         <ReviewSection targetId="general" targetType="site" />

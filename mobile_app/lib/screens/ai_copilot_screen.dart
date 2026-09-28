@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
 import '../services/voice_player_service.dart';
+import '../services/voice_service.dart';
 import 'destination_detail_screen.dart';
 import 'trip_planner_screen.dart';
 import 'map_screen.dart';
@@ -54,6 +58,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
   late AnimationController _voicePulseController;
   List<Destination> _allDestinations = [];
 
+  String _currentSessionId = 'sess_${DateTime.now().millisecondsSinceEpoch}';
+  List<ChatSession> _savedSessions = [];
+
   final List<String> _quickSuggestions = [
     'Kedarkantha snow trek (₹5,000 budget)',
     'Haldwani 1-day hidden spots (Sattal)',
@@ -72,8 +79,12 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     );
 
     _loadDestinations();
+    _loadSavedSessions();
+    _resetToWelcomeMessage();
+  }
 
-    // Welcome message from Pahadi Copilot
+  void _resetToWelcomeMessage() {
+    _messages.clear();
     _messages.add(
       ChatMessage(
         text: 'Namaste! Main Discovery Uttarakhand ka Pahadi Copilot hoon.\n\nKisi bhi destination, snow trek, backpacker budget, road condition, dharamshala/stays ya verified bike rentals ke baare me puchiye, main real ground roadmap share karunga.',
@@ -82,6 +93,251 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
         suggestions: _quickSuggestions,
         toolsUsed: ['searchDestinations', 'getWeather', 'calculateBudget'],
         confidence: 'grounded',
+      ),
+    );
+  }
+
+  Future<void> _loadSavedSessions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('devbhoomi_copilot_sessions_v1');
+      if (raw != null && raw.isNotEmpty) {
+        final List list = json.decode(raw);
+        if (mounted) {
+          setState(() {
+            _savedSessions = list.map((e) => ChatSession.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _persistSessions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = json.encode(_savedSessions.map((s) => s.toJson()).toList());
+      await prefs.setString('devbhoomi_copilot_sessions_v1', raw);
+    } catch (_) {}
+  }
+
+  void _autoSaveCurrentSession() {
+    if (_messages.length <= 1) return;
+    final firstUserMsg = _messages.firstWhere(
+      (m) => m.isUser && m.text.trim().isNotEmpty,
+      orElse: () => _messages.first,
+    );
+    final title = firstUserMsg.text.length > 36 ? '${firstUserMsg.text.substring(0, 36)}...' : firstUserMsg.text;
+
+    final existingIdx = _savedSessions.indexWhere((s) => s.id == _currentSessionId);
+    final currentSession = ChatSession(
+      id: _currentSessionId,
+      title: title.isEmpty ? 'Himalayan Conversation' : title,
+      timestamp: DateTime.now(),
+      messages: List.from(_messages),
+    );
+
+    if (existingIdx >= 0) {
+      _savedSessions[existingIdx] = currentSession;
+    } else {
+      _savedSessions.insert(0, currentSession);
+    }
+    _persistSessions();
+    if (mounted) setState(() {});
+  }
+
+  void _startNewChat() {
+    _autoSaveCurrentSession();
+    setState(() {
+      _currentSessionId = 'sess_${DateTime.now().millisecondsSinceEpoch}';
+      _resetToWelcomeMessage();
+    });
+    _scrollToBottom();
+  }
+
+  void _switchToSession(ChatSession session) {
+    _autoSaveCurrentSession();
+    setState(() {
+      _currentSessionId = session.id;
+      _messages.clear();
+      _messages.addAll(session.messages);
+    });
+    _scrollToBottom();
+  }
+
+  void _deleteSession(String sessionId) {
+    setState(() {
+      _savedSessions.removeWhere((s) => s.id == sessionId);
+      if (_currentSessionId == sessionId) {
+        _currentSessionId = 'sess_${DateTime.now().millisecondsSinceEpoch}';
+        _resetToWelcomeMessage();
+      }
+    });
+    _persistSessions();
+  }
+
+  void _clearAllHistory() {
+    setState(() {
+      _savedSessions.clear();
+      _currentSessionId = 'sess_${DateTime.now().millisecondsSinceEpoch}';
+      _resetToWelcomeMessage();
+    });
+    _persistSessions();
+  }
+
+  void _showHistoryBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(ctx).size.height * 0.72,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(color: Color(0xFFE8F5E9), shape: BoxShape.circle),
+                        child: const Icon(Icons.history, color: AppTheme.forestGreen, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Chat History & Sessions', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.textDark)),
+                          Text('${_savedSessions.length} saved sessions', style: const TextStyle(fontSize: 11, color: AppTheme.mutedText)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (_savedSessions.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: ctx,
+                          builder: (dCtx) => AlertDialog(
+                            title: const Text('Clear All History?'),
+                            content: const Text('This will delete all past conversations and cannot be undone.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(dCtx);
+                                  Navigator.pop(ctx);
+                                  _clearAllHistory();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Chat history cleared.'), backgroundColor: AppTheme.forestGreen),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626), foregroundColor: Colors.white),
+                                child: const Text('Clear All'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete_sweep, color: Color(0xFFDC2626), size: 16),
+                      label: const Text('Clear All', style: TextStyle(color: Color(0xFFDC2626), fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _startNewChat();
+                  },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Start New Conversation', style: TextStyle(fontWeight: FontWeight.w900)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.forestGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: _savedSessions.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
+                            const SizedBox(height: 10),
+                            const Text('No past conversations yet', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.mutedText)),
+                            const SizedBox(height: 4),
+                            const Text('Ask any question to create your first session.', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _savedSessions.length,
+                        itemBuilder: (context, idx) {
+                          final session = _savedSessions[idx];
+                          final isCurrent = session.id == _currentSessionId;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: isCurrent ? AppTheme.forestGreen.withValues(alpha: 0.08) : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isCurrent ? AppTheme.forestGreen : const Color(0xFFE2E8F0),
+                                width: isCurrent ? 1.5 : 1,
+                              ),
+                            ),
+                            child: ListTile(
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                _switchToSession(session);
+                              },
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isCurrent ? AppTheme.forestGreen : const Color(0xFFF1F5F9),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.forum_outlined, color: isCurrent ? Colors.white : AppTheme.forestGreen, size: 18),
+                              ),
+                              title: Text(
+                                session.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isCurrent ? AppTheme.forestGreen : AppTheme.textDark),
+                              ),
+                              subtitle: Text(
+                                '${DateFormat('MMM d, h:mm a').format(session.timestamp)} • ${session.messages.length} msgs',
+                                style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFF94A3B8)),
+                                onPressed: () {
+                                  _deleteSession(session.id);
+                                  setModalState(() {});
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -167,6 +423,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
             ),
           );
         });
+        _autoSaveCurrentSession();
         _scrollToBottom();
 
         // Check for uiActions (Favorites Vault & Action Confirmation)
@@ -206,6 +463,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
             ),
           );
         });
+        _autoSaveCurrentSession();
         _scrollToBottom();
       }
     }
@@ -223,17 +481,51 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               decoration: const BoxDecoration(color: AppTheme.forestGreen, shape: BoxShape.circle),
               child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
             ),
-            const SizedBox(width: 10),
-            Column(
+            const SizedBox(width: 8),
+            const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('Pahadi Copilot', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.textDark)),
-                Text('Himalayan Ground Intelligence • Verified', style: TextStyle(fontSize: 10, color: AppTheme.emeraldSafe, fontWeight: FontWeight.bold)),
+              children: [
+                Text('Pahadi Copilot', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.textDark)),
+                Text('Himalayan Ground Intelligence', style: TextStyle(fontSize: 9, color: AppTheme.emeraldSafe, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
         ),
         actions: [
+          // New Chat Action
+          InkWell(
+            onTap: _startNewChat,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppTheme.forestGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.forestGreen.withValues(alpha: 0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.add, size: 14, color: AppTheme.forestGreen),
+                  SizedBox(width: 3),
+                  Text('New', style: TextStyle(color: AppTheme.forestGreen, fontWeight: FontWeight.w900, fontSize: 11)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+
+          // History Button
+          IconButton(
+            icon: Badge(
+              isLabelVisible: _savedSessions.isNotEmpty,
+              label: Text('${_savedSessions.length}', style: const TextStyle(fontSize: 9)),
+              backgroundColor: AppTheme.forestGreen,
+              child: const Icon(Icons.history_rounded, color: AppTheme.textDark, size: 22),
+            ),
+            tooltip: 'Chat History',
+            onPressed: _showHistoryBottomSheet,
+          ),
+
           IconButton(
             icon: const Icon(Icons.sos, color: Color(0xFFDC2626)),
             tooltip: 'Emergency SOS',
@@ -258,10 +550,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
 
           // ── Typing Indicator ───────────────────────────────────────
           if (_isTyping)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
-                children: const [
+                children: [
                   SizedBox(
                     width: 14,
                     height: 14,
@@ -296,7 +588,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -3))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -3))],
             ),
             child: SafeArea(
               child: Row(
@@ -348,26 +640,77 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
   }
 
   void _openVoiceDialog() {
-    String voiceState = 'idle'; // idle | listening | processing | speaking
+    final voiceService = VoiceService();
+    String voiceState = 'idle'; // idle | requestingMic | connecting | listening | processing | speaking | error
     String liveTranscript = '';
     String lastReply = '';
     String lastAudioBase64 = '';
+    String errorMessage = '';
     String selectedLang = 'हिन्दी';
     final TextEditingController voiceInputController = TextEditingController();
 
     StateSetter? modalSetState;
 
-    void modalVoiceListener() {
+    void onStateChanged(VoiceState vs) {
       if (mounted && modalSetState != null) {
         modalSetState!(() {
-          if (!VoicePlayerService.isPlaying && voiceState == 'speaking') {
-            voiceState = 'idle';
+          switch (vs) {
+            case VoiceState.idle:
+              voiceState = 'idle';
+              break;
+            case VoiceState.requestingMic:
+              voiceState = 'requestingMic';
+              break;
+            case VoiceState.connecting:
+              voiceState = 'connecting';
+              break;
+            case VoiceState.listening:
+              voiceState = 'listening';
+              break;
+            case VoiceState.processing:
+              voiceState = 'processing';
+              break;
+            case VoiceState.speaking:
+              voiceState = 'speaking';
+              break;
+            case VoiceState.error:
+              voiceState = 'error';
+              break;
           }
         });
       }
     }
 
-    VoicePlayerService.addListener(modalVoiceListener);
+    void onUserTranscript(String text) {
+      if (mounted && modalSetState != null) {
+        modalSetState!(() {
+          liveTranscript = text;
+        });
+      }
+    }
+
+    void onAgentTranscript(String delta, String full) {
+      if (mounted && modalSetState != null) {
+        modalSetState!(() {
+          lastReply = full;
+        });
+      }
+    }
+
+    void onError(String err) {
+      if (mounted && modalSetState != null) {
+        modalSetState!(() {
+          voiceState = 'error';
+          errorMessage = err;
+        });
+      }
+    }
+
+    voiceService.addStateListener(onStateChanged);
+    voiceService.addUserTranscriptListener(onUserTranscript);
+    voiceService.addAgentTranscriptListener(onAgentTranscript);
+    voiceService.addErrorListener(onError);
+
     _voicePulseController.repeat(reverse: true);
 
     showModalBottomSheet(
@@ -389,59 +732,32 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                   voiceState = 'processing';
                   liveTranscript = q;
                   lastReply = '';
-                  lastAudioBase64 = '';
+                  errorMessage = '';
                 });
               }
 
-              try {
-                final langCode = selectedLang == 'English' ? 'en' : 'hi';
-                final result = await ApiService.sendVoiceMessage(q, lang: langCode);
-                final reply = (result['text'] as String?)?.trim() ?? 'Main aapki baat sun raha hoon.';
-                final audioBase64 = (result['audio_base64'] as String?) ?? '';
+              if (voiceService.state == VoiceState.idle || voiceService.state == VoiceState.error) {
+                await voiceService.startSession();
+              }
+              voiceService.sendTextQuery(q);
 
-                if (ctx.mounted) {
-                  setModalState(() {
-                    voiceState = audioBase64.isNotEmpty ? 'speaking' : 'idle';
-                    lastReply = reply;
-                    lastAudioBase64 = audioBase64;
-                  });
-                }
-
-                // Play authentic Gemini Live Aoede Studio audio
-                if (audioBase64.isNotEmpty) {
-                  await VoicePlayerService.playBase64Audio(audioBase64);
-                }
-
-                // After receiving reply, add to main chat history
-                if (mounted) {
-                  setState(() {
-                    _messages.add(ChatMessage(text: q, isUser: true, timestamp: DateTime.now()));
-                    _messages.add(ChatMessage(
-                      text: reply,
-                      isUser: false,
-                      timestamp: DateTime.now(),
-                      toolsUsed: (result['toolsUsed'] as List?)?.map((e) => e.toString()).toList(),
-                      confidence: result['confidence']?.toString() ?? 'grounded',
-                    ));
-                  });
-                  _scrollToBottom();
-                }
-              } catch (e) {
-                if (ctx.mounted) {
-                  setModalState(() {
-                    voiceState = 'idle';
-                    lastReply = 'Network issue. Kripya dobara poochiye.';
-                  });
-                }
+              if (mounted) {
+                setState(() {
+                  _messages.add(ChatMessage(text: q, isUser: true, timestamp: DateTime.now()));
+                });
+                _scrollToBottom();
               }
             }
 
             final statusLabel = {
-              'idle': 'Tap any question below or ask anything',
-              'listening': 'Listening to your speech...',
-              'processing': 'Gemini Live is thinking & generating Aoede voice...',
+              'idle': 'Tap microphone to talk with Devbhoomi AI',
+              'requestingMic': 'Allow microphone access to talk with AI...',
+              'connecting': 'Connecting to Gemini Live WebSocket...',
+              'listening': 'Listening... Speak in Hindi or English',
+              'processing': 'Gemini Live is thinking...',
               'speaking': 'Gemini Aoede speaking (24kHz Studio Audio)',
-            }[voiceState]!;
+              'error': errorMessage.isNotEmpty ? errorMessage : 'Microphone blocked or server unavailable. Tap to retry.',
+            }[voiceState] ?? 'Devbhoomi Voice Companion';
 
             return Container(
               height: MediaQuery.of(context).size.height * 0.90,
@@ -523,7 +839,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                             IconButton(
                               icon: const Icon(Icons.close, color: Colors.white70, size: 22),
                               onPressed: () {
-                                VoicePlayerService.stopAudio();
+                                voiceService.stopSession();
                                 Navigator.pop(ctx);
                               },
                             ),
@@ -549,15 +865,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                                 children: [
                                   GestureDetector(
                                     onTap: () {
-                                      if (isSpeaking) {
-                                        VoicePlayerService.stopAudio();
-                                        setModalState(() => voiceState = 'idle');
+                                      if (voiceState == 'speaking' || voiceState == 'listening' || voiceState == 'processing') {
+                                        voiceService.stopSession();
                                       } else {
                                         final userQuery = voiceInputController.text.trim();
                                         if (userQuery.isNotEmpty) {
                                           submit(userQuery);
                                         } else {
-                                          submit('Nainital 2 din ka plan aur budget bataiye');
+                                          voiceService.startSession();
                                         }
                                       }
                                     },
@@ -652,6 +967,33 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
 
                           const SizedBox(height: 16),
 
+                          // Permission / Error Banner
+                          if (voiceState == 'error')
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFFCA5A5)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.mic_off, color: Color(0xFFDC2626), size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      errorMessage.isNotEmpty
+                                          ? errorMessage
+                                          : 'Microphone access is blocked. Please allow microphone permission for this site.',
+                                      style: const TextStyle(color: Color(0xFF991B1B), fontSize: 11.5, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                           // Live Question Transcript Card
                           if (liveTranscript.isNotEmpty)
                             Container(
@@ -669,8 +1011,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: const [
+                                  const Row(
+                                    children: [
                                       Icon(Icons.record_voice_over, color: Color(0xFF0F3D2E), size: 14),
                                       SizedBox(width: 6),
                                       Text(
@@ -873,8 +1215,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                                 icon: const Icon(Icons.stop, color: Color(0xFFDC2626), size: 18),
                                 tooltip: 'Stop Aoede Voice',
                                 onPressed: () {
-                                  VoicePlayerService.stopAudio();
-                                  setModalState(() => voiceState = 'idle');
+                                  voiceService.stopSession();
                                 },
                               ),
                             ),
@@ -892,7 +1233,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     ).whenComplete(() {
       _voicePulseController.stop();
       _voicePulseController.reset();
-      VoicePlayerService.removeListener(modalVoiceListener);
+      voiceService.removeStateListener(onStateChanged);
+      voiceService.removeUserTranscriptListener(onUserTranscript);
+      voiceService.removeAgentTranscriptListener(onAgentTranscript);
+      voiceService.removeErrorListener(onError);
+      voiceService.stopSession();
       voiceInputController.dispose();
     });
   }
@@ -993,7 +1338,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               border: Border.all(color: const Color(0xFFA7F3D0)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F3D2E).withOpacity(0.06),
+                  color: const Color(0xFF0F3D2E).withValues(alpha: 0.06),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -1039,7 +1384,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
+                        color: Colors.black.withValues(alpha: 0.02),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -1136,7 +1481,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -1152,9 +1497,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               color: Color(0xFFE8F5E9),
               borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
             ),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Row(
                   children: [
                     Icon(Icons.landscape, size: 12, color: Color(0xFF0F3D2E)),
@@ -1208,7 +1553,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F3D2E).withOpacity(0.88),
+                    color: const Color(0xFF0F3D2E).withValues(alpha: 0.88),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: Colors.white24),
                   ),
@@ -1231,10 +1576,10 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4),
                     ],
                   ),
                   child: Row(
@@ -1323,8 +1668,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: const Color(0xFFA7F3D0)),
                         ),
-                        child: Row(
-                          children: const [
+                        child: const Row(
+                          children: [
                             Icon(Icons.map_outlined, size: 12, color: Color(0xFF0F3D2E)),
                             SizedBox(width: 4),
                             Text('Map', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F3D2E))),
@@ -1343,8 +1688,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: const Color(0xFFCBD5E1)),
                         ),
-                        child: Row(
-                          children: const [
+                        child: const Row(
+                          children: [
                             Icon(Icons.calendar_month_outlined, size: 12, color: Color(0xFF475569)),
                             SizedBox(width: 4),
                             Text('Plan', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
@@ -1397,9 +1742,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: Column(
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('TOTAL DISTANCE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                       SizedBox(height: 2),
                       Text('585 km', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
@@ -1417,9 +1762,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: Column(
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('EST. BUDGET', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                       SizedBox(height: 2),
                       Text('₹24,800', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F3D2E))),
@@ -1437,9 +1782,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: Column(
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('ELEVATION', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                       SizedBox(height: 2),
                       Text('2,748m peak', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
@@ -1497,7 +1842,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
+                                color: Colors.black.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text('Verified Fleet', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 8, fontWeight: FontWeight.bold)),
@@ -1517,11 +1862,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
+                      const Padding(
+                        padding: EdgeInsets.all(8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text('Mahindra Thar 4x4', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0F172A))),
                             SizedBox(height: 2),
                             Text('Includes mountain chauffeur Rawat Ji & chains.', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
@@ -1561,7 +1906,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
+                                color: Colors.black.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text('Curated Homestay', style: TextStyle(color: Color(0xFFFDE047), fontSize: 8, fontWeight: FontWeight.bold)),
@@ -1581,11 +1926,11 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
+                      const Padding(
+                        padding: EdgeInsets.all(8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text('Panchachuli Stone Lodge', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0F172A))),
                             SizedBox(height: 2),
                             Text('Handcrafted mud-slate cottage with wood fire.', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
@@ -1631,8 +1976,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
-                  child: Row(
-                    children: const [
+                  child: const Row(
+                    children: [
                       Icon(Icons.map_outlined, size: 12, color: Color(0xFF0F3D2E)),
                       SizedBox(width: 4),
                       Text('Route Map', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F3D2E))),
@@ -1879,7 +2224,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                   bottomRight: Radius.circular(msg.isUser ? 4 : 20),
                 ),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),
                 ],
                 border: msg.isUser ? null : Border.all(color: const Color(0xFFE2E8F0)),
               ),
@@ -2000,6 +2345,19 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                   for (final dest in mentionedDestinations)
                     _buildDestinationSpotlight(dest),
 
+                  // Agentic Canonical Trip Planner Prefill Card
+                  if (!msg.isUser && (_messages.indexOf(msg) == _messages.length - 1 || msg.text.contains('Trek') || msg.text.contains('Plan') || msg.text.contains('Expedition') || msg.text.contains('Blueprint') || msg.text.contains('Guidelines'))) ...[
+                    Builder(
+                      builder: (ctx) {
+                        final plan = _extractTripPlanFromConversation();
+                        if (plan != null) {
+                          return _buildAgenticTripPlannerCard(plan);
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
+
                   // LangGraph-style Agentic Tool Execution Card
                   if (!msg.isUser && msg.toolsUsed != null && msg.toolsUsed!.isNotEmpty)
                     Container(
@@ -2008,7 +2366,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2016,8 +2374,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: const [
+                              const Row(
+                                children: [
                                   Icon(Icons.terminal, size: 12, color: Color(0xFF34D399)),
                                   SizedBox(width: 6),
                                   Text(
@@ -2029,7 +2387,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.15),
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -2047,7 +2405,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                               return Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
+                                  color: Colors.black.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(color: Colors.white12),
                                 ),
@@ -2086,6 +2444,238 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── 6. Agentic Extraction & Prefill Helper ──────────────────────────────────
+  Map<String, dynamic>? _extractTripPlanFromConversation() {
+    final allUserText = _messages.where((m) => m.isUser).map((m) => m.text).join(' ');
+    final allAssistantText = _messages.where((m) => !m.isUser).map((m) => m.text).join(' ');
+    final combined = '$allUserText $allAssistantText'.toLowerCase();
+
+    final isTripContext = combined.contains('plan') ||
+        combined.contains('jana hai') ||
+        combined.contains('itinerary') ||
+        combined.contains('trip') ||
+        combined.contains('trek') ||
+        combined.contains('din') ||
+        combined.contains('day') ||
+        combined.contains('budget') ||
+        combined.contains('kedarnath') ||
+        combined.contains('badrinath') ||
+        combined.contains('rishikesh') ||
+        combined.contains('auli') ||
+        combined.contains('munsiyari') ||
+        combined.contains('nainital');
+
+    if (!isTripContext) return null;
+
+    String dest = 'Kedarnath';
+    for (final entry in _kDestinationAliasMap.entries) {
+      if (entry.value.any((alias) => combined.contains(alias))) {
+        dest = entry.key
+            .split('-')
+            .map((s) => s.isNotEmpty ? '${s[0].toUpperCase()}${s.substring(1)}' : '')
+            .join(' ');
+        break;
+      }
+    }
+
+    int days = 4;
+    final dayMatch = RegExp(r'(\d+)\s*(?:din|day|days)').firstMatch(combined);
+    if (dayMatch != null) {
+      days = int.tryParse(dayMatch.group(1)!) ?? 4;
+    }
+
+    int travelers = 2;
+    final travelerMatch = RegExp(r'(\d+)\s*(?:log|people|person|persons|traveler|travelers|members)').firstMatch(combined);
+    if (travelerMatch != null) {
+      travelers = int.tryParse(travelerMatch.group(1)!) ?? 2;
+    } else if (combined.contains('solo') || combined.contains('akela')) {
+      travelers = 1;
+    } else if (combined.contains('couple') || combined.contains('dono')) {
+      travelers = 2;
+    }
+
+    double budget = 12000;
+    final budgetMatch = RegExp(r'(?:₹|rs\.?|inr|budget)?\s*(\d{4,6})').firstMatch(combined);
+    if (budgetMatch != null) {
+      budget = double.tryParse(budgetMatch.group(1)!) ?? 12000;
+    }
+
+    String origin = 'Delhi';
+    const originCities = [
+      'Delhi',
+      'Dehradun',
+      'Haridwar',
+      'Rishikesh',
+      'Haldwani',
+      'Kathgodam',
+      'Chandigarh',
+      'Mumbai',
+      'Jaipur',
+      'Lucknow',
+    ];
+    for (final city in originCities) {
+      if (combined.contains(city.toLowerCase())) {
+        origin = city;
+        break;
+      }
+    }
+
+    return {
+      'destination': dest,
+      'days': days,
+      'travelers': travelers,
+      'budget': budget,
+      'origin': origin,
+    };
+  }
+
+  Widget _buildAgenticTripPlannerCard(Map<String, dynamic> plan) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F3D2E), Color(0xFF14532D)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F3D2E).withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF059669),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'CANONICAL EXPEDITION DETECTED',
+                    style: TextStyle(
+                      color: Color(0xFF34D399),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Ready to Prefill',
+                  style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${plan['days']}-Day ${plan['destination']} Expedition Plan',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Extracted directly from your conversation with Pahadi Copilot. Origin: ${plan['origin']} • ${plan['travelers']} Travelers • ₹${plan['budget'].toInt()} Budget.',
+            style: const TextStyle(color: Color(0xFFD1FAE5), fontSize: 11, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildParamChip(Icons.location_on, plan['destination']),
+              _buildParamChip(Icons.calendar_today, '${plan['days']} Days'),
+              _buildParamChip(Icons.people, '${plan['travelers']} Travelers'),
+              _buildParamChip(Icons.account_balance_wallet, '₹${plan['budget'].toInt()}'),
+              _buildParamChip(Icons.trip_origin, 'From ${plan['origin']}'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TripPlannerScreen(
+                      initialDestination: plan['destination'],
+                      initialDays: plan['days'],
+                      initialTravelers: plan['travelers'],
+                      initialBudget: plan['budget'],
+                      initialOrigin: plan['origin'],
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.rocket_launch, size: 16),
+              label: const Text(
+                '🚀 Open Pre-filled Plan in Trip Planner',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00FF88),
+                foregroundColor: const Color(0xFF0F3D2E),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParamChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: const Color(0xFF34D399)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }

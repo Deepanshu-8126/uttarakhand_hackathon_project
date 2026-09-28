@@ -1,0 +1,294 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'voice_bridge_selector.dart';
+import 'voice_bridge_interface.dart';
+
+enum VoiceState {
+  idle,
+  connecting,
+  requestingMic,
+  listening,
+  processing,
+  speaking,
+  error,
+}
+
+class VoiceService {
+  static final VoiceService _instance = VoiceService._internal();
+  factory VoiceService() => _instance;
+  VoiceService._internal() {
+    _bridge = getPlatformVoiceBridge();
+  }
+
+  late final VoicePlatformBridge _bridge;
+
+  WebSocketChannel? _channel;
+  StreamSubscription? _channelSub;
+  Timer? _pingTimer;
+
+  VoiceState _state = VoiceState.idle;
+  VoiceState get state => _state;
+
+  String _userTranscript = '';
+  String get userTranscript => _userTranscript;
+
+  String _agentTranscript = '';
+  String get agentTranscript => _agentTranscript;
+
+  double _volume = 0.0;
+  double get volume => _volume;
+
+  // Listeners
+  final List<void Function(VoiceState)> _stateListeners = [];
+  final List<void Function(String)> _userTranscriptListeners = [];
+  final List<void Function(String delta, String full)> _agentTranscriptListeners = [];
+  final List<void Function(double)> _volumeListeners = [];
+  final List<void Function(String)> _errorListeners = [];
+
+  void addStateListener(void Function(VoiceState) l) => _stateListeners.add(l);
+  void removeStateListener(void Function(VoiceState) l) => _stateListeners.remove(l);
+
+  void addUserTranscriptListener(void Function(String) l) => _userTranscriptListeners.add(l);
+  void removeUserTranscriptListener(void Function(String) l) => _userTranscriptListeners.remove(l);
+
+  void addAgentTranscriptListener(void Function(String, String) l) => _agentTranscriptListeners.add(l);
+  void removeAgentTranscriptListener(void Function(String, String) l) => _agentTranscriptListeners.remove(l);
+
+  void addVolumeListener(void Function(double) l) => _volumeListeners.add(l);
+  void removeVolumeListener(void Function(double) l) => _volumeListeners.remove(l);
+
+  void addErrorListener(void Function(String) l) => _errorListeners.add(l);
+  void removeErrorListener(void Function(String) l) => _errorListeners.remove(l);
+
+  void _setState(VoiceState newState) {
+    if (_state != newState) {
+      _state = newState;
+      for (final l in _stateListeners) {
+        l(_state);
+      }
+    }
+  }
+
+  void _notifyUserTranscript(String text) {
+    _userTranscript = text;
+    for (final l in _userTranscriptListeners) {
+      l(_userTranscript);
+    }
+  }
+
+  void _notifyAgentTranscript(String delta) {
+    _agentTranscript += delta;
+    for (final l in _agentTranscriptListeners) {
+      l(delta, _agentTranscript);
+    }
+  }
+
+  void _notifyVolume(double vol) {
+    _volume = vol;
+    for (final l in _volumeListeners) {
+      l(_volume);
+    }
+  }
+
+  void _notifyError(String err) {
+    _setState(VoiceState.error);
+    for (final l in _errorListeners) {
+      l(err);
+    }
+  }
+
+  /// Start an end-to-end voice session
+  Future<void> startSession({String? wsUrl}) async {
+    await stopSession();
+
+    _userTranscript = '';
+    _agentTranscript = '';
+    _setState(VoiceState.requestingMic);
+
+    // 1. Initialize AudioContext on user gesture immediately
+    _bridge.initPlayback();
+    _bridge.setPlaybackFinishedCallback(() {
+      if (_state == VoiceState.speaking) {
+        _setState(VoiceState.listening);
+      }
+    });
+
+    // 2. Connect to WebSocket
+    _setState(VoiceState.connecting);
+    final endpoint = wsUrl ?? _bridge.resolveDefaultWsUrl();
+
+    try {
+      final uri = Uri.parse(endpoint);
+      _channel = WebSocketChannel.connect(uri);
+
+      _channelSub = _channel!.stream.listen(
+        (dynamic rawMessage) {
+          _handleServerMessage(rawMessage);
+        },
+        onError: (dynamic err) {
+          debugPrint('[VoiceService] WebSocket error: $err');
+          _notifyError('Could not connect to Gemini Live voice server.');
+        },
+        onDone: () {
+          debugPrint('[VoiceService] WebSocket closed');
+          if (_state != VoiceState.idle && _state != VoiceState.error) {
+            _setState(VoiceState.idle);
+          }
+        },
+      );
+
+      // Start ping heartbeat
+      _pingTimer?.cancel();
+      _pingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+        if (_channel != null) {
+          _channel!.sink.add(jsonEncode({'type': 'ping'}));
+        }
+      });
+    } catch (e) {
+      _notifyError('Failed to establish connection: $e');
+      return;
+    }
+
+    // 3. Start microphone capture
+    _startMicrophone();
+  }
+
+  void _startMicrophone() {
+    try {
+      _bridge.startRecording(
+        onReady: () {
+          _setState(VoiceState.listening);
+        },
+        onChunk: (chunkB64) {
+          if (_channel != null &&
+              (_state == VoiceState.listening ||
+                  _state == VoiceState.processing ||
+                  _state == VoiceState.speaking)) {
+            _channel!.sink.add(jsonEncode({
+              'type': 'audio',
+              'data': chunkB64,
+              'chunk': chunkB64,
+              'rate': 16000,
+            }));
+          }
+        },
+        onVolume: (vol) {
+          _notifyVolume(vol);
+        },
+        onError: (errMsg) {
+          _notifyError(errMsg);
+        },
+      );
+    } catch (e) {
+      _notifyError('Microphone capture error: $e');
+    }
+  }
+
+  void _handleServerMessage(dynamic rawMessage) {
+    try {
+      final Map<String, dynamic> msg = jsonDecode(rawMessage.toString());
+      final type = msg['type'] as String?;
+
+      switch (type) {
+        case 'connected':
+        case 'ready':
+          if (_state == VoiceState.connecting) {
+            _setState(VoiceState.listening);
+          }
+          break;
+
+        case 'userText':
+          final text = (msg['text'] as String?) ?? '';
+          if (text.isNotEmpty) {
+            _notifyUserTranscript(text);
+            if (_state != VoiceState.speaking) {
+              _setState(VoiceState.processing);
+            }
+          }
+          break;
+
+        case 'text':
+          final delta = (msg['delta'] as String?) ?? (msg['text'] as String?) ?? '';
+          if (delta.isNotEmpty) {
+            _notifyAgentTranscript(delta);
+            _setState(VoiceState.speaking);
+          }
+          break;
+
+        case 'audio':
+        case 'pcm_chunk':
+        case 'audio_chunk':
+          final chunk = (msg['data'] as String?) ?? (msg['chunk'] as String?) ?? '';
+          if (chunk.isNotEmpty) {
+            _setState(VoiceState.speaking);
+            _bridge.playPcm24Chunk(chunk);
+          }
+          break;
+
+        case 'interrupted':
+          // Barge-in: user interrupted the AI
+          _bridge.clearAudioPlayback();
+          _agentTranscript = '';
+          _setState(VoiceState.listening);
+          break;
+
+        case 'turnComplete':
+          // Model finished generating, playback will finish naturally
+          break;
+
+        case 'error':
+          final err = (msg['message'] as String?) ?? 'Voice error';
+          _notifyError(err);
+          break;
+      }
+    } catch (e) {
+      debugPrint('[VoiceService] Message parse error: $e');
+    }
+  }
+
+  /// Send typed query into the voice WebSocket pipeline
+  void sendTextQuery(String query) {
+    if (query.trim().isEmpty) return;
+    _userTranscript = query.trim();
+    _agentTranscript = '';
+    _notifyUserTranscript(_userTranscript);
+    _setState(VoiceState.processing);
+
+    if (_channel != null) {
+      _channel!.sink.add(jsonEncode({
+        'type': 'query',
+        'query': query.trim(),
+      }));
+    }
+  }
+
+  /// Stop the session, microphone, audio playback and close socket
+  Future<void> stopSession() async {
+    _pingTimer?.cancel();
+    _pingTimer = null;
+
+    try {
+      _bridge.stopRecording();
+      _bridge.clearAudioPlayback();
+    } catch (e) {
+      debugPrint('[VoiceService] Stop error: $e');
+    }
+
+    if (_channel != null) {
+      try {
+        _channel!.sink.add(jsonEncode({'type': 'stop'}));
+        await _channel!.sink.close();
+      } catch (_) {}
+      _channel = null;
+    }
+
+    await _channelSub?.cancel();
+    _channelSub = null;
+
+    _volume = 0.0;
+    _notifyVolume(0.0);
+    _setState(VoiceState.idle);
+  }
+}

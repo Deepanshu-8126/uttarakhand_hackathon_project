@@ -40,6 +40,7 @@ import internalAgentRoutes from './routes/internalAgentRoutes.js';
 import voiceRoutes from './routes/voiceRoutes.js';
 import sosRoutes from './routes/sosRoutes.js';
 import photoRoutes from './routes/photoRoutes.js';
+import hiddenLocationRoutes from './routes/hiddenLocationRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Validate production environment variables
@@ -172,6 +173,8 @@ app.use('/guides', guideRoutes);
 app.use('/activities', activityRoutes);
 app.use('/spiritual', spiritualRoutes);
 app.use('/culture', cultureRoutes);
+app.use('/api/hidden-locations', hiddenLocationRoutes);
+app.use('/hidden-locations', hiddenLocationRoutes);
 app.use('/health', (req, res) => res.redirect(307, '/api/health'));
 
 // Root & API Info Handlers

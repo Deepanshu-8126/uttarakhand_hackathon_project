@@ -35,6 +35,7 @@ class AppTheme {
         surface: cream,
         brightness: Brightness.light,
       ),
+      fontFamilyFallback: const ['Noto Sans Devanagari', 'sans-serif'],
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: textDark),
         displayMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textDark),
@@ -52,7 +53,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: warmWhite,
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.06),
+        shadowColor: Colors.black.withValues(alpha: 0.06),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

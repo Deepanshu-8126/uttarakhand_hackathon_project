@@ -1,5 +1,7 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
+import 'package:geolocator/geolocator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/destination.dart';
 import '../services/api_service.dart';
@@ -15,7 +17,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMixin {
-  final TransformationController _transformController = TransformationController();
+  final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
 
   String selectedFilter = 'All';
@@ -48,17 +50,6 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   bool isLoading = true;
 
   final List<String> categories = ['All', 'Spiritual', 'High Altitude', 'Lakes & Treks', 'Nature'];
-
-  // Uttarakhand Topo Canvas Coordinates Boundary
-  // Canvas Logical Dimensions
-  static const double canvasWidth = 1100.0;
-  static const double canvasHeight = 900.0;
-
-  // Approximate Uttarakhand Bounding Box
-  static const double minLng = 77.4;
-  static const double maxLng = 81.2;
-  static const double minLat = 28.7;
-  static const double maxLat = 31.5;
 
   final List<Map<String, dynamic>> corridors = [
     {
@@ -118,32 +109,44 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
 
   @override
   void dispose() {
-    _transformController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   void _centerUttarakhand() {
-    final size = MediaQuery.of(context).size;
-    const double initialScale = 0.85;
-    final double dx = (size.width - (canvasWidth * initialScale)) / 2;
-    final double dy = (size.height - (canvasHeight * initialScale)) / 2 - 40;
-
-    _transformController.value = Matrix4.identity()
-      ..translate(dx, dy)
-      ..scale(initialScale);
+    _mapController.move(const LatLng(30.0668, 79.0193), 8.2);
   }
 
   void _zoomIn() {
-    final matrix = _transformController.value.clone();
-    matrix.scale(1.25, 1.25);
-    _transformController.value = matrix;
+    final current = _mapController.camera.zoom;
+    _mapController.move(_mapController.camera.center, current + 1.0);
   }
 
   void _zoomOut() {
-    final matrix = _transformController.value.clone();
-    matrix.scale(0.8, 0.8);
-    _transformController.value = matrix;
+    final current = _mapController.camera.zoom;
+    _mapController.move(_mapController.camera.center, current - 1.0);
+  }
+
+  Future<void> _locateUser() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        final pos = await Geolocator.getCurrentPosition();
+        _mapController.move(LatLng(pos.latitude, pos.longitude), 13.0);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Centered on GPS location (${pos.latitude.toStringAsFixed(3)}, ${pos.longitude.toStringAsFixed(3)})'),
+              backgroundColor: const Color(0xFF0F3D2E),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadSpatialData() async {
@@ -209,26 +212,6 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       }
       return true;
     }).toList();
-  }
-
-  // Map destination coordinates to canvas space
-  Offset _getCanvasPosition(Destination dest) {
-    double lat = dest.latitude ?? _fallbackLatForDistrict(dest.district, dest.name);
-    double lng = dest.longitude ?? _fallbackLngForDistrict(dest.district, dest.name);
-
-    lat = lat.clamp(minLat, maxLat);
-    lng = lng.clamp(minLng, maxLng);
-
-    final double xRatio = (lng - minLng) / (maxLng - minLng);
-    final double yRatio = (maxLat - lat) / (maxLat - minLat);
-
-    // Padding inset within canvas
-    const double padX = 70.0;
-    const double padY = 70.0;
-    final double usableW = canvasWidth - (padX * 2);
-    final double usableH = canvasHeight - (padY * 2);
-
-    return Offset(padX + (xRatio * usableW), padY + (yRatio * usableH));
   }
 
   double _fallbackLatForDistrict(String district, String name) {
@@ -300,15 +283,76 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   // Focus on a specific destination
   void _focusOnDestination(Destination dest) {
     setState(() => selectedLocationId = dest.id);
-    final pos = _getCanvasPosition(dest);
-    final size = MediaQuery.of(context).size;
-    const double scale = 1.35;
-    final double dx = (size.width / 2) - (pos.dx * scale);
-    final double dy = (size.height / 2) - (pos.dy * scale) - 60;
+    final lat = dest.latitude ?? _fallbackLatForDistrict(dest.district, dest.name);
+    final lng = dest.longitude ?? _fallbackLngForDistrict(dest.district, dest.name);
+    _mapController.move(LatLng(lat, lng), 12.0);
+  }
 
-    _transformController.value = Matrix4.identity()
-      ..translate(dx, dy)
-      ..scale(scale);
+  List<Polyline> _buildCorridorPolylines() {
+    return [
+      // Char Dham Sacred Corridor
+      Polyline(
+        points: const [
+          LatLng(29.9457, 78.1642), // Haridwar
+          LatLng(30.0869, 78.2676), // Rishikesh
+          LatLng(30.1459, 78.5990), // Devprayag
+          LatLng(30.2227, 78.7844), // Srinagar
+          LatLng(30.2858, 78.9811), // Rudraprayag
+          LatLng(30.5200, 79.0800), // Guptkashi
+          LatLng(30.7352, 79.0669), // Kedarnath
+          LatLng(30.4070, 79.3364), // Chamoli
+          LatLng(30.5564, 79.5661), // Joshimath
+          LatLng(30.7465, 79.4942), // Badrinath
+        ],
+        color: const Color(0xFF059669),
+        strokeWidth: 4.0,
+        borderStrokeWidth: 1.5,
+        borderColor: Colors.white.withValues(alpha: 0.8),
+      ),
+      // Kumaon Lakes & Wildlife Belt
+      Polyline(
+        points: const [
+          LatLng(29.2182, 79.5267), // Kathgodam
+          LatLng(29.3803, 79.4636), // Nainital
+          LatLng(29.3497, 79.5539), // Bhimtal
+          LatLng(29.5892, 79.6467), // Almora
+          LatLng(29.7042, 79.7564), // Binsar
+          LatLng(29.8542, 79.6058), // Kausani
+        ],
+        color: const Color(0xFF2563EB),
+        strokeWidth: 4.0,
+        borderStrokeWidth: 1.5,
+        borderColor: Colors.white.withValues(alpha: 0.8),
+      ),
+      // Adi Kailash & Om Parvat High Pass
+      Polyline(
+        points: const [
+          LatLng(29.5829, 80.2182), // Pithoragarh
+          LatLng(29.8497, 80.5372), // Dharchula
+          LatLng(30.1800, 80.8500), // Gunji
+          LatLng(30.2200, 80.8800), // Nabi
+          LatLng(30.2400, 81.0400), // Lipulekh
+        ],
+        color: const Color(0xFFD97706),
+        strokeWidth: 4.0,
+        borderStrokeWidth: 1.5,
+        borderColor: Colors.white.withValues(alpha: 0.8),
+      ),
+      // Hemkund & Valley of Flowers Trek
+      Polyline(
+        points: const [
+          LatLng(30.6250, 79.5480), // Govindghat
+          LatLng(30.6400, 79.5600), // Poolna
+          LatLng(30.6989, 79.5931), // Ghangaria
+          LatLng(30.7280, 79.6053), // Valley of Flowers
+          LatLng(30.7008, 79.6236), // Hemkund Sahib
+        ],
+        color: const Color(0xFF7C3AED),
+        strokeWidth: 4.0,
+        borderStrokeWidth: 1.5,
+        borderColor: Colors.white.withValues(alpha: 0.8),
+      ),
+    ];
   }
 
   @override
@@ -345,56 +389,56 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       body: SafeArea(
         child: Stack(
           children: [
-            // ── 1. Infinite Canvas Alpine Topographic Map ──
+            // ── 1. Real Leaflet-Powered Geoapify Interactive Map ──
             Positioned.fill(
-              child: GestureDetector(
-                onTap: () {
-                  if (selectedLocationId != null) {
-                    setState(() => selectedLocationId = null);
-                  }
-                },
-                child: InteractiveViewer(
-                  transformationController: _transformController,
-                  minScale: 0.55,
-                  maxScale: 3.5,
-                  boundaryMargin: const EdgeInsets.all(500),
-                  child: SizedBox(
-                    width: canvasWidth,
-                    height: canvasHeight,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Topographic Contours, Mountain Peaks, Rivers, Corridors
-                        CustomPaint(
-                          size: const Size(canvasWidth, canvasHeight),
-                          painter: AlpineUttarakhandTopoPainter(
-                            isSatellite: isSatelliteMode,
-                            showCorridors: showCorridorsLayer,
-                            showRadar: showSafetyRadarLayer,
-                          ),
-                        ),
-
-                        // Destination Markers
-                        if (!isLoading)
-                          ...visiblePlaces.map((dest) {
-                            final pos = _getCanvasPosition(dest);
-                            final isSel = selectedLocationId == dest.id;
-                            final color = _getNodeColor(dest);
-                            final icon = _getNodeIcon(dest);
-
-                            return Positioned(
-                              left: pos.dx - (isSel ? 24 : 18),
-                              top: pos.dy - (isSel ? 24 : 18),
-                              child: GestureDetector(
-                                onTap: () => _focusOnDestination(dest),
-                                child: _buildMarkerWidget(dest, isSel, color, icon),
-                              ),
-                            );
-                          }),
-                      ],
-                    ),
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: const LatLng(30.0668, 79.0193),
+                  initialZoom: 8.2,
+                  minZoom: 6.5,
+                  maxZoom: 18.0,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.all,
                   ),
+                  onTap: (_, __) {
+                    if (selectedLocationId != null) {
+                      setState(() => selectedLocationId = null);
+                    }
+                  },
                 ),
+                children: [
+                  TileLayer(
+                    urlTemplate: isSatelliteMode
+                        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                        : 'https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=2c3a7f1f2e184822a7631d30dfac330c',
+                    userAgentPackageName: 'com.discoveryuttarakhand.app',
+                    maxZoom: 19,
+                  ),
+                  if (showCorridorsLayer)
+                    PolylineLayer(
+                      polylines: _buildCorridorPolylines(),
+                    ),
+                  if (!isLoading)
+                    MarkerLayer(
+                      markers: visiblePlaces.map((dest) {
+                        final isSel = selectedLocationId == dest.id;
+                        final color = _getNodeColor(dest);
+                        final icon = _getNodeIcon(dest);
+                        final lat = dest.latitude ?? _fallbackLatForDistrict(dest.district, dest.name);
+                        final lng = dest.longitude ?? _fallbackLngForDistrict(dest.district, dest.name);
+                        return Marker(
+                          point: LatLng(lat, lng),
+                          width: isSel ? 70 : 54,
+                          height: isSel ? 70 : 54,
+                          child: GestureDetector(
+                            onTap: () => _focusOnDestination(dest),
+                            child: _buildMarkerWidget(dest, isSel, color, icon),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                ],
               ),
             ),
 
@@ -412,8 +456,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       color: isSatelliteMode
-                          ? const Color(0xFF0F241A).withOpacity(0.94)
-                          : Colors.white.withOpacity(0.96),
+                          ? const Color(0xFF0F241A).withValues(alpha: 0.94)
+                          : Colors.white.withValues(alpha: 0.96),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFE2E8F0),
@@ -421,7 +465,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(isSatelliteMode ? 0.35 : 0.08),
+                          color: Colors.black.withValues(alpha: isSatelliteMode ? 0.35 : 0.08),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -482,7 +526,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isSatelliteMode
-                                    ? const Color(0xFF059669).withOpacity(0.5)
+                                    ? const Color(0xFF059669).withValues(alpha: 0.5)
                                     : (showAllPins ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0)),
                               ),
                             ),
@@ -538,8 +582,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                               color: isSel
                                   ? const Color(0xFF0F3D2E)
                                   : (isSatelliteMode
-                                      ? const Color(0xFF0E2218).withOpacity(0.9)
-                                      : Colors.white.withOpacity(0.92)),
+                                      ? const Color(0xFF0E2218).withValues(alpha: 0.9)
+                                      : Colors.white.withValues(alpha: 0.92)),
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
                                 color: isSel
@@ -549,7 +593,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(isSel ? 0.15 : 0.04),
+                                  color: Colors.black.withValues(alpha: isSel ? 0.15 : 0.04),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -636,6 +680,14 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     tooltip: 'Center Uttarakhand',
                     onTap: _centerUttarakhand,
                   ),
+                  const SizedBox(height: 8),
+
+                  // GPS Location Button
+                  _buildFloatingToolButton(
+                    icon: Icons.my_location_rounded,
+                    tooltip: 'Current GPS Location',
+                    onTap: _locateUser,
+                  ),
                 ],
               ),
             ),
@@ -657,15 +709,15 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFDC2626).withOpacity(0.4),
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.4),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.sos_rounded, color: Colors.white, size: 16),
                       SizedBox(width: 6),
                       Text(
@@ -693,7 +745,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   duration: const Duration(milliseconds: 250),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isSatelliteMode ? const Color(0xFF0A1B14).withOpacity(0.96) : Colors.white,
+                    color: isSatelliteMode ? const Color(0xFF0A1B14).withValues(alpha: 0.96) : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSatelliteMode
@@ -703,7 +755,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isSatelliteMode ? 0.45 : 0.12),
+                        color: Colors.black.withValues(alpha: isSatelliteMode ? 0.45 : 0.12),
                         blurRadius: 20,
                         offset: const Offset(0, 6),
                       ),
@@ -893,7 +945,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isSatelliteMode ? const Color(0xFF0F241A).withOpacity(0.92) : Colors.white.withOpacity(0.95),
+        color: isSatelliteMode ? const Color(0xFF0F241A).withValues(alpha: 0.92) : Colors.white.withValues(alpha: 0.95),
         shape: BoxShape.circle,
         border: Border.all(
           color: isActive ? activeColor : (isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFE2E8F0)),
@@ -901,7 +953,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -958,7 +1010,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
             border: Border.all(color: color, width: isSel ? 3 : (isHub ? 2 : 1.5)),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(isSel ? 0.6 : 0.2),
+                color: color.withValues(alpha: isSel ? 0.6 : 0.2),
                 blurRadius: isSel ? 14 : (isHub ? 6 : 3),
                 spreadRadius: isSel ? 2 : 0,
               ),
@@ -977,7 +1029,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
             decoration: BoxDecoration(
               color: isSel
                   ? color
-                  : (isSatelliteMode ? const Color(0xFF0F241A).withOpacity(0.9) : Colors.white.withOpacity(0.95)),
+                  : (isSatelliteMode ? const Color(0xFF0F241A).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.95)),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: isSel ? color : (isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFE2E8F0)),
@@ -985,7 +1037,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 4,
                 ),
               ],
@@ -1042,8 +1094,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(Icons.radar, color: Color(0xFF10B981), size: 22),
                       SizedBox(width: 8),
                       Text(
@@ -1073,8 +1125,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   color: const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.shield_outlined, color: Color(0xFF34D399), size: 22),
                     SizedBox(width: 10),
                     Expanded(
@@ -1190,9 +1242,9 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                             child: const Icon(Icons.navigation_rounded, color: Color(0xFF34D399), size: 18),
                           ),
                           const SizedBox(width: 10),
-                          Column(
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'Himalayan Route Navigator',
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
@@ -1249,7 +1301,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                               border: Border.all(
                                 color: isSelected
                                     ? const Color(0xFF059669)
-                                    : (c['color'] as Color).withOpacity(0.25),
+                                    : (c['color'] as Color).withValues(alpha: 0.25),
                                 width: isSelected ? 1.5 : 1,
                               ),
                             ),
@@ -1276,7 +1328,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: (c['color'] as Color).withOpacity(0.12),
+                                        color: (c['color'] as Color).withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -1358,156 +1410,3 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   }
 }
 
-// ── Topographic Uttarakhand Alpine Canvas Painter ──
-class AlpineUttarakhandTopoPainter extends CustomPainter {
-  final bool isSatellite;
-  final bool showCorridors;
-  final bool showRadar;
-
-  AlpineUttarakhandTopoPainter({
-    required this.isSatellite,
-    required this.showCorridors,
-    required this.showRadar,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bgRect = Rect.fromLTWH(0, 0, size.width, size.height);
-
-    // 1. Base Gradient Canvas Fill
-    final bgPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: isSatellite
-            ? [const Color(0xFF04100B), const Color(0xFF0B2018), const Color(0xFF06140E)]
-            : [const Color(0xFFEDF2EC), const Color(0xFFF7FAF7), const Color(0xFFEBF1EB)],
-      ).createShader(bgRect);
-    canvas.drawRect(bgRect, bgPaint);
-
-    // 2. High Elevation Snow-cap Shading (Northern Greater Himalayas)
-    final snowCapPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: isSatellite
-            ? [const Color(0xFF1E3A2E).withOpacity(0.5), Colors.transparent]
-            : [const Color(0xFFD1E0D4).withOpacity(0.45), Colors.transparent],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.45));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height * 0.45), snowCapPaint);
-
-    // 3. Topographic Elevation Contours
-    final contourPaint = Paint()
-      ..color = isSatellite ? const Color(0xFF133827).withOpacity(0.5) : const Color(0xFFCBD8CD).withOpacity(0.6)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    final contourCount = 14;
-    for (int i = 1; i <= contourCount; i++) {
-      final yBase = (size.height / (contourCount + 1)) * i;
-      final path = Path();
-      path.moveTo(0, yBase);
-      for (double x = 0; x <= size.width; x += 60) {
-        final double wave = math.sin((x / 140) + (i * 0.7)) * (20 + (i * 1.5));
-        path.lineTo(x, yBase + wave);
-      }
-      canvas.drawPath(path, contourPaint);
-    }
-
-    // 4. Sacred River Valleys (Alaknanda, Bhagirathi, Ganga, Yamuna, Kali)
-    final riverPaint = Paint()
-      ..color = isSatellite ? const Color(0xFF38BDF8).withOpacity(0.6) : const Color(0xFF0284C7).withOpacity(0.5)
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    // Ganga / Alaknanda main arterial river
-    final alaknanda = Path()
-      ..moveTo(size.width * 0.65, size.height * 0.15) // Badrinath origin
-      ..cubicTo(size.width * 0.60, size.height * 0.32, size.width * 0.50, size.height * 0.45, size.width * 0.40, size.height * 0.58)
-      ..cubicTo(size.width * 0.35, size.height * 0.65, size.width * 0.28, size.height * 0.72, size.width * 0.22, size.height * 0.88); // Haridwar / Plains
-    canvas.drawPath(alaknanda, riverPaint);
-
-    // Bhagirathi (Gangotri to Devprayag confluence)
-    final bhagirathi = Path()
-      ..moveTo(size.width * 0.45, size.height * 0.12) // Gangotri
-      ..cubicTo(size.width * 0.42, size.height * 0.25, size.width * 0.38, size.height * 0.40, size.width * 0.40, size.height * 0.58);
-    canvas.drawPath(bhagirathi, riverPaint);
-
-    // Kali River (Eastern Border)
-    final kaliRiver = Path()
-      ..moveTo(size.width * 0.90, size.height * 0.22)
-      ..cubicTo(size.width * 0.88, size.height * 0.45, size.width * 0.85, size.height * 0.65, size.width * 0.80, size.height * 0.85);
-    canvas.drawPath(kaliRiver, riverPaint);
-
-    // 5. Iconic Mountain Peaks (Triangular Snow Icons with Labels)
-    _drawMountainPeak(canvas, size.width * 0.72, size.height * 0.20, 'Nanda Devi (7,816m)');
-    _drawMountainPeak(canvas, size.width * 0.66, size.height * 0.26, 'Trishul (7,120m)');
-    _drawMountainPeak(canvas, size.width * 0.52, size.height * 0.18, 'Kedarnath Peak (6,831m)');
-    _drawMountainPeak(canvas, size.width * 0.60, size.height * 0.16, 'Badrinath / Neelkanth (6,596m)');
-    _drawMountainPeak(canvas, size.width * 0.85, size.height * 0.32, 'Panchachuli (6,904m)');
-
-    // 6. Himalayan Highway Transit Corridors
-    if (showCorridors) {
-      final corridorPaint = Paint()
-        ..color = const Color(0xFF059669).withOpacity(0.7)
-        ..strokeWidth = 2.8
-        ..style = PaintingStyle.stroke;
-
-      // Char Dham Highway Route
-      final chardhamPath = Path()
-        ..moveTo(size.width * 0.22, size.height * 0.88) // Haridwar
-        ..lineTo(size.width * 0.28, size.height * 0.72) // Rishikesh
-        ..lineTo(size.width * 0.40, size.height * 0.58) // Devprayag
-        ..lineTo(size.width * 0.50, size.height * 0.45) // Rudraprayag
-        ..lineTo(size.width * 0.60, size.height * 0.32) // Joshimath
-        ..lineTo(size.width * 0.65, size.height * 0.15); // Badrinath
-      canvas.drawPath(chardhamPath, corridorPaint);
-
-      // Kumaon Lake Highway
-      final kumaonPaint = Paint()
-        ..color = const Color(0xFF2563EB).withOpacity(0.7)
-        ..strokeWidth = 2.4
-        ..style = PaintingStyle.stroke;
-
-      final kumaonPath = Path()
-        ..moveTo(size.width * 0.60, size.height * 0.88) // Kathgodam
-        ..lineTo(size.width * 0.62, size.height * 0.75) // Nainital
-        ..lineTo(size.width * 0.70, size.height * 0.65) // Almora
-        ..lineTo(size.width * 0.73, size.height * 0.54); // Binsar
-      canvas.drawPath(kumaonPath, kumaonPaint);
-    }
-  }
-
-  void _drawMountainPeak(Canvas canvas, double x, double y, String label) {
-    final peakPaint = Paint()
-      ..color = isSatellite ? const Color(0xFFE2E8F0) : const Color(0xFF0F3D2E)
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(x, y - 10)
-      ..lineTo(x - 9, y + 6)
-      ..lineTo(x + 9, y + 6)
-      ..close();
-    canvas.drawPath(path, peakPaint);
-
-    final textSpan = TextSpan(
-      text: label,
-      style: TextStyle(
-        color: isSatellite ? const Color(0xFF94A3B8) : const Color(0xFF475569),
-        fontSize: 8,
-        fontWeight: FontWeight.w800,
-      ),
-    );
-    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(x - (textPainter.width / 2), y + 8));
-  }
-
-  @override
-  bool shouldRepaint(covariant AlpineUttarakhandTopoPainter oldDelegate) {
-    return oldDelegate.isSatellite != isSatellite ||
-        oldDelegate.showCorridors != showCorridors ||
-        oldDelegate.showRadar != showRadar;
-  }
-}

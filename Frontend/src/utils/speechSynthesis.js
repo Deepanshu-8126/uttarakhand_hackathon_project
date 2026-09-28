@@ -33,7 +33,7 @@ export function cleanTextForSpeech(rawText) {
     .replace(/https?:\/\/\S+/g, '')
     .replace(/<[^>]*>/g, '')
     // Clean symbols and excessive whitespace
-    .replace(/[•★◆✦\*\#\_\~`]/g, '')
+    .replace(/[•★◆✦*\#_\~`]/g, '')
     .replace(/[\r\n]+/g, '. ')
     .replace(/\s{2,}/g, ' ')
     .trim();

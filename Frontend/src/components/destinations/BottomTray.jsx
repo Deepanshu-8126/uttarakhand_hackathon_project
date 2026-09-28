@@ -1,11 +1,8 @@
 import React, { useRef } from 'react';
 import { 
   MdFavoriteBorder, 
-  MdFavorite, 
   MdArrowForward, 
-  MdChevronRight, 
-  MdTerrain,
-  MdAutoAwesome
+  MdChevronRight 
 } from 'react-icons/md';
 import { useMapStore } from '../../store/mapStore';
 

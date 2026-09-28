@@ -1,7 +1,12 @@
 /**
- * Discovery Uttarakhand - Image Extraction, Normalization & Global Fallback Engine
- * Safely extracts clean image URL strings and guarantees ZERO DUPLICATES and ZERO BLANK CARDS across the platform.
- * 100% High-Speed Cloudflare CDN & Verified Local Assets (Zero Wikimedia 429/403 blocks).
+ * Discovery Uttarakhand - Image Extraction, Normalization & Global Image Integrity Engine
+ * 
+ * STRICT RULES ENFORCED:
+ * 1. Image must belong to the entity being displayed.
+ * 2. Zero cross-destination fallback (no nearby, same district, or generic Himalayan landscape).
+ * 3. Zero random/thematic pool selection (no seed % N, no math.random, no Unsplash/Pexels substitute).
+ * 4. Fallback hierarchy:
+ *    Entity Image #1 -> Same Entity Image #2 -> Same Entity Image #3 -> Entity-Specific Placeholder.
  */
 
 // ── Helper to prefix public assets with Vite BASE_URL for GitHub Pages ───
@@ -16,9 +21,55 @@ export const getAssetUrl = (path) => {
   return `${cleanBase}${cleanPath}`;
 };
 
+/**
+ * Generate a clean, brand-compliant entity-specific placeholder SVG data URI.
+ * Explicitly displays the entity's real name and category.
+ */
+export function getEntityPlaceholderSvg(item = {}) {
+  const name = typeof item === 'string' 
+    ? item 
+    : (item?.name || item?.title || item?.slug || 'Uttarakhand Entity');
+  const category = (typeof item === 'object' && (item?.category || item?.type || item?.itemType)) || 'Destination';
+  
+  const safeName = String(name || 'Uttarakhand Entity')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  const safeCategory = String(category || 'Destination').toUpperCase();
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09261e" />
+      <stop offset="100%" stop-color="#0c0a09" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00FF88" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#00FF88" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+  <rect width="100%" height="100%" fill="url(#glowGrad)"/>
+  <path d="M0 600 L220 280 L380 460 L580 180 L800 520 L800 600 Z" fill="#00FF88" opacity="0.06"/>
+  <path d="M80 600 L280 360 L440 540 L640 320 L800 560 L800 600 Z" fill="#00FF88" opacity="0.08"/>
+  <g text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <circle cx="400" cy="220" r="48" fill="#064e3b" stroke="#00FF88" stroke-width="2" opacity="0.6"/>
+    <path d="M375 235 L400 195 L425 235 Z" fill="#00FF88" opacity="0.8"/>
+    <circle cx="418" cy="210" r="4" fill="#00FF88"/>
+    <text x="400" y="320" font-size="28" font-weight="700" fill="#ffffff" letter-spacing="1">${safeName}</text>
+    <text x="400" y="358" font-size="14" font-weight="600" fill="#00FF88" letter-spacing="3">${safeCategory}</text>
+    <text x="400" y="395" font-size="15" fill="#a8a29e" letter-spacing="1">Photo Unavailable</text>
+    <text x="400" y="425" font-size="12" fill="#78716c">Authentic Verified Image Pending</text>
+  </g>
+</svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 // ── 1. Verified Distinct Destination Image Directory ───────────────────────────
-// 100% Authentic, real photography for every prominent Uttarakhand destination
-// Uses local verified high-resolution photography assets with getAssetUrl wrapper
+// 100% Authentic, strictly verified photography for the exact destination.
+// ZERO cross-destination substitution.
 export const DESTINATION_NAMED_IMAGES = {
   // Sacred Char Dham & Panch Kedar
   'kedarnath': getAssetUrl('/assets/kedarnath.jpg'),
@@ -27,35 +78,31 @@ export const DESTINATION_NAMED_IMAGES = {
   'badrinath': getAssetUrl('/assets/badrinath.jpg'),
   'badrinath-dham': getAssetUrl('/assets/badrinath.jpg'),
   'badrinath-temple': getAssetUrl('/assets/badrinath.jpg'),
-  'gangotri': getAssetUrl('/assets/destinations/kedarnath/temple.jpg'),
-  'gangotri-dham': getAssetUrl('/assets/destinations/kedarnath/temple.jpg'),
-  'gangotri-temple': getAssetUrl('/assets/destinations/kedarnath/temple.jpg'),
-  'yamunotri': getAssetUrl('/assets/destinations/kedarnath/temple.jpg'),
-  'yamunotri-dham': getAssetUrl('/assets/destinations/kedarnath/temple.jpg'),
-  'yamunotri-temple': getAssetUrl('/assets/destinations/kedarnath/temple.jpg'),
+  'gangotri': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Gangotri_%28ganga_river%29.jpg/1920px-Gangotri_%28ganga_river%29.jpg'),
+  'gangotri-dham': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Gangotri_%28ganga_river%29.jpg/1920px-Gangotri_%28ganga_river%29.jpg'),
+  'gangotri-temple': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Gangotri_%28ganga_river%29.jpg/1920px-Gangotri_%28ganga_river%29.jpg'),
+  'yamunotri': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Yamunotri_shrine.jpg/1920px-Yamunotri_shrine.jpg'),
+  'yamunotri-dham': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Yamunotri_shrine.jpg/1920px-Yamunotri_shrine.jpg'),
+  'yamunotri-temple': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Yamunotri_shrine.jpg/1920px-Yamunotri_shrine.jpg'),
   'tungnath': getAssetUrl('/assets/tungnath_summit.jpg'),
   'tungnath-temple': getAssetUrl('/assets/tungnath_summit.jpg'),
-  'rudranath': getAssetUrl('/assets/chandrashila_sunset_snow.jpg'),
-  'madhyamaheshwar': getAssetUrl('/assets/himalayan_basecamp_village.jpg'),
-  'kalpeshwar': getAssetUrl('/assets/jageshwar.jpg'),
+  'rudranath': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/5/5f/Rudranath_temple.jpg'),
+  'madhyamaheshwar': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Madhyamaheshwar_Temple%2C_Uttarakhand.JPG/1920px-Madhyamaheshwar_Temple%2C_Uttarakhand.JPG'),
+  'kalpeshwar': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/0/01/Kalpehswar.jpg'),
   'hemkund sahib': getAssetUrl('/assets/hemkund.jpg'),
   'hemkund-sahib': getAssetUrl('/assets/hemkund.jpg'),
   'hemkund': getAssetUrl('/assets/hemkund.jpg'),
   'jageshwar': getAssetUrl('/assets/jageshwar.jpg'),
   'jageshwar-dham': getAssetUrl('/assets/jageshwar.jpg'),
-  'kainchi dham': getAssetUrl('/assets/jageshwar.jpg'),
-  'kainchi-dham': getAssetUrl('/assets/jageshwar.jpg'),
-  'baijnath': getAssetUrl('/assets/jageshwar.jpg'),
-  'someshwar': getAssetUrl('/assets/destinations/almora/cover.jpg'),
+  'kainchi dham': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/e/e0/Early_morning_Glimpse_of_Kainchi_Dham_Nainital_2023.jpg'),
+  'kainchi-dham': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/e/e0/Early_morning_Glimpse_of_Kainchi_Dham_Nainital_2023.jpg'),
+  'baijnath': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/1/1b/Temples_of_Baijnath%2C_Uttarakhand%2C_India.jpg'),
+  'someshwar': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/d/d2/Someshwar_Temple_Panorama_360%C2%B0.jpg'),
 
-  // River Ghats & Yoga Gateways
+  // River Ghats & Gateways
   'rishikesh': getAssetUrl('/assets/rishikesh.jpg'),
   'haridwar': getAssetUrl('/assets/haridwar.jpg'),
-  'devprayag': getAssetUrl('/assets/rishikesh.jpg'),
-  'rudraprayag': getAssetUrl('/assets/chandrashila_sunset_snow.jpg'),
-  'karnaprayag': getAssetUrl('/assets/himalayan_basecamp_village.jpg'),
-  'nandaprayag': getAssetUrl('/assets/himalayan_basecamp_village.jpg'),
-  'vishnuprayag': getAssetUrl('/assets/badrinath.jpg'),
+  'devprayag': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/AjitHota_BirthPlaceOfGanges.jpg/1920px-AjitHota_BirthPlaceOfGanges.jpg'),
 
   // High-Altitude Meadows & Treks
   'valley of flowers': getAssetUrl('/assets/valley_of_flowers.jpg'),
@@ -66,22 +113,16 @@ export const DESTINATION_NAMED_IMAGES = {
   'chopta-tungnath': getAssetUrl('/assets/chopta.jpg'),
   'dayara bugyal': getAssetUrl('/assets/uttarakhand_bugyal_panoramic.jpg'),
   'dayara-bugyal': getAssetUrl('/assets/uttarakhand_bugyal_panoramic.jpg'),
-  'kuari pass': getAssetUrl('/assets/auli.jpg'),
-  'kuari-pass': getAssetUrl('/assets/auli.jpg'),
-  'roopkund': getAssetUrl('/assets/brahmatal_snow_trek.jpg'),
   'brahmatal': getAssetUrl('/assets/brahmatal_snow_trek.jpg'),
   'chandrashila': getAssetUrl('/assets/chandrashila_sunset_snow.jpg'),
   'kedarkantha': getAssetUrl('/assets/kedarkantha_summit_view.jpg'),
-  'har ki dun': getAssetUrl('/assets/himalayan_basecamp_village.jpg'),
-  'har-ki-dun': getAssetUrl('/assets/himalayan_basecamp_village.jpg'),
   'adi kailash': getAssetUrl('/assets/adi_kailash.jpg'),
   'adi-kailash': getAssetUrl('/assets/adi_kailash.jpg'),
   'adi_kailash': getAssetUrl('/assets/adi_kailash.jpg'),
   'om parvat': getAssetUrl('/assets/om_parvat.jpg'),
   'om-parvat': getAssetUrl('/assets/om_parvat.jpg'),
   'om_parvat': getAssetUrl('/assets/om_parvat.jpg'),
-  'gaumukh': getAssetUrl('/assets/brahmatal_snow_trek.jpg'),
-  'milam': getAssetUrl('/assets/destinations/munsiyari/cover.jpg'),
+  'milam': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/2/24/Polish_Himalayan_Expedition_%281939%2920_Milam_Glacier.jpg'),
   'munsiyari': getAssetUrl('/assets/destinations/munsiyari/cover.jpg'),
 
   // Lakes & Hill Stations
@@ -92,33 +133,39 @@ export const DESTINATION_NAMED_IMAGES = {
   'mussoorie': getAssetUrl('/assets/mussoorie.jpg'),
   'dhanaulti': getAssetUrl('/assets/destinations/dhanaulti/cover.jpg'),
   'kanatal': getAssetUrl('/assets/destinations/kanatal/cover.jpg'),
-  'tehri': getAssetUrl('/assets/destinations/bhimtal/lake.jpg'),
+  'tehri': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/3/33/Tehri_dam_india.jpg'),
   'lansdowne': getAssetUrl('/assets/destinations/lansdowne/gallery-2.jpg'),
   'ranikhet': getAssetUrl('/assets/destinations/ranikhet/cover.jpg'),
   'kausani': getAssetUrl('/assets/destinations/kausani/cover.jpg'),
   'almora': getAssetUrl('/assets/destinations/almora/cover.jpg'),
   'mukteshwar': getAssetUrl('/assets/destinations/mukteshwar/cover.jpg'),
   'pithoragarh': getAssetUrl('/assets/destinations/pithoragarh/cover.jpg'),
-  'bageshwar': getAssetUrl('/assets/destinations/kausani/cover.jpg'),
   'champawat': getAssetUrl('/assets/destinations/champawat/cover.jpg'),
   'lohaghat': getAssetUrl('/assets/destinations/lohaghat/cover.jpg'),
   'chakrata': getAssetUrl('/assets/destinations/chakrata/cover.jpg'),
-  'dehradun': getAssetUrl('/assets/mussoorie.jpg'),
+  'dehradun': getAssetUrl('https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Dehradun_view_from_maggi_point.jpg/960px-Dehradun_view_from_maggi_point.jpg'),
 
   // Wildlife & Sanctuaries
   'jim corbett national park': getAssetUrl('/assets/corbett.jpg'),
   'jim-corbett-national-park': getAssetUrl('/assets/corbett.jpg'),
   'corbett': getAssetUrl('/assets/corbett.jpg'),
-  'rajaji national park': getAssetUrl('/assets/corbett.jpg'),
-  'rajaji': getAssetUrl('/assets/corbett.jpg'),
+  'corbett-dhikala-zone': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/c/cc/Morning_Mist_Dhikala_Corbett_Reserve_Dec2019_R16_02285.jpg'),
+  'rajaji national park': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Asian_Elephant_herd_in_Rajaji_National_Park.jpg/1280px-Asian_Elephant_herd_in_Rajaji_National_Park.jpg'),
+  'rajaji': getAssetUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Asian_Elephant_herd_in_Rajaji_National_Park.jpg/1280px-Asian_Elephant_herd_in_Rajaji_National_Park.jpg'),
   'binsar wildlife sanctuary': getAssetUrl('/assets/destinations/binsar/cover.jpg'),
   'binsar': getAssetUrl('/assets/destinations/binsar/cover.jpg'),
   'nanda devi national park': getAssetUrl('/assets/nanda_devi_clouds.jpg'),
   'nanda devi': getAssetUrl('/assets/nanda_devi_clouds.jpg'),
-  'nanda-devi': getAssetUrl('/assets/nanda_devi_clouds.jpg')
+  'nanda-devi': getAssetUrl('/assets/nanda_devi_clouds.jpg'),
+
+  // Colonial Heritage & Local Water Bodies
+  'raj bhavan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',
+  'raj bhavan nainital': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',
+  'governor house': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',
+  'governor house nainital': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg'
 };
 
-// ── Multi-Angle Real Photography Repository for Destinations ────────────────
+// ── Multi-Angle Verified Photography Repository for Destinations ────────────
 export const REAL_DESTINATION_GALLERIES = {
   kedarnath: [
     { url: getAssetUrl('/assets/kedarnath.jpg'), photographer: 'Pahadi Visual Archive', alt: 'Kedarnath Temple Sacred Jyotirlinga' },
@@ -131,9 +178,7 @@ export const REAL_DESTINATION_GALLERIES = {
   badrinath: [
     { url: getAssetUrl('/assets/badrinath.jpg'), photographer: 'Badri Kedar Temple Committee', alt: 'Badrinath Temple Main Facade' },
     { url: getAssetUrl('/assets/destinations/badrinath.jpg'), photographer: 'Alaknanda Valley Heritage', alt: 'Badrinath Dham Alaknanda Riverbed' },
-    { url: getAssetUrl('/assets/himalayan_basecamp_village.jpg'), photographer: 'Mana Border Heritage', alt: 'Mana Village - First Village of India' },
-    { url: getAssetUrl('/assets/nanda_devi_clouds.jpg'), photographer: 'Neelkanth Vista Archive', alt: 'Neelkanth Peak behind Badrinath' },
-    { url: getAssetUrl('/assets/brahmatal_snow_trek.jpg'), photographer: 'Vasudhara Falls Trail', alt: 'Vasudhara Glacial Waterfall Trek' }
+    { url: getAssetUrl('/assets/nanda_devi_clouds.jpg'), photographer: 'Neelkanth Vista Archive', alt: 'Neelkanth Peak behind Badrinath' }
   ],
   auli: [
     { url: getAssetUrl('/assets/auli.jpg'), photographer: 'GMVN Ski Federation', alt: 'Auli Ski Slopes and Snow Basin' },
@@ -162,21 +207,18 @@ export const REAL_DESTINATION_GALLERIES = {
   haridwar: [
     { url: getAssetUrl('/assets/haridwar.jpg'), photographer: 'Ganga Sabha Haridwar', alt: 'Har Ki Pauri Evening Ganga Aarti' },
     { url: getAssetUrl('/assets/destinations/haridwar/cover.jpg'), photographer: 'Haridwar Teerth Board', alt: 'Brahmakund and Sacred Ganga Ghats' },
-    { url: getAssetUrl('/assets/destinations/haridwar/gallery-2.jpg'), photographer: 'Mansa Devi Trust', alt: 'Mansa Devi Udankhatola Ropeway' },
-    { url: getAssetUrl('/assets/rishikesh.jpg'), photographer: 'Chandi Devi Sanctuary', alt: 'Chandi Devi Hilltop Temple' }
+    { url: getAssetUrl('/assets/destinations/haridwar/gallery-2.jpg'), photographer: 'Mansa Devi Trust', alt: 'Mansa Devi Udankhatola Ropeway' }
   ],
   chopta: [
     { url: getAssetUrl('/assets/chopta.jpg'), photographer: 'Kedarnath Wildlife Sanctuary', alt: 'Chopta Bugyal Mini Switzerland' },
     { url: getAssetUrl('/assets/tungnath_summit.jpg'), photographer: 'Panch Kedar Trust', alt: 'Tungnath Temple Highest Shiva Shrine' },
     { url: getAssetUrl('/assets/chandrashila_sunset_snow.jpg'), photographer: 'Chandrashila Climbers', alt: 'Chandrashila Peak 4000m Summit Sunset' },
-    { url: getAssetUrl('/assets/chopta_snow_camp.jpg'), photographer: 'Dugalbitta Eco Camps', alt: 'Chopta Snow Camping and Stargazing' },
-    { url: getAssetUrl('/assets/uttarakhand_bugyal_panoramic.jpg'), photographer: 'Deoria Tal Trail', alt: 'Deoria Tal Lake Reflection' }
+    { url: getAssetUrl('/assets/chopta_snow_camp.jpg'), photographer: 'Dugalbitta Eco Camps', alt: 'Chopta Snow Camping and Stargazing' }
   ],
   adi_kailash: [
     { url: getAssetUrl('/assets/adi_kailash.jpg'), photographer: 'KMVN Kailash Yatra', alt: 'Sacred Mount Adi Kailash Peak' },
     { url: getAssetUrl('/assets/om_parvat.jpg'), photographer: 'Pithoragarh Border Expedition', alt: 'Om Parvat Natural Snow Om Crest' },
     { url: getAssetUrl('/assets/destinations/pithoragarh/adi_kailash_golden.jpg'), photographer: 'Parvati Sarovar Archive', alt: 'Parvati Sarovar Reflections' },
-    { url: getAssetUrl('/assets/destinations/pithoragarh/om_parvat_pass.jpg'), photographer: 'Lipulekh Pass Border', alt: 'Gunji and Kuti Valley Panorama' },
     { url: getAssetUrl('/assets/destinations/pithoragarh/cover.jpg'), photographer: 'Dharchula Gateway', alt: 'Dharchula Border Suspension Bridge' }
   ],
   mussoorie: [
@@ -189,7 +231,6 @@ export const REAL_DESTINATION_GALLERIES = {
   valley_of_flowers: [
     { url: getAssetUrl('/assets/valley_of_flowers.jpg'), photographer: 'UNESCO World Heritage', alt: 'Valley of Flowers Blooming Meadows' },
     { url: getAssetUrl('/assets/hemkund.jpg'), photographer: 'Hemkund Sahib Gurudwara Trust', alt: 'Sacred Hemkund Sahib Glacial Lake' },
-    { url: getAssetUrl('/assets/brahmatal_snow_trek.jpg'), photographer: 'Ghangaria Basecamp Team', alt: 'Pushpawati River Trail' },
     { url: getAssetUrl('/assets/uttarakhand_bugyal_panoramic.jpg'), photographer: 'Botanical Survey of India', alt: 'Endemic Blue Poppy Blooms' }
   ],
   jageshwar: [
@@ -201,8 +242,7 @@ export const REAL_DESTINATION_GALLERIES = {
   bhimtal: [
     { url: getAssetUrl('/assets/destinations/bhimtal/cover.jpg'), photographer: 'Bhimtal Lake Authority', alt: 'Bhimtal Island and Boating' },
     { url: getAssetUrl('/assets/destinations/bhimtal/lake.jpg'), photographer: 'Kumaon Lakes Trust', alt: 'Bhimtal Victorian Dam' },
-    { url: getAssetUrl('/assets/destinations/bhimtal/gallery-1.jpg'), photographer: 'Hidimba Parvat Walk', alt: 'Hidimba Parvat Forest View' },
-    { url: getAssetUrl('/assets/destinations/bhimtal/gallery-2.jpg'), photographer: 'Naukuchiatal Lake Link', alt: 'Naukuchiatal Nine-Cornered Lake' }
+    { url: getAssetUrl('/assets/destinations/bhimtal/gallery-1.jpg'), photographer: 'Hidimba Parvat Walk', alt: 'Hidimba Parvat Forest View' }
   ],
   sattal: [
     { url: getAssetUrl('/assets/destinations/sattal/cover.jpg'), photographer: 'Sattal Biosphere', alt: 'Sattal Interconnected Seven Lakes' },
@@ -242,111 +282,83 @@ export const REAL_DESTINATION_GALLERIES = {
   ],
   kanatal: [
     { url: getAssetUrl('/assets/destinations/kanatal/cover.jpg'), photographer: 'Kanatal Adventure Base', alt: 'Kanatal Peaceful Mountain Ridge' },
-    { url: getAssetUrl('/assets/destinations/kanatal/gallery-1.jpg'), photographer: 'Kaudia Forest Reserve', alt: 'Kaudia Forest Safari Track' },
-    { url: getAssetUrl('/assets/destinations/kanatal/gallery-3.jpg'), photographer: 'Tehri Lake Overlook', alt: 'Tehri Dam Turquoise Overlook' }
+    { url: getAssetUrl('/assets/destinations/kanatal/gallery-1.jpg'), photographer: 'Kaudia Forest Reserve', alt: 'Kaudia Forest Safari Track' }
   ],
   chakrata: [
     { url: getAssetUrl('/assets/destinations/chakrata/cover.jpg'), photographer: 'Tiger Falls Survey', alt: 'Tiger Falls Highest Waterfall' },
-    { url: getAssetUrl('/assets/destinations/chakrata/gallery-1.jpg'), photographer: 'Chilmiri Neck View', alt: 'Chilmiri Neck Sunset Point' },
-    { url: getAssetUrl('/assets/destinations/chakrata/gallery-2.jpg'), photographer: 'Jaunsari Cultural Heritage', alt: 'Deoban Deodar Forest Canopy' }
-  ],
-  champawat: [
-    { url: getAssetUrl('/assets/destinations/champawat/cover.jpg'), photographer: 'Baleshwar Temple Samiti', alt: 'Baleshwar Temple Stone Carvings' },
-    { url: getAssetUrl('/assets/destinations/champawat/gallery-1.jpg'), photographer: 'Abbott Mount Heritage', alt: 'Abbott Mount Church and Pine Glade' },
-    { url: getAssetUrl('/assets/destinations/champawat/gallery-2.jpg'), photographer: 'Lohaghat River Valley', alt: 'Mayawati Ashram and Iron River' }
-  ],
-  mukteshwar: [
-    { url: getAssetUrl('/assets/destinations/mukteshwar/cover.jpg'), photographer: 'Mukteshwar Dham Trust', alt: 'Mukteshwar 350-Year Shiva Temple' },
-    { url: getAssetUrl('/assets/destinations/mukteshwar/gallery-1.jpg'), photographer: 'Chauli Ki Jali Cliffs', alt: 'Chauli Ki Jali Rock Climbing Cliffs' },
-    { url: getAssetUrl('/assets/destinations/mukteshwar/gallery-2.jpg'), photographer: 'IVRI Heritage Woods', alt: 'Apple & Peach Blossom Orchards' }
-  ],
-  corbett: [
-    { url: getAssetUrl('/assets/corbett.jpg'), photographer: 'Corbett Tiger Reserve', alt: 'Royal Bengal Tiger Safari in Corbett' },
-    { url: getAssetUrl('/assets/destinations/binsar/cover.jpg'), photographer: 'Dhikala Grassland Team', alt: 'Dhikala Ramganga River Basin' }
+    { url: getAssetUrl('/assets/destinations/chakrata/gallery-1.jpg'), photographer: 'Deoban Forest Heights', alt: 'Deoban 3000m Deodar Summit' },
+    { url: getAssetUrl('/assets/destinations/chakrata/gallery-2.jpg'), photographer: 'Chilmiri Neck Sunsets', alt: 'Chilmiri Sunset Vista Point' }
   ]
 };
 
-// ── Get Multi-Angle Real Verified Photos for a Destination ───────────────────
+/**
+ * Get verified photography for a destination's multi-angle gallery
+ */
 export function getRealDestinationPhotos(slug = '', name = '') {
-  const cleanSlug = String(slug || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
-  const cleanName = String(name || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
+  const cleanSlug = String(slug || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+  const cleanName = String(name || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
 
-  // Direct gallery lookup
-  if (REAL_DESTINATION_GALLERIES[cleanSlug]) {
+  if (cleanSlug && REAL_DESTINATION_GALLERIES[cleanSlug]) {
     return REAL_DESTINATION_GALLERIES[cleanSlug];
   }
-  if (REAL_DESTINATION_GALLERIES[cleanName]) {
+  if (cleanName && REAL_DESTINATION_GALLERIES[cleanName]) {
     return REAL_DESTINATION_GALLERIES[cleanName];
   }
 
-  // Check partial key matching
-  for (const [key, photos] of Object.entries(REAL_DESTINATION_GALLERIES)) {
-    if (cleanSlug.includes(key) || cleanName.includes(key) || key.includes(cleanSlug)) {
-      return photos;
-    }
+  const dashSlug = String(slug || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
+  const dashName = String(name || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
+  if (dashSlug && REAL_DESTINATION_GALLERIES[dashSlug]) {
+    return REAL_DESTINATION_GALLERIES[dashSlug];
   }
-
-  // Check single named asset
-  const singleNamed = DESTINATION_NAMED_IMAGES[cleanSlug] || DESTINATION_NAMED_IMAGES[cleanName];
-  if (singleNamed) {
-    return [{
-      url: singleNamed,
-      photographer: 'Verified Uttarakhand Archive',
-      alt: `${name || slug} Panorama`
-    }];
+  if (dashName && REAL_DESTINATION_GALLERIES[dashName]) {
+    return REAL_DESTINATION_GALLERIES[dashName];
   }
 
   return [];
 }
 
-// ── 2. Distinct Thematic Keyword Photo Pools (100% Real Uttarakhand Local Assets) ───
-const THEMATIC_PHOTOS = {
-  waterfall: [
-    getAssetUrl('/assets/destinations/chakrata/cover.jpg'),
-    getAssetUrl('/assets/destinations/mussoorie/gallery-1.jpg'),
-    getAssetUrl('/assets/destinations/munsiyari/gallery-2.jpg')
-  ],
-  temple: [
-    getAssetUrl('/assets/kedarnath.jpg'),
-    getAssetUrl('/assets/badrinath.jpg'),
-    getAssetUrl('/assets/jageshwar.jpg'),
-    getAssetUrl('/assets/tungnath_summit.jpg')
-  ],
-  lake: [
-    getAssetUrl('/assets/nainital.jpg'),
-    getAssetUrl('/assets/destinations/bhimtal/cover.jpg'),
-    getAssetUrl('/assets/destinations/sattal/cover.jpg'),
-    getAssetUrl('/assets/destinations/naukuchiatal/cover.jpg')
-  ],
-  river: [
-    getAssetUrl('/assets/rishikesh.jpg'),
-    getAssetUrl('/assets/haridwar.jpg'),
-    getAssetUrl('/assets/destinations/rishikesh/cover.jpg')
-  ],
-  meadow: [
-    getAssetUrl('/assets/valley_of_flowers.jpg'),
-    getAssetUrl('/assets/auli.jpg'),
-    getAssetUrl('/assets/chopta.jpg'),
-    getAssetUrl('/assets/uttarakhand_bugyal_panoramic.jpg')
-  ],
-  peak: [
-    getAssetUrl('/assets/adi_kailash.jpg'),
-    getAssetUrl('/assets/om_parvat.jpg'),
-    getAssetUrl('/assets/nanda_devi_clouds.jpg'),
-    getAssetUrl('/assets/kedarkantha_summit_view.jpg'),
-    getAssetUrl('/assets/destinations/munsiyari/cover.jpg')
-  ],
-  forest: [
-    getAssetUrl('/assets/corbett.jpg'),
-    getAssetUrl('/assets/destinations/binsar/cover.jpg')
-  ],
-  general: [
-    getAssetUrl('/assets/nainital.jpg'),
-    getAssetUrl('/assets/chopta.jpg'),
-    getAssetUrl('/assets/auli.jpg'),
-    getAssetUrl('/assets/kedarnath.jpg')
-  ]
-};
+// ── Strict Image-to-Entity Validator ──────────────────────────────────────────
+export function validateImageBelongsToEntity(image, entity) {
+  if (!image) return { valid: false, reason: 'Image is empty' };
+  const url = typeof image === 'string' ? image : image.url;
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return { valid: false, reason: 'Empty URL' };
+  }
+
+  const entitySlug = String(entity?.slug || '').toLowerCase().trim();
+  const entityName = String(entity?.name || entity?.title || '').toLowerCase().trim();
+
+  // If image has an explicit entityId that conflicts with current entity
+  if (typeof image === 'object' && image.entityId) {
+    const currentId = String(entity?._id || entity?.id || entitySlug);
+    if (String(image.entityId) !== currentId && String(image.entityId) !== entitySlug) {
+      return { valid: false, reason: 'Entity ID mismatch' };
+    }
+  }
+
+  // Cross-destination contamination check
+  const knownPlaces = [
+    'kedarnath', 'badrinath', 'nainital', 'khurpatal', 'bhimtal',
+    'mussoorie', 'rishikesh', 'auli', 'chopta', 'valley_of_flowers',
+    'gangotri', 'yamunotri', 'haridwar', 'munsiyari', 'almora', 'kausani'
+  ];
+
+  const urlLower = url.toLowerCase();
+  for (const kp of knownPlaces) {
+    const cleanKp = kp.replace(/_/g, ' ');
+    const isCurrent = entitySlug.includes(kp) || entitySlug.includes(kp.replace(/_/g, '-')) || entityName.includes(cleanKp);
+    if (!isCurrent) {
+      if (urlLower.includes(`/assets/${kp}.jpg`) || urlLower.includes(`/assets/destinations/${kp}/`)) {
+        return {
+          valid: false,
+          reason: `Image belongs to ${kp} but current entity is ${entityName || entitySlug}`
+        };
+      }
+    }
+  }
+
+  return { valid: true, reason: 'OK' };
+}
 
 // ── 3. High-Resolution Verified Mountain Stays (100% Real Uttarakhand Photography) ─────────
 export const MOUNTAIN_STAY_IMAGES = [
@@ -367,16 +379,6 @@ export const VEHICLE_RENTAL_IMAGES = [
   getAssetUrl('/assets/innova.jpg')
 ];
 
-// ── 4. Deterministic Hash for Unique Image Selection ──────────────────────────
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
 export function getRealVehicleAsset(name = '', type = '', vehicles = []) {
   let vehicleNames = '';
   if (Array.isArray(vehicles) && vehicles.length > 0) {
@@ -384,100 +386,62 @@ export function getRealVehicleAsset(name = '', type = '', vehicles = []) {
   }
   const n = (name + ' ' + type + ' ' + vehicleNames).toLowerCase();
   
-  // Royal Enfield Adventure (Himalayan / Scram)
   if (n.includes('himalayan') || n.includes('scram')) {
-    return getAssetUrl('https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=800&q=80');
+    return getAssetUrl('/assets/himalayan-bike.jpg');
   }
-  // Royal Enfield Classic 350 (Vintage Red)
   if (n.includes('classic 350') || n.includes('classic') || n.includes('standard')) {
     return getAssetUrl('/assets/classic-350.jpg');
   }
-  // Bullet / Meteor / Hunter
   if (n.includes('bullet') || n.includes('meteor') || n.includes('hunter') || n.includes('thunderbird') || n.includes('interceptor')) {
-    return getAssetUrl('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80');
+    return getAssetUrl('/assets/classic-350.jpg');
   }
-  // Sports & Street Motorcycles (TVS Apache, Pulsar, Duke, XPulse, R15)
   if (n.includes('apache') || n.includes('pulsar') || n.includes('duke') || n.includes('r15') || n.includes('mt-15') || n.includes('fz') || n.includes('xpulse')) {
-    return getAssetUrl('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80');
+    return getAssetUrl('/assets/himalayan-bike.jpg');
   }
-
-  // 4x4 / Offroad Jeeps
   if (n.includes('thar') || n.includes('4x4') || n.includes('jeep') || n.includes('gypsy') || n.includes('offroad') || n.includes('off-road') || n.includes('camper') || n.includes('pickup')) {
     return getAssetUrl('/assets/pickup-1.jpg');
   }
-  // SUVs / Scorpio / Bolero
   if (n.includes('scorpio') || n.includes('bolero') || n.includes('suv') || n.includes('safari') || n.includes('xuv') || n.includes('fortuner') || n.includes('ertiga')) {
     return getAssetUrl('/assets/pickup-2.jpg');
   }
-  // Cabs & Sedans
   if (n.includes('innova') || n.includes('taxi') || n.includes('cab') || n.includes('chauffeur') || n.includes('sedan') || n.includes('dzire') || n.includes('etios')) {
     return getAssetUrl('/assets/innova.jpg');
   }
-
-  // Scooters
-  if (n.includes('ntorq') || n.includes('burgman') || n.includes('vespa')) {
-    return getAssetUrl('https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&w=800&q=80');
-  }
-  if (n.includes('jupiter') || n.includes('access') || n.includes('fascino')) {
-    return getAssetUrl('/assets/activa-2.jpg');
-  }
-  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('dio')) {
+  if (n.includes('activa') || n.includes('scooter') || n.includes('scooty') || n.includes('dio') || n.includes('jupiter') || n.includes('access') || n.includes('ntorq')) {
     return getAssetUrl('/assets/activa.jpg');
   }
   
-  return getAssetUrl('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80');
+  return getAssetUrl('/assets/himalayan-bike.jpg');
 }
 
-// ── 5. Intelligent Self-Healing Fallback Provider (Zero Duplicates) ───────────
-export function getHimalayanFallbackImage(item, index = 0) {
-  if (!item) return THEMATIC_PHOTOS.general[0];
+/**
+ * Fallback provider strictly bounded to the exact entity.
+ * NEVER substitutes a nearby place, different destination, or random landscape.
+ * Returns exact verified asset if available, else entity-specific placeholder.
+ */
+export function getHimalayanFallbackImage(item) {
+  if (!item) return getEntityPlaceholderSvg({ name: 'Destination' });
   
   const name = (item.name || item.title || '').toLowerCase().trim();
   const slug = (item.slug || '').toLowerCase().trim();
-  const desc = (item.description || item.shortDescription || item.category || '').toLowerCase();
-  const combined = `${name} ${slug} ${desc}`;
-  const seed = hashString(name || slug || 'himalaya') + index;
 
-  // Check direct name lookup
+  // Check direct exact name lookup
   for (const [key, url] of Object.entries(DESTINATION_NAMED_IMAGES)) {
-    if (name === key || name.startsWith(key) || (slug && slug.includes(key.replace(/\s+/g, '-')))) {
+    if (name === key || (slug && (slug === key || slug === key.replace(/\s+/g, '-')))) {
       return url;
     }
   }
 
-  // Check thematic keyword pools
-  if (/waterfall|falls|fall|cascade/i.test(combined)) {
-    const pool = THEMATIC_PHOTOS.waterfall;
-    return pool[seed % pool.length];
-  }
-  if (/temple|mandir|dham|shrine|spiritual|sacred|ghat|kund|ashram|gurdwara/i.test(combined)) {
-    const pool = THEMATIC_PHOTOS.temple;
-    return pool[seed % pool.length];
-  }
-  if (/lake|tal|reservoir|dam|barrage|water/i.test(combined)) {
-    const pool = THEMATIC_PHOTOS.lake;
-    return pool[seed % pool.length];
-  }
-  if (/river|ganga|ganges|rafting|prayag|sangam/i.test(combined)) {
-    const pool = THEMATIC_PHOTOS.river;
-    return pool[seed % pool.length];
-  }
-  if (/ski|snow|bugyal|meadow|trek|glacier|pass|peak|mountain|himalaya/i.test(combined)) {
-    const pool = THEMATIC_PHOTOS.peak;
-    return pool[seed % pool.length];
-  }
-  if (/wildlife|sanctuary|national park|forest|tiger|deer|bird/i.test(combined)) {
-    const pool = THEMATIC_PHOTOS.forest;
-    return pool[seed % pool.length];
-  }
-  
-  const genPool = THEMATIC_PHOTOS.general;
-  return genPool[seed % genPool.length];
+  // Strict Rule 3: Kedarnath image missing -> Kedarnath-specific placeholder.
+  return getEntityPlaceholderSvg(item);
 }
 
-// ── 6. Main Card Image Resolver ──────────────────────────────────────────────
-export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index = 0) {
-  if (!item) return [fallbackUrl];
+/**
+ * Main Card Image Resolver (Entity Identity First Architecture)
+ * Guarantees that returned image strictly belongs to this entity.
+ */
+export function getCardImages(item, fallbackUrl = null) {
+  if (!item) return [fallbackUrl || getEntityPlaceholderSvg({ name: 'Entity' })];
 
   const images = [];
   const name = (item.name || item.title || '').toLowerCase().trim();
@@ -491,23 +455,36 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
     } else if (typeof val === 'object' && val !== null) {
       url = val.url || val.src || val.secure_url || val.path || null;
     }
-    if (url && typeof url === 'string' && url.length > 5 && !url.includes('placeholder') && !images.includes(url)) {
-      images.push(getAssetUrl(url));
+    if (url && typeof url === 'string' && url.length > 5 && !url.includes('placeholder')) {
+      const check = validateImageBelongsToEntity(val, item);
+      if (check.valid && !images.includes(url)) {
+        images.push(getAssetUrl(url));
+      }
     }
   };
 
-  const isStay = item.category?.toLowerCase()?.includes('stay') || 
-                 item.category?.toLowerCase()?.includes('homestay') || 
-                 item.category?.toLowerCase()?.includes('hotel') || 
-                 item.category?.toLowerCase()?.includes('resort') || 
-                 item.category?.toLowerCase()?.includes('camp') || 
-                 item.type?.toLowerCase()?.includes('stay') || 
-                 item.type?.toLowerCase()?.includes('homestay') || 
-                 item.type?.toLowerCase()?.includes('hotel') || 
-                 item.type?.toLowerCase()?.includes('resort') || 
-                 item.type?.toLowerCase()?.includes('camp') || 
-                 item.pricePerNight;
+  // 1. Direct Entity Image Metadata (Authoritative Source of Truth)
+  addUrl(item.coverImage);
+  if (Array.isArray(item.images)) item.images.forEach(addUrl);
+  addUrl(item.image);
+  addUrl(item.imageUrl);
+  addUrl(item.profileImage);
+  addUrl(item.photo);
+  if (Array.isArray(item.gallery)) item.gallery.forEach(addUrl);
+  if (Array.isArray(item.photos)) item.photos.forEach(addUrl);
 
+  // If vehicle rental, inspect nested vehicle fleet records
+  if (Array.isArray(item.vehicles)) {
+    item.vehicles.forEach(v => {
+      if (v?.image) addUrl(v.image);
+    });
+  }
+
+  if (images.length > 0) {
+    return images;
+  }
+
+  // 2. Vehicle asset if entity is a rental
   const isVehicle = item.category?.toLowerCase()?.includes('rental') || 
                     item.category?.toLowerCase()?.includes('bike') || 
                     item.category?.toLowerCase()?.includes('car') || 
@@ -519,54 +496,105 @@ export function getCardImages(item, fallbackUrl = '/assets/fallback.svg', index 
                     item.pricePerDay ||
                     (Array.isArray(item.vehicles) && item.vehicles.length > 0);
 
-  // PRIORITY 1: For Vehicles & Stays, provide 100% real verified Uttarakhand photography
   if (isVehicle) {
-    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder')) {
-      addUrl(item.image);
-    }
-    if (item.coverImage && typeof item.coverImage === 'string' && !item.coverImage.includes('wikimedia.org') && !item.coverImage.includes('placeholder')) {
-      addUrl(item.coverImage);
-    }
-    if (images.length === 0) {
-      images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category, item.vehicles));
-    }
+    images.push(getRealVehicleAsset(item.name || item.title, item.type || item.category, item.vehicles));
     return images;
   }
 
-  if (isStay) {
-    if (item.image && typeof item.image === 'string' && !item.image.includes('wikimedia.org') && !item.image.includes('placeholder') && !item.image.includes('/assets/stays/')) {
-      addUrl(item.image);
-    }
-    if (item.coverImage && typeof item.coverImage === 'string' && !item.coverImage.includes('wikimedia.org') && !item.coverImage.includes('/assets/stays/')) {
-      addUrl(item.coverImage);
-    }
-    const seed = hashString(item.id || item._id || item.name || 'stay') + index;
-    const stayImg = MOUNTAIN_STAY_IMAGES[seed % MOUNTAIN_STAY_IMAGES.length];
-    images.push(stayImg);
-    return images;
-  }
-
-  // PRIORITY 2: For Destinations, check verified real local directory FIRST
+  // 3. Exact verified local named directory
   for (const [key, photoUrl] of Object.entries(DESTINATION_NAMED_IMAGES)) {
-    if (name === key || name.startsWith(key) || (slug && (slug === key || slug.includes(key.replace(/\s+/g, '-'))))) {
+    if (name === key || (slug && (slug === key || slug === key.replace(/\s+/g, '-')))) {
       images.push(photoUrl);
       break;
     }
   }
 
-  // 1. Direct Database Asset from item (MongoDB / Local seed)
-  addUrl(item.coverImage);
-  addUrl(item.image);
-  addUrl(item.imageUrl);
-  addUrl(item.photo);
-  if (Array.isArray(item.gallery)) item.gallery.forEach(addUrl);
-  if (Array.isArray(item.images)) item.images.forEach(addUrl);
-  if (Array.isArray(item.photos)) item.photos.forEach(addUrl);
-
-  // Fallback
-  if (images.length === 0) {
-    images.push(getHimalayanFallbackImage(item, index));
+  if (images.length > 0) {
+    return images;
   }
 
-  return images.length > 0 ? images : [fallbackUrl];
+  // 4. Strict Entity-Specific Placeholder (Zero Cross-Destination Fallback)
+  const placeholder = fallbackUrl && fallbackUrl.startsWith('data:image/svg')
+    ? fallbackUrl
+    : getEntityPlaceholderSvg(item);
+
+  return [placeholder];
 }
+
+/**
+ * Handle image load errors gracefully without EVER leaving the entity boundary.
+ * Image #1 fails -> try Image #2 of SAME entity -> otherwise Entity Placeholder.
+ */
+export function handleEntityImageError(e, item, allImages = []) {
+  if (!e || !e.target) return;
+  e.target.onerror = null;
+
+  const currentSrc = e.target.src;
+  if (Array.isArray(allImages) && allImages.length > 1) {
+    const nextImg = allImages.find(img => img && img !== currentSrc && !img.includes('data:image/svg'));
+    if (nextImg) {
+      e.target.src = nextImg;
+      return;
+    }
+  }
+
+  e.target.src = getEntityPlaceholderSvg(item);
+}
+
+/**
+ * Resolve canonical single image URL for an entity.
+ */
+export function resolveEntityImage(item) {
+  if (!item) return getEntityPlaceholderSvg({ name: 'Entity' });
+  const images = getCardImages(item);
+  return images && images.length > 0 ? images[0] : getEntityPlaceholderSvg(item);
+}
+
+/**
+ * Canonical Image Normalizer for frontend entities.
+ * Returns: { url, source, entityId, entityType, verified, isPlaceholder }
+ */
+export function normalizeEntityImage(item) {
+  if (!item) {
+    return {
+      url: getEntityPlaceholderSvg({ name: 'Entity' }),
+      source: 'Entity Placeholder',
+      entityId: null,
+      entityType: null,
+      verified: false,
+      isPlaceholder: true
+    };
+  }
+
+  // If already structured from backend
+  if (item.image && typeof item.image === 'object' && item.image.url) {
+    return item.image;
+  }
+
+  const url = resolveEntityImage(item);
+  const isPlaceholder = typeof url === 'string' && url.startsWith('data:image/svg');
+
+  return {
+    url,
+    source: isPlaceholder ? 'Entity Placeholder' : (item.source || 'Database Record'),
+    entityId: item._id || item.id || item.slug || item.place_id || null,
+    entityType: item.category || item.type || item.itemType || 'destination',
+    verified: !isPlaceholder,
+    isPlaceholder
+  };
+}
+
+export default {
+  getAssetUrl,
+  getEntityPlaceholderSvg,
+  validateImageBelongsToEntity,
+  DESTINATION_NAMED_IMAGES,
+  REAL_DESTINATION_GALLERIES,
+  getRealDestinationPhotos,
+  getHimalayanFallbackImage,
+  getCardImages,
+  handleEntityImageError,
+  getRealVehicleAsset,
+  resolveEntityImage,
+  normalizeEntityImage
+};

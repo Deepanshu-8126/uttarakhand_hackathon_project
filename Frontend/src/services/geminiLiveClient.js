@@ -12,12 +12,24 @@ export class GeminiLiveClient {
     this.pingInterval = null;
 
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const envWs = import.meta.env.VITE_WS_URL || '';
 
-    // Production WebSocket on Render + dev fallback
-    this.candidateHosts = envWs
-      ? [envWs]
-      : ['wss://uttarakhand-hackathon-project.onrender.com/ws/voice', 'ws://localhost:8765/ws/voice'];
+    // Smart priority: localhost dev uses local bridge on port 8765 first; HTTPS/prod uses secure WSS
+    if (envWs) {
+      this.candidateHosts = [envWs];
+    } else if (isLocalhost) {
+      this.candidateHosts = [
+        'ws://localhost:8765/ws/live',
+        'ws://localhost:8765/ws/voice',
+        'wss://uttarakhand-hackathon-project.onrender.com/ws/voice'
+      ];
+    } else {
+      this.candidateHosts = [
+        'wss://uttarakhand-hackathon-project.onrender.com/ws/voice',
+        'ws://localhost:8765/ws/live'
+      ];
+    }
   }
 
   active() {
@@ -44,6 +56,7 @@ export class GeminiLiveClient {
 
     const apiKey = config.apiKey || '';
     const voice = config.voice || 'Aoede';
+    const model = config.model || 'gemini-3.1-flash-live-preview';
     const systemPrompt = config.systemPrompt ||
       'You are Devbhoomi Companion, the expert AI voice travel guide, mountain safety expert, and local Pahadi friend for Uttarakhand, India, powered by Discover Uttarakhand. ' +
       'You have authentic, street-smart knowledge of Garhwal & Kumaon tourism, Char Dham pilgrimages, hidden gems, high-altitude treks, weather, transport routes, and backpacker budgeting. ' +
