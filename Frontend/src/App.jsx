@@ -34,11 +34,9 @@ import TrekkerLivePage from './pages/TrekkerLivePage';
 import VerifiedReviewPage from './pages/VerifiedReviewPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import CheckoutPage from './pages/CheckoutPage';
-import BottomNavBar from './components/navigation/BottomNavBar';
 import AddToTripModal from './components/planner/AddToTripModal';
 import GlobalToast from './components/common/GlobalToast';
 import GlobalAiCopilotLauncher from './components/copilot/GlobalAiCopilotLauncher';
-import SOSFloatingButton from './components/sos/SOSFloatingButton';
 import SOSActiveBanner from './components/sos/SOSActiveBanner';
 import NotFoundPage from './pages/NotFoundPage';
 

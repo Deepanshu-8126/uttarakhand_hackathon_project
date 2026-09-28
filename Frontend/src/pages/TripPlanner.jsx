@@ -66,17 +66,35 @@ const QUICK_SUGGESTIONS = [
 function renderMarkdown(text) {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
-    if (!line.trim()) return <div key={i} className="h-2" />;
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    if (!line.trim()) return <div key={i} className="h-1.5" />;
+
+    // Markdown Headers (### or ##)
+    if (line.startsWith('### ') || line.startsWith('## ')) {
+      const headerText = line.replace(/^#{2,3}\s+/, '');
+      return (
+        <h4 key={i} className="text-sm font-bold text-stone-900 mt-2 mb-1 flex items-center gap-1.5 border-b border-stone-100 pb-1">
+          {headerText}
+        </h4>
+      );
+    }
+
+    // Bullet items (- or *)
+    const isBullet = line.trim().startsWith('- ') || line.trim().startsWith('* ');
+    const rawContent = isBullet ? line.trim().replace(/^[-*]\s+/, '') : line;
+    const parts = rawContent.split(/(\*\*[^*]+\*\*)/g);
+
     return (
-      <p key={i} className="mb-1 leading-relaxed text-sm text-stone-800">
-        {parts.map((part, j) =>
-          part.startsWith('**') && part.endsWith('**') ? (
-            <strong key={j} className="font-bold text-stone-900">{part.replace(/\*\*/g, '')}</strong>
-          ) : (
-            part
-          )
-        )}
+      <p key={i} className={`mb-1 leading-relaxed text-sm text-stone-800 ${isBullet ? 'flex items-start gap-1.5 pl-1.5' : ''}`}>
+        {isBullet && <span className="text-emerald-600 font-bold shrink-0 mt-0.5">•</span>}
+        <span className="flex-1">
+          {parts.map((part, j) =>
+            part.startsWith('**') && part.endsWith('**') ? (
+              <strong key={j} className="font-bold text-stone-900">{part.replace(/\*\*/g, '')}</strong>
+            ) : (
+              part
+            )
+          )}
+        </span>
       </p>
     );
   });
@@ -390,12 +408,25 @@ export default function TripPlanner() {
             if (raw === '[DONE]') break;
             try {
               const parsed = JSON.parse(raw);
-              if (parsed.token) {
-                fullContent += parsed.token;
+              const chunk = parsed.token || parsed.delta || parsed.text || '';
+              if (chunk) {
+                fullContent += chunk;
                 setMessages(prev => prev.map(m => m.id === streamId ? { ...m, content: fullContent } : m));
               }
-              if (parsed.agent) agentName = parsed.agent;
-              if (parsed.suggestions) suggestions = parsed.suggestions;
+              if (parsed.message && typeof parsed.message === 'string') {
+                fullContent = parsed.message;
+                setMessages(prev => prev.map(m => m.id === streamId ? { ...m, content: fullContent } : m));
+              }
+              if (parsed.agent) {
+                agentName = parsed.agent;
+                setMessages(prev => prev.map(m => m.id === streamId ? { ...m, agent: agentName } : m));
+              }
+              if (parsed.thought && typeof parsed.thought === 'string') {
+                setMessages(prev => prev.map(m => m.id === streamId ? { ...m, thought: parsed.thought } : m));
+              }
+              if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+                suggestions = parsed.suggestions;
+              }
               if (parsed.entities) mergeEntities(parsed.entities);
               if (parsed.prefill) mergeEntities(parsed.prefill);
               if (parsed.data?.entities) mergeEntities(parsed.data.entities);
@@ -413,18 +444,21 @@ export default function TripPlanner() {
 
       mergeEntities(fullContent);
       const finalSuggestions = suggestions.length > 0 ? suggestions : inferSuggestions(tripBrief);
+      const effectiveContent = fullContent.trim() || buildFallbackResponse(clean, tripBrief).content;
       setMessages(prev => prev.map(m =>
-        m.id === streamId ? { ...m, content: fullContent, isStreaming: false, agent: agentName, suggestions: finalSuggestions } : m
+        m.id === streamId ? { ...m, content: effectiveContent, isStreaming: false, agent: agentName, suggestions: finalSuggestions } : m
       ));
     } catch (err) {
       if (err.name === 'AbortError') {
         setMessages(prev => prev.filter(m => m.id !== streamId));
       } else {
         const fallback = buildFallbackResponse(clean, tripBrief);
+        const resolvedContent = fullContent.trim() || fallback.content;
+        const resolvedSuggestions = suggestions.length > 0 ? suggestions : fallback.suggestions;
         setMessages(prev => prev.map(m =>
-          m.id === streamId ? { ...m, content: fallback.content, isStreaming: false, suggestions: fallback.suggestions } : m
+          m.id === streamId ? { ...m, content: resolvedContent, isStreaming: false, agent: agentName || 'Trip Concierge', suggestions: resolvedSuggestions } : m
         ));
-        mergeEntities(clean);
+        mergeEntities(resolvedContent);
       }
     } finally {
       setIsChatLoading(false);
@@ -688,7 +722,7 @@ export default function TripPlanner() {
                         />
                       ))}
                     </span>
-                    <span>Thinking...</span>
+                    <span className="truncate max-w-xs sm:max-w-md">{messages[messages.length - 1]?.thought || 'Thinking...'}</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -812,16 +846,20 @@ function ChatMessage({ msg, onSuggestion }) {
         </div>
         {msg.suggestions?.length > 0 && !msg.isStreaming && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {msg.suggestions.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onSuggestion(s)}
-                className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-all whitespace-nowrap"
-              >
-                {s}
-              </button>
-            ))}
+            {msg.suggestions.map((s, i) => {
+              const label = typeof s === 'string' ? s : (s.label || s.query || String(s));
+              const queryText = typeof s === 'string' ? s : (s.query || s.label || String(s));
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onSuggestion(queryText)}
+                  className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-all whitespace-nowrap"
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

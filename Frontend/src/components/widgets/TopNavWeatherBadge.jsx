@@ -56,7 +56,7 @@ export default function TopNavWeatherBadge({ isDark = false, onOpenLocationModal
             ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200'
             : 'border border-stone-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-stone-800'
         }`}
-        title="Live Weather & Location Details"
+        title={`Live Weather & Location Details in ${displayCity}: ${temp} (${condition})`}
       >
         {/* Weather Icon */}
         <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100/70 text-emerald-800'}`}>

@@ -887,6 +887,31 @@ class ApiService {
         'confidence': 'verified',
         'suggestions': ['Rent Himalayan', 'Rent Activa', 'View Rates'],
       };
+    } else if (lower.contains('homestay') || lower.contains('stay') || lower.contains('hotel') || lower.contains('dharamshala') || lower.contains('camp')) {
+      return {
+        'text':
+            '### 🏡 Verified Pahadi Homestays Under ₹2,000/Night\n\n'
+            '**Ganga Darshan Riverside Pahadi Homestay** (Tapovan, Rishikesh)\n'
+            '- **Tariff**: **₹1,100 - ₹1,800/night**\n'
+            '- **Amenities**: Ganga river view, rooftop yoga, organic pahadi breakfast, Wi-Fi\n'
+            '- **Host Contact**: `+91 98371 44520`\n\n'
+            '**Shivpuri Himalayan Eco Retreat & Tents** (Shivpuri, Rishikesh)\n'
+            '- **Tariff**: **₹900 - ₹1,600/night**\n'
+            '- **Amenities**: Riverside camping, beach volleyball, bonfire & stargazing\n'
+            '- **Host Contact**: `+91 94129 88310`\n\n'
+            '**Chopta Meadow View Pahari Homestay** (Sari Village / Chopta Base)\n'
+            '- **Tariff**: **₹1,200 - ₹1,800/night**\n'
+            '- **Amenities**: Organic pahari meals, bonfire, mountain view, heated blankets\n'
+            '- **Host Contact**: `+91 94120 44551`\n\n'
+            '**Tungnath Eco Homestay & Camps** (Baniyakund / Chopta)\n'
+            '- **Tariff**: **₹1,300 - ₹1,950/night**\n'
+            '- **Amenities**: Alpine meadow view, trek guide assistance, traditional chulha food\n'
+            '- **Host Contact**: `+91 97580 43921`\n\n'
+            '**Pahadi Hospitality Note**: All homestays are host-verified with hot water, authentic local meals, and direct host contacts under ₹2,000.',
+        'toolsUsed': ['searchStays', 'verifyHomestay'],
+        'confidence': 'verified',
+        'suggestions': ['Book Homestay', 'Chopta Weather', 'Rent Bike in Rishikesh', 'Trek Guide'],
+      };
     }
 
     return {

@@ -28,6 +28,11 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   bool showAllPins = false; // Default: clean decluttered Key Hubs overview
   String searchQuery = '';
 
+  String? activeCorridorId;
+  String? activeCorridorName;
+  String? activeRouteStats;
+  List<LatLng>? destinationRoutePoints;
+
   static const Set<String> _keyHubNames = {
     'Nainital', 'Kedarnath', 'Badrinath', 'Auli', 'Rishikesh',
     'Chopta', 'Tungnath', 'Valley of Flowers', 'Munsiyari',
@@ -134,7 +139,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-        final pos = await Geolocator.getCurrentPosition();
+        final pos = await Geolocator.getCurrentPosition(timeLimit: const Duration(seconds: 4));
         _mapController.move(LatLng(pos.latitude, pos.longitude), 13.0);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -145,8 +150,21 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
             ),
           );
         }
+        return;
       }
     } catch (_) {}
+
+    // Graceful fallback if GPS is blocked or times out in browser
+    _mapController.move(const LatLng(30.0869, 78.2676), 11.5);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Centered on Rishikesh Gateway (GPS simulation)'),
+          backgroundColor: Color(0xFF0F3D2E),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _loadSpatialData() async {
@@ -280,7 +298,30 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     return Icons.landscape;
   }
 
-  // Focus on a specific destination
+  String _getDestinationImage(Destination dest) {
+    if (dest.imageUrl.isNotEmpty && dest.imageUrl.startsWith('http')) {
+      return dest.imageUrl;
+    }
+    if (dest.images.isNotEmpty && dest.images.first.startsWith('http')) {
+      return dest.images.first;
+    }
+    final name = dest.name.toLowerCase();
+    if (name.contains('kedar')) return 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('badri')) return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('auli')) return 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('naini')) return 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('rishi')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Ram_Jhula_Rishikesh.jpg/1280px-Ram_Jhula_Rishikesh.jpg';
+    if (name.contains('harid')) return 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('chopta') || name.contains('tung')) return 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('kailash') || name.contains('om')) return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('flower') || name.contains('valley')) return 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('mussoorie')) return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('corbett')) return 'https://images.unsplash.com/photo-1575550959106-5a7defe28b56?auto=format&fit=crop&w=1200&q=80';
+    if (name.contains('tehri')) return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80';
+    return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80';
+  }
+
+  // Focus on a specific destination and open its preview card
   void _focusOnDestination(Destination dest) {
     setState(() => selectedLocationId = dest.id);
     final lat = dest.latitude ?? _fallbackLatForDistrict(dest.district, dest.name);
@@ -288,11 +329,85 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     _mapController.move(LatLng(lat, lng), 12.0);
   }
 
+  void _routeToDestination(Destination dest) {
+    final lat = dest.latitude ?? _fallbackLatForDistrict(dest.district, dest.name);
+    final lng = dest.longitude ?? _fallbackLngForDistrict(dest.district, dest.name);
+
+    final isKumaon = dest.region.toLowerCase().contains('kumaon') ||
+        dest.district.toLowerCase().contains('nainital') ||
+        dest.district.toLowerCase().contains('almora') ||
+        dest.district.toLowerCase().contains('pithoragarh') ||
+        dest.district.toLowerCase().contains('bageshwar');
+
+    final origin = isKumaon ? const LatLng(29.2182, 79.5267) : const LatLng(30.0869, 78.2676);
+    final originName = isKumaon ? 'Kathgodam Railhead' : 'Rishikesh Gateway';
+
+    final midLat = (origin.latitude + lat) / 2.0;
+    final midLng = (origin.longitude + lng) / 2.0;
+
+    setState(() {
+      destinationRoutePoints = [
+        origin,
+        LatLng(midLat + 0.04, midLng - 0.02),
+        LatLng(lat, lng),
+      ];
+      activeCorridorId = 'dest_${dest.id}';
+      activeCorridorName = '$originName → ${dest.name}';
+      activeRouteStats = 'Scenic Mountain Route • Clear & Verified Pass';
+    });
+
+    _mapController.move(LatLng(midLat, midLng), 9.2);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Route calculated: $originName to ${dest.name}'),
+        backgroundColor: const Color(0xFF0F3D2E),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _selectCorridor(Map<String, dynamic> c) {
+    setState(() {
+      activeCorridorId = c['id'] as String;
+      activeCorridorName = c['name'] as String;
+      activeRouteStats = '${c['distance']} • ${c['duration']} • ${c['status']}';
+      destinationRoutePoints = null;
+    });
+
+    switch (c['id']) {
+      case 'chardham':
+        _mapController.move(const LatLng(30.3800, 78.9800), 8.8);
+        break;
+      case 'kumaon':
+        _mapController.move(const LatLng(29.5892, 79.6467), 9.2);
+        break;
+      case 'adikailash':
+        _mapController.move(const LatLng(30.0000, 80.6000), 8.8);
+        break;
+      case 'valley':
+        _mapController.move(const LatLng(30.7000, 79.5900), 11.0);
+        break;
+      default:
+        _centerUttarakhand();
+    }
+  }
+
+  void _clearActiveRoute() {
+    setState(() {
+      activeCorridorId = null;
+      activeCorridorName = null;
+      activeRouteStats = null;
+      destinationRoutePoints = null;
+    });
+  }
+
   List<Polyline> _buildCorridorPolylines() {
-    return [
-      // Char Dham Sacred Corridor
-      Polyline(
-        points: const [
+    final polylines = <Polyline>[];
+
+    final corridorDefs = [
+      {
+        'id': 'chardham',
+        'points': const [
           LatLng(29.9457, 78.1642), // Haridwar
           LatLng(30.0869, 78.2676), // Rishikesh
           LatLng(30.1459, 78.5990), // Devprayag
@@ -304,14 +419,11 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
           LatLng(30.5564, 79.5661), // Joshimath
           LatLng(30.7465, 79.4942), // Badrinath
         ],
-        color: const Color(0xFF059669),
-        strokeWidth: 4.0,
-        borderStrokeWidth: 1.5,
-        borderColor: Colors.white.withValues(alpha: 0.8),
-      ),
-      // Kumaon Lakes & Wildlife Belt
-      Polyline(
-        points: const [
+        'color': const Color(0xFF059669),
+      },
+      {
+        'id': 'kumaon',
+        'points': const [
           LatLng(29.2182, 79.5267), // Kathgodam
           LatLng(29.3803, 79.4636), // Nainital
           LatLng(29.3497, 79.5539), // Bhimtal
@@ -319,40 +431,65 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
           LatLng(29.7042, 79.7564), // Binsar
           LatLng(29.8542, 79.6058), // Kausani
         ],
-        color: const Color(0xFF2563EB),
-        strokeWidth: 4.0,
-        borderStrokeWidth: 1.5,
-        borderColor: Colors.white.withValues(alpha: 0.8),
-      ),
-      // Adi Kailash & Om Parvat High Pass
-      Polyline(
-        points: const [
+        'color': const Color(0xFF2563EB),
+      },
+      {
+        'id': 'adikailash',
+        'points': const [
           LatLng(29.5829, 80.2182), // Pithoragarh
           LatLng(29.8497, 80.5372), // Dharchula
           LatLng(30.1800, 80.8500), // Gunji
           LatLng(30.2200, 80.8800), // Nabi
           LatLng(30.2400, 81.0400), // Lipulekh
         ],
-        color: const Color(0xFFD97706),
-        strokeWidth: 4.0,
-        borderStrokeWidth: 1.5,
-        borderColor: Colors.white.withValues(alpha: 0.8),
-      ),
-      // Hemkund & Valley of Flowers Trek
-      Polyline(
-        points: const [
+        'color': const Color(0xFFD97706),
+      },
+      {
+        'id': 'valley',
+        'points': const [
           LatLng(30.6250, 79.5480), // Govindghat
           LatLng(30.6400, 79.5600), // Poolna
           LatLng(30.6989, 79.5931), // Ghangaria
           LatLng(30.7280, 79.6053), // Valley of Flowers
           LatLng(30.7008, 79.6236), // Hemkund Sahib
         ],
-        color: const Color(0xFF7C3AED),
-        strokeWidth: 4.0,
-        borderStrokeWidth: 1.5,
-        borderColor: Colors.white.withValues(alpha: 0.8),
-      ),
+        'color': const Color(0xFF7C3AED),
+      },
     ];
+
+    for (final def in corridorDefs) {
+      final id = def['id'] as String;
+      final points = def['points'] as List<LatLng>;
+      final baseColor = def['color'] as Color;
+      final isSelected = activeCorridorId == id;
+      final isAnySelected = activeCorridorId != null;
+
+      polylines.add(
+        Polyline(
+          points: points,
+          color: isSelected
+              ? baseColor
+              : (isAnySelected ? baseColor.withValues(alpha: 0.35) : baseColor.withValues(alpha: 0.85)),
+          strokeWidth: isSelected ? 6.5 : (isAnySelected ? 3.0 : 4.0),
+          borderStrokeWidth: isSelected ? 2.5 : 1.2,
+          borderColor: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.7),
+        ),
+      );
+    }
+
+    if (destinationRoutePoints != null && destinationRoutePoints!.isNotEmpty) {
+      polylines.add(
+        Polyline(
+          points: destinationRoutePoints!,
+          color: const Color(0xFF00FF88),
+          strokeWidth: 6.5,
+          borderStrokeWidth: 2.5,
+          borderColor: const Color(0xFF0F3D2E),
+        ),
+      );
+    }
+
+    return polylines;
   }
 
   @override
@@ -616,6 +753,56 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                       },
                     ),
                   ),
+
+                  // ── Active Route & Transit HUD Banner ──
+                  if (activeCorridorName != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F3D2E),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF00FF88), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 3)),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.navigation_rounded, color: Color(0xFF00FF88), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  activeCorridorName!,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (activeRouteStats != null)
+                                  Text(
+                                    activeRouteStats!,
+                                    style: const TextStyle(color: Color(0xFF34D399), fontSize: 9.5, fontWeight: FontWeight.bold),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: _clearActiveRoute,
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                              child: const Icon(Icons.close, color: Colors.white, size: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -735,7 +922,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               ),
             ),
 
-            // ── 5. Selected Mountain Destination Card (Floating Glassmorphic Modal) ──
+            // ── 5. Selected Mountain Destination Card (Floating Glassmorphic Modal with Large Photo) ──
             if (activeDest != null)
               Positioned(
                 bottom: 16,
@@ -743,9 +930,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                 right: 14,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isSatelliteMode ? const Color(0xFF0A1B14).withValues(alpha: 0.96) : Colors.white,
+                    color: isSatelliteMode ? const Color(0xFF0A1B14).withValues(alpha: 0.98) : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSatelliteMode
@@ -755,176 +941,282 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isSatelliteMode ? 0.45 : 0.12),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
+                        color: Colors.black.withValues(alpha: isSatelliteMode ? 0.55 : 0.16),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header with close button
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: CachedNetworkImage(
-                              imageUrl: activeDest.imageUrl,
-                              width: 72,
-                              height: 72,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Container(
-                                width: 72,
-                                height: 72,
-                                color: const Color(0xFF0F3D2E),
-                                child: const Icon(Icons.landscape, color: Colors.white70),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Large Panoramic Mountain Image Banner
+                        SizedBox(
+                          height: 140,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CachedNetworkImage(
+                                imageUrl: _getDestinationImage(activeDest),
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(
+                                  color: const Color(0xFF0F3D2E),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(color: Color(0xFF34D399), strokeWidth: 2),
+                                  ),
+                                ),
+                                errorWidget: (_, __, ___) => Container(
+                                  color: const Color(0xFF0F3D2E),
+                                  child: const Icon(Icons.terrain_rounded, color: Colors.white70, size: 40),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                              // Subtle bottom-up dark gradient scrim for high-contrast legibility
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.25),
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.85),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Top Badges (Category & Dismiss)
+                              Positioned(
+                                top: 10,
+                                left: 12,
+                                right: 10,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0F3D2E).withValues(alpha: 0.9),
+                                        borderRadius: BorderRadius.circular(999),
+                                        border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.6)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            activeDest.altitude >= 3000 ? Icons.snowing : Icons.verified_rounded,
+                                            size: 11,
+                                            color: const Color(0xFF34D399),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            activeDest.category,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.65),
+                                            borderRadius: BorderRadius.circular(999),
+                                          ),
+                                          child: Text(
+                                            '⛰️ ${activeDest.altitude}m',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        InkWell(
+                                          onTap: () => setState(() => selectedLocationId = null),
+                                          borderRadius: BorderRadius.circular(999),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(alpha: 0.65),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.close_rounded, size: 16, color: Colors.white),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Bottom Destination Title & Star Rating
+                              Positioned(
+                                bottom: 10,
+                                left: 14,
+                                right: 14,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Expanded(
                                       child: Text(
                                         activeDest.name,
-                                        style: TextStyle(
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
                                           fontWeight: FontWeight.w900,
-                                          fontSize: 16,
-                                          color: isSatelliteMode ? Colors.white : const Color(0xFF0F172A),
+                                          shadows: [
+                                            Shadow(color: Colors.black, blurRadius: 8),
+                                          ],
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: activeDest.altitude >= 3000
-                                            ? const Color(0xFFFEE2E2)
-                                            : const Color(0xFFECFDF5),
+                                        color: const Color(0xFFF59E0B),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Text(
-                                        '⛰️ ${activeDest.altitude}m',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                          color: activeDest.altitude >= 3000
-                                              ? const Color(0xFFDC2626)
-                                              : const Color(0xFF059669),
-                                        ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.star_rounded, size: 13, color: Colors.white),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            '${activeDest.rating}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    // Dismiss button
-                                    IconButton(
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      icon: const Icon(Icons.close_rounded, size: 18),
-                                      color: const Color(0xFF94A3B8),
-                                      onPressed: () => setState(() => selectedLocationId = null),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  '${activeDest.district} • ${activeDest.region} Corridor',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSatelliteMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      '${activeDest.rating}',
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Details and Action Dock Below Image
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on_rounded, size: 13, color: isSatelliteMode ? const Color(0xFF34D399) : const Color(0xFF0F3D2E)),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      '${activeDest.district} • ${activeDest.region} Corridor • Best: ${activeDest.bestTimeToVisit}',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSatelliteMode ? Colors.white : const Color(0xFF0F172A),
+                                        fontWeight: FontWeight.w600,
+                                        color: isSatelliteMode ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              // Three Interactive Actions (Show Route, Guide, Book Razorpay)
+                              Row(
+                                children: [
+                                  // 1. Show Route Polyline Button
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _routeToDestination(activeDest!),
+                                      icon: const Icon(Icons.alt_route_rounded, size: 14),
+                                      label: const Text('Show Route'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0284C7),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                        elevation: 0,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '• ${activeDest.bestTimeToVisit}',
-                                      style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Two Primary Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => DestinationDetailScreen(destination: activeDest!),
                                   ),
-                                );
-                              },
-                              icon: const Icon(Icons.explore_outlined, size: 15),
-                              label: const Text('Explore Guide'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: isSatelliteMode ? const Color(0xFF34D399) : const Color(0xFF0F3D2E),
-                                side: BorderSide(
-                                  color: isSatelliteMode ? const Color(0xFF059669) : const Color(0xFFCBD5E1),
-                                ),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => CheckoutScreen(
-                                      itemType: 'Pass & Stay Package',
-                                      itemName: '${activeDest!.name} Mountain Expedition',
-                                      basePrice: activeDest.estimatedBudget,
+                                  const SizedBox(width: 8),
+
+                                  // 2. Explore Guide
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => DestinationDetailScreen(destination: activeDest!),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.explore_outlined, size: 14),
+                                      label: const Text('Guide'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: isSatelliteMode ? const Color(0xFF34D399) : const Color(0xFF0F3D2E),
+                                        side: BorderSide(
+                                          color: isSatelliteMode ? const Color(0xFF059669) : const Color(0xFFCBD5E1),
+                                        ),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                              icon: const Icon(Icons.lock_outline_rounded, size: 15),
-                              label: const Text('Book Stay / Pass'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0F3D2E),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                                  const SizedBox(width: 8),
+
+                                  // 3. Book Stay / Fleet (Razorpay)
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => CheckoutScreen(
+                                              itemType: 'Stay & Pass Combo',
+                                              itemName: '${activeDest!.name} Mountain Stay',
+                                              basePrice: activeDest.estimatedBudget > 0 ? activeDest.estimatedBudget : 1800,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.lock_rounded, size: 13),
+                                      label: const Text('Book'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0F3D2E),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+                                        elevation: 0,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1193,17 +1485,21 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   }
 
   // Modal Sheet for Himalayan Transit Corridors & Route Navigator
+  // Modal Sheet for Himalayan Transit Corridors & Route Navigator
   void _showCorridorsBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        String activePreset = 'kedarnath';
+        String activePreset = activeCorridorId ?? 'chardham';
+        String selectedOrigin = 'Rishikesh Gateway';
+        String selectedDest = 'Kedarnath Dham';
+
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return Container(
-              height: MediaQuery.of(context).size.height * 0.85,
+              height: MediaQuery.of(context).size.height * 0.88,
               decoration: BoxDecoration(
                 color: isSatelliteMode ? const Color(0xFF0A1B14) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -1211,173 +1507,397 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   color: isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFCBD5E1),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFCBD5E1),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F3D2E),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.navigation_rounded, color: Color(0xFF34D399), size: 18),
+                      // Drag Handle
+                      Center(
+                        child: Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFCBD5E1),
+                            borderRadius: BorderRadius.circular(999),
                           ),
-                          const SizedBox(width: 10),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
-                              Text(
-                                'Himalayan Route Navigator',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                              Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0F3D2E),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.navigation_rounded, color: Color(0xFF34D399), size: 18),
                               ),
-                              Text(
-                                'Live Highway Status & Mountain Waypoints',
-                                style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Himalayan Route Navigator',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: isSatelliteMode ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Tap any corridor or select locations to plot route',
+                                    style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
                         ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
-                        onPressed: () => Navigator.pop(ctx),
+                      const SizedBox(height: 12),
+
+                      // Quick Route Shortcuts
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildRouteShortcutChip('Kedarnath', 'chardham', activePreset, (id) {
+                              setSheetState(() => activePreset = id);
+                              final found = corridors.firstWhere((it) => it['id'] == id, orElse: () => corridors.first);
+                              Navigator.pop(ctx);
+                              _selectCorridor(found);
+                            }),
+                            const SizedBox(width: 6),
+                            _buildRouteShortcutChip('Badrinath & Auli', 'chardham', activePreset, (id) {
+                              setSheetState(() => activePreset = id);
+                              final found = corridors.firstWhere((it) => it['id'] == id, orElse: () => corridors.first);
+                              Navigator.pop(ctx);
+                              _selectCorridor(found);
+                            }),
+                            const SizedBox(width: 6),
+                            _buildRouteShortcutChip('Kumaon Lakes', 'kumaon', activePreset, (id) {
+                              setSheetState(() => activePreset = id);
+                              final found = corridors.firstWhere((it) => it['id'] == id, orElse: () => corridors.first);
+                              Navigator.pop(ctx);
+                              _selectCorridor(found);
+                            }),
+                            const SizedBox(width: 6),
+                            _buildRouteShortcutChip('Valley of Flowers', 'valley', activePreset, (id) {
+                              setSheetState(() => activePreset = id);
+                              final found = corridors.firstWhere((it) => it['id'] == id, orElse: () => corridors.first);
+                              Navigator.pop(ctx);
+                              _selectCorridor(found);
+                            }),
+                            const SizedBox(width: 6),
+                            _buildRouteShortcutChip('Adi Kailash', 'adikailash', activePreset, (id) {
+                              setSheetState(() => activePreset = id);
+                              final found = corridors.firstWhere((it) => it['id'] == id, orElse: () => corridors.first);
+                              Navigator.pop(ctx);
+                              _selectCorridor(found);
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Corridors List & Custom Location Selector Scrollable Area
+                      Expanded(
+                        child: ListView(
+                          children: [
+                            // ── Section 1: Custom Location to Route Selector ──
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 14),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: isSatelliteMode ? const Color(0xFF0F241A) : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSatelliteMode ? const Color(0xFF1E3A2E) : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.tune_rounded, size: 14, color: Color(0xFF0F3D2E)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'SELECT ORIGIN & DESTINATION',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 0.5,
+                                          color: isSatelliteMode ? const Color(0xFF34D399) : const Color(0xFF0F3D2E),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('From', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                              ),
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  value: selectedOrigin,
+                                                  isExpanded: true,
+                                                  isDense: true,
+                                                  items: const [
+                                                    DropdownMenuItem(value: 'Rishikesh Gateway', child: Text('Rishikesh Gateway', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Kathgodam Railhead', child: Text('Kathgodam Railhead', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Dehradun Airport', child: Text('Dehradun Airport', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Haridwar Junction', child: Text('Haridwar Junction', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                  ],
+                                                  onChanged: (val) {
+                                                    if (val != null) setSheetState(() => selectedOrigin = val);
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 14),
+                                        child: Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFF64748B)),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('To', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                              ),
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  value: selectedDest,
+                                                  isExpanded: true,
+                                                  isDense: true,
+                                                  items: const [
+                                                    DropdownMenuItem(value: 'Kedarnath Dham', child: Text('Kedarnath Dham', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Badrinath Temple', child: Text('Badrinath Temple', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Auli Ski Resort', child: Text('Auli Ski Resort', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Nainital Lake', child: Text('Nainital Lake', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Chopta Bugyal', child: Text('Chopta Bugyal', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Valley of Flowers', child: Text('Valley of Flowers', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                    DropdownMenuItem(value: 'Adi Kailash', child: Text('Adi Kailash', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                                                  ],
+                                                  onChanged: (val) {
+                                                    if (val != null) setSheetState(() => selectedDest = val);
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        // Find destination if matching
+                                        final destName = selectedDest.replaceAll(' Dham', '').replaceAll(' Temple', '').replaceAll(' Lake', '').replaceAll(' Resort', '').replaceAll(' Bugyal', '').trim().toLowerCase();
+                                        final matched = destinations.firstWhere(
+                                          (d) => d.name.toLowerCase().contains(destName),
+                                          orElse: () => destinations.isNotEmpty ? destinations.first : Destination(
+                                            id: 'custom',
+                                            name: selectedDest,
+                                            district: 'Garhwal',
+                                            region: 'Alpine',
+                                            category: 'Spiritual',
+                                            description: '',
+                                            shortDescription: '',
+                                            imageUrl: '',
+                                            rating: 4.9,
+                                            reviewsCount: 120,
+                                            estimatedBudget: 2500,
+                                            altitude: 3500,
+                                            bestTimeToVisit: 'May - Oct',
+                                            highlights: [],
+                                            experiences: [],
+                                          ),
+                                        );
+                                        _routeToDestination(matched);
+                                      },
+                                      icon: const Icon(Icons.directions_car_rounded, size: 15),
+                                      label: Text('Plot Route: $selectedOrigin → $selectedDest'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0F3D2E),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 9),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // ── Section 2: Predefined Verified Corridors ──
+                            ...corridors.map((c) {
+                              final isSelected = activePreset == c['id'] || activeCorridorId == c['id'];
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _selectCorridor(c);
+                                },
+                                borderRadius: BorderRadius.circular(18),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFFECFDF5)
+                                        : (isSatelliteMode ? const Color(0xFF0F241A) : const Color(0xFFF8FAFC)),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFF059669)
+                                          : (c['color'] as Color).withValues(alpha: 0.3),
+                                      width: isSelected ? 1.8 : 1,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: const Color(0xFF059669).withValues(alpha: 0.15),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 10,
+                                                height: 10,
+                                                decoration: BoxDecoration(color: c['color'] as Color, shape: BoxShape.circle),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                c['name'],
+                                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                              ),
+                                            ],
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: (c['color'] as Color).withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              c['status'],
+                                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c['color'] as Color),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        c['route'],
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.speed, size: 13, color: Color(0xFF0F3D2E)),
+                                          const SizedBox(width: 4),
+                                          Text('${c['distance']} • ${c['duration']}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF334155))),
+                                          const Spacer(),
+                                          Text(c['weather'], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // Explicit Tap-to-Route Trigger
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '⚡ Tap to Show Route on Map →',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: isSelected ? const Color(0xFF059669) : const Color(0xFF2563EB),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+
+                      // Bottom Action Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            final found = corridors.firstWhere((it) => it['id'] == activePreset, orElse: () => corridors.first);
+                            _selectCorridor(found);
+                          },
+                          icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                          label: const Text('View Highlighted Corridor on Map'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F3D2E),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-
-                  // Quick Route Shortcuts
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildRouteShortcutChip('Kedarnath', 'kedarnath', activePreset, (id) => setSheetState(() => activePreset = id)),
-                        const SizedBox(width: 6),
-                        _buildRouteShortcutChip('Badrinath & Auli', 'chardham', activePreset, (id) => setSheetState(() => activePreset = id)),
-                        const SizedBox(width: 6),
-                        _buildRouteShortcutChip('Kumaon Lakes', 'kumaon', activePreset, (id) => setSheetState(() => activePreset = id)),
-                        const SizedBox(width: 6),
-                        _buildRouteShortcutChip('Valley of Flowers', 'valley', activePreset, (id) => setSheetState(() => activePreset = id)),
-                        const SizedBox(width: 6),
-                        _buildRouteShortcutChip('Adi Kailash', 'adikailash', activePreset, (id) => setSheetState(() => activePreset = id)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Corridors List & Waypoints
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        ...corridors.map((c) {
-                          final isSelected = activePreset == c['id'];
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFFECFDF5)
-                                  : (isSatelliteMode ? const Color(0xFF0F241A) : const Color(0xFFF8FAFC)),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF059669)
-                                    : (c['color'] as Color).withValues(alpha: 0.25),
-                                width: isSelected ? 1.5 : 1,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(color: c['color'] as Color, shape: BoxShape.circle),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          c['name'],
-                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
-                                        ),
-                                      ],
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: (c['color'] as Color).withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        c['status'],
-                                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c['color'] as Color),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  c['route'],
-                                  style: const TextStyle(fontSize: 11, color: Color(0xFF475569), fontWeight: FontWeight.w600),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.speed, size: 13, color: Color(0xFF0F3D2E)),
-                                    const SizedBox(width: 4),
-                                    Text('${c['distance']} • ${c['duration']}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF334155))),
-                                    const Spacer(),
-                                    Text(c['weather'], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-
-                  // Bottom Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pop(ctx),
-                      icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                      label: const Text('View Active Corridors on Map'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F3D2E),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             );
           },

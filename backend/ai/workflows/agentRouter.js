@@ -10,6 +10,7 @@ import { BudgetAgent } from "../agents/BudgetAgent.js";
 import { SafetyAgent } from "../agents/SafetyAgent.js";
 import { RentalAgent } from "../agents/RentalAgent.js";
 import { FestivalAgent } from "../agents/FestivalAgent.js";
+import { StayAgent } from "../agents/StayAgent.js";
 import { GroqProvider } from "../../services/ai/providers/GroqProvider.js";
 import { GeminiProvider } from "../../services/ai/providers/GeminiProvider.js";
 
@@ -19,7 +20,8 @@ const AGENT_MAP = {
   BudgetAgent,
   SafetyAgent,
   RentalAgent,
-  FestivalAgent
+  FestivalAgent,
+  StayAgent
 };
 
 export class AgentRouter {
@@ -29,27 +31,31 @@ export class AgentRouter {
   static routeIntent(queryText) {
     const q = String(queryText || "").toLowerCase();
 
-    // 1. Safety & Altitude
+    // 1. Homestays & Stays
+    if (/stay|homestay|hotel|resort|dharamshala|ashram|room|lodge|tent|camp|hostel|cottage|night/i.test(q)) {
+      return StayAgent;
+    }
+    // 2. Safety & Altitude
     if (/ams|altitude|oxygen|height|safe|danger|doctor|hospital|headache|breathe|sickness|emergency|sos|police|sdrf/i.test(q)) {
       return SafetyAgent;
     }
-    // 2. Budget & Costs
+    // 3. Budget & Costs
     if (/budget|cost|price|kharcha|rupaye|rate|how much|inexpensive|cheap|luxury|tariff|expense/i.test(q)) {
       return BudgetAgent;
     }
-    // 3. Rentals & Vehicles
+    // 4. Rentals & Vehicles
     if (/bike|rental|rent|car|scooty|enfield|himalayan|thar|taxi|cab|driver|jeep|gear/i.test(q)) {
       return RentalAgent;
     }
-    // 4. Festivals & Culture
+    // 5. Festivals & Culture
     if (/festival|phool dei|harela|ganga dussehra|mela|tradition|ritual|culture|food|cuisine|pahari/i.test(q)) {
       return FestivalAgent;
     }
-    // 5. Itinerary & Trip Planning
+    // 6. Itinerary & Trip Planning
     if (/plan|itinerary|days|schedule|trip|route|tour|guide|day 1|day 2|acclimatiz/i.test(q)) {
       return PlannerAgent;
     }
-    // 6. Default to Destination Exploration
+    // 7. Default to Destination Exploration
     return DestinationAgent;
   }
 
@@ -126,7 +132,7 @@ export class AgentRouter {
     if (res && !res.writableEnded) {
       const tokens = synthesizedText.split(/(?<=\s)/);
       for (const token of tokens) {
-        emitEvent("token", { delta: token });
+        emitEvent("token", { delta: token, token: token, text: token });
       }
     }
 
@@ -187,6 +193,21 @@ ${itin.dailyPlan.map(d => `**Day ${d.day}: ${d.title}** (${d.altitude})\n- *Trav
 - **Food**: ${b.breakdown.food}
 - **Activities & Permits**: ${b.breakdown.permitsAndActivities}
 - **Emergency Mountain Buffer**: ${b.breakdown.emergencyMountainBuffer}`;
+    }
+
+    if (agentName === "StayAgent") {
+      const stays = agentResult.data?.stays || [];
+      if (stays.length > 0) {
+        return `### 🏡 Verified Pahadi Homestays & Mountain Stays
+Here are top-rated, host-verified mountain homestays matching your request:
+
+${stays.slice(0, 4).map(s => `**${s.name}** (${s.location}, ${s.district})
+- **Tariff**: **${s.pricePerNight}/night**
+- **Amenities**: ${s.amenities.join(", ")}
+- **Host Contact**: \`${s.contact}\``).join("\n\n")}
+
+**Pahadi Hospitality Note**: All homestays serve fresh organic Kumaoni / Garhwali food (Mandua roti, Pahadi dal) and are verified by Devbhoomi ground coordinators.`;
+      }
     }
 
     return `### 🌲 Devbhoomi Guide

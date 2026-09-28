@@ -121,33 +121,55 @@ class VoiceService {
 
     try {
       final uri = Uri.parse(endpoint);
-      _channel = WebSocketChannel.connect(uri);
+      final channel = WebSocketChannel.connect(uri);
+      _channel = channel;
+      
+      // Catch errors on BOTH ready and sink.done to prevent unhandled zone exceptions
+      channel.ready.then((_) {
+        debugPrint('[VoiceService] WebSocket handshake successful');
+      }).catchError((dynamic err) {
+        debugPrint('[VoiceService] WebSocket connection failed: $err');
+        _notifyError('Voice server offline on $endpoint. Please launch run_voice_agent.bat');
+        _safeCloseSocket();
+      });
 
-      _channelSub = _channel!.stream.listen(
+      channel.sink.done.catchError((dynamic err) {
+        debugPrint('[VoiceService] WebSocket sink done handled: $err');
+      });
+
+      _channelSub = channel.stream.listen(
         (dynamic rawMessage) {
           _handleServerMessage(rawMessage);
         },
         onError: (dynamic err) {
           debugPrint('[VoiceService] WebSocket error: $err');
-          _notifyError('Could not connect to Gemini Live voice server.');
+          _notifyError('Voice server offline on $endpoint. Please launch run_voice_agent.bat');
+          _safeCloseSocket();
         },
         onDone: () {
           debugPrint('[VoiceService] WebSocket closed');
+          _safeCloseSocket();
           if (_state != VoiceState.idle && _state != VoiceState.error) {
             _setState(VoiceState.idle);
           }
         },
+        cancelOnError: true,
       );
 
       // Start ping heartbeat
       _pingTimer?.cancel();
       _pingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
         if (_channel != null) {
-          _channel!.sink.add(jsonEncode({'type': 'ping'}));
+          try {
+            _channel!.sink.add(jsonEncode({'type': 'ping'}));
+          } catch (_) {
+            _safeCloseSocket();
+          }
         }
       });
     } catch (e) {
       _notifyError('Failed to establish connection: $e');
+      _safeCloseSocket();
       return;
     }
 
@@ -166,12 +188,17 @@ class VoiceService {
               (_state == VoiceState.listening ||
                   _state == VoiceState.processing ||
                   _state == VoiceState.speaking)) {
-            _channel!.sink.add(jsonEncode({
-              'type': 'audio',
-              'data': chunkB64,
-              'chunk': chunkB64,
-              'rate': 16000,
-            }));
+            try {
+              _channel?.sink.add(jsonEncode({
+                'type': 'audio',
+                'data': chunkB64,
+                'chunk': chunkB64,
+                'rate': 16000,
+              }));
+            } catch (e) {
+              debugPrint('[VoiceService] Audio sink send error: $e');
+              _safeCloseSocket();
+            }
           }
         },
         onVolume: (vol) {
@@ -257,35 +284,49 @@ class VoiceService {
     _setState(VoiceState.processing);
 
     if (_channel != null) {
-      _channel!.sink.add(jsonEncode({
-        'type': 'query',
-        'query': query.trim(),
-      }));
+      try {
+        _channel!.sink.add(jsonEncode({
+          'type': 'query',
+          'query': query.trim(),
+        }));
+      } catch (e) {
+        debugPrint('[VoiceService] Send query error: $e');
+      }
     }
   }
 
-  /// Stop the session, microphone, audio playback and close socket
-  Future<void> stopSession() async {
+  void _safeCloseSocket() {
     _pingTimer?.cancel();
     _pingTimer = null;
 
     try {
       _bridge.stopRecording();
+    } catch (_) {}
+
+    final channel = _channel;
+    _channel = null;
+
+    if (channel != null) {
+      try {
+        channel.sink.close();
+      } catch (_) {}
+    }
+
+    try {
+      _channelSub?.cancel();
+    } catch (_) {}
+    _channelSub = null;
+  }
+
+  /// Stop the session, microphone, audio playback and close socket
+  Future<void> stopSession() async {
+    _safeCloseSocket();
+
+    try {
       _bridge.clearAudioPlayback();
     } catch (e) {
-      debugPrint('[VoiceService] Stop error: $e');
+      debugPrint('[VoiceService] Stop audio playback error: $e');
     }
-
-    if (_channel != null) {
-      try {
-        _channel!.sink.add(jsonEncode({'type': 'stop'}));
-        await _channel!.sink.close();
-      } catch (_) {}
-      _channel = null;
-    }
-
-    await _channelSub?.cancel();
-    _channelSub = null;
 
     _volume = 0.0;
     _notifyVolume(0.0);

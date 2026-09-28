@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, X, MapPin, Sparkles, Navigation, Globe, CheckCircle2, Coins, ArrowRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Search, X, Sparkles, Globe, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { placesApi } from '../api/placesApi';
 import UnverifiedPlaceModal from './map/UnverifiedPlaceModal';
 import { DESTINATION_NAMED_IMAGES, getHimalayanFallbackImage } from '../utils/imageHelpers';

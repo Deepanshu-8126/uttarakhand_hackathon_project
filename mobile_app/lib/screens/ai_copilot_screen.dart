@@ -300,11 +300,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                                 width: isCurrent ? 1.5 : 1,
                               ),
                             ),
-                            child: ListTile(
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                _switchToSession(session);
-                              },
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              child: ListTile(
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _switchToSession(session);
+                                },
                               leading: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
@@ -331,7 +334,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                                 },
                               ),
                             ),
-                          );
+                          ),
+                        );
                         },
                       ),
               ),
@@ -370,9 +374,18 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     });
   }
@@ -565,23 +578,24 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
               ),
             ),
 
-          // ── Quick Suggestion Chips Bar (Matches reference design) ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: Colors.white,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildPromptChip('🪷', '3-Day Rishikesh spiritual retreat', 'Suggest a 3-day spiritual retreat in Rishikesh with Ganga Aarti & meditation ashrams'),
-                  const SizedBox(width: 6),
-                  _buildPromptChip('🏔️', '4x4 Offbeat road trip to Munsiyari', 'Suggest a 4-day scenic road trip from Dehradun to Munsiyari with verified 4x4 Thar rental and boutique homestays.'),
-                  const SizedBox(width: 6),
-                  _buildPromptChip('🏡', 'Budget homestays near Valley of Flowers', 'Find verified budget Pahadi homestays near Valley of Flowers & Govindghat under ₹2,000'),
-                ],
+          // ── Quick Suggestion Chips Bar (Only shown in welcome state to avoid crowding chat) ──
+          if (_messages.length <= 1)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              color: Colors.white,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildPromptChip('🪷', '3-Day Rishikesh spiritual retreat', 'Suggest a 3-day spiritual retreat in Rishikesh with Ganga Aarti & meditation ashrams'),
+                    const SizedBox(width: 6),
+                    _buildPromptChip('🏔️', '4x4 Offbeat road trip to Munsiyari', 'Suggest a 4-day scenic road trip from Dehradun to Munsiyari with verified 4x4 Thar rental and boutique homestays.'),
+                    const SizedBox(width: 6),
+                    _buildPromptChip('🏡', 'Budget homestays near Valley of Flowers', 'Find verified budget Pahadi homestays near Valley of Flowers & Govindghat under ₹2,000'),
+                  ],
+                ),
               ),
             ),
-          ),
 
           // ── Input Box ──────────────────────────────────────────────
           Container(
@@ -911,6 +925,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
 
                                   // Status Badge
                                   Container(
+                                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.80),
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: isSpeaking ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
@@ -928,12 +943,16 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                                           size: 8,
                                         ),
                                         const SizedBox(width: 6),
-                                        Text(
-                                          statusLabel,
-                                          style: TextStyle(
-                                            color: isSpeaking ? const Color(0xFF065F46) : const Color(0xFF334155),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
+                                        Flexible(
+                                          child: Text(
+                                            statusLabel,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: isSpeaking ? const Color(0xFF065F46) : const Color(0xFF334155),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -1438,10 +1457,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     );
   }
 
+  bool _matchesKeyword(String text, String keyword) {
+    if (keyword.trim().length < 3) return false;
+    final pattern = RegExp(r'(?:\b|_)' + RegExp.escape(keyword.trim().toLowerCase()) + r'(?:\b|_)', caseSensitive: false);
+    return pattern.hasMatch(text);
+  }
+
   // ── 2. Destination Matching Engine ─────────────────────────────────────────
   List<Destination> _findMentionedDestinations(String text) {
     if (text.isEmpty || _allDestinations.isEmpty) return [];
-    final lower = text.toLowerCase();
     final matched = <Destination>[];
 
     for (final dest in _allDestinations) {
@@ -1451,15 +1475,22 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
       bool isMatch = false;
       for (final entry in _kDestinationAliasMap.entries) {
         if (entry.key == destKey || entry.key == nameLower) {
-          if (entry.value.any((alias) => lower.contains(alias))) {
+          if (entry.value.any((alias) => _matchesKeyword(text, alias))) {
             isMatch = true;
             break;
           }
         }
       }
 
-      if (!isMatch && (lower.contains(nameLower) || (nameLower.length > 4 && lower.contains(nameLower.split(' ')[0])))) {
-        isMatch = true;
+      if (!isMatch) {
+        if (_matchesKeyword(text, nameLower)) {
+          isMatch = true;
+        } else {
+          final firstWord = nameLower.split(' ')[0];
+          if (firstWord.length >= 4 && _matchesKeyword(text, firstWord)) {
+            isMatch = true;
+          }
+        }
       }
 
       if (isMatch) {
@@ -2095,6 +2126,59 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
           );
         }
 
+        // 4A2. Homestay & Stay Card Formatter
+        if (trimmed.startsWith('**') && (trimmed.contains('Tariff') || trimmed.contains('Host Contact') || trimmed.contains('Homestay') || trimmed.contains('Retreat'))) {
+          final lines = trimmed.split('\n');
+          final titleLine = lines.first.replaceAll('**', '');
+          final otherLines = lines.skip(1).toList();
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 1)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F3D2E),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.home_work_outlined, size: 14, color: Color(0xFF34D399)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        titleLine,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F3D2E)),
+                      ),
+                    ),
+                  ],
+                ),
+                if (otherLines.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  for (final l in otherLines)
+                    if (l.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 3),
+                        child: _buildFormattedInlineText(l.trim()),
+                      ),
+                ],
+              ],
+            ),
+          );
+        }
+
         // 4B. Day-Wise Plan Summary Cards
         if (trimmed.startsWith('**Day ') || trimmed.startsWith('Day ')) {
           final lines = trimmed.split('\n');
@@ -2346,7 +2430,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
                     _buildDestinationSpotlight(dest),
 
                   // Agentic Canonical Trip Planner Prefill Card
-                  if (!msg.isUser && (_messages.indexOf(msg) == _messages.length - 1 || msg.text.contains('Trek') || msg.text.contains('Plan') || msg.text.contains('Expedition') || msg.text.contains('Blueprint') || msg.text.contains('Guidelines'))) ...[
+                  if (!msg.isUser && (msg.text.contains('Itinerary') || msg.text.contains('Expedition') || msg.text.contains('Trek Plan') || msg.text.contains('Blueprint')) && !msg.text.contains('Verified Pahadi Homestays') && !msg.text.contains('Tariff')) ...[
                     Builder(
                       builder: (ctx) {
                         final plan = _extractTripPlanFromConversation();
@@ -2454,20 +2538,18 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> with SingleTickerProv
     final allAssistantText = _messages.where((m) => !m.isUser).map((m) => m.text).join(' ');
     final combined = '$allUserText $allAssistantText'.toLowerCase();
 
+    final lastUserMsg = _messages.lastWhere((m) => m.isUser, orElse: () => _messages.first).text.toLowerCase();
+    // Do not generate trip plan if user just asked for homestays/stays or rentals
+    if (lastUserMsg.contains('homestay') || lastUserMsg.contains('stay') || lastUserMsg.contains('hotel') || (lastUserMsg.contains('bike') && !lastUserMsg.contains('plan'))) {
+      return null;
+    }
+
     final isTripContext = combined.contains('plan') ||
         combined.contains('jana hai') ||
         combined.contains('itinerary') ||
-        combined.contains('trip') ||
-        combined.contains('trek') ||
-        combined.contains('din') ||
-        combined.contains('day') ||
-        combined.contains('budget') ||
-        combined.contains('kedarnath') ||
-        combined.contains('badrinath') ||
-        combined.contains('rishikesh') ||
-        combined.contains('auli') ||
-        combined.contains('munsiyari') ||
-        combined.contains('nainital');
+        combined.contains('expedition') ||
+        (combined.contains('trip') && combined.contains('din')) ||
+        (combined.contains('trek') && combined.contains('day'));
 
     if (!isTripContext) return null;
 

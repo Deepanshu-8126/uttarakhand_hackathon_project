@@ -1145,16 +1145,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, color: const Color(0xFF0F3D2E), size: 18),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: const Color(0xFF0F3D2E), size: 18),
+          ),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF0F172A))),
+          subtitle: Text(subtitle, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+          onTap: onTap,
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF0F172A))),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
-        onTap: onTap,
       ),
     );
   }

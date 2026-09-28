@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Car, Shield, ShieldCheck, MapPin, ChevronLeft, ChevronRight, 
+  Shield, ShieldCheck, ChevronLeft, ChevronRight, 
   Play, Pause, Sparkles, Navigation, LocateFixed, Zap, Star,
   Compass
 } from 'lucide-react';

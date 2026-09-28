@@ -106,18 +106,42 @@ export const DESTINATIONS_DB = [
 
 export const HOMESTAYS_DB = [
   {
+    name: "Ganga Darshan Riverside Pahadi Homestay",
+    location: "Tapovan / Laxman Jhula",
+    district: "Rishikesh",
+    pricePerNight: "₹1,100 - ₹1,800",
+    amenities: ["Ganga river view", "Rooftop yoga", "Organic sattvic pahadi breakfast", "Wi-Fi"],
+    contact: "+91 98371 44520"
+  },
+  {
+    name: "Shivpuri Himalayan Eco Retreat & Tents",
+    location: "Shivpuri",
+    district: "Rishikesh",
+    pricePerNight: "₹900 - ₹1,600",
+    amenities: ["Riverside camping", "Beach volleyball", "Bonfire & stargazing", "Buffet meals"],
+    contact: "+91 94129 88310"
+  },
+  {
     name: "Chopta Meadow View Pahari Homestay",
-    location: "Chopta / Sari Village",
-    district: "Rudraprayag",
-    pricePerNight: "₹1,200 - ₹2,000",
-    amenities: ["Organic pahari meals", "Bonfire", "Mountain view", "Heated blankets"],
+    location: "Sari Village / Chopta Base",
+    district: "Chopta",
+    pricePerNight: "₹1,200 - ₹1,800",
+    amenities: ["Organic pahadi meals", "Bonfire", "Mountain view", "Heated blankets"],
     contact: "+91 94120 44551"
+  },
+  {
+    name: "Tungnath Eco Homestay & Camps",
+    location: "Baniyakund / Chopta",
+    district: "Chopta",
+    pricePerNight: "₹1,300 - ₹1,950",
+    amenities: ["Alpine meadow view", "Trek guide assistance", "Solar hot water", "Traditional chulha food"],
+    contact: "+91 97580 43921"
   },
   {
     name: "Guptkashi Heritage Kedar Retreat",
     location: "Guptkashi",
     district: "Rudraprayag",
-    pricePerNight: "₹1,500 - ₹2,800",
+    pricePerNight: "₹1,500 - ₹2,500",
     amenities: ["Hot water", "Mandakini valley view", "Helipad transfer assistance", "Pure vegetarian dining"],
     contact: "+91 98970 33412"
   },
@@ -133,9 +157,25 @@ export const HOMESTAYS_DB = [
     name: "Munsyari Panchachuli View Eco Home",
     location: "Munsyari",
     district: "Pithoragarh",
-    pricePerNight: "₹1,400 - ₹2,200",
+    pricePerNight: "₹1,400 - ₹2,000",
     amenities: ["Balcony facing 5 peaks", "Locally grown Bhatt ki Churkani meals", "Local trek guide"],
     contact: "+91 94561 77892"
+  },
+  {
+    name: "Nainital Pine Valley Heritage Homestay",
+    location: "Bhimtal / Bhowali",
+    district: "Nainital",
+    pricePerNight: "₹1,200 - ₹1,900",
+    amenities: ["Lake view terrace", "Home-cooked Kumaoni meals", "Free parking", "Quiet pine orchard"],
+    contact: "+91 94111 67204"
+  },
+  {
+    name: "Sankri Kedarkantha Base Homestay",
+    location: "Sankri Village",
+    district: "Uttarkashi",
+    pricePerNight: "₹600 - ₹1,200",
+    amenities: ["Dorm and private rooms", "Trekking gear rental", "Warm wooden rooms", "Local guide network"],
+    contact: "+91 94583 11209"
   }
 ];
 

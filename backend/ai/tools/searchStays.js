@@ -1,8 +1,11 @@
 import Stay from "../../models/Stay.js";
 import { HOMESTAYS_DB } from "../retrieval/destinationStore.js";
 
-export async function searchStays({ location = "", maxPrice = null }) {
-  const loc = String(location || "").trim();
+export async function searchStays({ location = "", query = "", maxPrice = null }) {
+  const loc = String(location || query || "").trim();
+  const combined = `${location} ${query}`.toLowerCase();
+  const knownLocations = ["rishikesh", "chopta", "guptkashi", "mana", "munsyari", "munsiyari", "nainital", "bhimtal", "sankri", "kedarkantha", "auli", "joshimath", "dehradun", "haridwar"];
+  const targetedLocations = knownLocations.filter(k => combined.includes(k));
 
   try {
     const filter = { status: { $ne: "inactive" } };
@@ -37,6 +40,10 @@ export async function searchStays({ location = "", maxPrice = null }) {
 
   const lowerLoc = loc.toLowerCase();
   let matches = HOMESTAYS_DB.filter((stay) => {
+    const stayText = `${stay.name} ${stay.location} ${stay.district}`.toLowerCase();
+    if (targetedLocations.length > 0) {
+      return targetedLocations.some(k => stayText.includes(k));
+    }
     if (!lowerLoc) return true;
     return stay.location.toLowerCase().includes(lowerLoc) ||
            stay.district.toLowerCase().includes(lowerLoc) ||

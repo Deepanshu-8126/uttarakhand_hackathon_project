@@ -26,10 +26,10 @@ export default function RentalDetailModal({
   startDate,
   endDate
 }) {
-  if (!isOpen || !rental) return null;
-
   const navigate = useNavigate();
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+
+  if (!isOpen || !rental) return null;
 
   const images = getCardImages(rental);
   const rentalId = rental._id || rental.id || rental.slug;

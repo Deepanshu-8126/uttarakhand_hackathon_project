@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'voice_bridge_interface.dart';
 
@@ -9,7 +7,6 @@ import 'voice_bridge_interface.dart';
 /// Fallback: ws://192.168.1.37:8765/ws/voice (LAN dev)
 class PlatformVoiceBridgeImpl implements VoicePlatformBridge {
   // ─── Audio Playback ───────────────────────────────────────────
-  VoidCallback? _playbackFinishedCb;
 
   @override
   void initPlayback() {
@@ -18,7 +15,7 @@ class PlatformVoiceBridgeImpl implements VoicePlatformBridge {
 
   @override
   void setPlaybackFinishedCallback(VoidCallback cb) {
-    _playbackFinishedCb = cb;
+    // Handled by platform audio player
   }
 
   @override

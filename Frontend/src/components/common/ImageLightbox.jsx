@@ -2,11 +2,8 @@ import React, { useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, ExternalLink, Sparkles } from 'lucide-react';
 
 export default function ImageLightbox({ images = [], activeIndex = 0, onClose, onNavigate }) {
-  if (!images || images.length === 0) return null;
-
-  const current = images[activeIndex] || images[0];
-
   useEffect(() => {
+    if (!images || images.length === 0) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose?.();
@@ -18,7 +15,11 @@ export default function ImageLightbox({ images = [], activeIndex = 0, onClose, o
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeIndex, images.length, onClose, onNavigate]);
+  }, [activeIndex, images, onClose, onNavigate]);
+
+  if (!images || images.length === 0) return null;
+
+  const current = images[activeIndex] || images[0];
 
   const handlePrev = (e) => {
     e.stopPropagation();

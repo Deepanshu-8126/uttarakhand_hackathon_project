@@ -122,8 +122,26 @@ export function setStoredUserLocation(locationData) {
  * Reverse geocodes latitude and longitude into a clean, human-friendly city/state name.
  */
 export async function reverseGeocodeCoords(lat, lng) {
+  // 1. Primary: OpenStreetMap Nominatim with high locality granularity
   try {
-    // 1. Primary: Fast client-side BigDataCloud reverse geocode API (CORS friendly, no key required)
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      { headers: { 'Accept-Language': 'en' }, signal: AbortSignal.timeout(4500) }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const address = data.address || {};
+      const city = address.city || address.town || address.village || address.suburb || address.county || address.state_district;
+      const state = address.state;
+      if (city && state) return `${city}, ${state}`;
+      if (city) return city;
+    }
+  } catch {
+    // Attempt fallback
+  }
+
+  // 2. Secondary: Fast client-side BigDataCloud reverse geocode API (CORS friendly, no key required)
+  try {
     const res = await fetch(
       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
       { signal: AbortSignal.timeout(4000) }
@@ -140,24 +158,6 @@ export async function reverseGeocodeCoords(lat, lng) {
       }
     }
   } catch {
-    // Attempt fallback
-  }
-
-  try {
-    // 2. Secondary: OpenStreetMap Nominatim
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-      { headers: { 'Accept-Language': 'en' }, signal: AbortSignal.timeout(4000) }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const address = data.address || {};
-      const city = address.city || address.town || address.village || address.county || address.state_district;
-      const state = address.state;
-      if (city && state) return `${city}, ${state}`;
-      if (city) return city;
-    }
-  } catch {
     // Fall through
   }
 
@@ -165,8 +165,8 @@ export async function reverseGeocodeCoords(lat, lng) {
 }
 
 /**
- * Request browser location cleanly upon user button click.
- * Handles permission denied, timeout, and positioning errors gracefully.
+ * Request browser location cleanly upon user button click or initialization.
+ * Uses high accuracy GPS / Wi-Fi triangulation with zero stale cache, falling back to standard accuracy.
  */
 export function detectBrowserLocation() {
   return new Promise((resolve) => {
@@ -178,43 +178,54 @@ export function detectBrowserLocation() {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        try {
-          const locationName = await reverseGeocodeCoords(lat, lng);
+    const queryLocation = (highAccuracy) => {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            const locationName = await reverseGeocodeCoords(lat, lng);
+            resolve({
+              success: true,
+              name: locationName,
+              coordinates: [lat, lng]
+            });
+          } catch {
+            resolve({
+              success: true,
+              name: 'Current Location',
+              coordinates: [lat, lng]
+            });
+          }
+        },
+        (err) => {
+          // If high accuracy times out, retry with standard accuracy before giving up
+          if (highAccuracy && (err.code === 3 || err.code === 2)) {
+            queryLocation(false);
+            return;
+          }
+
+          let message = 'Unable to detect your location. Please enter your starting city below.';
+          if (err.code === 1) {
+            message = 'Location permission was denied. Please select or type your starting city below.';
+          } else if (err.code === 3) {
+            message = 'Location request timed out. Please select or type your starting city below.';
+          }
           resolve({
-            success: true,
-            name: locationName,
-            coordinates: [lat, lng]
+            success: false,
+            error: message
           });
-        } catch {
-          resolve({
-            success: true,
-            name: 'Current Location',
-            coordinates: [lat, lng]
-          });
+        },
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 8000 : 9000,
+          maximumAge: 0 // Do not use stale cached ISP coordinates
         }
-      },
-      (err) => {
-        let message = 'Unable to detect your location. Please enter your starting city below.';
-        if (err.code === 1) {
-          message = 'Location permission was denied. Please select or type your starting city below.';
-        } else if (err.code === 3) {
-          message = 'Location request timed out. Please select or type your starting city below.';
-        }
-        resolve({
-          success: false,
-          error: message
-        });
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 9000,
-        maximumAge: 60000
-      }
-    );
+      );
+    };
+
+    // Begin with high accuracy for true live GPS / Wi-Fi positioning
+    queryLocation(true);
   });
 }
 

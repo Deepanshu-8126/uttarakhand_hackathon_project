@@ -172,7 +172,7 @@ export default function GlobalLocationModal({ isOpen, onClose }) {
                 Active Location
               </span>
               <strong className="text-xs sm:text-sm font-bold text-stone-900">
-                {currentLoc?.formatted || currentLoc?.city || 'No Location Set (Defaulting to Uttarakhand)'}
+                {currentLoc?.formatted || currentLoc?.city || 'Haldwani, Uttarakhand (Default Gateway)'}
               </strong>
             </div>
           </div>
