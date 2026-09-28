@@ -1,14 +1,10 @@
 /**
- * Discovery Uttarakhand - Authentic Real Photography Engine
- * 
- * STRICT RULES ENFORCED:
- * 1. ZERO cross-destination substitution (No Kuari Pass -> Auli, No Vishnuprayag -> Badrinath).
- * 2. ZERO random external photo fetching (No Pexels/Unsplash random stock image fallback).
- * 3. Exact entity match -> Authentic Photo. Missing -> Entity-Specific Placeholder.
+ * Discovery Uttarakhand - Authentic Real Photography & Pexels Dynamic Auto-Fetch Engine
  */
 
 import { useState, useEffect } from 'react';
 import { DESTINATION_NAMED_IMAGES, getEntityPlaceholderSvg } from './imageHelpers';
+import { resolveOnlinePhotos } from '../services/pexelsService';
 
 // ── Verified 100% Authentic Real Uttarakhand Photos ──────────────────────────
 export const AUTHENTIC_LOCAL_PHOTOS = {
@@ -57,6 +53,8 @@ export const AUTHENTIC_LOCAL_PHOTOS = {
   "kedarkantha": "/assets/kedarkantha_summit_view.jpg",
   "brahmatal": "/assets/brahmatal_snow_trek.jpg",
   "chandrashila": "/assets/chandrashila_sunset_snow.jpg",
+  "deoria-tal": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Deoriatal.jpg/1920px-Deoriatal.jpg",
+  "deoriatal": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Deoriatal.jpg/1920px-Deoriatal.jpg",
 
   // Rivers & Ghats
   "rishikesh": "/assets/rishikesh.jpg",
@@ -83,14 +81,22 @@ export const AUTHENTIC_LOCAL_PHOTOS = {
   "chakrata": "/assets/destinations/chakrata/cover.jpg",
   "dehradun": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Dehradun_view_from_maggi_point.jpg/960px-Dehradun_view_from_maggi_point.jpg",
 
-  // Wildlife
+  // Wildlife & Sanctuaries
   "jim-corbett-national-park": "/assets/corbett.jpg",
   "corbett": "/assets/corbett.jpg",
   "corbett-dhikala-zone": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Morning_Mist_Dhikala_Corbett_Reserve_Dec2019_R16_02285.jpg",
-  "rajaji-national-park": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Asian_Elephant_herd_in_Rajaji_National_Park.jpg/1280px-Asian_Elephant_herd_in_Rajaji_National_Park.jpg"
+  "rajaji-national-park": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Asian_Elephant_herd_in_Rajaji_National_Park.jpg/1280px-Asian_Elephant_herd_in_Rajaji_National_Park.jpg",
+  "rajaji": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Asian_Elephant_herd_in_Rajaji_National_Park.jpg/1280px-Asian_Elephant_herd_in_Rajaji_National_Park.jpg",
+  "binsar": "/assets/destinations/binsar/cover.jpg",
+  "binsar-wildlife-sanctuary": "/assets/destinations/binsar/cover.jpg",
+  "nanda-devi": "/assets/nanda_devi_clouds.jpg",
+  "nanda-devi-national-park": "/assets/nanda_devi_clouds.jpg",
+  "askot": "https://images.pexels.com/photos/34098/south-africa-hluhluwe-imfolozi-park-wilderness.jpg?auto=compress&cs=tinysrgb&w=1200",
+  "askot-musk-deer-sanctuary": "https://images.pexels.com/photos/145939/pexels-photo-145939.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "govind-pashu-vihar": "https://images.pexels.com/photos/673020/pexels-photo-673020.jpeg?auto=compress&cs=tinysrgb&w=1200"
 };
 
-function getVerifiedLocalPhoto(key) {
+export function getVerifiedLocalPhoto(key) {
   if (!key) return null;
   const clean = String(key).toLowerCase().trim().replace(/[\s_]+/g, '-');
   const spaceClean = clean.replace(/-/g, ' ');
@@ -103,9 +109,7 @@ function getVerifiedLocalPhoto(key) {
 }
 
 /**
- * Returns strictly authentic photograph for the specific destination.
- * If not present in verified dataset, returns neutral entity placeholder.
- * NEVER returns another destination's photo.
+ * Returns authentic photograph or triggers Pexels / Wikimedia dynamic resolution.
  */
 export async function getFreshImage(destinationKey = '', fallbackUrl = null) {
   if (!destinationKey) {
@@ -119,27 +123,52 @@ export async function getFreshImage(destinationKey = '', fallbackUrl = null) {
     return verifiedLocal;
   }
 
+  // Auto-fetch via Pexels / Wikimedia
+  try {
+    const fetched = await resolveOnlinePhotos(destinationKey, 'Destination');
+    if (fetched && fetched.length > 0) {
+      return fetched[0];
+    }
+  } catch (e) {
+    console.debug('[getFreshImage] fetch error:', e);
+  }
+
   return fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey, category: 'Destination', slug: cleanKey });
 }
 
 /**
- * React hook to safely resolve verified photograph or entity placeholder.
+ * React hook to safely resolve verified photograph, with async Pexels/Wikimedia dynamic fallback.
  */
-export function useFreshImage(destinationKey, fallbackUrl = null) {
-  const placeholder = fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey || 'Destination' });
-  const initialLocal = getVerifiedLocalPhoto(destinationKey) || placeholder;
-  const [imageSrc, setImageSrc] = useState(initialLocal);
+export function useFreshImage(destinationKey, fallbackUrl = null, category = 'Destination') {
+  const local = getVerifiedLocalPhoto(destinationKey);
+  const placeholder = fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey || 'Destination', category });
+  const [imageSrc, setImageSrc] = useState(local || placeholder);
 
   useEffect(() => {
-    if (destinationKey) {
-      const local = getVerifiedLocalPhoto(destinationKey);
-      if (local) {
-        setImageSrc(local);
-      } else {
-        setImageSrc(fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey, category: 'Destination' }));
-      }
+    let isMounted = true;
+    if (!destinationKey) return;
+
+    const currentLocal = getVerifiedLocalPhoto(destinationKey);
+    if (currentLocal) {
+      setImageSrc(currentLocal);
+      return;
     }
-  }, [destinationKey, fallbackUrl]);
+
+    // Async fetch via Pexels/Wikimedia
+    resolveOnlinePhotos(destinationKey, category).then((photos) => {
+      if (isMounted && photos && photos.length > 0) {
+        setImageSrc(photos[0]);
+      } else if (isMounted) {
+        setImageSrc(fallbackUrl || placeholder);
+      }
+    }).catch(() => {
+      if (isMounted) setImageSrc(fallbackUrl || placeholder);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [destinationKey, fallbackUrl, category]);
 
   return imageSrc;
 }

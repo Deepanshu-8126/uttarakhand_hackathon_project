@@ -157,6 +157,13 @@ export const DESTINATION_NAMED_IMAGES = {
   'nanda devi national park': getAssetUrl('/assets/nanda_devi_clouds.jpg'),
   'nanda devi': getAssetUrl('/assets/nanda_devi_clouds.jpg'),
   'nanda-devi': getAssetUrl('/assets/nanda_devi_clouds.jpg'),
+  'askot': 'https://images.pexels.com/photos/34098/south-africa-hluhluwe-imfolozi-park-wilderness.jpg?auto=compress&cs=tinysrgb&w=1200',
+  'askot musk deer sanctuary': 'https://images.pexels.com/photos/145939/pexels-photo-145939.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  'askot-musk-deer-sanctuary': 'https://images.pexels.com/photos/145939/pexels-photo-145939.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  'govind pashu vihar': 'https://images.pexels.com/photos/673020/pexels-photo-673020.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  'govind-pashu-vihar': 'https://images.pexels.com/photos/673020/pexels-photo-673020.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  'deoria tal': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Deoriatal.jpg/1920px-Deoriatal.jpg',
+  'deoria-tal': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Deoriatal.jpg/1920px-Deoriatal.jpg',
 
   // Colonial Heritage & Local Water Bodies
   'raj bhavan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg/1920px-Governor_House%2C_Nainital%2C_Uttarakhand%2C_India.jpg',

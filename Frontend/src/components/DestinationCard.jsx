@@ -50,9 +50,18 @@ const DestinationCard = ({ destination, distance }) => {
     return Array.from(new Set(list.filter(Boolean)));
   }, [destination]);
 
+  const freshImage = useFreshImage(destination.name || destination.slug, null, destination.category || 'Destination');
+
   const displayImages = React.useMemo(() => {
-    return allImages.length > 0 ? allImages.slice(0, 5) : [getHimalayanFallbackImage(destination)];
-  }, [allImages, destination]);
+    const realPhotos = allImages.filter((img) => img && typeof img === 'string' && !img.startsWith('data:image/svg'));
+    if (realPhotos.length > 0) {
+      return realPhotos.slice(0, 5);
+    }
+    if (freshImage && typeof freshImage === 'string' && !freshImage.startsWith('data:image/svg')) {
+      return [freshImage];
+    }
+    return [getHimalayanFallbackImage(destination)];
+  }, [allImages, freshImage, destination]);
 
   const [currentImgIndex, setCurrentImgIndex] = React.useState(0);
   const [isHovered, setIsHovered] = React.useState(false);
