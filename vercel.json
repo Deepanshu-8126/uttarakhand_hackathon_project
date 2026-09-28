@@ -3,7 +3,7 @@
   "buildCommand": "npm run build --prefix Frontend",
   "installCommand": "npm install --prefix Frontend",
   "outputDirectory": "Frontend/dist",
-  "framework": "vite",
+  "framework": null,
   "cleanUrls": true,
   "headers": [
     {
