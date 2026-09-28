@@ -156,6 +156,47 @@ app.use('/api/places', placesRoutes);
 app.use('/api/search', placesRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/voice', voiceRoutes);
+
+// Express WebSocket Native Endpoint for Voice Companion
+const handleExpressVoiceWs = (ws, req) => {
+  console.log('[Express WS Voice] Client connected via WebSocket');
+  try {
+    ws.send(JSON.stringify({
+      type: 'connected',
+      ready: true,
+      engine: 'devbhoomi_express_voice',
+      message: 'Connected to Devbhoomi Live Voice Companion'
+    }));
+  } catch (_) {}
+
+  ws.on('message', async (data) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      if (msg.type === 'ping') {
+        return ws.send(JSON.stringify({ type: 'pong' }));
+      }
+      if (msg.type === 'query' || msg.type === 'text' || msg.type === 'audio') {
+        let transcript = (msg.query || msg.text || '').trim();
+        if (!transcript) transcript = 'Uttarakhand tourism destinations';
+
+        ws.send(JSON.stringify({
+          type: 'turn_complete',
+          text: `Namaste! Welcome to Devbhoomi Uttarakhand travel guide. You asked about: ${transcript}.`,
+          response: `Namaste! Welcome to Devbhoomi Uttarakhand travel guide. You asked about: ${transcript}.`,
+          audio_base64: '',
+          user_transcript: transcript
+        }));
+      }
+    } catch (err) {
+      console.warn('[Express WS Voice Msg Error]', err.message);
+    }
+  });
+};
+
+app.ws('/api/voice/live', handleExpressVoiceWs);
+app.ws('/api/voice/ws/live', handleExpressVoiceWs);
+app.ws('/ws/live', handleExpressVoiceWs);
+app.ws('/ws/voice', handleExpressVoiceWs);
 app.use('/api/photos', photoRoutes);
 app.use('/photos', photoRoutes);
 app.use('/api/sos', sosRoutes);

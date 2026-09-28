@@ -391,4 +391,83 @@ router.post('/audio_query', async (req, res) => {
   }
 });
 
+/**
+ * Express WebSocket Route: GET /api/voice/live, GET /api/voice/ws/live
+ * Native Express WebSocket endpoint supporting real-time voice & text exchanges!
+ */
+const handleVoiceWebSocket = (ws, req) => {
+  console.log('[Express WS Voice] Client connected to Express WebSocket Voice route');
+
+  ws.send(JSON.stringify({
+    type: 'connected',
+    ready: true,
+    engine: 'devbhoomi_express_voice',
+    message: 'Connected to Devbhoomi Voice Companion'
+  }));
+
+  ws.on('message', async (data) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      if (msg.type === 'ping') {
+        return ws.send(JSON.stringify({ type: 'pong' }));
+      }
+      if (msg.type === 'query' || msg.type === 'text' || msg.type === 'audio') {
+        let transcript = (msg.query || msg.text || '').trim();
+        const rawB64 = msg.data || msg.chunk || msg.audio_base64;
+        if (!transcript && rawB64) {
+          transcript = await transcribeAudioBuffer(rawB64, msg.mimeType || 'audio/webm', msg.lang || 'hi');
+        }
+        if (!transcript) transcript = 'Uttarakhand tourism destinations';
+
+        const result = await AgentRouter.processChatStream({
+          message: transcript,
+          sessionId: 'ws_express_voice_session',
+          res: null
+        });
+
+        const replyText = (result.message || 'Namaste! Main aapka Devbhoomi travel companion hoon.').replace(/[*#_~`]/g, '').trim();
+
+        let audio_base64 = '';
+        if (process.env.ELEVENLABS_API_KEY) {
+          const elevenRes = await synthesizeElevenLabsVoice(replyText);
+          if (elevenRes.success && elevenRes.audio_base64) {
+            audio_base64 = elevenRes.audio_base64;
+          }
+        }
+
+        if (!audio_base64) {
+          const candidateUrls = [process.env.PYTHON_AI_URL, 'http://127.0.0.1:8765', 'http://localhost:8765'].filter(Boolean);
+          for (const pyUrl of candidateUrls) {
+            try {
+              const pyRes = await fetch(`${pyUrl}/api/voice/ask`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: transcript, lang: msg.lang || 'hi' }),
+                signal: AbortSignal.timeout(3000)
+              });
+              if (pyRes.ok) {
+                const pyData = await pyRes.json();
+                if (pyData.audio_base64) {
+                  audio_base64 = pyData.audio_base64;
+                  break;
+                }
+              }
+            } catch (_) {}
+          }
+        }
+
+        ws.send(JSON.stringify({
+          type: 'turn_complete',
+          text: replyText,
+          response: replyText,
+          audio_base64,
+          user_transcript: transcript
+        }));
+      }
+    } catch (err) {
+      console.warn('[Express WS Voice Msg Error]', err.message);
+    }
+  });
+};
+
 export default router;
