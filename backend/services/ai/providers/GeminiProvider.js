@@ -1,13 +1,13 @@
 /**
  * Discovery Uttarakhand — Google Gemini AI Provider
- * Connects to Google Gemini API (gemini-1.5-flash / gemini-1.5-pro)
+ * Connects to Google Gemini API (gemini-3.8-flash / gemini-1.5-pro)
  * Enforces structured JSON output and strict grounding to supplied context.
  */
 
 import { BaseAiProvider } from './BaseAiProvider.js';
 
 export class GeminiProvider extends BaseAiProvider {
-  constructor(apiKey = process.env.GEMINI_API_KEY, modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash') {
+  constructor(apiKey = process.env.GEMINI_API_KEY, modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash') {
     super('gemini');
     this.apiKey = apiKey;
     this.modelName = modelName;

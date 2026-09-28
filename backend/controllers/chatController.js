@@ -1,3 +1,4 @@
+import { cacheGet, cacheSet } from '../config/redis.js';
 import Chat from '../models/Chat.js';
 import { AgentRouter } from '../ai/workflows/agentRouter.js';
 
@@ -104,7 +105,7 @@ export const streamChat = async (req, res) => {
 export const handleDirectChat = async (req, res) => {
   try {
     const { message, query, content, sessionId } = req.body;
-    const userQuery = message || query || content;
+    const userQuery = (message || query || content || '').trim();
 
     if (!userQuery) {
       return res.status(400).json({
@@ -113,6 +114,17 @@ export const handleDirectChat = async (req, res) => {
       });
     }
 
+    // 1. Check Redis Cache for Instant (<15ms) Response
+    const cacheKey = `chat:direct:${encodeURIComponent(userQuery.toLowerCase())}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        ...cached,
+        cached: true
+      });
+    }
+
+    // 2. Process query with AgentRouter
     const result = await AgentRouter.processChatStream({
       message: userQuery,
       sessionId: sessionId || req.headers['x-session-id'] || 'default_session',
@@ -120,14 +132,19 @@ export const handleDirectChat = async (req, res) => {
       res: null
     });
 
-    return res.status(200).json({
+    const payload = {
       success: true,
-      message: result.message,
+      message: result.message || (result.data && result.data.message) || '',
       data: result,
       agent: result.agent,
-      suggestions: result.suggestions,
-      toolsUsed: result.toolsUsed
-    });
+      suggestions: result.suggestions || [],
+      toolsUsed: result.toolsUsed || []
+    };
+
+    // Cache in Redis for 12 hours
+    await cacheSet(cacheKey, payload, 43200);
+
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('[DirectChat Error]', error);
     res.status(500).json({

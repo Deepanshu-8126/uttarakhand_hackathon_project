@@ -1,3 +1,4 @@
+import VoiceCallAgent from './components/voice/VoiceCallAgent';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Rentals from './pages/Rentals';
@@ -36,8 +37,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import CheckoutPage from './pages/CheckoutPage';
 import AddToTripModal from './components/planner/AddToTripModal';
 import GlobalToast from './components/common/GlobalToast';
-import GlobalAiCopilotLauncher from './components/copilot/GlobalAiCopilotLauncher';
 import SOSActiveBanner from './components/sos/SOSActiveBanner';
+import FloatingCallButton from './components/voice/FloatingCallButton';
+import ScrollToTop from './components/common/ScrollToTop';
 import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
@@ -51,14 +53,16 @@ function App() {
           <FavoritesProvider>
             <CartProvider>
               <Router basename={routerBasename}>
+                <ScrollToTop />
                 <SOSActiveBanner />
                 <ErrorBoundary fallback={null}>
                   <AddToTripModal />
                 </ErrorBoundary>
                 <GlobalToast />
-                <ErrorBoundary fallback={null}>
-                  <GlobalAiCopilotLauncher />
-                </ErrorBoundary>
+            <FloatingCallButton />
+                <VoiceCallAgent />
+
+                
                 <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/explore" element={<Home />} />
