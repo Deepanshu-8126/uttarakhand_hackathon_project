@@ -84,16 +84,21 @@ class PlatformVoiceBridgeImpl implements VoicePlatformBridge {
   String resolveDefaultWsUrl() {
     try {
       final loc = html.window.location;
-      final protocol = loc.protocol == 'https:' ? 'wss:' : 'ws:';
       final hostname = loc.hostname ?? 'localhost';
+
+      // Local dev: use local bridge
       if (hostname == 'localhost' || hostname == '127.0.0.1') {
-        return 'ws://localhost:8765/ws/live';
+        return 'ws://localhost:8765/ws/voice';
       }
-      return '$protocol//$hostname:8765/ws/live';
+
+      // Production: point to dedicated Render voice bridge service
+      // This is web_bridge.py deployed separately from the main backend
+      return 'wss://devbhoomi-voice-bridge.onrender.com/ws/voice';
     } catch (_) {
-      return 'ws://localhost:8765/ws/live';
+      return 'ws://localhost:8765/ws/voice';
     }
   }
+
 }
 
 VoicePlatformBridge getVoicePlatformBridge() => PlatformVoiceBridgeImpl();

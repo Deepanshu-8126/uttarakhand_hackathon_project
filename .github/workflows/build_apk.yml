@@ -34,15 +34,14 @@ jobs:
           cmdline-tools-version: '12266719'
           packages: >-
             platform-tools
-            platforms;android-36
             platforms;android-35
-            build-tools;36.0.0
             build-tools;35.0.0
-            ndk;28.2.13676669
+            ndk;27.0.12077973
 
       - name: Set up Flutter SDK (Stable)
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.27.4'
           channel: 'stable'
           cache: true
 
@@ -63,7 +62,7 @@ jobs:
           flutter build apk \
             --release \
             --no-tree-shake-icons \
-            --android-skip-build-dependency-validation
+            --target-platform android-arm,android-arm64,android-x64
 
       - name: Locate and Stage APK
         run: |
