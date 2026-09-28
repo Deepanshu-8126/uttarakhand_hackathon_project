@@ -9,11 +9,11 @@ import {
   RefreshCw, 
   MapPin, 
   ChevronDown,
-  Compass
+  Navigation
 } from 'lucide-react';
 import { useLiveLocationWeather } from '../../hooks/useLiveLocationWeather';
 
-export default function TopNavWeatherBadge({ isDark = false }) {
+export default function TopNavWeatherBadge({ isDark = false, onOpenLocationModal, userLocation }) {
   const { weather, loading, locationName, refreshWeather } = useLiveLocationWeather();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -31,54 +31,66 @@ export default function TopNavWeatherBadge({ isDark = false }) {
 
   // Weather icon selector
   const getWeatherIcon = (code) => {
-    const iconColor = isDark ? "text-emerald-300" : "text-[#0F2B1F]";
-    if (code >= 71) return <Snowflake size={14} className={iconColor} />;
-    if (code >= 51) return <CloudRain size={14} className={iconColor} />;
-    if (code >= 1 && code <= 3) return <CloudSun size={14} className={iconColor} />;
-    return <Sun size={14} className={iconColor} />;
+    const iconColor = isDark ? "text-emerald-300" : "text-emerald-800";
+    if (code >= 71) return <Snowflake size={13} className={iconColor} />;
+    if (code >= 51) return <CloudRain size={13} className={iconColor} />;
+    if (code >= 1 && code <= 3) return <CloudSun size={13} className={iconColor} />;
+    return <Sun size={13} className={iconColor} />;
   };
 
   const temp = weather?.temperature !== undefined ? `${weather.temperature}°C` : '--';
   const condition = weather?.condition || 'Clear';
-  const displayCity = weather?.city || locationName || 'Kichha';
+  const displayCity = userLocation?.city || weather?.city || locationName || 'Uttarakhand';
 
   return (
-    <div className="relative inline-block" ref={dropdownRef}>
-      {/* ── 1. Top Bar Weather Badge (Always Visible) ───────────────── */}
+    <div className="relative inline-block shrink-0" ref={dropdownRef}>
+      {/* 🌟 1. Single Unified Top Bar Weather & Location Pill */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold transition cursor-pointer shadow-2xs group shrink-0 ${
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer shadow-2xs group shrink-0 ${
           isDark
             ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200'
-            : 'border border-stone-200/90 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800'
+            : 'border border-stone-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-stone-800'
         }`}
-        title="Live Weather for your location"
+        title="Live Weather & Location Details"
       >
-        <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9] text-[#0F2B1F]'}`}>
+        {/* Weather Icon */}
+        <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100/70 text-emerald-800'}`}>
           {loading ? (
-            <RefreshCw size={10} className={`${isDark ? 'text-emerald-300' : 'text-[#0F2B1F]'} animate-spin`} />
+            <RefreshCw size={9} className={`${isDark ? 'text-emerald-300' : 'text-emerald-800'} animate-spin`} />
           ) : (
             getWeatherIcon(weather?.wmoCode)
           )}
         </span>
-        <span className={isDark ? "text-emerald-300 font-black" : "text-[#0F2B1F] font-black"}>{temp}</span>
-        <span className={`hidden md:inline font-semibold max-w-[70px] truncate ${isDark ? 'text-stone-300' : 'text-stone-500'}`}>
+
+        {/* Temperature */}
+        <span className={isDark ? "text-emerald-300 font-extrabold" : "text-emerald-900 font-extrabold"}>
+          {temp}
+        </span>
+
+        {/* Subtle Separator Dot */}
+        <span className={isDark ? "text-white/20 text-[10px]" : "text-stone-300 text-[10px]"}>•</span>
+
+        {/* Location Pin & City Name */}
+        <MapPin size={11} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-700 shrink-0"} />
+        <span className={`font-semibold max-w-[80px] sm:max-w-[95px] truncate ${isDark ? 'text-stone-200' : 'text-stone-700'}`}>
           {displayCity}
         </span>
-        <ChevronDown size={11} className={`${isDark ? 'text-stone-400' : 'text-stone-400'} transition-transform hidden sm:inline-block ${isOpen ? 'rotate-180' : ''}`} />
+
+        <ChevronDown size={11} className={`text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* ── 2. Weather Details Popup Card (Global Design System Card) ── */}
+      {/* 🌟 2. Unified Weather & Location Details Popup Card */}
       {isOpen && (
         <div 
           className={`absolute right-0 mt-2 w-72 sm:w-80 rounded-[20px] p-4 z-50 text-left animate-in fade-in zoom-in-95 duration-150 ${
             isDark 
               ? 'bg-[#06140c] border border-emerald-500/30 text-white shadow-2xl shadow-emerald-950/80' 
-              : 'bg-white border border-[#F0F0F0] shadow-[0_4px_20px_rgba(0,0,0,0.06)]'
+              : 'bg-white border border-[#F0F0F0] shadow-[0_4px_20px_rgba(0,0,0,0.08)]'
           }`}
         >
-          {/* Header */}
+          {/* Header with Location & Change Button */}
           <div className={`flex items-center justify-between border-b pb-3 mb-3 ${isDark ? 'border-white/10' : 'border-stone-100'}`}>
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9]'}`}>
@@ -86,7 +98,7 @@ export default function TopNavWeatherBadge({ isDark = false }) {
               </div>
               <div>
                 <div className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
-                  Your Location
+                  Current Location
                 </div>
                 <div className={`text-sm font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>
                   {displayCity}
@@ -94,59 +106,82 @@ export default function TopNavWeatherBadge({ isDark = false }) {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={refreshWeather}
-              disabled={loading}
-              className="p-1.5 rounded-full bg-stone-50 hover:bg-[#E8F5E9] text-[#0F2B1F] transition cursor-pointer"
-              title="Refresh GPS & Weather"
-            >
-              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            </button>
+            <div className="flex items-center gap-1.5">
+              {onOpenLocationModal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onOpenLocationModal();
+                  }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
+                    isDark 
+                      ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300' 
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
+                  }`}
+                  title="Change Location"
+                >
+                  <Navigation size={10} />
+                  <span>Change</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={refreshWeather}
+                disabled={loading}
+                className="p-1.5 rounded-full bg-stone-50 hover:bg-[#E8F5E9] text-[#0F2B1F] transition cursor-pointer"
+                title="Refresh GPS & Weather"
+              >
+                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              </button>
+            </div>
           </div>
 
           {/* Temperature & Condition Main Display */}
           <div className="flex items-baseline justify-between mb-4">
             <div>
-              <div className="text-3xl font-black text-[#0F172A] tracking-tight">
+              <div className={`text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>
                 {temp}
               </div>
-              <div className="text-xs font-semibold text-emerald-800">
+              <div className={`text-xs font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
                 Feels like {weather?.feelsLike ?? weather?.temperature ?? 26}°C
               </div>
             </div>
             <div className="text-right">
-              <span className="inline-block px-2.5 py-1 rounded-full bg-[#E8F5E9] text-[11px] font-bold text-[#0F2B1F]">
+              <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9] text-[#0F2B1F]'
+              }`}>
                 {condition}
               </span>
             </div>
           </div>
 
           {/* Telemetry Grid (Humidity & Wind) */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 text-xs">
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-stone-50">
-              <div className="w-7 h-7 rounded-lg bg-[#E8F5E9] flex items-center justify-center shrink-0">
-                <Droplets size={14} className="text-[#0F2B1F]" />
+          <div className={`grid grid-cols-2 gap-2 pt-2 border-t text-xs ${isDark ? 'border-white/10' : 'border-stone-100'}`}>
+            <div className={`flex items-center gap-2 p-2 rounded-xl ${isDark ? 'bg-white/5' : 'bg-stone-50'}`}>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9] text-[#0F2B1F]'}`}>
+                <Droplets size={14} />
               </div>
               <div>
-                <div className="text-[10px] text-[#64748B] font-bold">Humidity</div>
-                <div className="font-extrabold text-[#0F172A]">{weather?.humidity ?? 65}%</div>
+                <div className={`text-[10px] font-bold ${isDark ? 'text-stone-400' : 'text-[#64748B]'}`}>Humidity</div>
+                <div className={`font-extrabold ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>{weather?.humidity ?? 65}%</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-stone-50">
-              <div className="w-7 h-7 rounded-lg bg-[#E8F5E9] flex items-center justify-center shrink-0">
-                <Wind size={14} className="text-[#0F2B1F]" />
+            <div className={`flex items-center gap-2 p-2 rounded-xl ${isDark ? 'bg-white/5' : 'bg-stone-50'}`}>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[#E8F5E9] text-[#0F2B1F]'}`}>
+                <Wind size={14} />
               </div>
               <div>
-                <div className="text-[10px] text-[#64748B] font-bold">Wind Speed</div>
-                <div className="font-extrabold text-[#0F172A]">{weather?.windSpeed ?? 5} km/h</div>
+                <div className={`text-[10px] font-bold ${isDark ? 'text-stone-400' : 'text-[#64748B]'}`}>Wind Speed</div>
+                <div className={`font-extrabold ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>{weather?.windSpeed ?? 5} km/h</div>
               </div>
             </div>
           </div>
 
           {/* Footer note */}
-          <div className="mt-3 pt-2 text-[10px] text-[#64748B] flex items-center justify-between border-t border-stone-100">
+          <div className={`mt-3 pt-2 text-[10px] flex items-center justify-between border-t ${isDark ? 'border-white/10 text-stone-400' : 'border-stone-100 text-[#64748B]'}`}>
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live Telemetry Active

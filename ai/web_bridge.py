@@ -1193,7 +1193,7 @@ async def websocket_voice_endpoint(
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("VOICE_BRIDGE_PORT", "8765"))
+    port = int(os.getenv("PORT", os.getenv("VOICE_BRIDGE_PORT", "8765")))
     print("\n" + "=" * 60)
     print(f"  Devbhoomi Voice-Demo Bridge Starting on port {port}")
     print(f"  Gemini Live Voice Engine: {LIVE_VOICE_MODEL} (Voice: {LIVE_VOICE_NAME})")

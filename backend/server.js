@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import expressWs from 'express-ws';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import helmet from 'helmet';
@@ -54,6 +55,7 @@ const __dirname = path.dirname(__filename);
 
 // Create Express app
 const app = express();
+expressWs(app);
 
 // Middleware - allow cross-origin resource policy so uploaded images can be loaded from frontend port
 app.use(helmet({

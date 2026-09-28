@@ -217,25 +217,13 @@ export default function Navbar() {
                 })}
               </nav>
 
-              {/* Weather + Location Pill */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <TopNavWeatherBadge isDark={isDark} />
-
-                <button
-                  type="button"
-                  onClick={() => setShowLocationModal(true)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
-                    isDark 
-                      ? 'border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-stone-200' 
-                      : 'border border-stone-200 bg-white hover:bg-emerald-50 text-stone-800'
-                  }`}
-                  title="Change location"
-                >
-                  <MapPin size={11} className={isDark ? "text-emerald-400 shrink-0" : "text-emerald-800 shrink-0"} />
-                  <span className={`whitespace-nowrap max-w-[85px] truncate ${isDark ? 'text-stone-300' : 'text-stone-700'}`}>
-                    {userLocation?.city || 'Location'}
-                  </span>
-                </button>
+              {/* Unified Weather & Location Pill */}
+              <div className="flex items-center shrink-0">
+                <TopNavWeatherBadge 
+                  isDark={isDark} 
+                  onOpenLocationModal={() => setShowLocationModal(true)} 
+                  userLocation={userLocation}
+                />
               </div>
             </div>
 
