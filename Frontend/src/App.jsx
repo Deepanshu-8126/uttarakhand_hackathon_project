@@ -20,6 +20,7 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { LocationProvider } from './context/LocationContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -47,7 +48,8 @@ function App() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <AuthProvider>
+        <LocationProvider>
+          <AuthProvider>
           <FavoritesProvider>
             <CartProvider>
               <Router basename={routerBasename}>
@@ -132,7 +134,8 @@ function App() {
         </CartProvider>
       </FavoritesProvider>
     </AuthProvider>
-  </LanguageProvider>
+  </LocationProvider>
+</LanguageProvider>
 </ErrorBoundary>
 );
 }

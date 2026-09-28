@@ -9,12 +9,15 @@ import {
   RefreshCw, 
   MapPin, 
   ChevronDown,
-  Navigation
+  Navigation,
+  LocateFixed
 } from 'lucide-react';
 import { useLiveLocationWeather } from '../../hooks/useLiveLocationWeather';
+import { useLocationContext } from '../../context/LocationContext';
 
 export default function TopNavWeatherBadge({ isDark = false, onOpenLocationModal, userLocation }) {
   const { weather, loading, locationName, refreshWeather } = useLiveLocationWeather();
+  const { requestLocationPermission, isDetecting } = useLocationContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -107,6 +110,23 @@ export default function TopNavWeatherBadge({ isDark = false, onOpenLocationModal
             </div>
 
             <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  requestLocationPermission();
+                }}
+                disabled={isDetecting}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer active:scale-95 ${
+                  isDark 
+                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40' 
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                }`}
+                title="Detect Real-Time GPS Location"
+              >
+                <LocateFixed size={11} className={isDetecting ? 'animate-spin' : ''} />
+                <span>{isDetecting ? 'Locating...' : 'GPS Live'}</span>
+              </button>
+
               {onOpenLocationModal && (
                 <button
                   type="button"
@@ -114,15 +134,15 @@ export default function TopNavWeatherBadge({ isDark = false, onOpenLocationModal
                     setIsOpen(false);
                     onOpenLocationModal();
                   }}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                     isDark 
-                      ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300' 
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
+                      ? 'bg-white/10 hover:bg-white/20 text-stone-300' 
+                      : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
                   }`}
-                  title="Change Location"
+                  title="Change Location Manually"
                 >
                   <Navigation size={10} />
-                  <span>Change</span>
+                  <span>Select</span>
                 </button>
               )}
 

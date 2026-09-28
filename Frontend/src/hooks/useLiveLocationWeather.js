@@ -77,6 +77,17 @@ export function useLiveLocationWeather() {
   }, []);
 
   const detectLocationAndFetch = useCallback(() => {
+    // Check if user has a stored location first
+    const stored = getStoredUserLocation();
+    if (stored && stored.coordinates && stored.coordinates.length === 2) {
+      const [lat, lon] = stored.coordinates;
+      const cityName = stored.city || stored.formatted || 'Your Location';
+      setCoords({ lat, lon, city: cityName });
+      setLocationName(cityName);
+      fetchWeatherForCoords(lat, lon, cityName);
+      return;
+    }
+
     if (typeof window === 'undefined' || !navigator.geolocation) {
       fetchWeatherForCoords(DEFAULT_COORDS.lat, DEFAULT_COORDS.lon, DEFAULT_COORDS.city);
       return;
@@ -116,7 +127,19 @@ export function useLiveLocationWeather() {
 
   useEffect(() => {
     detectLocationAndFetch();
-  }, [detectLocationAndFetch]);
+
+    const handleLocationUpdate = (e) => {
+      if (e.detail && e.detail.coordinates) {
+        const [lat, lon] = e.detail.coordinates;
+        const cityName = e.detail.city || e.detail.formatted || 'Your Location';
+        setCoords({ lat, lon, city: cityName });
+        setLocationName(cityName);
+        fetchWeatherForCoords(lat, lon, cityName);
+      }
+    };
+    window.addEventListener('discovery_location_updated', handleLocationUpdate);
+    return () => window.removeEventListener('discovery_location_updated', handleLocationUpdate);
+  }, [detectLocationAndFetch, fetchWeatherForCoords]);
 
   return {
     weather,

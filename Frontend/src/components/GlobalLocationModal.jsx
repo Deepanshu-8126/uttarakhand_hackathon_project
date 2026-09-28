@@ -20,6 +20,7 @@ import {
   calculateDistanceKm,
   UTTARAKHAND_CITY_COORDINATES
 } from '../utils/geoHelpers';
+import { useLocationContext } from '../context/LocationContext';
 
 // Major Uttarakhand Gateway Hubs
 const GATEWAY_HUBS = [
@@ -30,6 +31,7 @@ const GATEWAY_HUBS = [
 ];
 
 export default function GlobalLocationModal({ isOpen, onClose }) {
+  const { location, isDetecting: isCtxDetecting, requestLocationPermission, errorMsg } = useLocationContext();
   const [currentLoc, setCurrentLoc] = useState(getStoredUserLocation());
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -85,17 +87,13 @@ export default function GlobalLocationModal({ isOpen, onClose }) {
   const handleGpsDetect = async () => {
     setIsDetecting(true);
     try {
-      const res = await detectBrowserLocation();
-      if (res.success && res.coordinates) {
-        const cityName = res.name.split(',')[0].trim();
-        const loc = {
-          city: cityName,
-          formatted: res.name,
-          detectedName: res.name,
-          coordinates: res.coordinates,
-          isGps: true
-        };
-        handleSelectLocation(loc);
+      const res = await requestLocationPermission();
+      if (res.success && res.location) {
+        setCurrentLoc(res.location);
+        computeGatewayAdvice(res.location.coordinates[0], res.location.coordinates[1], res.location.city);
+        setTimeout(() => {
+          onClose();
+        }, 500);
       } else {
         alert(res.error || 'Could not detect location automatically. Please type your city name below.');
       }
