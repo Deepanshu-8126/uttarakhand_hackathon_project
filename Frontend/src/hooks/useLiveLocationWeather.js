@@ -79,7 +79,17 @@ export function useLiveLocationWeather() {
 
   const detectLocationAndFetch = useCallback(() => {
     // Check if user has a stored location first
-    const stored = getStoredUserLocation();
+    let stored = null;
+    try {
+      if (typeof getStoredUserLocation === 'function') {
+        stored = getStoredUserLocation();
+      } else if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('discovery_user_location');
+        stored = raw ? JSON.parse(raw) : null;
+      }
+    } catch (_) {
+      stored = null;
+    }
     if (stored && stored.coordinates && stored.coordinates.length === 2) {
       const [lat, lon] = stored.coordinates;
       const cityName = stored.city || stored.formatted || 'Your Location';

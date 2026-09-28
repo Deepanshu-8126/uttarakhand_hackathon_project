@@ -205,9 +205,10 @@ async def cache_set_response(query_key: str, text: str, audio_b64: str, ttl_seco
 
 
 def _get_genai_client():
-    if not GOOGLE_API_KEY:
-        raise ValueError("GOOGLE_API_KEY environment variable is not set")
-    return genai.Client(api_key=GOOGLE_API_KEY)
+    key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or GOOGLE_API_KEY
+    if not key:
+        return None
+    return genai.Client(api_key=key)
 
 
 def pcm_to_wav_base64(pcm_data: bytes, sample_rate: int = 24000) -> str:
@@ -894,7 +895,7 @@ async def stream_gemini_live_to_ws(
     text_chunks: list[str] = []
     transcription_chunks: list[str] = []
 
-    if not SKIP_LIVE_VOICE:
+    if not SKIP_LIVE_VOICE and client:
         try:
             async with asyncio.timeout(28.0):
                 async with client.aio.live.connect(model=LIVE_VOICE_MODEL, config=config) as session:
@@ -963,23 +964,24 @@ async def stream_gemini_live_to_ws(
         facts_prompt = ("\nVerified Facts from Devbhoomi DB:\n" + "\n".join(enriched_facts)) if enriched_facts else ""
         contents_text = f"User asked via voice: '{prompt}'.\nLanguage preference: {lang}\n{facts_prompt}\n\nRespond as Devbhoomi Guide warmly, informatively, and concisely in 1 to 3 spoken sentences without any markdown formatting or bullet points."
         fb_text = ""
-        for m in FALLBACK_TEXT_MODELS:
-            try:
-                gen_res = await asyncio.to_thread(
-                    client.models.generate_content,
-                    model=m,
-                    contents=contents_text,
-                    config=types.GenerateContentConfig(
-                        system_instruction=AGENT_SYSTEM_PROMPT,
-                        temperature=0.7,
-                        max_output_tokens=220,
-                    ),
-                )
-                fb_text = gen_res.text.replace("*", "").replace("#", "").strip()
-                if fb_text:
-                    break
-            except Exception as e:
-                logger.warning(f"[stream_ws] Fallback model {m} error: {e}")
+        if client:
+            for m in FALLBACK_TEXT_MODELS:
+                try:
+                    gen_res = await asyncio.to_thread(
+                        client.models.generate_content,
+                        model=m,
+                        contents=contents_text,
+                        config=types.GenerateContentConfig(
+                            system_instruction=AGENT_SYSTEM_PROMPT,
+                            temperature=0.7,
+                            max_output_tokens=220,
+                        ),
+                    )
+                    fb_text = gen_res.text.replace("*", "").replace("#", "").strip()
+                    if fb_text:
+                        break
+                except Exception as e:
+                    logger.warning(f"[stream_ws] Fallback model {m} error: {e}")
 
         if not fb_text:
             place_info = search_destination_info(prompt)
@@ -1069,8 +1071,10 @@ async def websocket_voice_endpoint(
     )
 
     try:
-        if client:
-            async with client.aio.live.connect(model=active_model, config=live_config) as session:
+        if not client:
+            raise RuntimeError("No Gemini API key configured for direct Live socket; entering local message synthesis mode.")
+
+        async with client.aio.live.connect(model=active_model, config=live_config) as session:
                 logger.info("[ws/live] Connected to Gemini Live backend session for client")
 
                 async def pump_client_to_session():
