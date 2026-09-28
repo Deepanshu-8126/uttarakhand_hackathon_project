@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Partner from '../models/Partner.js';
 import jwt from 'jsonwebtoken';
+import { resolveLocation } from '../services/locationService.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -16,7 +17,7 @@ const generateRefreshToken = (id) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, location, city, district, interests } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Please add all fields' });
@@ -28,11 +29,19 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
+    let resolvedLocation = null;
+    const locInput = location !== undefined ? location : (city ? { city, district } : null);
+    if (locInput) {
+      resolvedLocation = await resolveLocation(locInput);
+    }
+
     const user = await User.create({
       name,
       email,
       password,
       role: 'user',
+      location: resolvedLocation,
+      interests: Array.isArray(interests) ? interests : []
     });
 
     if (user) {
@@ -43,6 +52,8 @@ export const registerUser = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          location: user.location,
+          interests: user.interests,
           token: generateToken(user._id),
           refreshToken: generateRefreshToken(user._id),
         }
@@ -79,6 +90,8 @@ export const loginUser = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          location: user.location,
+          interests: user.interests,
           token: generateToken(user._id),
           refreshToken: generateRefreshToken(user._id),
         }

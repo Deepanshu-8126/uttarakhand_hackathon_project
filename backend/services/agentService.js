@@ -102,12 +102,22 @@ function buildSystemPrompt(tripContext, session, pageContext) {
   const hasPending = !!session?.pendingConfirmation;
   const entities = session?.contextEntities || {};
 
+  const userLoc = entities.userLocation;
+  const userLocCity = typeof userLoc === 'object' ? (userLoc?.city || userLoc?.district) : userLoc;
+  const userLocStr = userLocCity ? `${userLocCity}${userLoc?.district && userLoc.district !== userLocCity ? ` (${userLoc.district} District)` : ''}` : "Not set";
+
   const activeContextSection = `
 ACTIVE CONVERSATION CONTEXT:
+- User Saved Home Location: ${userLocStr}
 - Active Destination: ${entities.destination || (tripContext?.destinationNames || [])[0] || "Uttarakhand"}
 - Active Duration: ${entities.durationDays ? `${entities.durationDays} Days` : (tripContext?.duration || "Not specified")}
 - Active Travelers: ${entities.travelers || tripContext?.travelers || "Not specified"}
 - Active Budget Tier: ${entities.budgetTier || tripContext?.budget || "Balanced"}
+
+LOCATION & SPATIAL PRONOUN RESOLUTION:
+- "mere aas paas", "near me", "mere paas", "yahan", "mere city mein": refers to the user's location (${userLocStr}).
+- "wahan", "udhar", "uske paas": refers to the previously mentioned destination (${entities.destination || "the destination"}).
+- When user asks "mere aas paas kya hai?" or "near me": prioritize real nearby places, stays, and rentals around their home base (${userLocStr}).
 `;
 
   const tripSection = tripContext ? `

@@ -21,6 +21,7 @@ import { mergeAllowlist } from "./agentSessionStore.js";
 import { resolveDestination } from "./destinationResolver.js";
 import { applyTripMutation } from "./tripMutationService.js";
 import googlePlacesService from "./googlePlacesService.js";
+import { resolveLocation, findNearbyEntities } from "./locationService.js";
 
 const TOOL_TIMEOUT_MS = 8000;
 
@@ -205,6 +206,20 @@ export const TOOL_SCHEMAS = [
     },
     isStateChanging: false,
     requiresAuth: false
+  },
+  {
+    name: "getNearbyRecommendations",
+    description: "Discover real verified places, stays, rentals, activities, and guides near the user's current or saved location in Uttarakhand.",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string", description: "City or district (e.g. 'Nainital', 'Haldwani', 'Dehradun'). If omitted, automatically uses user's saved location." },
+        category: { type: "string", description: "Filter: 'all', 'stays', 'rentals', 'activities', 'guides', 'destinations'" },
+        radiusKm: { type: "number", description: "Search radius in km (default 75)" }
+      }
+    },
+    isStateChanging: false,
+    requiresAuth: false
   }
 ];
 
@@ -241,6 +256,7 @@ export async function executeTool(toolName, args, { session, user } = {}) {
       case "exploreDestination":      result = await _exploreDestination(args, session); break;
       case "searchDestinations":      result = await _searchDestinations(args, session); break;
       case "getRecommendations":      result = await _getRecommendations(args, session); break;
+      case "getNearbyRecommendations": result = await _getNearbyRecommendations(args, session, user); break;
       case "calculateBudget":         result = await _calculateBudget(args); break;
       case "planRoute":               result = await _planRoute(args); break;
       case "getItinerary":            result = await _getItinerary(args, user); break;
@@ -977,4 +993,47 @@ async function _checkBookingEligibility(args, session) {
     provenance: priceVerified ? "VERIFIED" : (listing.pricing?.provenance || "UNKNOWN"),
     bookingAction: eligible ? "PROCEED_TO_BOOKING_FLOW" : "NOT_ELIGIBLE"
   }, priceVerified ? "VERIFIED" : (listing.pricing?.provenance || "UNKNOWN"));
+}
+
+async function _getNearbyRecommendations(args, session, user) {
+  const locInput = args.location || session?.contextEntities?.userLocation || user?.location;
+  if (!locInput) {
+    return failureResult("User location is not set. Please provide a city or district (e.g. 'Nainital', 'Haldwani', 'Dehradun').", "NO_LOCATION");
+  }
+
+  const resolved = await resolveLocation(locInput);
+  if (!resolved) {
+    return failureResult(`Could not resolve location '${args.location || "user location"}' in Uttarakhand.`, "UNRESOLVED_LOCATION");
+  }
+
+  const radiusKm = args.radiusKm || 75;
+  const nearby = await findNearbyEntities({
+    coordinates: resolved.coordinates,
+    district: resolved.district,
+    city: resolved.city,
+    radiusKm,
+    interests: user?.interests || [],
+    limit: 6
+  });
+
+  return successResult({
+    location: resolved.city || resolved.district,
+    district: resolved.district,
+    hasCoordinates: resolved.hasCoordinates,
+    nearbyDestinations: (nearby.nearbyDestinations || []).map(d => ({
+      name: d.name, district: d.district, distance: d.distanceText, category: d.category
+    })),
+    nearbyStays: (nearby.nearbyStays || []).map(s => ({
+      name: s.name, city: s.city, district: s.district, distance: s.distanceText, price: s.price?.amount || s.pricePerNight
+    })),
+    nearbyRentals: (nearby.nearbyRentals || []).map(r => ({
+      name: r.name, city: r.city, distance: r.distanceText, vehiclesCount: (r.vehicles || []).length
+    })),
+    nearbyActivities: (nearby.nearbyActivities || []).map(a => ({
+      name: a.name, district: a.district, distance: a.distanceText, category: a.category
+    })),
+    nearbyGuides: (nearby.nearbyGuides || []).map(g => ({
+      name: g.name, location: g.location, distance: g.distanceText, specialties: g.specialties
+    }))
+  }, "verified_dataset", [{ source: "Discovery Uttarakhand Proximity Engine", freshness: "VERIFIED" }]);
 }

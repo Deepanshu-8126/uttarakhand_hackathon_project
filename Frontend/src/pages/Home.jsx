@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import ProblemStatement from '../components/home/ProblemStatement';
+import PersonalizedNearYouSection from '../components/home/PersonalizedNearYouSection';
 import ExploreSection from '../components/ExploreSection';
 import HiddenLocationsSection from '../components/destinations/HiddenLocationsSection';
 import ThankYouSection from '../components/ThankYouSection';
@@ -38,6 +39,7 @@ const Home = () => {
       <Navbar />
       <main className="flex-grow flex flex-col pb-28 md:pb-36">
         <HeroSection />
+        <PersonalizedNearYouSection />
         <ExploreSection />
         <HiddenLocationsSection />
         <ProblemStatement />

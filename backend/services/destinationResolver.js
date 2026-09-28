@@ -57,6 +57,7 @@ const STATIC_ALIASES = {
 };
 
 const SPATIAL_PRONOUN_REGEX = /\b(wahan|udhar|uske paas|wahi|nearby|there|around there|same place|that place|wahan ka|wahan ke)\b/i;
+export const USER_NEAR_PRONOUN_REGEX = /\b(mere\s+(?:aas\s*paas|paas|near|area|city|district)|yahan|near\s+me|around\s+me|mera\s+area|mere\s+ghar\s+ke\s+paas)\b/i;
 
 /**
  * Initialize registry from seed JSONs and DB fallback
@@ -171,7 +172,34 @@ export function resolveDestination(text, context = {}) {
     }
   }
 
-  // 3. Pronoun / spatial reference resolution (e.g. "wahan", "udhar", "uske paas")
+  // 3. User location / "near me" pronoun reference resolution (e.g. "mere aas paas", "near me", "mere paas", "yahan")
+  if (USER_NEAR_PRONOUN_REGEX.test(clean)) {
+    const userLoc = context.userLocation || context.userCity || context.userDistrict;
+    const targetLocName = (typeof userLoc === 'object' && userLoc !== null) 
+      ? (userLoc.city || userLoc.district || userLoc.name) 
+      : userLoc;
+    if (targetLocName && typeof targetLocName === 'string') {
+      const resolved = resolveDestination(targetLocName);
+      if (resolved) {
+        return {
+          ...resolved,
+          isUserNearby: true,
+          resolvedFrom: 'USER_LOCATION'
+        };
+      }
+      return {
+        name: targetLocName,
+        slug: targetLocName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        id: targetLocName.toLowerCase(),
+        district: (typeof userLoc === 'object' && userLoc?.district) ? userLoc.district : null,
+        region: null,
+        isUserNearby: true,
+        resolvedFrom: 'USER_LOCATION'
+      };
+    }
+  }
+
+  // 4. Pronoun / spatial reference resolution (e.g. "wahan", "udhar", "uske paas")
   if (SPATIAL_PRONOUN_REGEX.test(clean)) {
     const ctxDest = context.destination || context.lastDestination || (context.destinationNames && context.destinationNames[0]);
     if (ctxDest) {

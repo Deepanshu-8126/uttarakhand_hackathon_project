@@ -31,8 +31,26 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   location: {
-    type: String,
+    city: { type: String, trim: true },
+    district: { type: String, trim: true },
+    state: { type: String, trim: true, default: 'Uttarakhand' },
+    country: { type: String, trim: true, default: 'India' },
+    coordinates: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude] GeoJSON order
+        default: undefined
+      }
+    }
   },
+  interests: [{
+    type: String,
+    trim: true
+  }],
   isActive: {
     type: Boolean,
     default: true,
@@ -40,6 +58,11 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+userSchema.index({ 'location.coordinates': '2dsphere' }, { sparse: true });
+userSchema.index({ 'location.city': 1 });
+userSchema.index({ 'location.district': 1 });
+
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcryptjs.compare(enteredPassword, this.password);

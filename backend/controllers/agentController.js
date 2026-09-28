@@ -29,13 +29,14 @@ export function extractEntitiesFromText(text, sessionEntities = {}) {
   if (!text || typeof text !== "string") return entities;
   const clean = text.trim();
 
-  // 1. Dynamic Canonical Destination extraction
-  const resolved = resolveDestination(clean);
+  // 1. Dynamic Canonical Destination extraction (with spatial pronoun & user location context)
+  const resolved = resolveDestination(clean, sessionEntities);
   if (resolved) {
     entities.destination = resolved.name;
     entities.destinationId = resolved.id || resolved.slug;
     if (resolved.district) entities.district = resolved.district;
     if (resolved.region) entities.region = resolved.region;
+    if (resolved.isUserNearby) entities.isUserNearby = true;
   }
 
   // 2. Origin extraction (e.g. "Delhi se", "main Dehradun se niklunga", "from Delhi", "start from Delhi", or standalone "Delhi")
@@ -226,7 +227,7 @@ async function runPythonAgent({ message, chatId, tripContext, session, user, req
     chatId: chatId || session?.sessionId || requestId,
     sessionId: session?.sessionId || null,
     tripContext: tripContext || {},
-    userProfile: user ? { id: String(user._id), name: user.name, role: user.role } : null,
+    userProfile: user ? { id: String(user._id), name: user.name, role: user.role, location: user.location } : (session?.contextEntities?.userLocation ? { location: session.contextEntities.userLocation } : null),
     history: session?.history || []
   };
 
@@ -442,8 +443,17 @@ export const agentChat = async (req, res) => {
     }
     const tHistory = Date.now() - tHistoryStart;
 
-    // 7. Update session context entities from user message, pageContext & trip context
-    const extractedEntities = extractEntitiesFromText(sanitizedMessage, session.contextEntities || {});
+    // 7. Seed user saved location & device location into session context entities
+    session.contextEntities = session.contextEntities || {};
+    if (user?.location && !session.contextEntities.userLocation) {
+      session.contextEntities.userLocation = user.location;
+    }
+    if (pageContext?.userLocation) {
+      session.contextEntities.userLocation = pageContext.userLocation;
+    }
+
+    // Update session context entities from user message, pageContext & trip context
+    const extractedEntities = extractEntitiesFromText(sanitizedMessage, session.contextEntities);
 
     // Seed from safe pageContext
     if (pageContext?.destinationName && !extractedEntities.destination && !session.contextEntities?.destination) {

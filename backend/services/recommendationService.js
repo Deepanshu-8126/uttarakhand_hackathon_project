@@ -83,9 +83,11 @@ export class RecommendationEngine {
       seasonMonth = new Date().getMonth() + 1
     } = tripContext;
 
-    // Anchor coordinates: overnight base takes priority, then current location
-    const anchorCoords = extractCoordinates(overnightLocation) || extractCoordinates(currentLocation) || [30.0, 79.5];
-    const targetDistrict = overnightLocation.district || currentLocation.district || null;
+    // Anchor coordinates: overnight base takes priority, then current location, then user saved location
+    const userLocCoords = extractCoordinates(tripContext.userLocation);
+    const userLocDistrict = tripContext.userLocation?.district || null;
+    const anchorCoords = extractCoordinates(overnightLocation) || extractCoordinates(currentLocation) || userLocCoords || [30.0, 79.5];
+    const targetDistrict = overnightLocation.district || currentLocation.district || userLocDistrict || null;
     const maxRadiusKm = RECOMMENDATION_CONFIG.paceTravelLimitsKm[pace] || 75;
 
     const results = {};

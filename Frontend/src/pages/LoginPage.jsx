@@ -18,7 +18,9 @@ import {
   Car,
   CheckCircle2,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  MapPin,
+  Crosshair
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -61,10 +63,34 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
+  const [coordinates, setCoordinates] = useState(null);
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successNotice, setSuccessNotice] = useState('');
   const [showDemoDropdown, setShowDemoDropdown] = useState(false);
+
+  const handleDetectGps = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsDetectingGps(false);
+        const { latitude, longitude } = pos.coords;
+        setCoordinates([longitude, latitude]);
+      },
+      (err) => {
+        setIsDetectingGps(false);
+        console.warn('Geolocation denied or timed out:', err.message);
+      },
+      { timeout: 8000 }
+    );
+  };
 
   const isPartner = accountMode === 'partner';
   const searchParams = new URLSearchParams(location.search);
@@ -127,6 +153,13 @@ export default function LoginPage() {
             name: fullName || identifier.split('@')[0],
             email: identifier.includes('@') ? identifier : `${identifier}@traveler.in`,
             password,
+            location: (city || district || coordinates) ? {
+              city: city.trim(),
+              district: district.trim(),
+              state: 'Uttarakhand',
+              country: 'India',
+              coordinates: coordinates || undefined
+            } : undefined
           });
         }
       } else {
@@ -481,7 +514,8 @@ export default function LoginPage() {
             <form className="space-y-3.5" onSubmit={handleSubmit}>
               
               {isRegister && (
-                <div>
+                <>
+                  <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1" htmlFor="fullname">
                     {isPartner ? 'Business / Contact Name' : 'Full Name'}
                   </label>
@@ -500,7 +534,55 @@ export default function LoginPage() {
                     </div>
                   </div>
                 </div>
-              )}
+
+                {!isPartner && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700" htmlFor="city">
+                        Your Location / City (Optional)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleDetectGps}
+                        disabled={isDetectingGps}
+                        className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Crosshair size={11} className={isDetectingGps ? 'animate-spin' : 'text-emerald-600'} />
+                        <span>{isDetectingGps ? 'Locating...' : 'Use current location'}</span>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="relative">
+                        <input
+                          id="city"
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          placeholder="City (e.g. Nainital)"
+                          className="w-full bg-stone-50 text-slate-900 text-xs sm:text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl pl-8 pr-2.5 py-2 placeholder:text-slate-400 focus:outline-none transition"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+                        </div>
+                      </div>
+                      <div>
+                        <input
+                          id="district"
+                          type="text"
+                          value={district}
+                          onChange={(e) => setDistrict(e.target.value)}
+                          placeholder="District (e.g. Nainital)"
+                          className="w-full bg-stone-50 text-slate-900 text-xs sm:text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl px-3 py-2 placeholder:text-slate-400 focus:outline-none transition"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      {coordinates ? '✅ GPS location recorded. ' : ''}Personalizes your Explore experience to places near you.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
 
               {/* Email / Phone Field */}
               <div>

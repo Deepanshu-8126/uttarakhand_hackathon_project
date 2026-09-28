@@ -1,0 +1,41 @@
+# Discovery Uttarakhand — Orphan Code Audit
+**Generated:** 2026-09-28
+**Integrity Rule:** Do NOT delete anything during audit. Catalog all unused elements.
+
+## 1. Orphan Components (29 Files)
+These components are located in `Frontend/src/components/` but have zero imports across active pages or components:
+1. `Frontend/src/components/ActivityCard.jsx` (Replaced by direct page cards in `Activities.jsx`)
+2. `Frontend/src/components/AdaptiveMountainDock.jsx` (Legacy navigation dock)
+3. `Frontend/src/components/common/CinematicVideoShowcase.jsx` (Hero video experiment)
+4. `Frontend/src/components/common/DownloadAppModal.jsx` (App promotion modal)
+5. `Frontend/src/components/copilot/CopilotMessage.jsx` (Unified into `MessageRenderer.jsx`)
+6. `Frontend/src/components/copilot/QuickActions.jsx` (Unified into `SuggestedActions.jsx`)
+7. `Frontend/src/components/copilot/TripContextStrip.jsx` (Unified into `TripContextPanel.jsx`)
+8. `Frontend/src/components/destination/DestinationDiscoveryWorkspace.jsx` (Legacy destination UI)
+9. `Frontend/src/components/destinations/BottomTray.jsx` (Legacy map tray)
+10. `Frontend/src/components/destinations/DestinationCarousel.jsx` (Legacy carousel)
+11. `Frontend/src/components/home/TrustProtocolStrip.jsx` (Duplicated by `TrustStrip.jsx`)
+12. `Frontend/src/components/layout/LeftSidebar.jsx` (Replaced by top navigation)
+13. `Frontend/src/components/map/MapStage.jsx` (Integrated into `UttarakhandMap.jsx`)
+14. `Frontend/src/components/map/TripPlannerMap.jsx` (Integrated into `TripPlanner.jsx`)
+15. `Frontend/src/components/PhotoGallery.jsx` (Integrated into `DestinationDetails.jsx`)
+16. `Frontend/src/components/planner/AddDestinationDrawer.jsx` (Legacy planner component)
+17. `Frontend/src/components/planner/FloatingTripBasket.jsx` (Legacy planner component)
+18. `Frontend/src/components/planner/GeneratedItineraryDrawer.jsx` (Legacy planner component)
+19. `Frontend/src/components/planner/JourneySegmentStepper.jsx` (Legacy planner component)
+20. `Frontend/src/components/planner/PlanTripPanel.jsx` (Legacy planner component)
+21. `Frontend/src/components/planner/TripRightPanel.jsx` (Legacy planner component)
+22. `Frontend/src/components/planner/TripSearchPanel.jsx` (Legacy planner component)
+23. `Frontend/src/components/planner/TripSummaryPanel.jsx` (Legacy planner component)
+24. `Frontend/src/components/safety/CommunityGridWidget.jsx` (Integrated into `CommunitySafetyGrid.jsx`)
+25. `Frontend/src/components/safety/LandslideAlertBanner.jsx` (Integrated into `SOSActiveBanner.jsx`)
+26. `Frontend/src/components/widgets/ExploreMoreWidget.jsx` (Legacy sidebar widget)
+27. `Frontend/src/components/widgets/StatsWidget.jsx` (Integrated into `ExploreSection.jsx`)
+
+## 2. Orphan Backend Services (2 Files)
+1. `backend/services/ai/copilotService.js` (Superseded by canonical `backend/services/agentService.js`)
+2. `backend/services/chatService.js` (Legacy chat handler superseded by `agentService.js`)
+
+## 3. Unused Frontend API Clients (2 Files)
+1. `Frontend/src/api/exploreApi.js` (Explore page uses `destinationApi.js` directly)
+2. `Frontend/src/api/transportApi.js` (Transports are queried via local dataset in `verifiedTransports.js`)
