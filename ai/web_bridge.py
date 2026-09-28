@@ -7,6 +7,7 @@ Gemini Live voice companion using the exact studio-quality Aoede native voice.
 
 from __future__ import annotations
 
+from typing import Any, Dict, List, Optional, Union, Tuple
 import asyncio
 import base64
 import hashlib
@@ -18,6 +19,15 @@ import re
 import sys
 import wave
 from pathlib import Path
+
+# Force UTF-8 on Windows terminal so Hindi and emoji logs print seamlessly without UnicodeEncodeError
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 import httpx
 
@@ -1029,11 +1039,13 @@ async def websocket_voice_endpoint(
     - Structured queries (type: 'query' or 'text') with Devbhoomi DB tool grounding.
     """
     await websocket.accept()
-    logger.info("[ws/live] Client connected to Devbhoomi Voice WebSocket")
+    print("\n" + "=" * 60, flush=True)
+    print("🟢 [VOICE CLIENT CONNECTED]: New WebSocket connection established", flush=True)
+    print("=" * 60 + "\n", flush=True)
 
     active_key = apiKey or GOOGLE_API_KEY
     active_voice = voice or LIVE_VOICE_NAME or "Aoede"
-    active_model = model or LIVE_VOICE_MODEL or "gemini-2.5-flash-native-audio-latest"
+    active_model = model or LIVE_VOICE_MODEL or "gemini-3.1-flash-live-preview"
     active_system_prompt = system_prompt or AGENT_SYSTEM_PROMPT
 
     await safe_send(websocket, {
@@ -1046,7 +1058,7 @@ async def websocket_voice_endpoint(
     })
 
     if not active_key:
-        logger.warning("[ws/live] Missing Google API key, running local audio fallback mode")
+        print("⚠️  [VOICE WARNING]: Missing Google API key, running local audio fallback mode", flush=True)
         await safe_send(websocket, {"type": "info", "message": "Running in local synthesizer mode"})
 
     client = genai.Client(api_key=active_key) if active_key else None
@@ -1060,148 +1072,312 @@ async def websocket_voice_endpoint(
                 prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=active_voice)
             )
         ),
-        realtime_input_config=types.RealtimeInputConfig(
-            automatic_activity_detection=types.AutomaticActivityDetection(
-                start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_HIGH,
-                end_of_speech_sensitivity=types.EndSensitivity.END_SENSITIVITY_LOW,
-                prefix_padding_ms=150,
-                silence_duration_ms=600,
-            )
-        ),
         system_instruction=types.Content(parts=[types.Part.from_text(text=active_system_prompt)]),
         tools=[DEVBHOOMI_TOOLS],
     )
+
+    # Shared state for tracking current turn query to save into Redis L2 cache
+    current_prompt = [""]
 
     try:
         if not client:
             raise RuntimeError("No Gemini API key configured for direct Live socket; entering local message synthesis mode.")
 
         async with client.aio.live.connect(model=active_model, config=live_config) as session:
-                logger.info("[ws/live] Connected to Gemini Live backend session for client")
+            print("✨ [GEMINI LIVE SESSION READY]: Connected directly to Google Gemini Live bidirectional engine!", flush=True)
 
-                async def pump_client_to_session():
-                    try:
-                        while True:
-                            data = await websocket.receive_text()
-                            msg = json.loads(data)
-                            msg_type = msg.get("type", "audio")
+            async def pump_client_to_session():
+                pcm_chunk_count = 0
+                total_pcm_bytes = 0
+                try:
+                    while True:
+                        data = await websocket.receive_text()
+                        msg = json.loads(data)
+                        msg_type = msg.get("type", "audio")
 
-                            if msg_type in ("audio", "pcm_chunk", "audio_chunk"):
-                                raw_b64 = msg.get("data") or msg.get("chunk")
-                                if raw_b64:
-                                    pcm_data = base64.b64decode(raw_b64)
-                                    await session.send_realtime_input(
-                                        audio=types.Blob(
-                                            data=pcm_data,
-                                            mime_type="audio/pcm;rate=16000",
-                                        )
+                        if msg_type in ("audio", "pcm_chunk", "audio_chunk"):
+                            raw_b64 = msg.get("data") or msg.get("chunk")
+                            if raw_b64:
+                                pcm_data = base64.b64decode(raw_b64)
+                                total_pcm_bytes += len(pcm_data)
+                                pcm_chunk_count += 1
+                                if pcm_chunk_count % 35 == 1:
+                                    print(f"🎤 [MIC STREAMING]: Receiving live audio from microphone ({total_pcm_bytes // 1024} KB transferred)...", flush=True)
+                                await session.send_realtime_input(
+                                    audio=types.Blob(
+                                        data=pcm_data,
+                                        mime_type="audio/pcm;rate=16000",
                                     )
-                            elif msg_type in ("query", "text"):
-                                query_text = (msg.get("query") or msg.get("text", "")).strip()
-                                if query_text:
-                                    await session.send_client_content(
-                                        turns=[types.Content(role="user", parts=[types.Part.from_text(text=query_text)])]
-                                    )
-                            elif msg_type == "ping":
-                                await safe_send(websocket, {"type": "pong"})
-                    except WebSocketDisconnect:
-                        pass
-                    except Exception as exc:
-                        logger.warning(f"[ws/in] Pump error: {exc}")
+                                )
 
-                async def pump_session_to_client():
-                    try:
-                        async for response in session.receive():
-                            # Handle autonomous Devbhoomi tool execution
-                            tool_call = getattr(response, "tool_call", None)
-                            if tool_call and getattr(tool_call, "function_calls", None):
-                                logger.info(f"[ws/live] Autonomous tool dispatch: {[fc.name for fc in tool_call.function_calls]}")
-                                responses = []
-                                for fc in tool_call.function_calls:
-                                    res = await execute_tool(fc.name, fc.args)
-                                    responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
-                                await session.send_tool_response(function_responses=responses)
+                        elif msg_type in ("userSpeech", "user_speech", "speech"):
+                            speech_text = (msg.get("text") or msg.get("query") or "").strip()
+                            is_final = msg.get("isFinal", True)
+                            if speech_text:
+                                print("\n" + "=" * 65, flush=True)
+                                print(f"🎤 [USER SPOKE] ({'FINAL' if is_final else 'INTERIM'}): {speech_text}", flush=True)
+                                print("=" * 65 + "\n", flush=True)
 
-                            sc = response.server_content
-                            if sc:
-                                # Stream input transcription (what user spoke)
-                                in_tx = getattr(sc, "input_transcription", None)
-                                if in_tx and getattr(in_tx, "text", None):
-                                    await safe_send(websocket, {
-                                        "type": "userText",
-                                        "text": in_tx.text,
-                                    })
+                                # Echo to client so UI updates live
+                                await safe_send(websocket, {
+                                    "type": "userText",
+                                    "text": speech_text,
+                                })
 
-                                # Stream agent text delta
-                                out_tx = getattr(sc, "output_transcription", None)
-                                if out_tx and getattr(out_tx, "text", None):
-                                    await safe_send(websocket, {
-                                        "type": "text",
-                                        "delta": out_tx.text,
-                                        "text": out_tx.text,
-                                    })
-
-                                # Stream 24kHz raw PCM chunks (Aoede/selected voice)
-                                if sc.model_turn:
-                                    for part in sc.model_turn.parts:
-                                        if part.inline_data and part.inline_data.data:
-                                            chunk_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
+                                if is_final:
+                                    current_prompt[0] = speech_text
+                                    # 1. Check Redis Cache for Instant Smooth Replay (0-15ms)
+                                    cached = await cache_get_response(speech_text)
+                                    if cached:
+                                        c_text, c_audio = cached
+                                        print(f"⚡ [REDIS CACHE HIT]: Sub-15ms Instant Response for: '{speech_text}'", flush=True)
+                                        print(f"🤖 [DEVBHOOMI AI (Aoede)]: {c_text}\n", flush=True)
+                                        await safe_send(websocket, {
+                                            "type": "text",
+                                            "delta": c_text,
+                                            "text": c_text,
+                                        })
+                                        if c_audio:
                                             await safe_send(websocket, {
                                                 "type": "audio",
-                                                "data": chunk_b64,
-                                                "chunk": chunk_b64,
+                                                "data": c_audio,
+                                                "chunk": c_audio,
                                                 "rate": 24000,
                                             })
+                                        await safe_send(websocket, {
+                                            "type": "turnComplete",
+                                            "text": c_text,
+                                            "audio_base64": c_audio,
+                                        })
+                                        continue
 
-                                if sc.turn_complete:
-                                    await safe_send(websocket, {"type": "turnComplete"})
-                                
-                                if getattr(sc, "interrupted", False):
-                                    await safe_send(websocket, {"type": "interrupted"})
+                                    # 2. Forward to Gemini Live engine with turn_complete=True
+                                    await session.send_client_content(
+                                        turns=[types.Content(role="user", parts=[types.Part.from_text(text=speech_text)])],
+                                        turn_complete=True,
+                                    )
 
-                    except Exception as exc:
-                        logger.warning(f"[ws/out] Session receive error: {exc}")
+                        elif msg_type in ("query", "text"):
+                            query_text = (msg.get("query") or msg.get("text", "")).strip()
+                            if query_text:
+                                print("\n" + "=" * 65, flush=True)
+                                print(f"💬 [USER QUERY]: {query_text}", flush=True)
+                                print("=" * 65 + "\n", flush=True)
 
-                in_task = asyncio.create_task(pump_client_to_session())
-                out_task = asyncio.create_task(pump_session_to_client())
-                done, pending = await asyncio.wait(
-                    [in_task, out_task],
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-                for t in pending:
-                    t.cancel()
-                    try:
-                        await t
-                    except (asyncio.CancelledError, Exception):
-                        pass
+                                await safe_send(websocket, {
+                                    "type": "userText",
+                                    "text": query_text,
+                                })
+
+                                current_prompt[0] = query_text
+                                # Check Redis Cache
+                                cached = await cache_get_response(query_text)
+                                if cached:
+                                    c_text, c_audio = cached
+                                    print(f"⚡ [REDIS CACHE HIT]: Sub-15ms Instant Response for: '{query_text}'", flush=True)
+                                    print(f"🤖 [DEVBHOOMI AI (Aoede)]: {c_text}\n", flush=True)
+                                    await safe_send(websocket, {
+                                        "type": "text",
+                                        "delta": c_text,
+                                        "text": c_text,
+                                    })
+                                    if c_audio:
+                                        await safe_send(websocket, {
+                                            "type": "audio",
+                                            "data": c_audio,
+                                            "chunk": c_audio,
+                                            "rate": 24000,
+                                        })
+                                    await safe_send(websocket, {
+                                        "type": "turnComplete",
+                                        "text": c_text,
+                                        "audio_base64": c_audio,
+                                    })
+                                    continue
+
+                                await session.send_client_content(
+                                    turns=[types.Content(role="user", parts=[types.Part.from_text(text=query_text)])],
+                                    turn_complete=True,
+                                )
+
+                        elif msg_type == "ping":
+                            await safe_send(websocket, {"type": "pong"})
+
+                except WebSocketDisconnect:
+                    pass
+                except Exception as exc:
+                    print(f"⚠️  [WS PUMP IN ERROR]: {exc}", flush=True)
+
+            async def pump_session_to_client():
+                ai_text_chunks = []
+                ai_pcm_chunks = []
+                try:
+                    async for response in session.receive():
+                        # Handle autonomous Devbhoomi DB tool execution
+                        tool_call = getattr(response, "tool_call", None)
+                        if tool_call and getattr(tool_call, "function_calls", None):
+                            tool_names = [fc.name for fc in tool_call.function_calls]
+                            print(f"⚙️  [AI TOOL CALL]: {tool_names}", flush=True)
+                            responses = []
+                            for fc in tool_call.function_calls:
+                                print(f"   ↳ Executing DB Tool: {fc.name}({fc.args})...", flush=True)
+                                res = await execute_tool(fc.name, fc.args)
+                                print(f"   ✓ Tool Result: {str(res)[:100]}...", flush=True)
+                                responses.append(types.FunctionResponse(id=fc.id, name=fc.name, response=res))
+                            await session.send_tool_response(function_responses=responses)
+
+                        sc = response.server_content
+                        if sc:
+                            # Stream input transcription (what Gemini detected from user voice)
+                            in_tx = getattr(sc, "input_transcription", None)
+                            if in_tx and getattr(in_tx, "text", None):
+                                recognized_words = in_tx.text.strip()
+                                if recognized_words:
+                                    print("\n" + "=" * 65, flush=True)
+                                    print(f"🎤 [USER SPOKE (Gemini STT)]: {recognized_words}", flush=True)
+                                    print("=" * 65 + "\n", flush=True)
+                                    current_prompt[0] = recognized_words
+                                    await safe_send(websocket, {
+                                        "type": "userText",
+                                        "text": recognized_words,
+                                    })
+
+                            # Stream agent text delta
+                            out_tx = getattr(sc, "output_transcription", None)
+                            if out_tx and getattr(out_tx, "text", None):
+                                delta_text = out_tx.text
+                                ai_text_chunks.append(delta_text)
+                                print(delta_text, end="", flush=True)
+                                await safe_send(websocket, {
+                                    "type": "text",
+                                    "delta": delta_text,
+                                    "text": delta_text,
+                                })
+
+                            # Stream 24kHz raw PCM chunks (Aoede native voice)
+                            if sc.model_turn:
+                                for part in sc.model_turn.parts:
+                                    if part.inline_data and part.inline_data.data:
+                                        ai_pcm_chunks.append(part.inline_data.data)
+                                        chunk_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
+                                        await safe_send(websocket, {
+                                            "type": "audio",
+                                            "data": chunk_b64,
+                                            "chunk": chunk_b64,
+                                            "rate": 24000,
+                                        })
+
+                            if sc.turn_complete:
+                                full_reply = "".join(ai_text_chunks).strip()
+                                full_pcm = b"".join(ai_pcm_chunks)
+                                full_audio_b64 = base64.b64encode(full_pcm).decode("utf-8") if full_pcm else ""
+
+                                print(f"\n✨ [AI RESPONSE FINISHED]: \"{full_reply[:90]}...\"\n", flush=True)
+
+                                # Store response in Redis L2 Cache for instant replay
+                                if current_prompt[0] and full_reply:
+                                    await cache_set_response(current_prompt[0], full_reply, full_audio_b64)
+                                    print(f"⚡ [REDIS CACHE SAVED]: Stored '{current_prompt[0]}' in Upstash Redis (<15ms)", flush=True)
+
+                                ai_text_chunks.clear()
+                                ai_pcm_chunks.clear()
+                                await safe_send(websocket, {
+                                    "type": "turnComplete",
+                                    "text": full_reply,
+                                    "audio_base64": full_audio_b64,
+                                })
+
+                            if getattr(sc, "interrupted", False):
+                                print("\n⚡ [USER BARGE-IN INTERRUPTED AI]\n", flush=True)
+                                ai_text_chunks.clear()
+                                ai_pcm_chunks.clear()
+                                await safe_send(websocket, {"type": "interrupted"})
+
+                except Exception as exc:
+                    print(f"⚠️  [WS PUMP OUT ERROR]: {exc}", flush=True)
+
+            in_task = asyncio.create_task(pump_client_to_session())
+            out_task = asyncio.create_task(pump_session_to_client())
+            done, pending = await asyncio.wait(
+                [in_task, out_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for t in pending:
+                t.cancel()
+                try:
+                    await t
+                except (asyncio.CancelledError, Exception):
+                    pass
 
     except Exception as e:
-        logger.warning(f"[ws] Gemini Live direct session error: {e}. Running fallback message loop...")
+        print(f"\n⚠️  [GEMINI LIVE FALLBACK]: {type(e).__name__}: {e}. Running local synthesis mode with Redis.", flush=True)
         try:
             while True:
                 data = await websocket.receive_text()
                 msg = json.loads(data)
                 mtype = msg.get("type")
-                if mtype in ("query", "text"):
-                    q = (msg.get("query") or msg.get("text", "")).strip()
-                    lang = msg.get("lang", "en")
+                if mtype in ("userSpeech", "user_speech", "speech", "query", "text"):
+                    q = (msg.get("text") or msg.get("query") or "").strip()
+                    lang = msg.get("lang", "hi")
                     if q:
-                        logger.info(f"[ws/voice] Received WebSocket query: '{q}' (lang: {lang})")
-                        await stream_gemini_live_to_ws(websocket, q, [], lang)
-                        logger.info(f"[ws/voice] Finished response stream for: '{q}'")
+                        print("\n" + "=" * 65, flush=True)
+                        print(f"🎤 [USER SPOKE (Fallback)]: {q}", flush=True)
+                        print("=" * 65 + "\n", flush=True)
+
+                        await safe_send(websocket, {"type": "userText", "text": q})
+
+                        # Check Redis Cache
+                        cached = await cache_get_response(q)
+                        if cached:
+                            c_text, c_audio = cached
+                            print(f"⚡ [REDIS CACHE HIT]: Sub-15ms Instant Response for: '{q}'", flush=True)
+                            print(f"🤖 [DEVBHOOMI AI (Fallback)]: {c_text}\n", flush=True)
+                            await safe_send(websocket, {
+                                "type": "turn_complete",
+                                "text": c_text,
+                                "audio_base64": c_audio,
+                            })
+                            continue
+
+                        print(f"🤖 [DEVBHOOMI AI (Fallback)]: Thinking and synthesizing with tool grounding...", flush=True)
+                        ans_text, ans_audio = await stream_gemini_live_to_ws(websocket, q, [], lang)
+                        print(f"🤖 [DEVBHOOMI AI (Fallback)]: {ans_text}\n", flush=True)
+                        if q and ans_text:
+                            await cache_set_response(q, ans_text, ans_audio)
+                            print(f"⚡ [REDIS CACHE SAVED]: Stored in Upstash Redis.", flush=True)
+
                 elif mtype == "ping":
                     await safe_send(websocket, {"type": "pong"})
         except WebSocketDisconnect:
-            logger.info("[ws/voice] WebSocket client disconnected normally")
+            print("🔌 [CLIENT DISCONNECTED]: WebSocket closed normally", flush=True)
         except Exception as ex:
-            logger.error(f"[ws/voice] WebSocket error: {ex}", exc_info=True)
+            print(f"❌ [WS FALLBACK ERROR]: {ex}", flush=True)
     finally:
-        logger.info("[ws/voice] Cleaned up WebSocket connection")
+        print("🧹 [VOICE CLEANUP]: WebSocket session closed and cleaned up.", flush=True)
 
+
+
+def free_port(target_port: int):
+    """Automatically free port on Windows if an old process is still holding it."""
+    if sys.platform == "win32":
+        try:
+            import subprocess
+            out = subprocess.check_output(f"netstat -ano | findstr :{target_port}", shell=True, text=True)
+            curr_pid = os.getpid()
+            for line in out.strip().split("\n"):
+                parts = line.strip().split()
+                if len(parts) >= 5 and "LISTENING" in parts:
+                    pid = int(parts[-1])
+                    if pid != curr_pid and pid > 0:
+                        subprocess.run(f"taskkill /F /PID {pid}", shell=True, capture_output=True)
+                        print(f"🧹 [PORT FREED]: Released port {target_port} from previous process (PID {pid})")
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", os.getenv("VOICE_BRIDGE_PORT", "8765")))
+    port = int(os.getenv("VOICE_BRIDGE_PORT", "8765"))
+    free_port(port)
     print("\n" + "=" * 60)
     print(f"  Devbhoomi Voice-Demo Bridge Starting on port {port}")
     print(f"  Gemini Live Voice Engine: {LIVE_VOICE_MODEL} (Voice: {LIVE_VOICE_NAME})")

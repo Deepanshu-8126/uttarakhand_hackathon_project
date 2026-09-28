@@ -201,6 +201,27 @@ class VoiceService {
             }
           }
         },
+        onSpeech: (text, isFinal) {
+          final clean = text.trim();
+          if (clean.isEmpty) return;
+          _userTranscript = clean;
+          _notifyUserTranscript(clean);
+
+          if (isFinal) {
+            if (_state != VoiceState.speaking) {
+              _setState(VoiceState.processing);
+            }
+            try {
+              _channel?.sink.add(jsonEncode({
+                'type': 'userSpeech',
+                'text': clean,
+                'isFinal': true,
+              }));
+            } catch (e) {
+              debugPrint('[VoiceService] Speech sink send error: $e');
+            }
+          }
+        },
         onVolume: (vol) {
           _notifyVolume(vol);
         },
@@ -229,6 +250,7 @@ class VoiceService {
         case 'userText':
           final text = (msg['text'] as String?) ?? '';
           if (text.isNotEmpty) {
+            _userTranscript = text;
             _notifyUserTranscript(text);
             if (_state != VoiceState.speaking) {
               _setState(VoiceState.processing);
@@ -262,7 +284,16 @@ class VoiceService {
           break;
 
         case 'turnComplete':
-          // Model finished generating, playback will finish naturally
+        case 'turn_complete':
+          final completedText = (msg['text'] as String?) ?? '';
+          if (completedText.isNotEmpty) {
+            _notifyAgentTranscript(completedText);
+          }
+          final fallbackAudio = (msg['audio_base64'] as String?) ?? '';
+          if (fallbackAudio.isNotEmpty) {
+            _setState(VoiceState.speaking);
+            _bridge.playPcm24Chunk(fallbackAudio);
+          }
           break;
 
         case 'error':

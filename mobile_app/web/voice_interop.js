@@ -18,6 +18,8 @@
   var scriptProcessor = null;
   var isRecording = false;
 
+  var speechRecognizer = null;
+
   // Playback scheduler state
   var playAudioContext = null;
   var nextPlayTime = 0;
@@ -89,11 +91,12 @@
       return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext));
     },
 
-    // Start recording 16kHz PCM16 chunks
+    // Start recording 16kHz PCM16 chunks + native Speech Recognition
     startRecording: function (callbacks) {
       callbacks = callbacks || {};
       var onChunk = callbacks.onChunk;
       var onVolume = callbacks.onVolume;
+      var onSpeech = callbacks.onSpeech;
       var onError = callbacks.onError;
       var onReady = callbacks.onReady;
 
@@ -157,9 +160,57 @@
           }
         };
 
+        // Zero-gain node keeps ScriptProcessor running without looping mic audio to speakers
+        var zeroGain = audioContext.createGain();
+        zeroGain.gain.value = 0.0;
         micSource.connect(scriptProcessor);
-        scriptProcessor.connect(audioContext.destination);
+        scriptProcessor.connect(zeroGain);
+        zeroGain.connect(audioContext.destination);
+
         isRecording = true;
+
+        // Start native Speech Recognition for instant Hindi/English transcription
+        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRec) {
+          try {
+            speechRecognizer = new SpeechRec();
+            speechRecognizer.continuous = true;
+            speechRecognizer.interimResults = true;
+            speechRecognizer.lang = callbacks.lang || 'hi-IN';
+            speechRecognizer.maxAlternatives = 1;
+
+            speechRecognizer.onresult = function (event) {
+              var interim = '';
+              var finalTranscript = '';
+              for (var i = event.resultIndex; i < event.results.length; ++i) {
+                var res = event.results[i];
+                if (res.isFinal) {
+                  finalTranscript += res[0].transcript;
+                } else {
+                  interim += res[0].transcript;
+                }
+              }
+              var spoken = (finalTranscript || interim).trim();
+              if (spoken && onSpeech) {
+                onSpeech(spoken, !!finalTranscript);
+              }
+            };
+
+            speechRecognizer.onerror = function (err) {
+              console.warn('[DevbhoomiVoiceBridge] SpeechRecognition notice:', err.error);
+            };
+
+            speechRecognizer.onend = function () {
+              if (isRecording && speechRecognizer) {
+                try { speechRecognizer.start(); } catch (_) {}
+              }
+            };
+
+            speechRecognizer.start();
+          } catch (e) {
+            console.warn('[DevbhoomiVoiceBridge] SpeechRec start exception:', e);
+          }
+        }
 
         if (onReady) onReady();
       }).catch(function (err) {
@@ -176,6 +227,13 @@
 
     stopRecording: function () {
       isRecording = false;
+      if (speechRecognizer) {
+        try {
+          speechRecognizer.onend = null;
+          speechRecognizer.stop();
+        } catch (_) {}
+        speechRecognizer = null;
+      }
       if (scriptProcessor) {
         try { scriptProcessor.disconnect(); } catch (_) {}
         scriptProcessor.onaudioprocess = null;

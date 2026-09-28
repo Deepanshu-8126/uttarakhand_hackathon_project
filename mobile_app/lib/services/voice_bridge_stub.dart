@@ -36,6 +36,7 @@ class PlatformVoiceBridgeImpl implements VoicePlatformBridge {
     required void Function(double vol) onVolume,
     required void Function() onReady,
     required void Function(String err) onError,
+    void Function(String text, bool isFinal)? onSpeech,
   }) {
     // On Android, microphone capture is handled natively via VoiceService
     // which uses the Android MediaRecorder path through web_socket_channel.

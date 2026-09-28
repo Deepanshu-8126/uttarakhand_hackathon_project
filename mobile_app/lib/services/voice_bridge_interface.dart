@@ -8,6 +8,7 @@ abstract class VoicePlatformBridge {
     required void Function(double vol) onVolume,
     required void Function() onReady,
     required void Function(String err) onError,
+    void Function(String text, bool isFinal)? onSpeech,
   });
   void stopRecording();
   void playPcm24Chunk(String base64Chunk);

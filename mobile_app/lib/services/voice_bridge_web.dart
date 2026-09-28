@@ -31,6 +31,7 @@ class PlatformVoiceBridgeImpl implements VoicePlatformBridge {
     required void Function(double vol) onVolume,
     required void Function() onReady,
     required void Function(String err) onError,
+    void Function(String text, bool isFinal)? onSpeech,
   }) {
     final b = _bridge;
     if (b == null) {
@@ -46,6 +47,11 @@ class PlatformVoiceBridgeImpl implements VoicePlatformBridge {
       'onVolume': js_util.allowInterop((dynamic vol) {
         if (vol is num) {
           onVolume(vol.toDouble());
+        }
+      }),
+      'onSpeech': js_util.allowInterop((dynamic text, dynamic isFinal) {
+        if (onSpeech != null && text != null) {
+          onSpeech(text.toString(), isFinal == true);
         }
       }),
       'onError': js_util.allowInterop((dynamic err) {
