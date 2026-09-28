@@ -27,8 +27,16 @@ from collections.abc import AsyncIterator, Callable
 from typing import Protocol, runtime_checkable
 
 import numpy as np
-import sounddevice as sd
-from scipy import signal as scipy_signal
+
+try:
+    import sounddevice as sd
+except Exception:
+    sd = None
+
+try:
+    from scipy import signal as scipy_signal
+except Exception:
+    scipy_signal = None
 
 CHANNELS = 1
 DTYPE = "int16"
@@ -48,7 +56,11 @@ def resample_pcm16(data: bytes, src_rate: int, dst_rate: int) -> bytes:
     if samples.size == 0:
         return b""
     n_out = int(round(samples.size * dst_rate / src_rate))
-    return scipy_signal.resample(samples, n_out).astype(np.int16).tobytes()
+    if scipy_signal is not None:
+        return scipy_signal.resample(samples, n_out).astype(np.int16).tobytes()
+    x_old = np.linspace(0, 1, samples.size)
+    x_new = np.linspace(0, 1, n_out)
+    return np.interp(x_new, x_old, samples).astype(np.int16).tobytes()
 
 
 # ---------------------------------------------------------------------------
@@ -118,6 +130,8 @@ class MicStream:
         self._stream: sd.RawInputStream | None = None
 
     def start(self) -> None:
+        if sd is None:
+            raise RuntimeError("sounddevice module is not available in this environment.")
         self._loop = asyncio.get_running_loop()
 
         def callback(indata, frames, time_info, status):  # noqa: ANN001
@@ -178,6 +192,8 @@ class SpeakerStream:
         self._on_played = callback
 
     def start(self) -> None:
+        if sd is None:
+            raise RuntimeError("sounddevice module is not available in this environment.")
         def callback(outdata, frames, time_info, status):  # noqa: ANN001
             needed = len(outdata)
             with self._lock:
