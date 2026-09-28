@@ -81,14 +81,14 @@ jobs:
             exit 1
           fi
           echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.2.0-Release.apk
+          cp "$APK_PATH" dist-apk/Discover-Uttarakhand-v1.2.1-Release.apk
           ls -lh dist-apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Discover-Uttarakhand-Android-APK-v1.2.0
-          path: dist-apk/Discover-Uttarakhand-v1.2.0-Release.apk
+          name: Discover-Uttarakhand-Android-APK-v1.2.1
+          path: dist-apk/Discover-Uttarakhand-v1.2.1-Release.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -96,10 +96,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.2.0' }}
-          name: "📱 Discovery Uttarakhand Mobile App v1.2.0 — Himalayan AI Copilot Edition (Latest)"
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.2.1' }}
+          name: "📱 Discovery Uttarakhand Mobile App v1.2.1 — Himalayan AI Copilot Edition (Latest)"
           body: |
-            # 🏔️ Discovery Uttarakhand — Android Mobile App v1.2.0
+            # 🏔️ Discovery Uttarakhand — Android Mobile App v1.2.1
             > **Himalayan AI Copilot Edition** — The most complete mountain travel intelligence app for Uttarakhand.
 
             ---
@@ -107,7 +107,7 @@ jobs:
             ## 📲 DIRECT 1-CLICK APK DOWNLOAD
             👇 **Tap the `.apk` file directly on your Android phone — no unzipping needed:**
 
-            👉 **[⬇️ Download Discover-Uttarakhand-v1.2.0-Release.apk](https://github.com/${{ github.repository }}/releases/download/v1.2.0/Discover-Uttarakhand-v1.2.0-Release.apk)** 👈
+            👉 **[⬇️ Download Discover-Uttarakhand-v1.2.1-Release.apk](https://github.com/${{ github.repository }}/releases/download/v1.2.1/Discover-Uttarakhand-v1.2.1-Release.apk)** 👈
 
             > 📦 *Direct Android Package • ~57 MB • No account or Play Store required*
 
@@ -125,7 +125,7 @@ jobs:
 
             ---
 
-            ## 🆕 What's New in v1.2.0
+            ## 🆕 What's New in v1.2.1
 
             ### 🤖 AI Copilot v3 — Multi-Agent Architecture
             - **6 Specialized Himalayan Agents**: Planner · Destination · Budget · Safety · Rental · Festival
@@ -202,7 +202,7 @@ jobs:
 
             *🌿 Made with ❤️ for the mountains of Uttarakhand*
             *Universal Architecture (ARM64 / ARMv7 / x86_64) | Flutter 3.27.4 Stable | Android SDK 35*
-          files: dist-apk/Discover-Uttarakhand-v1.2.0-Release.apk
+          files: dist-apk/Discover-Uttarakhand-v1.2.1-Release.apk
           draft: false
           prerelease: false
           make_latest: true
