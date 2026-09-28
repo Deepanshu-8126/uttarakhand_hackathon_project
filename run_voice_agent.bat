@@ -7,9 +7,9 @@ set "PYTHON_BIN=python"
 if exist ".venv\Scripts\python.exe" set "PYTHON_BIN=.venv\Scripts\python.exe"
 
 echo ====================================================================
-echo   Devbhoomi AI Voice Demo & Live Voice Runtime
+echo   Devbhoomi AI Voice Demo ^& Live Voice Runtime
 echo ====================================================================
-echo   [1] Start Voice Bridge & Server (Port 8765 - Web and Mobile)
+echo   [1] Start Voice Bridge ^& Server (Port 8765 - Web and Mobile)
 echo   [2] Start Interactive Voice Demo Agent (voice_demo)
 echo   [3] Start Voice Bridge (Port 8765)
 echo   [4] Start Gemini Live Voice Agent (voice_demo)
