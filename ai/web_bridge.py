@@ -237,6 +237,8 @@ async def synthesize_gemini_live_voice(
         return "", ""   # Immediately fall to edge-tts (no 12s timeout)
     try:
         client = _get_genai_client()
+        if not client:
+            return "", ""
         facts_text = ("\nVerified Facts from Devbhoomi DB:\n" + "\n".join(enriched_facts)) if enriched_facts else ""
         system_instruction = f"{AGENT_SYSTEM_PROMPT}{facts_text}\nLanguage preference: {lang}"
 

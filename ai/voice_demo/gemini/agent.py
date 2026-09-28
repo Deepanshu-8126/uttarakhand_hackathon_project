@@ -172,10 +172,11 @@ async def run(
     ui: StatusUI | None = None,
 ) -> None:
     """Drive a raw Gemini Live conversation over the supplied audio frontend."""
-    api_key = os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("GOOGLE_API_KEY is not set.", file=sys.stderr)
+        print("Neither GOOGLE_API_KEY nor GEMINI_API_KEY is set in environment or ai/.env.", file=sys.stderr)
         sys.exit(1)
+    os.environ["GOOGLE_API_KEY"] = api_key
 
     ui = ui or NullUI()
     thread_id = str(uuid.uuid4())
