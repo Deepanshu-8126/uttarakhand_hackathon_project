@@ -139,7 +139,7 @@ async function callAiWithCascade(systemPrompt, userPrompt) {
 
   // 1. Try Gemini
   if (geminiKey) {
-    const models = [process.env.GEMINI_MODEL || 'gemini-1.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-pro'];
+    const models = [process.env.GEMINI_MODEL || 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
     for (const m of models) {
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${geminiKey}`;

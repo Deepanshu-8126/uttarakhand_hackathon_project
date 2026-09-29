@@ -1,3 +1,7 @@
+import { cacheGet, cacheSet } from './config/redis.js';
+import { AgentRouter } from './ai/workflows/agentRouter.js';
+import { synthesizeStudioVoice } from './services/studioVoiceService.js';
+import { transcribeAudioBuffer } from './routes/voiceRoutes.js';
 import 'dotenv/config';
 import express from 'express';
 import expressWs from 'express-ws';
@@ -42,6 +46,7 @@ import voiceRoutes from './routes/voiceRoutes.js';
 import sosRoutes from './routes/sosRoutes.js';
 import photoRoutes from './routes/photoRoutes.js';
 import hiddenLocationRoutes from './routes/hiddenLocationRoutes.js';
+import personalizedRoutes from './routes/personalizedRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Validate production environment variables
@@ -156,16 +161,22 @@ app.use('/api/places', placesRoutes);
 app.use('/api/search', placesRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/voice', voiceRoutes);
+app.use('/api/personalized', personalizedRoutes);
+app.use('/api/hidden-locations', hiddenLocationRoutes);
+app.use('/api/sos', sosRoutes);
+app.use('/api/photos', photoRoutes);
 
 // Express WebSocket Native Endpoint for Voice Companion
 const handleExpressVoiceWs = (ws, req) => {
   const clientIp = req.socket.remoteAddress || '127.0.0.1';
   console.log(`[Express WS Voice] Client connected from ${clientIp}`);
+
   try {
     ws.send(JSON.stringify({
       type: 'connected',
       ready: true,
-      engine: 'devbhoomi_express_voice',
+      engine: 'gemini_live_aoede_ws',
+      voice: 'Aoede',
       message: 'Connected to Devbhoomi Live Voice Companion'
     }));
   } catch (_) {}
@@ -176,20 +187,92 @@ const handleExpressVoiceWs = (ws, req) => {
       if (msg.type === 'ping') {
         return ws.send(JSON.stringify({ type: 'pong' }));
       }
+
       if (msg.type === 'query' || msg.type === 'text' || msg.type === 'audio') {
         let transcript = (msg.query || msg.text || '').trim();
-        if (!transcript) transcript = 'Uttarakhand tourism destinations';
-        console.log(`[Express WS Voice] Received query: "${transcript}"`);
+        const rawB64 = msg.audio_base64 || msg.data || msg.chunk;
+        const voice = msg.voice || 'Aoede';
+        const lang = msg.lang || 'hi';
 
-        const responseText = `Namaste! Welcome to Devbhoomi Uttarakhand travel guide. You asked about: ${transcript}.`;
-        ws.send(JSON.stringify({
+        // If audio buffer is sent, transcribe with Whisper / Gemini
+        if (!transcript && rawB64) {
+          try {
+            transcript = await transcribeAudioBuffer(rawB64, msg.mimeType || 'audio/webm', lang);
+          } catch (_) {}
+        }
+
+        if (!transcript) {
+          transcript = 'Uttarakhand tourism guidance';
+        }
+
+        console.log(`[Express WS Voice] Query: "${transcript}" (Voice: ${voice})`);
+
+        // 1. FAST REDIS CACHE LOOKUP (<15ms)
+        const cacheKey = 'voice:ws:' + encodeURIComponent(transcript.toLowerCase()) + ':' + voice + ':' + lang;
+        const cached = await cacheGet(cacheKey);
+        if (cached && cached.audio_base64) {
+          console.log(`[Express WS Voice] ⚡ Redis Cache HIT for "${transcript}"`);
+          return ws.send(JSON.stringify({
+            type: 'turn_complete',
+            text: cached.text,
+            response: cached.text,
+            voice,
+            engine: 'gemini_live_aoede_redis_cached',
+            audio_base64: cached.audio_base64,
+            mimeType: cached.mimeType || 'audio/wav',
+            user_transcript: transcript
+          }));
+        }
+
+        // 2. Process query with AgentRouter
+        let replyText = 'Devbhoomi Uttarakhand me aapka swagat hai!';
+        try {
+          const result = await AgentRouter.processChatStream({
+            message: transcript,
+            sessionId: 'ws_voice_session',
+            res: null
+          });
+          replyText = (result.message || (result.data && result.data.message) || replyText)
+            .replaceAll('*', '')
+            .replaceAll('#', '')
+            .replaceAll('_', '')
+            .replaceAll('`', '')
+            .trim();
+        } catch (_) {
+          replyText = 'Namaste! Main aapka Devbhoomi travel assistant hoon.';
+        }
+
+        // 3. Synthesize Aoede Studio Voice
+        let audio_base64 = '';
+        let mimeType = 'audio/wav';
+        try {
+          const synth = await synthesizeStudioVoice(replyText, voice);
+          if (synth && synth.audio_base64) {
+            audio_base64 = synth.audio_base64;
+            mimeType = synth.mimeType || 'audio/wav';
+          }
+        } catch (synthErr) {
+          console.warn('[Express WS Voice Synth notice]', synthErr.message);
+        }
+
+        const payload = {
           type: 'turn_complete',
-          text: responseText,
-          response: responseText,
-          audio_base64: '',
+          text: replyText,
+          response: replyText,
+          voice,
+          engine: 'gemini_live_aoede',
+          audio_base64,
+          mimeType,
           user_transcript: transcript
-        }));
-        console.log(`[Express WS Voice] Sent response packet for "${transcript}"`);
+        };
+
+        // Cache in Redis for 24 hours
+        if (audio_base64) {
+          await cacheSet(cacheKey, { text: replyText, audio_base64, voice, mimeType }, 86400);
+        }
+
+        ws.send(JSON.stringify(payload));
+        console.log(`[Express WS Voice] Sent Aoede response for "${transcript}" (audio length: ${audio_base64.length})`);
       }
     } catch (err) {
       console.error('[Express WS Voice Error]', err);

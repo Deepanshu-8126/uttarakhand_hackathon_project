@@ -100,6 +100,11 @@ export default function DestinationDetails() {
       })
       .finally(() => {
         setLoadingDest(false);
+        try {
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        } catch {
+          window.scrollTo(0, 0);
+        }
       });
 
     // Fetch related items (stays, activities, guides)
