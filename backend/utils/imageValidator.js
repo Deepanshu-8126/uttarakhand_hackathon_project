@@ -87,10 +87,47 @@ export function validateImageBelongsToEntity(image, entity) {
     }
   }
 
-  // 2. Cross-Destination Filename / Semantic Check
   const urlLower = url.toLowerCase();
   const altLower = (typeof image === 'object' && image.alt ? image.alt : '').toLowerCase();
 
+  // 2. Strict Cross-Category Semantic Protection
+  const isStay = entityType.includes('stay') || entityType.includes('hotel') || entityType.includes('homestay') || entityType.includes('resort');
+  const isRental = entityType.includes('rental') || entityType.includes('vehicle') || entityType.includes('bike') || entityType.includes('car');
+  const isGuide = entityType.includes('guide');
+  const isDestination = entityType.includes('destination');
+
+
+  const rentalMarkers = ['bike', 'motorcycle', 'scooter', 'bullet', 'activa', 'vehicle', 'car-rental', 'fleet'];
+  const stayMarkers = ['hotel', 'resort', 'homestay', 'room', 'bed', 'cottage', 'lodge', 'dormitory'];
+  const destinationMarkers = ['temple', 'dham', 'lake', 'waterfall', 'pass', 'glacier', 'valley-of-flowers'];
+
+  if (isStay) {
+    if (rentalMarkers.some(m => urlLower.includes(m) || altLower.includes(m))) {
+      return { valid: false, reason: 'Stay entity cannot receive a vehicle/rental image' };
+    }
+  }
+
+  if (isRental) {
+    if (stayMarkers.some(m => urlLower.includes(m) || altLower.includes(m))) {
+      return { valid: false, reason: 'Rental entity cannot receive a hotel/stay image' };
+    }
+  }
+
+  if (isGuide) {
+    if (destinationMarkers.some(m => urlLower.includes(m) || altLower.includes(m)) ||
+        stayMarkers.some(m => urlLower.includes(m) || altLower.includes(m)) ||
+        rentalMarkers.some(m => urlLower.includes(m) || altLower.includes(m))) {
+      return { valid: false, reason: 'Guide entity cannot receive destination, stay, or vehicle image' };
+    }
+  }
+
+  if (isDestination) {
+    if (rentalMarkers.some(m => urlLower.includes(m) || altLower.includes(m))) {
+      return { valid: false, reason: 'Destination entity cannot receive a rental vehicle image' };
+    }
+  }
+
+  // 3. Cross-Destination Filename / Semantic Check
   for (const known of KNOWN_DESTINATIONS) {
     const cleanKnown = known.replace(/_/g, ' ');
     const isCurrent = entitySlug.includes(known) || entitySlug.includes(known.replace(/_/g, '-')) || entityName.includes(cleanKnown);
@@ -111,6 +148,7 @@ export function validateImageBelongsToEntity(image, entity) {
 
   return { valid: true, reason: 'OK' };
 }
+
 
 /**
  * Filter an array of images to strictly those belonging to the given entity.

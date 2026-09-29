@@ -10,6 +10,7 @@ import {
   getPendingListings,
   getListingForAdmin,
   verifyListing,
+  activateListing,
   rejectListing,
   suspendListing,
   revokeListing,
@@ -30,6 +31,7 @@ router.get('/partners', protect, adminOnly, getAllPartners);
 router.get('/listings/pending', protect, adminOnly, getPendingListings);
 router.get('/listings/:id', protect, adminOnly, getListingForAdmin);
 router.post('/listings/:id/verify', protect, adminOnly, verifyListing);
+router.post('/listings/:id/activate', protect, adminOnly, activateListing);
 router.post('/listings/:id/reject', protect, adminOnly, rejectListing);
 router.post('/listings/:id/suspend', protect, adminOnly, suspendListing);
 router.post('/listings/:id/revoke', protect, adminOnly, revokeListing);

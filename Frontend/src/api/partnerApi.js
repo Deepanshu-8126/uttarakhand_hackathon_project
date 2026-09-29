@@ -232,6 +232,53 @@ export const deleteListingImage = async (listingId, imageId) => {
   return await res.json();
 };
 
+// ── Settlements ─────────────────────────────────────────────────────
+
+export const getPartnerSettlements = async () => {
+  const res = await fetch(`${API_BASE_URL}/partners/me/settlements`, {
+    headers: getHeaders()
+  });
+  return await res.json();
+};
+
+// ── Documents ───────────────────────────────────────────────────────
+
+export const getPartnerDocuments = async () => {
+  const res = await fetch(`${API_BASE_URL}/partners/me/documents`, {
+    headers: getHeaders()
+  });
+  return await res.json();
+};
+
+export const uploadPartnerDocument = async (formData) => {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE_URL}/partners/me/documents`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: formData
+  });
+  return await res.json();
+};
+
+export const deletePartnerDocumentApi = async (id) => {
+  const res = await fetch(`${API_BASE_URL}/partners/me/documents/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  });
+  return await res.json();
+};
+
+// ── Action Items ────────────────────────────────────────────────────
+
+export const getPartnerActionItems = async () => {
+  const res = await fetch(`${API_BASE_URL}/partners/me/action-items`, {
+    headers: getHeaders()
+  });
+  return await res.json();
+};
+
 // ── Admin Verification Operations ───────────────────────────────────
 
 export const getPendingListingsAdmin = async () => {

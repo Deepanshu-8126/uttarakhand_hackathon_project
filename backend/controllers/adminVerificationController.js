@@ -171,6 +171,53 @@ export const verifyListing = async (req, res) => {
 };
 
 /**
+ * Admin Activate Listing
+ * POST /api/admin/listings/:id/activate
+ * Allowed transition: VERIFIED -> ACTIVE
+ */
+export const activateListing = async (req, res) => {
+  try {
+    const listing = await PartnerListing.findById(req.params.id);
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Listing not found.' });
+    }
+
+    if (listing.status !== 'VERIFIED') {
+      return res.status(400).json({
+        success: false,
+        message: `Illegal state transition: Only VERIFIED listings can be activated. Current: [${listing.status}]`
+      });
+    }
+
+    const previousStatus = listing.status;
+    listing.status = 'ACTIVE';
+    listing.isActive = true;
+    await listing.save();
+
+    await VerificationAuditLog.create({
+      admin: req.user._id,
+      targetType: 'PartnerListing',
+      targetId: listing._id,
+      action: 'PUBLISH',
+      previousStatus,
+      newStatus: 'ACTIVE',
+      reason: req.body.notes || 'Listing activated for public discovery by administrator.',
+      verificationVersion: listing.verificationVersion || 1,
+      decisionSource: 'MANUAL_ADMIN_REVIEW'
+    });
+
+    res.status(200).json({
+      success: true,
+      data: listing,
+      message: 'Listing successfully activated for public discovery.'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+/**
  * Admin Suspend Listing
  * POST /api/admin/listings/:id/suspend
  */

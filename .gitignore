@@ -23,6 +23,8 @@ out/
 .next/
 *.tsbuildinfo
 .eslintcache
+.gradle/
+**/.gradle/
 
 # Logs
 *.log

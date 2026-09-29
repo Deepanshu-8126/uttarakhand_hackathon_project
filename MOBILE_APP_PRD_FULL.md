@@ -25,6 +25,9 @@
 11. [App Error Handling & Resilience](#11-app-error-handling--resilience)
 12. [Security Architecture](#12-security-architecture)
 13. [Future Features for App](#13-future-features-for-app)
+14. [Module 01: Real Marketplace Data Architecture (Zero Mock Data)](#14-module-01-real-marketplace-data-architecture-zero-mock-data)
+15. [Module 02: Real Razorpay Payment & Escrow State Machine](#15-module-02-real-razorpay-payment--escrow-state-machine)
+16. [Module 03: Mobility Marketplace & Partner Business Operating System](#16-module-03-mobility-marketplace--partner-business-operating-system)
 
 ---
 
@@ -83,9 +86,14 @@ App Root
 ├── CultureScreen                ← Pahadi heritage, festivals, crafts
 ├── TripPlannerScreen            ← Multi-day trip builder
 ├── MyTripScreen                 ← Saved trips workspace
-├── CheckoutScreen               ← Payment checkout with Razorpay
+├── CheckoutScreen               ← Production Razorpay payment + Escrow confirmation
 ├── VerificationProofScreen      ← Web3 QR code blockchain verifier
-└── InnovationShowcaseScreen     ← Project feature showcase page
+├── InnovationShowcaseScreen     ← Project feature showcase page
+│
+├── PartnerDashboardScreen       ← Partner Control Center (5-question view, bookings, earnings)
+├── ListingCreationWizardScreen  ← 6-Step guided listing & fleet creation flow
+├── DocumentsManagerScreen       ← Grouped compliance documents & permit manager
+└── PayoutsHistoryScreen         ← Real settlement ledger and bank payout status
 ```
 
 ---
@@ -97,7 +105,7 @@ App Root
 ```yaml
 name: discovery_uttarakhand
 description: "Pahadi Tourism & AI Travel Companion App for Uttarakhand"
-version: 1.1.0+10
+version: 1.2.0+11
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -110,6 +118,10 @@ dependencies:
   provider: ^6.1.1                # State management (AuthProvider)
   cached_network_image: ^3.3.1    # Efficient network image loading with cache
   shared_preferences: ^2.2.2      # Local JWT token and settings storage
+  razorpay_flutter: ^1.3.7        # Real Razorpay native checkout for Android/iOS
+  url_launcher: ^6.3.0            # Direct telephone calling (tel:), WhatsApp, and maps
+  geolocator: ^11.0.0             # Real-time native GPS coordinates
+  mobile_scanner: ^5.1.0          # Web3 QR code scanning for listings and vehicles
   url_launcher: ^6.2.5            # Open external links (maps, WhatsApp SOS)
   intl: ^0.19.0                   # Date/time formatting for Hindi locale
 
@@ -993,25 +1005,180 @@ Timer.periodic(Duration(seconds: 10), (timer) async {
 | 9 | Satellite SOS | Integrate with Garmin inReach or Spot X satellite messenger API |
 | 10 | Live Trekker Group | Create and join trekking groups, share live GPS with group members |
 
+## 14. Module 01: Real Marketplace Data Architecture (Zero Mock Data)
+
+The Discovery Uttarakhand mobile app must strictly operate on **real production data** from MongoDB. No hardcoded arrays, demo objects, or placeholder destinations are allowed in production.
+
+### Data Collection Sources
+| Marketplace Entity | Backend Endpoint | Source Collection | Production Standard |
+|---|---|---|---|
+| Destinations | `GET /api/destinations` | `destinations` | 105 official Uttarakhand spots with real coordinates & district mappings |
+| Homestays & Stays | `GET /api/stays` | `stays` + verified `partnerlistings` | KMVN/GMVN state properties and verified local homestays |
+| Vehicle Fleet | `GET /api/rentals` | `rentals` + verified `partnerlistings` | Real commercial bikes, scooties, SUVs, and mountain taxis |
+| Mountain Guides | `GET /api/guides` | `guides` | Licensed, local certified mountaineering & trek guides |
+| Adventure Activities | `GET /api/activities` | `activities` | Government-permitted rafting, paragliding, and camping operators |
+
+### Image & Asset Resolution Rules
+- **Cloudinary URLs:** Direct HTTPS URLs (`https://res.cloudinary.com/...`) loaded via `CachedNetworkImage` with memory/disk caching.
+- **Local Fallback Assets:** If an entity has no cloud URL, use categorical SVG brand badges:
+  - Stay: `/assets/kmvn-stay.svg`
+  - Vehicle: `/assets/rental-bike.svg`
+  - Guide: `/assets/guide-badge.svg`
+- **Zero Broken Links:** Never render a broken image URL. Always provide an `errorWidget` with mountain-themed placeholder.
+
+---
+
+## 15. Module 02: Real Razorpay Payment & Escrow State Machine
+
+Mobile checkout integrates native Razorpay checkout with strict backend server-authoritative price verification and HMAC-SHA256 signature checking.
+
+### Payment Flow Diagram
+```
+Mobile App (Flutter)                    Node.js Backend                    Razorpay Gateway
+       │                                       │                                  │
+       ├── 1. POST /api/payments/create-order ─►                                  │
+       │      (Sends bookingId)                ├── 2. Calculates real fare        │
+       │                                       ├── 3. Creates Order (Paise) ──────►
+       │                                       │◄── 4. Returns orderId ───────────┤
+       │◄── 5. Returns orderId, amount, keyId ─┤                                  │
+       │                                                                          │
+       ├── 6. Opens Razorpay Native SDK Sheet ────────────────────────────────────►
+       │      (User completes UPI/Card/NetBanking payment)                        │
+       │◄── 7. Returns paymentId, signature ──────────────────────────────────────┤
+       │                                                                          │
+       ├── 8. POST /api/payments/verify-signature ──►                             │
+       │      (orderId, paymentId, signature)  ├── 9. Verifies HMAC-SHA256        │
+       │                                       ├── 10. Marks CAPTURED & Escrow    │
+       │◄── 11. Confirmation & Escrow Status ──┤                                  │
+```
+
+### Flutter Native Razorpay Integration (`razorpay_flutter`)
+```dart
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+
+class PaymentController {
+  late Razorpay _razorpay;
+
+  void initialize() {
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  void launchCheckout({
+    required String orderId,
+    required int amountInPaise,
+    required String contact,
+    required String email,
+  }) {
+    var options = {
+      'key': const String.fromEnvironment('RAZORPAY_KEY_ID', defaultValue: 'rzp_test_...'),
+      'amount': amountInPaise,
+      'name': 'Discovery Uttarakhand',
+      'description': 'Booking Reservation Escrow',
+      'order_id': orderId,
+      'prefill': {'contact': contact, 'email': email},
+      'theme': {'color': '#0f3d2e'}
+    };
+    _razorpay.open(options);
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    // Call backend verify signature
+    final verified = await ApiService.verifyPaymentSignature(
+      orderId: response.orderId!,
+      paymentId: response.paymentId!,
+      signature: response.signature!,
+    );
+    if (verified) {
+      // Navigate to BookingConfirmationScreen
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Show user-friendly retry snackbar
+  }
+}
+```
+
+### Escrow State Machine
+- **`CREATED`**: Initial order generated on server; payment pending.
+- **`CAPTURED`**: Signature authentic; funds locked in platform escrow (`HELD_IN_ESCROW`).
+- **`RELEASED_TO_PARTNER`**: Booking completed / tourist checked in; payout available to host.
+- **`REFUNDED_TO_TRAVELER`**: Booking cancelled within policy; funds returned via Razorpay refund API.
+
+---
+
+## 16. Module 03: Mobility Marketplace & Partner Business Operating System
+
+The mobile app must support a dedicated **Partner Mode** for local homestay owners, taxi operators, guides, and future mobility drivers.
+
+### 1. Capability-Based Partner Control Center (`PartnerDashboardScreen`)
+Instead of an enterprise admin panel, the mobile screen strictly answers the **5 Essential Business Questions**:
+1. **Is my business active?**
+   - Live badge: `"Live & Active ✓"` or `"Under Review ⏳"`.
+2. **Do I have anything that needs attention?**
+   - High-priority action cards: `"Upload vehicle permit"`, `"Confirm guest check-in"`, `"Fix rejected listing"`.
+3. **Do I have upcoming bookings?**
+   - Next booking card with customer name, dates, guests count, amount, and direct `"Call Guest"` action.
+4. **How much have I earned?**
+   - Realized earnings this month in ₹, completed bookings counter, and average customer rating.
+5. **What should I do next?**
+   - Quick action buttons: `[ + Add Service ]`, `[ View Bookings ]`, `[ My Business ]`.
+
+### 2. 6-Step Guided Service Creation Wizard (`ListingCreationWizardScreen`)
+Local partners must never face a 40-field scrolling form. The app guides them step-by-step:
+- **Step 1: Category** — Homestay/Hotel, Car/Taxi, Bike/Scooty, Local Guide, Activity.
+- **Step 2: Basic Info** — Property/Vehicle name, District, Town, Landmark, Description.
+- **Step 3: Photos** — Mobile camera/gallery multi-photo upload to Cloudinary.
+- **Step 4: Pricing** — Tariff per night/day/person, refundable deposit.
+- **Step 5: Availability** — Fleet count / room count, guest capacity.
+- **Step 6: Review & Submit** — Live preview card with `Save Draft` or `Submit for Verification`.
+
+### 3. Customer Reservations with Direct Calling
+- Uses `url_launcher` package to initiate one-tap phone calls (`tel:${booking.customerPhone}`) between host and tourist.
+- Filter tabs: **Upcoming**, **Today**, **Completed**, **Cancelled**.
+- Collapsible modal for technical payment IDs and ledger entries (progressive disclosure).
+
+### 4. 3-Bucket Income Clarity & Payouts (`PayoutsHistoryScreen`)
+- **Available to you:** Ready for next scheduled bank payout.
+- **Processing:** Booking active; clears upon completion.
+- **Already paid out:** Transferred to registered bank account.
+- **Payout History:** Ledger showing date, amount, reference, and bank clearance status.
+
+### 5. Categorized Compliance Hub (`DocumentsManagerScreen`)
+- **Business Credentials:** MSME, Uttarakhand Tourism Registration, GST.
+- **Vehicle Permits:** RC, Commercial Driving License, Hill Route Permit, Insurance.
+- **Identity Proofs:** Aadhaar, Passport, Operating Address Lease.
+- Status indicators: `Verified ✓`, `Expires Soon ⚠`, `Under Review ●`, `Required`.
+
+### 6. Future Mobility Marketplace Readiness
+The Flutter models and navigation support future transport extensions without rewrite:
+- `partnerType`: `TransportOperator`, `MobilityPartner`, `DriverPartner`, `SharedRideOperator`.
+- `listingType`: `Transport`, `Mobility`, `SharedRide`, `PrivateRide`, `MultiDayTrip`.
+- Route Corridors: Fixed high-altitude hill corridors (Rishikesh ➔ Joshimath, Kathgodam ➔ Munsiyari).
+
 ---
 
 ## Key App Metrics
 
 | Metric | Current Value |
 |---|---|
-| Total Screens | 18 |
-| Total Services | 3 (ApiService, AuthProvider, WebSocketChatService) |
-| Data Models | 6 (User, Destination, Stay, Rental, Booking, SOSPayload) |
-| API Endpoint Methods | 25+ in ApiService |
-| App Version | 1.1.0 build 10 |
+| Total Screens | 22 (18 Traveler + 4 Partner Control Center) |
+| Total Services | 4 (ApiService, AuthProvider, PaymentService, WebSocketChatService) |
+| Data Models | 9 (User, Destination, Stay, Rental, Guide, Activity, Booking, Payment, PartnerDocument) |
+| API Endpoint Methods | 35+ in ApiService |
+| App Version | 1.2.0 build 11 |
 | Min Android SDK | API 21 (Android 5.0) |
 | Target Android SDK | API 34 (Android 14) |
 | Flutter SDK | 3.x (Dart >= 3.0.0) |
-| Dependencies | 7 current, 10 recommended additional |
+| Dependencies | 11 production dependencies |
 | APK Build Command | `flutter build apk --release` |
 | Build Script | `BUILD_APK.bat` (Windows one-click) |
 
 ---
 
 *Discovery Uttarakhand Mobile App — Complete PRD & Architecture Document*
-*Version 1.1.0 — Flutter Android/iOS App*
+*Version 1.2.0 — Flutter Android/iOS App*
+

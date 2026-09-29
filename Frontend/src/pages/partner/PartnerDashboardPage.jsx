@@ -20,7 +20,12 @@ import {
   deletePartnerExpense, 
   getPartnerAnalytics, 
   getPartnerReviews, 
-  replyToPartnerReview 
+  replyToPartnerReview,
+  getPartnerSettlements,
+  getPartnerDocuments,
+  uploadPartnerDocument,
+  deletePartnerDocumentApi,
+  getPartnerActionItems
 } from '../../api/partnerApi';
 import PartnerSidebar from '../../components/partner/PartnerSidebar';
 import PartnerHeader from '../../components/partner/PartnerHeader';
@@ -35,18 +40,31 @@ import ExpensesTab from '../../components/partner/tabs/ExpensesTab';
 import AnalyticsTab from '../../components/partner/tabs/AnalyticsTab';
 import ReviewsTab from '../../components/partner/tabs/ReviewsTab';
 import ProfileTab from '../../components/partner/tabs/ProfileTab';
+import SettlementsTab from '../../components/partner/tabs/SettlementsTab';
+import DocumentsTab from '../../components/partner/tabs/DocumentsTab';
+import VerificationTab from '../../components/partner/tabs/VerificationTab';
+import NotificationsTab from '../../components/partner/tabs/NotificationsTab';
+import SupportTab from '../../components/partner/tabs/SupportTab';
+import SettingsTab from '../../components/partner/tabs/SettingsTab';
+import CustomerPreviewModal from '../../components/partner/CustomerPreviewModal';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 const validTabs = [
-  'overview', 'listings', 'add-listing', 'bookings',
-  'availability', 'pricing', 'earnings', 'expenses',
-  'analytics', 'reviews', 'profile'
+  'overview', 'listings', 'services', 'add-listing', 'bookings',
+  'availability', 'pricing', 'earnings', 'settlements', 'expenses',
+  'analytics', 'reviews', 'verification', 'documents', 'profile', 'business',
+  'notifications', 'support', 'settings'
 ];
 
 const PartnerDashboardPage = () => {
   const { tab } = useParams();
   const navigate = useNavigate();
-  const activeTab = (tab && validTabs.includes(tab)) ? tab : 'overview';
+
+  // Normalize canonical tab aliases
+  let rawTab = (tab && validTabs.includes(tab)) ? tab : 'overview';
+  if (rawTab === 'services') rawTab = 'listings';
+  if (rawTab === 'business') rawTab = 'profile';
+  const activeTab = rawTab;
 
   const handleTabChange = (newTab) => {
     if (newTab === 'add-listing') {
@@ -69,10 +87,25 @@ const PartnerDashboardPage = () => {
   const [expenses, setExpenses] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [settlements, setSettlements] = useState([]);
+  const [settlementSummary, setSettlementSummary] = useState({});
+  const [documents, setDocuments] = useState([]);
+  const [expiringDocsCount, setExpiringDocsCount] = useState(0);
+  const [actionItems, setActionItems] = useState([]);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
   // Form State for Editing Listing
   const [editingListing, setEditingListing] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Customer Marketplace Preview Modal State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewService, setPreviewService] = useState(null);
+
+  const handleOpenPreview = (service = null) => {
+    setPreviewService(service);
+    setPreviewModalOpen(true);
+  };
 
   // Fetch all partner data in parallel
   const loadPartnerData = useCallback(async (isSilent = false) => {
@@ -89,7 +122,10 @@ const PartnerDashboardPage = () => {
         earningsRes,
         expensesRes,
         analyticsRes,
-        reviewsRes
+        reviewsRes,
+        settlementsRes,
+        documentsRes,
+        actionsRes
       ] = await Promise.all([
         getMyPartnerProfile(),
         getPartnerDashboardStats(),
@@ -98,7 +134,10 @@ const PartnerDashboardPage = () => {
         getPartnerEarnings(),
         getPartnerExpenses(),
         getPartnerAnalytics(),
-        getPartnerReviews()
+        getPartnerReviews(),
+        getPartnerSettlements().catch(() => ({ success: false })),
+        getPartnerDocuments().catch(() => ({ success: false })),
+        getPartnerActionItems().catch(() => ({ success: false }))
       ]);
 
       if (profileRes?.success) setPartnerProfile(profileRes.partner || profileRes.data);
@@ -109,6 +148,17 @@ const PartnerDashboardPage = () => {
       if (expensesRes?.success) setExpenses(expensesRes.expenses || expensesRes.data || []);
       if (analyticsRes?.success) setAnalytics(analyticsRes.analytics || analyticsRes.data);
       if (reviewsRes?.success) setReviews(reviewsRes.reviews || reviewsRes.data || []);
+      if (settlementsRes?.success) {
+        setSettlements(settlementsRes.settlements || settlementsRes.data || []);
+        setSettlementSummary(settlementsRes.summary || {});
+      }
+      if (documentsRes?.success) {
+        setDocuments(documentsRes.documents || documentsRes.data || []);
+        setExpiringDocsCount(documentsRes.expiringIn30Days || 0);
+      }
+      if (actionsRes?.success) {
+        setActionItems(actionsRes.actionItems || actionsRes.data || []);
+      }
     } catch (err) {
       console.error('Failed to load partner dashboard data:', err);
       setError('Unable to load partner business data. Please check connection and try again.');
@@ -136,7 +186,7 @@ const PartnerDashboardPage = () => {
           setEditingListing(null);
           handleTabChange('listings');
         } else {
-          alert(res.message || 'Failed to update listing.');
+          alert(res.message || 'Failed to update service.');
         }
       } else {
         const res = await createListingDraft(payload);
@@ -149,12 +199,12 @@ const PartnerDashboardPage = () => {
           setEditingListing(null);
           handleTabChange('listings');
         } else {
-          alert(res.message || 'Failed to create listing.');
+          alert(res.message || 'Failed to create service.');
         }
       }
     } catch (err) {
-      console.error('Error saving listing:', err);
-      alert('An error occurred while saving the listing.');
+      console.error('Error saving service:', err);
+      alert('An error occurred while saving the service.');
     } finally {
       setIsSubmitting(false);
     }
@@ -170,11 +220,11 @@ const PartnerDashboardPage = () => {
       if (res.success) {
         await loadPartnerData(true);
       } else {
-        alert(res.message || 'Failed to delete listing.');
+        alert(res.message || 'Failed to delete service.');
       }
     } catch (err) {
-      console.error('Delete listing error:', err);
-      alert('Failed to delete listing.');
+      console.error('Delete service error:', err);
+      alert('Failed to delete service.');
     }
   };
 
@@ -184,7 +234,7 @@ const PartnerDashboardPage = () => {
       const res = await submitListingForVerification(id);
       if (res.success) {
         await loadPartnerData(true);
-        alert('Listing submitted to Discovery Uttarakhand Admin for verification.');
+        alert('Service submitted to Discovery Uttarakhand Admin for verification.');
       } else {
         alert(res.message || 'Failed to submit for verification.');
       }
@@ -275,14 +325,14 @@ const PartnerDashboardPage = () => {
   };
 
   // Handler: Reply to Review
-  const handleReplyReview = async (id, text) => {
+  const handleReplyReview = async (reviewId, replyText) => {
     setIsSubmitting(true);
     try {
-      const res = await replyToPartnerReview(id, text);
+      const res = await replyToPartnerReview(reviewId, replyText);
       if (res.success) {
         await loadPartnerData(true);
       } else {
-        alert(res.message || 'Failed to post reply.');
+        alert(res.message || 'Failed to submit reply.');
       }
     } catch (err) {
       console.error('Reply review error:', err);
@@ -292,50 +342,90 @@ const PartnerDashboardPage = () => {
   };
 
   // Handler: Update Business Profile
-  const handleUpdateProfile = async (updates) => {
+  const handleUpdateProfile = async (formData) => {
     setIsSubmitting(true);
     try {
-      const res = await updateMyPartnerProfile(updates);
+      const res = await updateMyPartnerProfile(formData);
       if (res.success) {
         await loadPartnerData(true);
+        alert('Business profile updated successfully.');
       } else {
         alert(res.message || 'Failed to update profile.');
       }
     } catch (err) {
       console.error('Update profile error:', err);
+      alert('Failed to update business profile.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Handler: Upload and Delete Documents
+  const handleUploadDocument = async (formData) => {
+    setIsUploadingDoc(true);
+    try {
+      const res = await uploadPartnerDocument(formData);
+      if (res.success) {
+        await loadPartnerData(true);
+      } else {
+        alert(res.message || 'Failed to upload document.');
+      }
+    } catch (err) {
+      console.error('Upload document error:', err);
+      alert('Failed to upload document.');
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
+
+  const handleDeleteDocument = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this document?')) return;
+    try {
+      const res = await deletePartnerDocumentApi(id);
+      if (res.success) {
+        await loadPartnerData(true);
+      } else {
+        alert(res.message || 'Failed to delete document.');
+      }
+    } catch (err) {
+      console.error('Delete document error:', err);
+    }
+  };
+
   // Tab Title Map
   const tabTitles = {
-    overview: 'Partner Business Dashboard',
-    listings: 'Fleet & Stays Inventory',
-    'add-listing': editingListing ? 'Edit Listing' : 'Add New Listing',
+    overview: 'Partner Business Hub',
+    listings: 'My Services & Fleet',
+    'add-listing': editingListing ? 'Edit Service' : 'Add New Service',
     bookings: 'Reservations & Bookings',
-    availability: 'Fleet Availability & Units',
+    availability: 'Availability Calendar',
     pricing: 'Pricing Matrix & Tariffs',
-    earnings: 'Revenue & Payouts',
+    earnings: 'Earnings & Direct Payouts',
+    settlements: 'Escrow Settlements & Ledger',
     expenses: 'Expenses & Profit / Loss',
-    analytics: 'Business Performance Analytics',
-    reviews: 'Customer Ratings & Reviews',
-    profile: 'Business Profile & Verification'
+    analytics: 'Performance Analytics',
+    reviews: 'Guest Ratings & Reviews',
+    verification: 'Business Verification Status',
+    documents: 'Compliance Documents',
+    profile: 'My Business Profile',
+    notifications: 'Action Notifications',
+    support: 'Partner Help Center',
+    settings: 'Settings & Preferences'
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <Loader2 size={36} className="animate-spin text-forest-green mb-3" />
-        <p className="text-xs font-bold text-gray-700 tracking-wider uppercase">
-          Loading Partner Operating System...
+      <div className="min-h-screen bg-[#fdfbf7] flex flex-col items-center justify-center">
+        <Loader2 size={36} className="animate-spin text-emerald-800 mb-3" />
+        <p className="text-xs font-bold text-stone-700 tracking-wider uppercase">
+          Loading Discovery Partner Hub...
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex">
+    <div className="min-h-screen bg-[#FDFBF7] flex font-sans selection:bg-emerald-500 selection:text-white">
       {/* Sidebar Navigation */}
       <PartnerSidebar
         activeTab={activeTab === 'add-listing' && editingListing ? 'listings' : activeTab}
@@ -347,21 +437,24 @@ const PartnerDashboardPage = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-72">
-        {/* Top Header */}
+        {/* Top Header with Dual CTAs: View Public Profile + Add Service */}
         <PartnerHeader
-          title={tabTitles[activeTab] || 'Partner Dashboard'}
+          title={tabTitles[activeTab] || 'Partner Hub'}
           partnerProfile={partnerProfile}
           onMenuClick={() => setSidebarOpen(true)}
           onAddListingClick={() => {
             setEditingListing(null);
             handleTabChange('add-listing');
           }}
+          onViewPublicProfile={() => handleOpenPreview(null)}
           onRefresh={() => loadPartnerData(true)}
           isRefreshing={isRefreshing}
+          unreadNotificationsCount={actionItems.length}
+          onOpenNotifications={() => handleTabChange('notifications')}
         />
 
         {/* Tab Content Container */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
           {error && (
             <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
               <AlertCircle size={16} />
@@ -369,19 +462,21 @@ const PartnerDashboardPage = () => {
             </div>
           )}
 
-          {/* TAB 1: Overview */}
+          {/* TAB 1: Overview (Home Command Center) */}
           {activeTab === 'overview' && (
             <OverviewTab
               dashboardStats={dashboardStats}
               partnerProfile={partnerProfile}
+              actionItems={actionItems}
               onNavigateTab={(tab) => {
                 if (tab === 'add-listing') setEditingListing(null);
                 handleTabChange(tab);
               }}
+              onViewPublicProfile={() => handleOpenPreview(null)}
             />
           )}
 
-          {/* TAB 2: Listings */}
+          {/* TAB 2: My Services */}
           {activeTab === 'listings' && (
             <ListingsTab
               listings={listings}
@@ -393,19 +488,16 @@ const PartnerDashboardPage = () => {
                 setEditingListing(item);
                 handleTabChange('add-listing');
               }}
-              onManagePricing={(item) => {
-                handleTabChange('pricing');
-              }}
-              onManageAvailability={(item) => {
-                handleTabChange('availability');
-              }}
+              onPreviewService={(item) => handleOpenPreview(item)}
+              onManagePricing={() => handleTabChange('pricing')}
+              onManageAvailability={() => handleTabChange('availability')}
               onDeleteListing={handleDeleteListing}
               onSubmitVerification={handleSubmitVerification}
               isDeleting={isSubmitting}
             />
           )}
 
-          {/* TAB 3: Add / Edit Listing Form */}
+          {/* TAB 3: Add / Edit Service Form */}
           {activeTab === 'add-listing' && (
             <ListingFormTab
               initialData={editingListing}
@@ -445,9 +537,21 @@ const PartnerDashboardPage = () => {
             />
           )}
 
-          {/* TAB 7: Earnings */}
+          {/* TAB 7: Earnings & Settlements */}
           {activeTab === 'earnings' && (
-            <EarningsTab earningsData={earnings} />
+            <EarningsTab 
+              earningsData={earnings} 
+              settlements={settlements}
+              settlementSummary={settlementSummary}
+            />
+          )}
+
+          {activeTab === 'settlements' && (
+            <EarningsTab
+              earningsData={earnings}
+              settlements={settlements}
+              summary={settlementSummary}
+            />
           )}
 
           {/* TAB 8: Expenses & P&L */}
@@ -476,7 +580,26 @@ const PartnerDashboardPage = () => {
             />
           )}
 
-          {/* TAB 11: Profile */}
+          {/* TAB 11: Verification */}
+          {activeTab === 'verification' && (
+            <VerificationTab
+              partnerProfile={partnerProfile}
+              onNavigateTab={handleTabChange}
+            />
+          )}
+
+          {/* TAB 12: Documents */}
+          {activeTab === 'documents' && (
+            <DocumentsTab
+              documents={documents}
+              expiringCount={expiringDocsCount}
+              onUpload={handleUploadDocument}
+              onDelete={handleDeleteDocument}
+              isUploading={isUploadingDoc}
+            />
+          )}
+
+          {/* TAB 13: My Business Profile */}
           {activeTab === 'profile' && (
             <ProfileTab
               partnerProfile={partnerProfile}
@@ -484,8 +607,92 @@ const PartnerDashboardPage = () => {
               isUpdating={isSubmitting}
             />
           )}
+
+          {/* TAB 14: Action Notifications */}
+          {activeTab === 'notifications' && (
+            <NotificationsTab
+              actionItems={actionItems}
+              bookings={bookings}
+              onNavigateTab={handleTabChange}
+            />
+          )}
+
+          {/* TAB 15: Support & Help */}
+          {activeTab === 'support' && (
+            <SupportTab />
+          )}
+
+          {/* TAB 16: Settings */}
+          {activeTab === 'settings' && (
+            <SettingsTab
+              partnerProfile={partnerProfile}
+              onUpdateProfile={handleUpdateProfile}
+            />
+          )}
         </main>
+
+        {/* Mobile Bottom Navigation Bar (< 1024px) */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 lg:hidden px-3 py-1.5 flex items-center justify-around shadow-lg">
+          <button
+            onClick={() => handleTabChange('overview')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+              activeTab === 'overview' ? 'text-emerald-800 font-bold' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <span className="text-lg">🏠</span>
+            <span className="text-[10px]">Home</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('listings')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+              activeTab === 'listings' || activeTab === 'add-listing' ? 'text-emerald-800 font-bold' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <span className="text-lg">📦</span>
+            <span className="text-[10px]">Services</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('bookings')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+              activeTab === 'bookings' ? 'text-emerald-800 font-bold' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <span className="text-lg">📅</span>
+            <span className="text-[10px]">Bookings</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('earnings')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+              activeTab === 'earnings' || activeTab === 'settlements' ? 'text-emerald-800 font-bold' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <span className="text-lg">💰</span>
+            <span className="text-[10px]">Earnings</span>
+          </button>
+
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
+          >
+            <span className="text-lg">⋯</span>
+            <span className="text-[10px]">More</span>
+          </button>
+        </nav>
       </div>
+
+      {/* Customer Marketplace Preview Modal */}
+      <CustomerPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => {
+          setPreviewModalOpen(false);
+          setPreviewService(null);
+        }}
+        service={previewService}
+        partnerProfile={partnerProfile}
+      />
     </div>
   );
 };

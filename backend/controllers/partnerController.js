@@ -14,6 +14,8 @@ import Partner from '../models/Partner.js';
 import PartnerListing from '../models/PartnerListing.js';
 import User from '../models/User.js';
 import Booking from '../models/Booking.js';
+import Payment from '../models/Payment.js';
+import PartnerDocument from '../models/PartnerDocument.js';
 import PartnerExpense from '../models/PartnerExpense.js';
 import Review from '../models/Review.js';
 import Stay from '../models/Stay.js';
@@ -22,6 +24,9 @@ import Destination from '../models/Destination.js';
 import { resolveDestination } from '../services/destinationResolver.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
+
+// Configurable platform fee rate (default 10%). Override via env PLATFORM_FEE_RATE.
+const PLATFORM_FEE_RATE = Number(process.env.PLATFORM_FEE_RATE) || 0.10;
 
 // Helper slug generator
 function generateSlug(title) {
@@ -234,8 +239,12 @@ export const updateMyPartnerProfile = async (req, res) => {
 
     // Disallow arbitrary status elevation
     const allowedUpdates = [
-      'businessName', 'legalBusinessName', 'phone', 'email',
-      'district', 'city', 'locality', 'address', 'description', 'credentialType', 'credentialReference'
+      'businessName', 'legalBusinessName', 'displayName', 'contactPerson',
+      'phone', 'alternatePhone', 'email',
+      'district', 'city', 'locality', 'address', 'state', 'pincode',
+      'description', 'credentialType', 'credentialReference',
+      'operatingAreas', 'serviceCategories', 'languages', 'socialLinks',
+      'operatingHours', 'pickupInformation'
     ];
 
     allowedUpdates.forEach(field => {
@@ -328,14 +337,13 @@ export const createListingDraft = async (req, res) => {
       longitude
     });
 
-    // Structured pricing with PARTNER_CLAIMED provenance
-    // Structured pricing with VERIFIED provenance for active publishing
+    // Structured pricing with PARTNER_CLAIMED provenance — admin verification promotes to VERIFIED
     const normalizedPricing = {
       amount: Number(pricing.amount),
       unit: pricing.unit || 'night',
       currency: 'INR',
-      provenance: 'VERIFIED',
-      lastVerifiedAt: new Date()
+      provenance: 'PARTNER_CLAIMED',
+      lastVerifiedAt: null
     };
 
     const listing = await PartnerListing.create({
@@ -471,20 +479,18 @@ export const updateListing = async (req, res) => {
       if (resolved.location) listing.location = resolved.location;
     }
 
-    // Update pricing with VERIFIED provenance for instant publishing
+    // Update pricing — stays PARTNER_CLAIMED, admin verification sets VERIFIED
     if (req.body.pricing && req.body.pricing.amount) {
       listing.pricing = {
         amount: Number(req.body.pricing.amount),
         unit: req.body.pricing.unit || listing.pricing.unit,
         currency: 'INR',
-        provenance: 'VERIFIED',
-        lastVerifiedAt: new Date()
+        provenance: 'PARTNER_CLAIMED',
+        lastVerifiedAt: null
       };
     }
 
-    if (!listing.status || listing.status === 'DRAFT' || listing.status === 'PENDING_VERIFICATION') {
-      listing.status = 'ACTIVE';
-    }
+    // DO NOT auto-promote to ACTIVE — respect admin verification state machine
 
     await listing.save();
     res.status(200).json({ success: true, data: listing, message: 'Listing updated successfully.' });
@@ -1049,8 +1055,7 @@ export const getPartnerEarnings = async (req, res) => {
       }
     });
 
-    const platformFeeRate = 0.10; // 10% platform standard
-    const platformFee = Math.round(grossRevenue * platformFeeRate);
+    const platformFee = Math.round(grossRevenue * PLATFORM_FEE_RATE);
     const netPartnerEarnings = grossRevenue - platformFee;
 
     res.status(200).json({
@@ -1463,6 +1468,165 @@ export const deleteListingImage = async (req, res) => {
       data: listing.images,
       message: 'Image removed from listing successfully.'
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// 7. Partner Settlements (Real from Payment model)
+// ─────────────────────────────────────────────────────────────
+
+export const getPartnerSettlements = async (req, res) => {
+  try {
+    const partner = await Partner.findOne({ user: req.user._id });
+    if (!partner) return res.status(404).json({ success: false, message: 'Partner profile not found.' });
+
+    const payments = await Payment.find({ partnerId: partner._id })
+      .populate('bookingId', 'bookingReference startDate endDate status traveler listingSnapshot')
+      .sort({ createdAt: -1 });
+
+    const settlements = payments.map(p => ({
+      _id: p._id,
+      bookingReference: p.bookingId?.bookingReference || 'N/A',
+      bookingId: p.bookingId?._id,
+      grossAmount: p.financialBreakdown?.grossAmount || p.amount,
+      platformFee: p.financialBreakdown?.platformFee || 0,
+      taxes: p.financialBreakdown?.taxes || 0,
+      partnerAmount: p.financialBreakdown?.partnerAmount || p.amount,
+      paymentStatus: p.status,
+      settlementStatus: p.financialBreakdown?.settlementStatus || 'PENDING',
+      settlementReference: p.financialBreakdown?.settlementReference || null,
+      refundedAmount: p.refundedAmount || 0,
+      method: p.method,
+      capturedAt: p.capturedAt,
+      createdAt: p.createdAt
+    }));
+
+    const summary = {
+      totalGross: settlements.reduce((s, p) => s + (p.grossAmount || 0), 0),
+      totalPlatformFee: settlements.reduce((s, p) => s + (p.platformFee || 0), 0),
+      totalPartnerAmount: settlements.reduce((s, p) => s + (p.partnerAmount || 0), 0),
+      totalRefunded: settlements.reduce((s, p) => s + (p.refundedAmount || 0), 0),
+      settledCount: settlements.filter(p => p.settlementStatus === 'SETTLED_TO_PARTNER').length,
+      pendingCount: settlements.filter(p => ['PENDING', 'PENDING_ESCROW_RELEASE'].includes(p.settlementStatus)).length,
+      totalCount: settlements.length
+    };
+
+    res.status(200).json({ success: true, count: settlements.length, summary, data: settlements });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// 8. Partner Documents
+// ─────────────────────────────────────────────────────────────
+
+export const getPartnerDocuments = async (req, res) => {
+  try {
+    const partner = await Partner.findOne({ user: req.user._id });
+    if (!partner) return res.status(404).json({ success: false, message: 'Partner profile not found.' });
+
+    const documents = await PartnerDocument.find({ partner: partner._id }).sort({ createdAt: -1 });
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expiringCount = documents.filter(d => d.expiryDate && d.status === 'VERIFIED' && new Date(d.expiryDate) <= thirtyDays).length;
+
+    res.status(200).json({ success: true, count: documents.length, expiringCount, data: documents });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const uploadPartnerDocument = async (req, res) => {
+  try {
+    const partner = await Partner.findOne({ user: req.user._id });
+    if (!partner) return res.status(404).json({ success: false, message: 'Partner profile not found.' });
+    if (!req.files || req.files.length === 0) return res.status(400).json({ success: false, message: 'No document file uploaded.' });
+
+    const { documentType, documentName, expiryDate, notes } = req.body;
+    if (!documentType) return res.status(400).json({ success: false, message: 'documentType is required.' });
+
+    const file = req.files[0];
+    let fileUrl = null, publicId = null;
+
+    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+      try {
+        const result = await cloudinary.uploader.upload(file.path, { folder: `discovery-uttarakhand/partner-docs/${partner._id}`, resource_type: 'auto', access_mode: 'authenticated' });
+        fileUrl = result.secure_url; publicId = result.public_id;
+        try { fs.unlinkSync(file.path); } catch (_) {}
+      } catch (cErr) { console.warn('[Cloudinary] Doc upload failed:', cErr.message); }
+    }
+    if (!fileUrl) { fileUrl = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`; publicId = file.filename; }
+
+    const doc = await PartnerDocument.create({
+      partner: partner._id, ownerUser: req.user._id, documentType,
+      documentName: documentName || file.originalname, fileName: file.originalname,
+      fileUrl, publicId, mimeType: file.mimetype, fileSizeBytes: file.size,
+      status: 'PENDING', expiryDate: expiryDate ? new Date(expiryDate) : null, notes: notes || null, version: 1
+    });
+
+    res.status(201).json({ success: true, data: doc, message: 'Document uploaded. Pending admin verification.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deletePartnerDocument = async (req, res) => {
+  try {
+    const doc = await PartnerDocument.findById(req.params.id);
+    if (!doc) return res.status(404).json({ success: false, message: 'Document not found.' });
+    if (!doc.ownerUser.equals(req.user._id)) return res.status(403).json({ success: false, message: 'Access denied.' });
+    if (!['PENDING', 'REJECTED'].includes(doc.status)) return res.status(400).json({ success: false, message: 'Only PENDING or REJECTED documents can be deleted.' });
+
+    if (doc.publicId && process.env.CLOUDINARY_CLOUD_NAME) { try { await cloudinary.uploader.destroy(doc.publicId); } catch (_) {} }
+    await PartnerDocument.findByIdAndDelete(doc._id);
+    res.status(200).json({ success: true, message: 'Document removed.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// 9. Partner Action Center
+// ─────────────────────────────────────────────────────────────
+
+export const getPartnerActionItems = async (req, res) => {
+  try {
+    const partner = await Partner.findOne({ user: req.user._id });
+    if (!partner) return res.status(404).json({ success: false, message: 'Partner profile not found.' });
+
+    const actions = [];
+
+    if (['NOT_STARTED', 'DRAFT'].includes(partner.verificationStatus))
+      actions.push({ type: 'verification', priority: 'high', title: 'Complete business verification', description: 'Submit your details for admin verification.', action: 'verification' });
+    if (partner.verificationStatus === 'REJECTED')
+      actions.push({ type: 'verification', priority: 'critical', title: 'Verification rejected', description: partner.verificationNotes || 'Please update details and resubmit.', action: 'verification' });
+
+    const listings = await PartnerListing.find({ partner: partner._id });
+    const rejected = listings.filter(l => l.status === 'REJECTED');
+    const drafts = listings.filter(l => l.status === 'DRAFT');
+    if (rejected.length > 0) actions.push({ type: 'listing', priority: 'high', title: `${rejected.length} listing(s) rejected`, description: 'Review admin feedback and resubmit.', action: 'listings', count: rejected.length });
+    if (drafts.length > 0) actions.push({ type: 'listing', priority: 'medium', title: `${drafts.length} draft(s) pending submission`, description: 'Complete and submit your drafts.', action: 'listings', count: drafts.length });
+
+    const listingIds = listings.map(l => l._id);
+    const pendingBookings = await Booking.countDocuments({ partnerListing: { $in: listingIds }, status: { $in: ['PENDING', 'pending'] } });
+    if (pendingBookings > 0) actions.push({ type: 'booking', priority: 'high', title: `${pendingBookings} booking(s) require action`, description: 'Confirm or respond to pending bookings.', action: 'bookings', count: pendingBookings });
+
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expiringDocs = await PartnerDocument.countDocuments({ partner: partner._id, status: 'VERIFIED', expiryDate: { $lte: thirtyDays, $gte: now } });
+    if (expiringDocs > 0) actions.push({ type: 'document', priority: 'high', title: `${expiringDocs} document(s) expiring soon`, description: 'Upload updated docs before expiry.', action: 'documents', count: expiringDocs });
+
+    const existingTypes = await PartnerDocument.distinct('documentType', { partner: partner._id, status: { $in: ['PENDING', 'VERIFIED'] } });
+    const missing = ['identity_proof', 'business_registration'].filter(d => !existingTypes.includes(d));
+    if (missing.length > 0) actions.push({ type: 'document', priority: 'medium', title: `${missing.length} required doc(s) missing`, description: `Upload: ${missing.join(', ').replace(/_/g, ' ')}`, action: 'documents', count: missing.length });
+
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    actions.sort((a, b) => (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3));
+
+    res.status(200).json({ success: true, count: actions.length, data: actions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

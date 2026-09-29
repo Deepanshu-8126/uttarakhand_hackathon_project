@@ -25,15 +25,36 @@ const partnerSchema = new mongoose.Schema({
     trim: true,
     maxlength: 160
   },
+  displayName: {
+    type: String,
+    trim: true,
+    maxlength: 120,
+    default: null
+  },
+  contactPerson: {
+    type: String,
+    trim: true,
+    maxlength: 100,
+    default: null
+  },
   partnerType: {
     type: String,
     required: true,
-    enum: ['Homestay', 'Hotel', 'Guide', 'TrekOperator', 'VehicleRental', 'ActivityProvider']
+    enum: [
+      'Homestay', 'Hotel', 'Guide', 'TrekOperator', 'VehicleRental', 'ActivityProvider',
+      'TransportOperator', 'MobilityPartner', 'DriverPartner', 'TourOperator',
+      'ExperienceProvider', 'SharedRideOperator'
+    ]
   },
   phone: {
     type: String,
     required: true,
     trim: true
+  },
+  alternatePhone: {
+    type: String,
+    trim: true,
+    default: null
   },
   email: {
     type: String,
@@ -56,12 +77,26 @@ const partnerSchema = new mongoose.Schema({
     trim: true,
     default: null
   },
+  state: {
+    type: String,
+    trim: true,
+    default: 'Uttarakhand'
+  },
+  pincode: {
+    type: String,
+    trim: true,
+    default: null
+  },
   address: {
     type: String,
     trim: true
   },
   location: {
     type: pointSchema,
+    default: null
+  },
+  profileImage: {
+    type: imageSchema,
     default: null
   },
   logo: {
@@ -87,14 +122,32 @@ const partnerSchema = new mongoose.Schema({
     trim: true,
     maxlength: 1000
   },
+  operatingAreas: [{
+    type: String,
+    trim: true
+  }],
+  serviceCategories: [{
+    type: String,
+    trim: true
+  }],
+  languages: [{
+    type: String,
+    trim: true
+  }],
+  socialLinks: {
+    website: { type: String, trim: true, default: null },
+    whatsapp: { type: String, trim: true, default: null },
+    instagram: { type: String, trim: true, default: null },
+    facebook: { type: String, trim: true, default: null }
+  },
   status: {
     type: String,
-    enum: ['PENDING_APPROVAL', 'APPROVED', 'SUSPENDED'],
+    enum: ['PENDING_APPROVAL', 'APPROVED', 'SUSPENDED', 'REVOKED'],
     default: 'APPROVED'
   },
   verificationStatus: {
     type: String,
-    enum: ['DRAFT', 'PENDING_VERIFICATION', 'VERIFIED', 'REJECTED'],
+    enum: ['NOT_STARTED', 'DRAFT', 'PENDING_VERIFICATION', 'VERIFIED', 'REJECTED', 'SUSPENDED', 'REVOKED'],
     default: 'DRAFT'
   },
   verificationNotes: {

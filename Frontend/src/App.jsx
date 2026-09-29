@@ -28,6 +28,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminManagement from './pages/AdminManagement';
 import VerificationProofPage from './pages/VerificationProofPage';
 import PartnerDashboardPage from './pages/partner/PartnerDashboardPage';
+import PartnerLoginPage from './pages/partner/PartnerLoginPage';
+import PartnerOnboardingPage from './pages/partner/PartnerOnboardingPage';
 import GuideDashboard from './pages/GuideDashboard';
 import LiveTrackingPage from './pages/LiveTrackingPage';
 import RescueOpsPage from './pages/RescueOpsPage';
@@ -105,6 +107,11 @@ function App() {
                   <ProfilePage />
                 </ProtectedRoute>
               } />
+              <Route path="/partner/login" element={<PartnerLoginPage />} />
+              <Route path="/partner/register" element={<Navigate to="/partner/onboarding" replace />} />
+              <Route path="/partner/onboarding" element={<PartnerOnboardingPage />} />
+              <Route path="/partner/services" element={<Navigate to="/partner/listings" replace />} />
+              <Route path="/partner/business" element={<Navigate to="/partner/profile" replace />} />
               <Route path="/partner" element={
                 <ProtectedRoute partnerOnly={true}>
                   <PartnerDashboardPage />

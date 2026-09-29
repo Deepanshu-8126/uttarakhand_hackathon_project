@@ -40,6 +40,8 @@ import {
 import { getStayById, getStays } from '../api/stayApi';
 import { getRentalById, getRentals } from '../api/rentalApi';
 import { createBooking } from '../api/bookingApi';
+import { createPaymentOrder, verifyPaymentSignature } from '../api/paymentApi';
+import { resolveEntityImage } from '../utils/imageUtils';
 import { useAuth } from '../context/AuthContext';
 
 export default function CheckoutPage() {
@@ -162,34 +164,9 @@ export default function CheckoutPage() {
           }
         }
 
-        // Default fallback mock if not found
+        // Handle missing real item honestly
         if (!item && isMounted) {
-          if (type === 'rental' || type === 'rentals') {
-            setItemType('rental');
-            setItem({
-              name: 'Royal Enfield Himalayan 450 (GPS Ready)',
-              type: 'Motorcycle',
-              pricePerDay: 1800,
-              city: 'Rishikesh',
-              district: 'Dehradun',
-              rating: 4.92,
-              reviewCount: 96,
-              hostName: 'Rawat Mountain Expeditions',
-              images: [{ url: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80' }]
-            });
-          } else {
-            setItemType('stay');
-            setItem({
-              name: 'Himalayan Eco Glamping & Orchard Retreat',
-              price: 3800,
-              city: 'Kanatal',
-              district: 'Tehri Garhwal',
-              rating: 4.95,
-              reviewCount: 142,
-              hostName: 'Virendra Rawat (Kanatal Valley)',
-              images: [{ url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80' }]
-            });
-          }
+          console.warn(`No verified listing found for ID: ${id || 'unknown'}`);
         }
       } catch (err) {
         console.error('Error loading checkout item:', err);
@@ -202,9 +179,11 @@ export default function CheckoutPage() {
     return () => { isMounted = false; };
   }, [type, id]);
 
-  // Pricing calculations
-  const baseRate = item?.price?.amount || item?.pricePerNight || item?.pricePerDay || item?.price || 3800;
-  const staySubtotal = typeof baseRate === 'number' ? baseRate * daysCount : 3800 * daysCount;
+  // Real Pricing calculations
+  const rawRate = item?.price?.amount ?? item?.pricePerNight ?? item?.pricePerDay ?? (typeof item?.price === 'number' ? item.price : null);
+  const isPriceVerified = rawRate !== null && !isNaN(rawRate) && Number(rawRate) > 0;
+  const baseRate = isPriceVerified ? Number(rawRate) : 0;
+  const staySubtotal = isPriceVerified ? baseRate * daysCount : 0;
   
   // Addon costs
   const addonCost = 
@@ -249,168 +228,191 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!item) {
+      alert('Cannot create booking: Selected listing is unavailable or not verified.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-    const bookingId = `DU-ESCROW-${Date.now().toString().slice(-6)}`;
-
-    const finalizeBooking = async (paymentDetails = {}) => {
-      const isCash = paymentMethod === 'cash';
-
-      let serverBooking = null;
-      try {
-        const payload = {
-          type: item?.isPartnerListing ? 'partner_listing' : (itemType || 'stay'),
-          bookingType: item?.isPartnerListing ? 'partner_listing' : (itemType || 'stay'),
-          item: item?._id || item?.id,
-          partnerListing: item?.isPartnerListing || item?.partnerListingId ? (item?.partnerListingId || item?._id) : undefined,
-          stay: (itemType === 'stay' && !item?.isPartnerListing) ? (item?._id || item?.id) : undefined,
-          rental: (itemType === 'rental' && !item?.isPartnerListing) ? (item?._id || item?.id) : undefined,
-          startDate,
-          endDate,
-          guests,
-          traveler: {
-            name: fullName,
-            email: email,
-            phone: phoneNumber,
-            guests
-          },
-          notes: `Payment: ${isCash ? 'CASH_ON_ARRIVAL' : paymentMethod}. Addons: ${Object.keys(addons).filter(k => addons[k]).join(', ') || 'None'}. Special: ${specialNotes || 'None'}`
-        };
-
-        const res = await createBooking(payload);
-        if (res && res.data) {
-          serverBooking = res.data;
-        }
-      } catch (err) {
-        console.warn('Backend booking sync:', err.message);
-      }
-
-      const effectiveRef = serverBooking?.bookingReference || bookingId;
-      const effectiveOtp = serverBooking?.checkInOtp || generatedOtp;
-
-      const bookingRecord = {
-        bookingId: effectiveRef,
-        id: effectiveRef,
-        _id: serverBooking?._id || bookingId,
-        bookingReference: effectiveRef,
-        userId: currentUser?._id || currentUser?.id,
-        userEmail: currentUser?.email || email,
-        userName: currentUser?.name || fullName,
-        userPhone: currentUser?.phone || phoneNumber,
-        itemTitle: item?.name || item?.title || 'Himalayan Verified Booking',
-        itemType,
-        location: item?.city ? `${item.city}, ${item.district || 'Uttarakhand'}` : (item?.district || 'Uttarakhand'),
+    try {
+      // 1. Create server-side booking in PENDING_PAYMENT state
+      const payload = {
+        type: item?.isPartnerListing ? 'partner_listing' : (itemType || 'stay'),
+        bookingType: item?.isPartnerListing ? 'partner_listing' : (itemType || 'stay'),
+        item: item?._id || item?.id,
+        partnerListing: item?.isPartnerListing || item?.partnerListingId ? (item?.partnerListingId || item?._id) : undefined,
+        stay: (itemType === 'stay' && !item?.isPartnerListing) ? (item?._id || item?.id) : undefined,
+        rental: (itemType === 'rental' && !item?.isPartnerListing) ? (item?._id || item?.id) : undefined,
         startDate,
         endDate,
-        daysCount,
         guests,
-        totalAmount,
-        subtotal,
-        taxes,
-        discount: appliedDiscount,
-        escrowStatus: isCash ? 'CASH_HANDSHAKE_PENDING' : 'HELD_IN_ESCROW',
-        status: 'CONFIRMED',
-        checkInOtp: effectiveOtp,
-        paidAt: isCash ? null : new Date().toISOString(),
-        paymentMethod: isCash ? 'CASH_ON_ARRIVAL' : paymentMethod.toUpperCase(),
-        partnerVerified: true,
-        verificationProof: 'GPS Geofenced • On-Chain KYC Match',
-        addons,
-        specialNotes,
-        ...paymentDetails
+        traveler: {
+          name: fullName,
+          email: email,
+          phone: phoneNumber,
+          guests
+        },
+        notes: `Payment: ${paymentMethod === 'cash' ? 'CASH_ON_ARRIVAL' : paymentMethod}. Addons: ${Object.keys(addons).filter(k => addons[k]).join(', ') || 'None'}. Special: ${specialNotes || 'None'}`
       };
 
-      try {
-        localStorage.setItem('active_escrow_booking', JSON.stringify(bookingRecord));
-        const existingTrip = localStorage.getItem('discovery_active_trip');
-        if (existingTrip) {
-          const parsed = JSON.parse(existingTrip);
-          parsed.escrowBooking = bookingRecord;
-          localStorage.setItem('discovery_active_trip', JSON.stringify(parsed));
-        }
-      } catch (e) {
-        console.warn(e);
+      const bookingRes = await createBooking(payload);
+      const serverBooking = bookingRes?.data || bookingRes;
+      if (!serverBooking?._id) {
+        throw new Error(bookingRes?.message || 'Failed to initialize booking on server.');
       }
 
-      setConfirmedBooking(bookingRecord);
-      setIsSubmitting(false);
-    };
+      const finalizeBookingRecord = (paymentDetails = {}) => {
+        const isCash = paymentMethod === 'cash';
+        const effectiveRef = serverBooking?.bookingReference || `DU-ESCROW-${Date.now().toString().slice(-6)}`;
+        const effectiveOtp = serverBooking?.checkInOtp || Math.floor(1000 + Math.random() * 9000).toString();
 
-    // If Cash on Arrival is chosen, direct handshake booking
-    if (paymentMethod === 'cash') {
-      setTimeout(() => {
-        finalizeBooking({
+        const bookingRecord = {
+          bookingId: effectiveRef,
+          id: effectiveRef,
+          _id: serverBooking?._id,
+          bookingReference: effectiveRef,
+          userId: currentUser?._id || currentUser?.id,
+          userEmail: currentUser?.email || email,
+          userName: currentUser?.name || fullName,
+          userPhone: currentUser?.phone || phoneNumber,
+          itemTitle: item?.name || item?.title || 'Himalayan Verified Booking',
+          itemType,
+          location: item?.city ? `${item.city}, ${item.district || 'Uttarakhand'}` : (item?.district || 'Uttarakhand'),
+          startDate,
+          endDate,
+          daysCount,
+          guests,
+          totalAmount: serverBooking?.totalPrice || totalAmount,
+          subtotal,
+          taxes,
+          discount: appliedDiscount,
+          escrowStatus: isCash ? 'CASH_HANDSHAKE_PENDING' : 'HELD_IN_ESCROW',
+          status: isCash ? 'PENDING' : 'CONFIRMED',
+          checkInOtp: effectiveOtp,
+          paidAt: isCash ? null : new Date().toISOString(),
+          paymentMethod: isCash ? 'CASH_ON_ARRIVAL' : paymentMethod.toUpperCase(),
+          partnerVerified: true,
+          verificationProof: 'GPS Geofenced • Server-Verified Pricing',
+          addons,
+          specialNotes,
+          ...paymentDetails
+        };
+
+        try {
+          localStorage.setItem('active_escrow_booking', JSON.stringify(bookingRecord));
+          const existingTrip = localStorage.getItem('discovery_active_trip');
+          if (existingTrip) {
+            const parsed = JSON.parse(existingTrip);
+            parsed.escrowBooking = bookingRecord;
+            localStorage.setItem('discovery_active_trip', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+
+        setConfirmedBooking(bookingRecord);
+        setIsSubmitting(false);
+      };
+
+      // 2. Cash on Arrival option
+      if (paymentMethod === 'cash') {
+        finalizeBookingRecord({
           paymentMethod: 'CASH_ON_ARRIVAL',
           paymentStatus: 'PAY_ON_CHECKIN',
           notes: 'Traveler will pay cash directly to partner after physical inspection and 4-digit OTP exchange.'
         });
-      }, 500);
-      return;
-    }
+        return;
+      }
 
-    // Razorpay Integration
-    const loadRazorpay = () => {
-      return new Promise((resolve) => {
-        if (window.Razorpay) return resolve(true);
-        const s = document.createElement('script');
-        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        s.onload = () => resolve(true);
-        s.onerror = () => resolve(false);
-        document.body.appendChild(s);
-      });
-    };
+      // 3. Online Payment: Create authentic Razorpay Server Order
+      const orderRes = await createPaymentOrder(serverBooking._id, { method: paymentMethod });
+      if (!orderRes?.success || !orderRes?.orderId) {
+        throw new Error(orderRes?.message || 'Could not create payment order on server.');
+      }
 
-    const isLoaded = await loadRazorpay();
-    if (isLoaded && window.Razorpay) {
-      try {
-        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Tfve5JcWu17bY6';
-        const options = {
-          key: razorpayKey,
-          amount: Math.round(totalAmount * 100),
-          currency: "INR",
-          name: "Discovery Uttarakhand",
-          description: `Escrow Protected Booking - ${item?.name || item?.title || 'Mountain Experience'}`,
-          image: "/logo.png",
-          handler: function (response) {
-            finalizeBooking({
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpaySignature: response.razorpay_signature
+      // 4. Load Razorpay Checkout SDK
+      const loadRazorpay = () => {
+        return new Promise((resolve) => {
+          if (window.Razorpay) return resolve(true);
+          const s = document.createElement('script');
+          s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          s.onload = () => resolve(true);
+          s.onerror = () => resolve(false);
+          document.body.appendChild(s);
+        });
+      };
+
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded || !window.Razorpay) {
+        throw new Error('Razorpay Checkout SDK could not be loaded. Please check your network connection.');
+      }
+
+      const options = {
+        key: orderRes.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Tfve5JcWu17bY6',
+        order_id: orderRes.orderId,
+        amount: orderRes.amount, // Server-calculated paise
+        currency: orderRes.currency || 'INR',
+        name: "Discovery Uttarakhand",
+        description: `Escrow Protected Booking — ${item?.name || 'Verified Mountain Experience'}`,
+        image: "/logo.png",
+        handler: async function (response) {
+          try {
+            // 5. Server-Side Signature Verification Gate
+            const verifyRes = await verifyPaymentSignature({
+              bookingId: serverBooking._id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
             });
-          },
-          prefill: {
-            name: fullName || "Traveler",
-            email: email || "traveler@discovery.com",
-            contact: phoneNumber || "+919876543210"
-          },
-          theme: {
-            color: '#0f3d2e'
-          },
-          modal: {
-            ondismiss: function () {
+
+            if (verifyRes?.verified || verifyRes?.success) {
+              finalizeBookingRecord({
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+                paymentStatus: 'PAID',
+                status: 'CONFIRMED'
+              });
+            } else {
+              alert('Payment Verification Failed: Gateway signature could not be verified by server.');
               setIsSubmitting(false);
             }
+          } catch (verifyErr) {
+            console.error('Signature verification error:', verifyErr);
+            alert(`Payment verification error: ${verifyErr.response?.data?.message || verifyErr.message}`);
+            setIsSubmitting(false);
           }
-        };
+        },
+        prefill: {
+          name: fullName || "Traveler",
+          email: email || "traveler@discovery.com",
+          contact: phoneNumber || "+919876543210"
+        },
+        theme: {
+          color: '#0f3d2e'
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+          }
+        }
+      };
 
-        const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function (response) {
-          alert(`Payment Failed: ${response.error?.description || 'Transaction declined'}`);
-          setIsSubmitting(false);
-        });
-        rzp.open();
-        return;
-      } catch (err) {
-        console.warn("Razorpay popup launch fallback:", err);
-      }
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        alert(`Payment Failed: ${response.error?.description || 'Transaction declined by bank.'}`);
+        setIsSubmitting(false);
+      });
+      rzp.open();
+
+    } catch (err) {
+      console.error('Booking / Payment Error:', err);
+      alert(`Booking Error: ${err.response?.data?.message || err.message}`);
+      setIsSubmitting(false);
     }
-
-    // Direct fallback
-    setTimeout(() => {
-      finalizeBooking();
-    }, 600);
   };
+
 
   return (
     <div className="min-h-screen bg-[#f8faf7] flex flex-col font-sans text-stone-900 selection:bg-emerald-200 selection:text-emerald-950 relative overflow-x-hidden">
@@ -487,8 +489,28 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* ── Two Column Responsive Checkout Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ── Two Column Responsive Checkout Grid or Empty State ── */}
+        {!loading && !item ? (
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-10 border border-stone-200/90 text-center max-w-xl mx-auto shadow-sm my-12">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-700 mx-auto flex items-center justify-center mb-4 border border-amber-200 shadow-2xs">
+              <AlertTriangle size={28} />
+            </div>
+            <h3 className="text-xl font-black text-stone-900 mb-2">Listing Unavailable</h3>
+            <p className="text-sm text-stone-600 mb-6 leading-relaxed">
+              The listing you requested ({id || 'unknown'}) was not found in our operational database or is not currently active.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Link to="/stays" className="px-5 py-2.5 rounded-xl bg-emerald-950 text-white font-bold text-xs hover:bg-emerald-900 transition shadow-xs">
+                Browse Verified Stays
+              </Link>
+              <Link to="/rentals" className="px-5 py-2.5 rounded-xl bg-stone-100 text-stone-800 font-bold text-xs hover:bg-stone-200 transition border border-stone-200">
+                Browse Verified Rentals
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
           
           {/* ════ LEFT COLUMN (7 Cols): Details, Dates, Add-ons & Payments ════ */}
           <div className="lg:col-span-7 space-y-6">
@@ -498,20 +520,21 @@ export default function CheckoutPage() {
               <div className="flex flex-col sm:flex-row items-start gap-5">
                 <div className="w-full sm:w-36 h-48 sm:h-36 rounded-2xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200/90 relative group shadow-2xs">
                   <img 
-                    src={
-                      item?.images?.[0]?.url || 
-                      item?.image || 
-                      (itemType === 'rental' 
-                        ? 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=600&q=80'
-                        : 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=600&q=80')
-                    } 
+                    src={resolveEntityImage(item, itemType)} 
                     alt={item?.name || 'Booking item'} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1">
-                    ★ {item?.rating || 4.95} <span className="text-white/70">({item?.reviewCount || 142})</span>
-                  </div>
+                  {item?.rating ? (
+                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1">
+                      ★ {item.rating} {item.reviewCount ? <span className="text-white/70">({item.reviewCount})</span> : null}
+                    </div>
+                  ) : (
+                    <div className="absolute top-2 left-2 bg-emerald-950/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-300 flex items-center gap-1">
+                      ✓ Verified
+                    </div>
+                  )}
                 </div>
+
 
                 <div className="flex-grow min-w-0 w-full">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -1159,6 +1182,8 @@ export default function CheckoutPage() {
           </div>
 
         </div>
+        )}
+
 
       </main>
 

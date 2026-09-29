@@ -27,3 +27,13 @@ export function toMinorUnit(amount, precision = 2) {
   
   return minorUnits;
 }
+
+export function fromMinorUnit(minorUnits, precision = 2) {
+  if (typeof minorUnits !== 'number' && typeof minorUnits !== 'string') {
+    return 0;
+  }
+  const units = parseInt(minorUnits, 10);
+  if (isNaN(units)) return 0;
+  return Number((units / Math.pow(10, precision)).toFixed(precision));
+}
+

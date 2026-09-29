@@ -48,7 +48,10 @@ const partnerListingSchema = new mongoose.Schema({
   },
   listingType: {
     type: String,
-    enum: ['Stay', 'Guide', 'Rental', 'Activity'],
+    enum: [
+      'Stay', 'Guide', 'Rental', 'Activity', 'Experience',
+      'Transport', 'Mobility', 'SharedRide', 'PrivateRide', 'MultiDayTrip'
+    ],
     required: true
   },
   title: {

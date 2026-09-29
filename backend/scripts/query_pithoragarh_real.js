@@ -10,7 +10,7 @@ async function run() {
 
   const Destination = conn.model('Destination', new mongoose.Schema({}, { strict: false }), 'destinations');
   const Stay = conn.model('Stay', new mongoose.Schema({}, { strict: false }), 'stays');
-  const HiddenLocation = conn.model('HiddenLocation', new mongoose.Schema({}, { strict: false }), 'hidden_locations');
+  const HiddenLocation = conn.model('HiddenLocationpn', new mongoose.Schema({}, { strict: false }), 'hidden_locations');
   const Spiritual = conn.model('Spiritual', new mongoose.Schema({}, { strict: false }), 'spirituals');
   const Activity = conn.model('Activity', new mongoose.Schema({}, { strict: false }), 'activities');
 

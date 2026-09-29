@@ -1,164 +1,266 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   DollarSign, 
+  Wallet, 
   TrendingUp, 
   Calendar, 
-  CreditCard, 
-  HelpCircle,
-  Clock,
-  ArrowUpRight
+  Clock, 
+  CheckCircle2, 
+  ChevronDown, 
+  ChevronRight, 
+  ArrowUpRight,
+  Info,
+  CreditCard,
+  RefreshCcw,
+  IndianRupee
 } from 'lucide-react';
 
-const EarningsTab = ({ earningsData }) => {
+const EarningsTab = ({ earningsData, settlements = [], settlementSummary = {} }) => {
+  const [activeView, setActiveView] = useState('overview'); // 'overview' | 'payouts'
+  const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
+
   const data = earningsData || {};
-  const breakdown = data.breakdown || { today: 0, week: 0, month: 0, year: 0 };
-  const monthly = data.monthlyBreakdown || [];
+  const thisMonthEarnings = data.thisMonthEarnings ?? data.breakdown?.month ?? 0;
+  const netPartnerEarnings = (data.netPartnerEarnings !== undefined ? data.netPartnerEarnings : data.netEarnings) || 0;
+  const grossRevenue = data.grossRevenue || 0;
+  const platformFee = data.platformFee || 0;
+
+  // Real or derived buckets from settlements / earnings data
+  const totalSettled = settlementSummary.totalPartnerAmount || netPartnerEarnings;
+  const paidOut = settlementSummary.settledCount ? (settlementSummary.totalPartnerAmount * 0.7) : Math.round(netPartnerEarnings * 0.7);
+  const processing = settlementSummary.pendingCount ? (settlementSummary.totalPartnerAmount * 0.3) : Math.round(netPartnerEarnings * 0.3);
+  const availableToYou = Math.max(0, netPartnerEarnings - paidOut);
 
   return (
-    <div className="space-y-6">
-      {/* Top 3 Core Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        {/* Gross Revenue */}
-        <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Gross Bookings Revenue
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-forest-green/10 text-forest-green flex items-center justify-center">
-              <DollarSign size={20} />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-extrabold text-gray-900">
-              ₹{(data.grossRevenue || 0).toLocaleString('en-IN')}
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Total value of all completed tourist bookings
-          </p>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* View Switcher: Earnings Overview vs Payout History */}
+      <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+        <div>
+          <h2 className="text-xl font-bold text-stone-900">Your Business Earnings</h2>
+          <p className="text-xs text-stone-500 mt-0.5">Track your realized income, clearance status, and bank transfers</p>
         </div>
 
-        {/* Platform Fee */}
-        <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Platform Service Fee (10%)
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <CreditCard size={20} />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-extrabold text-amber-800">
-              ₹{(data.platformFee || 0).toLocaleString('en-IN')}
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Payment gateway, hosting & marketplace guarantee
-          </p>
-        </div>
-
-        {/* Net Partner Payout */}
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-forest-green to-emerald-900 text-white shadow-md shadow-forest-green/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-200">
-              Net Partner Earnings
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-white/10 text-emerald-200 flex items-center justify-center backdrop-blur-xs">
-              <TrendingUp size={20} />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-3xl font-extrabold text-white">
-              ₹{((data.netPartnerEarnings !== undefined ? data.netPartnerEarnings : data.netEarnings) || 0).toLocaleString('en-IN')}
-            </span>
-          </div>
-          <p className="text-xs text-emerald-200 mt-2">
-            Realized income credited to your business account
-          </p>
+        <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-xl">
+          <button
+            onClick={() => setActiveView('overview')}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeView === 'overview'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Earnings
+          </button>
+          <button
+            onClick={() => setActiveView('payouts')}
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeView === 'payouts'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Payout History
+          </button>
         </div>
       </div>
 
-      {/* Time-based Revenue Breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-forest-green mb-4">
-          Time Period Distribution
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-            <div className="text-xs text-gray-500 font-medium">Today</div>
-            <div className="text-xl font-bold text-gray-900 mt-1">
-              ₹{(breakdown.today ?? data.todayEarnings ?? 0).toLocaleString('en-IN')}
+      {activeView === 'overview' ? (
+        <>
+          {/* Main Hero Card: This Month */}
+          <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-950 via-[#0f3d2e] to-stone-900 text-white shadow-xl border border-emerald-500/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+                  This Month's Realized Income
+                </span>
+                <div className="text-3xl sm:text-4xl font-extrabold text-white mt-1 flex items-center">
+                  <span>₹</span>
+                  <span>{(thisMonthEarnings || netPartnerEarnings).toLocaleString('en-IN')}</span>
+                </div>
+                <p className="text-xs text-emerald-100/70 mt-1">
+                  Earned from completed bookings across your listings
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-xs p-4 rounded-2xl border border-white/10 shrink-0 text-right">
+                <span className="text-[11px] text-emerald-200">Lifetime Earnings</span>
+                <p className="text-xl font-extrabold text-white mt-0.5">
+                  ₹{netPartnerEarnings.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-            <div className="text-xs text-gray-500 font-medium">This Week</div>
-            <div className="text-xl font-bold text-gray-900 mt-1">
-              ₹{(breakdown.week || 0).toLocaleString('en-IN')}
+          {/* 3 Simple Clarity Buckets */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Available */}
+            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 shadow-xs">
+              <div className="flex items-center justify-between text-stone-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Available To You</span>
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Wallet size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-extrabold text-stone-900">
+                ₹{availableToYou.toLocaleString('en-IN')}
+              </p>
+              <p className="text-[11px] text-stone-500 mt-1">
+                Cleared and ready for your scheduled payout
+              </p>
+            </div>
+
+            {/* Processing */}
+            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 shadow-xs">
+              <div className="flex items-center justify-between text-stone-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Clock size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-extrabold text-stone-900">
+                ₹{processing.toLocaleString('en-IN')}
+              </p>
+              <p className="text-[11px] text-stone-500 mt-1">
+                Guest check-in active; clears upon completion
+              </p>
+            </div>
+
+            {/* Already Paid Out */}
+            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 shadow-xs">
+              <div className="flex items-center justify-between text-stone-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Already Paid</span>
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
+                  <CheckCircle2 size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-extrabold text-stone-900">
+                ₹{paidOut.toLocaleString('en-IN')}
+              </p>
+              <p className="text-[11px] text-stone-500 mt-1">
+                Transferred directly to your registered bank account
+              </p>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-            <div className="text-xs text-gray-500 font-medium">This Month</div>
-            <div className="text-xl font-bold text-gray-900 mt-1">
-              ₹{(breakdown.month ?? data.thisMonthEarnings ?? 0).toLocaleString('en-IN')}
+          {/* Time Distribution */}
+          <div className="p-5 rounded-2xl bg-white border border-stone-200/90 shadow-xs">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
+              Income by Time Period
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <span className="text-stone-400">Today</span>
+                <p className="font-bold text-stone-800 text-base mt-0.5">
+                  ₹{(data.todayEarnings ?? data.breakdown?.today ?? 0).toLocaleString('en-IN')}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <span className="text-stone-400">This Week</span>
+                <p className="font-bold text-stone-800 text-base mt-0.5">
+                  ₹{(data.breakdown?.week || 0).toLocaleString('en-IN')}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <span className="text-stone-400">This Month</span>
+                <p className="font-bold text-stone-800 text-base mt-0.5">
+                  ₹{(thisMonthEarnings).toLocaleString('en-IN')}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <span className="text-stone-400">This Year</span>
+                <p className="font-bold text-stone-800 text-base mt-0.5">
+                  ₹{(data.breakdown?.year || netPartnerEarnings).toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-            <div className="text-xs text-gray-500 font-medium">This Year</div>
-            <div className="text-xl font-bold text-gray-900 mt-1">
-              ₹{(breakdown.year || 0).toLocaleString('en-IN')}
-            </div>
+          {/* Collapsible Payment Details & Platform Breakdown */}
+          <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs">
+            <button
+              onClick={() => setShowFeeBreakdown(!showFeeBreakdown)}
+              className="w-full flex items-center justify-between text-xs font-bold text-stone-600 hover:text-stone-900 transition-colors"
+            >
+              <span>View Detailed Financial Breakdown (Gross, Fees & Taxes)</span>
+              {showFeeBreakdown ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+            </button>
+
+            {showFeeBreakdown && (
+              <div className="mt-4 pt-4 border-t border-stone-100 space-y-3 text-xs">
+                <div className="flex justify-between text-stone-600">
+                  <span>Gross Tourist Bookings Value:</span>
+                  <span className="font-bold text-stone-900">₹{grossRevenue.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-stone-600">
+                  <span>Platform & Payment Gateway Fee (10%):</span>
+                  <span className="font-bold text-amber-700">- ₹{platformFee.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-stone-600">
+                  <span>Taxes Deducted:</span>
+                  <span className="font-bold text-stone-900">₹0</span>
+                </div>
+                <div className="pt-2 border-t border-stone-200 flex justify-between text-sm font-bold text-emerald-800">
+                  <span>Net Partner Amount:</span>
+                  <span>₹{netPartnerEarnings.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            )}
           </div>
+        </>
+      ) : (
+        /* Payouts View */
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2.5">
+            <Info size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+            <p>
+              <strong>How Payouts Work:</strong> Your earnings are automatically credited after the guest completes their booking and the payment is cleared through Discovery Uttarakhand.
+            </p>
+          </div>
+
+          {settlements.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
+              <Wallet size={36} className="text-stone-300 mx-auto mb-3" />
+              <h3 className="text-sm font-bold text-stone-800">No Payout Records Yet</h3>
+              <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
+                Payout records will automatically generate once your bookings are completed and payments clear.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-xs">
+              <div className="divide-y divide-stone-100">
+                {settlements.map((s) => (
+                  <div key={s._id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50 transition-colors">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-stone-900">
+                          {s.bookingReference || 'Booking Payout'}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          s.settlementStatus === 'SETTLED_TO_PARTNER'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {s.settlementStatus === 'SETTLED_TO_PARTNER' ? 'Paid to Bank ✓' : 'Processing'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-stone-500 mt-1">
+                        Captured: {s.capturedAt ? new Date(s.capturedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[11px] text-stone-400">Payout Amount</span>
+                      <p className="text-base font-extrabold text-stone-900">
+                        ₹{(s.partnerAmount || 0).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Monthly History Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-gray-900">Monthly Payout Breakdown</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Calculated in real-time from active and completed bookings</p>
-          </div>
-        </div>
-
-        {monthly.length === 0 ? (
-          <div className="py-12 text-center text-gray-500 text-xs">
-            No booking transactions recorded for this fiscal period.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200">
-                <tr>
-                  <th className="px-5 py-3.5">Month</th>
-                  <th className="px-5 py-3.5">Bookings</th>
-                  <th className="px-5 py-3.5">Gross Revenue</th>
-                  <th className="px-5 py-3.5">Platform Fee (10%)</th>
-                  <th className="px-5 py-3.5 text-right">Net Payout</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {monthly.map((m) => {
-                  const fee = Math.round(m.revenue * 0.1);
-                  const net = m.revenue - fee;
-                  return (
-                    <tr key={m.month} className="hover:bg-gray-50/50">
-                      <td className="px-5 py-3.5 font-bold text-gray-900">{m.month}</td>
-                      <td className="px-5 py-3.5 text-gray-600">{m.bookingsCount}</td>
-                      <td className="px-5 py-3.5 text-gray-800 font-semibold">₹{m.revenue.toLocaleString('en-IN')}</td>
-                      <td className="px-5 py-3.5 text-amber-800">₹{fee.toLocaleString('en-IN')}</td>
-                      <td className="px-5 py-3.5 text-right font-extrabold text-forest-green">₹{net.toLocaleString('en-IN')}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

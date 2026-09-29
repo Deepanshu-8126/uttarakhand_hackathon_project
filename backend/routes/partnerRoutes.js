@@ -34,7 +34,12 @@ import {
   getPartnerReviews,
   replyToReview,
   uploadListingImages,
-  deleteListingImage
+  deleteListingImage,
+  getPartnerSettlements,
+  getPartnerDocuments,
+  uploadPartnerDocument,
+  deletePartnerDocument,
+  getPartnerActionItems
 } from '../controllers/partnerController.js';
 
 const router = express.Router();
@@ -123,6 +128,24 @@ router.post('/me/reviews/:id/reply', protect, partnerOnly, replyToReview);
 router.post('/reviews/:id/reply', protect, partnerOnly, replyToReview);
 
 // ── 8. Image Upload (Cloudinary Multi-Photo with Partner Provenance) ──
+
+// ── 8a. Settlements ─────────────────────────────────────────────────
+router.get('/me/settlements', protect, partnerOnly, getPartnerSettlements);
+router.get('/settlements', protect, partnerOnly, getPartnerSettlements);
+
+// ── 8b. Documents ───────────────────────────────────────────────────
+router.get('/me/documents', protect, partnerOnly, getPartnerDocuments);
+router.get('/documents', protect, partnerOnly, getPartnerDocuments);
+router.post('/me/documents', protect, partnerOnly, upload.array('documents', 5), uploadPartnerDocument);
+router.post('/documents', protect, partnerOnly, upload.array('documents', 5), uploadPartnerDocument);
+router.delete('/me/documents/:id', protect, partnerOnly, deletePartnerDocument);
+router.delete('/documents/:id', protect, partnerOnly, deletePartnerDocument);
+
+// ── 8c. Action Items ────────────────────────────────────────────────
+router.get('/me/action-items', protect, partnerOnly, getPartnerActionItems);
+router.get('/action-items', protect, partnerOnly, getPartnerActionItems);
+
+// ── 9. Image Upload (Cloudinary Multi-Photo with Partner Provenance) ──
 const handlePartnerUpload = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {

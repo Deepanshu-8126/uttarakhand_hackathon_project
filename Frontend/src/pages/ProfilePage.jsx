@@ -96,6 +96,30 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState(tabParam || 'personal');
   const [favCategory, setFavCategory] = useState('all');
 
+  // Edit Profile Modal States
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveMsg, setProfileSaveMsg] = useState({ text: '', type: '' });
+  const [profileForm, setProfileForm] = useState({
+    name: currentUser?.name || '',
+    email: currentUser?.email || '',
+    phone: currentUser?.phone || '',
+    location: currentUser?.location || ''
+  });
+
+  useEffect(() => {
+    if (currentUser) {
+      setProfileForm({
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '',
+        location: currentUser.location || ''
+      });
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
