@@ -14,7 +14,7 @@ ENV VITE_API_URL=${VITE_API_BASE_URL}
 
 # Copy dependency manifests
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source code and build
 COPY . .
@@ -31,13 +31,13 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration with SPA fallback
+# Copy custom Nginx configuration with SPA fallback and reverse proxy
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,10 +1,8 @@
 # ==============================================================================
 # DISCOVERY UTTARAKHAND — DOCKER COMPOSE ORCHESTRATION
-# For Local/Staging Containerized Environments
-# Production database connects to MongoDB Atlas via MONGODB_URI.
+# For Local/Staging/Production Containerized Environments
+# Production database connects to MongoDB Atlas via MONGODB_URI or MONGO_URI.
 # ==============================================================================
-
-version: '3.8'
 
 services:
   # Backend API Server
@@ -16,24 +14,42 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - FRONTEND_URL=http://localhost:80,http://localhost:5173
-      - MONGODB_URI=${MONGODB_URI}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost,http://localhost:80,http://localhost:5173}
+      - MONGODB_URI=${MONGODB_URI:-${MONGO_URI}}
+      - MONGO_URI=${MONGODB_URI:-${MONGO_URI}}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - AI_PROVIDER=${AI_PROVIDER:-deterministic}
       - OMNIROUTE_ENABLED=${OMNIROUTE_ENABLED:-false}
       - OMNIROUTE_BASE_URL=${OMNIROUTE_BASE_URL:-http://omniroute:20128/v1}
       - OMNIROUTE_API_KEY=${OMNIROUTE_API_KEY}
+      - OMNIROUTE_MODEL=${OMNIROUTE_MODEL:-auto/fast}
+      - GROQ_ENABLED=${GROQ_ENABLED:-false}
+      - GROQ_BASE_URL=${GROQ_BASE_URL:-https://api.groq.com/openai/v1}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+      - GEMINI_ENABLED=${GEMINI_ENABLED:-false}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-1.5-flash}
+      - OPENAI_ENABLED=${OPENAI_ENABLED:-false}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 15s
     networks:
       - discovery_net
 
@@ -43,7 +59,7 @@ services:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_BASE_URL=http://localhost:5000/api
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:5000/api}
     container_name: discovery_frontend
     restart: unless-stopped
     ports:
@@ -51,10 +67,11 @@ services:
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s
     networks:
       - discovery_net
 
