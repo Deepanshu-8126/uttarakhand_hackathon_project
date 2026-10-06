@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import bcryptjs from 'bcryptjs';
-import { imageSchema } from './sharedSchemas.js';
+import { imageSchema, pointSchema } from './sharedSchemas.js';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -45,15 +45,8 @@ const userSchema = new mongoose.Schema({
     state: { type: String, trim: true, default: 'Uttarakhand' },
     country: { type: String, trim: true, default: 'India' },
     coordinates: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point'
-      },
-      coordinates: {
-        type: [Number], // [longitude, latitude] GeoJSON order
-        default: undefined
-      }
+      type: pointSchema,
+      default: undefined
     }
   },
   interests: [{
