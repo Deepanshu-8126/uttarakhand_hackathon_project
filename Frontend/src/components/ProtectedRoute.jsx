@@ -267,7 +267,9 @@ const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false }) =>
     isLoading, 
     currentUser, 
     setAuthModalOpen, 
-    openPartnerAuth 
+    openPartnerAuth,
+    updateUser,
+    login
   } = useAuth();
   const location = useLocation();
 

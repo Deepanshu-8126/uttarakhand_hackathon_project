@@ -177,7 +177,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (updatedData) => {
-    setCurrentUser((prev) => ({ ...prev, ...updatedData }));
+    setCurrentUser((prev) => (prev ? { ...prev, ...updatedData } : updatedData));
+    if (updatedData) {
+      setIsAuthenticated(true);
+    }
   };
 
   const value = {
