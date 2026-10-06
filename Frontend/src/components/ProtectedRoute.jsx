@@ -6,6 +6,7 @@ import {
   Mail, KeyRound, User, Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { promptGoogleSignIn } from '../utils/googleAuth';
 
 function GoogleIcon() {
   return (
@@ -31,7 +32,7 @@ function GoogleIcon() {
 }
 
 function InlineAuthGate({ isCopilot }) {
-  const { login, register, authError, setAuthError } = useAuth();
+  const { login, loginWithGoogle, register, authError, setAuthError } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -39,17 +40,23 @@ function InlineAuthGate({ isCopilot }) {
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState('');
 
-  const handleGoogleAuth = () => {
-    // Instant Google auth helper / simulation
+  const handleGoogleAuth = async () => {
     setSubmitting(true);
-    setTimeout(async () => {
-      await login({
-        email: 'traveler.google@gmail.com',
-        password: 'GoogleOAuth2User@2026',
-        name: 'Verified Himalayan Traveler'
+    setLocalError('');
+    try {
+      const { credential } = await promptGoogleSignIn();
+      const res = await loginWithGoogle({
+        credential,
+        role: 'user',
       });
+      if (!res?.success) {
+        setLocalError(res?.message || 'Google Sign-In failed.');
+      }
+    } catch (err) {
+      setLocalError(err.message || 'Google Sign-In failed.');
+    } finally {
       setSubmitting(false);
-    }, 600);
+    }
   };
 
   const handleSubmit = async (e) => {

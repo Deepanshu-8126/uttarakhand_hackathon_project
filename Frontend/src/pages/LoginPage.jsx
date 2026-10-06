@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
+import { promptGoogleSignIn } from '../utils/googleAuth';
 
 function GoogleIcon() {
   return (
@@ -51,7 +52,7 @@ function GoogleIcon() {
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, register, registerPartnerAccount } = useAuth();
+  const { login, loginWithGoogle, register, registerPartnerAccount } = useAuth();
 
   // Mode: 'traveler' | 'partner'
   const [accountMode, setAccountMode] = useState('traveler');
@@ -97,19 +98,21 @@ export default function LoginPage() {
   const redirectParam = searchParams.get('redirect');
   const redirectPath = redirectParam || location.state?.from?.pathname || (isPartner ? '/partner' : '/profile');
 
-  // One-Click Google Authentication Handler
+  // Real Google OAuth 2.0 & One-Tap Authentication Handler
   const handleGoogleAuth = async () => {
     setSubmitting(true);
     setErrorMessage('');
     setSuccessNotice('');
     try {
-      const res = await login({
-        email: isPartner ? 'partner.business@gmail.com' : 'traveler.google@gmail.com',
-        password: 'GoogleOAuth2User@2026',
-        name: isPartner ? 'Verified Mountain Host' : 'Verified Himalayan Traveler',
+      const { credential } = await promptGoogleSignIn();
+      const res = await loginWithGoogle({
+        credential,
+        role: isPartner ? 'partner' : 'user',
       });
       if (res?.success) {
         navigate(isPartner ? '/partner' : redirectPath);
+      } else {
+        setErrorMessage(res?.message || 'Google Sign-In failed.');
       }
     } catch (err) {
       setErrorMessage(err.message || 'Google Sign-In failed. Please try with email.');

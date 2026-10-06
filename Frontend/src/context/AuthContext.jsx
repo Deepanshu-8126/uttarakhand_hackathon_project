@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import {
   login as apiLogin,
+  googleLogin as apiGoogleLogin,
   register as apiRegister,
   registerPartner as apiRegisterPartner,
   getMe,
@@ -79,6 +80,26 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: res.message || 'Login failed' };
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Login failed. Please try again.';
+      setAuthError(msg);
+      return { success: false, message: msg };
+    }
+  };
+
+  const loginWithGoogle = async ({ credential, role = 'user' }) => {
+    try {
+      setAuthError(null);
+      const res = await apiGoogleLogin({ credential, role });
+      if (res.success) {
+        handleAuthSuccess(res.data);
+        if (pendingAction) {
+          pendingAction();
+          setPendingAction(null);
+        }
+        return { success: true, user: res.data, redirectTo: getPostLoginPath(res.data) };
+      }
+      return { success: false, message: res.message || 'Google Sign-In failed.' };
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Google Sign-In failed. Please try again.';
       setAuthError(msg);
       return { success: false, message: msg };
     }
@@ -164,6 +185,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isLoading,
     login,
+    loginWithGoogle,
     register,
     registerPartnerAccount,
     logout,
