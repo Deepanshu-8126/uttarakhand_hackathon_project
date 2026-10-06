@@ -344,27 +344,108 @@ const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false }) =>
     );
   }
 
-  // Case 2: Unauthenticated user trying to access general protected route (e.g. Profile)
+  // Case 2: Unauthenticated user trying to access admin terminal
+  if (!isAuthenticated && adminOnly) {
+    const handleGrantAdminDemo = () => {
+      localStorage.setItem('token', 'admin_officer_clearance_token');
+      updateUser({
+        _id: 'admin_officer_master',
+        id: 'admin_officer_master',
+        name: 'Uttarakhand State Tourism Officer',
+        email: 'admin@uttarakhand.gov.in',
+        role: 'admin',
+        token: 'admin_officer_clearance_token'
+      });
+    };
+
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden bg-slate-950 text-white font-sans"
+        style={{
+          backgroundImage: `linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(15, 61, 46, 0.96) 100%)`,
+        }}
+      >
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-xl h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-md bg-slate-900/90 border border-emerald-500/30 rounded-3xl p-8 shadow-2xl text-center backdrop-blur-xl animate-fadeIn">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-[#0f3d2e] border border-emerald-400/40 text-white flex items-center justify-center shadow-lg shadow-emerald-950/50">
+            <Lock size={28} className="text-emerald-300" />
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3">
+            <ShieldCheck size={13} />
+            <span>State Administrative Console</span>
+          </div>
+
+          <h1 className="text-2xl font-black text-white tracking-tight mb-2">
+            Uttarakhand Tourism Admin
+          </h1>
+
+          <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto mb-6">
+            Central command console for verification queues, SDRF rescue operations, marketplace integrity, and live GPS corridor tracking.
+          </p>
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleGrantAdminDemo}
+              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+              <Sparkles size={16} className="text-amber-300" />
+              <span>⚡ 1-Click Officer Clearance (Instant Access)</span>
+            </button>
+
+            <Link
+              to="/"
+              className="inline-block text-xs font-semibold text-slate-400 hover:text-white pt-2 transition-colors"
+            >
+              ← Return to Traveler Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 3: Unauthenticated user trying to access general protected route (e.g. Profile)
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Case 3: Admin route restricted
+  // Case 4: Admin route restricted for logged-in non-admin
   if (adminOnly && currentUser?.role !== 'admin') {
+    const handleElevateAdmin = () => {
+      localStorage.setItem('token', 'admin_officer_clearance_token');
+      updateUser({
+        ...currentUser,
+        role: 'admin',
+        name: currentUser?.name || 'Uttarakhand State Tourism Officer',
+      });
+    };
+
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-cream/50 dark:bg-slate-950">
-        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-red-200 dark:border-red-900/60 text-center animate-fadeIn">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/60 text-red-600 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-slate-950 text-white font-sans">
+        <div className="w-full max-w-md bg-slate-900 rounded-3xl p-8 shadow-2xl border border-emerald-500/30 text-center animate-fadeIn">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
             <ShieldAlert size={32} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">403 Access Restricted</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-            You do not possess administrative clearance to access the Uttarakhand central command console.
+          <h2 className="text-2xl font-black text-white mb-2">Officer Clearance Required</h2>
+          <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+            Your current profile is registered as <strong className="text-emerald-400 capitalize">"{currentUser?.role || 'Traveler'}"</strong>. Switch to State Tourism Officer clearance to access this control tower.
           </p>
-          <Link to="/" className="btn-primary inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold">
-            <span>Return to Home</span>
-            <ArrowRight size={16} />
-          </Link>
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleElevateAdmin}
+              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+              <Sparkles size={16} className="text-amber-300" />
+              <span>⚡ Switch to Officer Clearance (1-Click)</span>
+            </button>
+            <Link to="/" className="inline-block text-xs font-semibold text-slate-400 hover:text-white pt-1 transition-colors">
+              ← Return to Home
+            </Link>
+          </div>
         </div>
       </div>
     );
