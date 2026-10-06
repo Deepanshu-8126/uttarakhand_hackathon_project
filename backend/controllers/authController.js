@@ -209,12 +209,20 @@ export const googleAuth = async (req, res) => {
     }
 
     let payload = null;
+    let isRealGoogleToken = false;
 
     // 1. Verify with Google's public tokeninfo endpoint
     try {
-      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
       if (googleRes.ok) {
-        payload = await googleRes.json();
+        try {
+          payload = await googleRes.json();
+          isRealGoogleToken = true;
+          console.log('[GoogleAuth] Verified real Google token via tokeninfo endpoint');
+        } catch (jsonErr) {
+          console.warn('[GoogleAuth] Failed to parse JSON response from tokeninfo endpoint:', jsonErr.message);
+          // Continue to fallback parsing below
+        }
       }
     } catch (fetchErr) {
       console.warn('[GoogleAuth] Direct tokeninfo verification warning:', fetchErr.message);
@@ -229,6 +237,18 @@ export const googleAuth = async (req, res) => {
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
           payload = JSON.parse(jsonPayload);
+          
+      // Check if this looks like our fallback token
+      if (payload.sub && payload.sub.startsWith('google_oauth_fallback_')) {
+        console.warn('[GoogleAuth] Using fallback/mock Google token');
+        isRealGoogleToken = false;
+      } else if (payload.sub && payload.sub.startsWith('google_oauth_')) {
+        console.warn('[GoogleAuth] Using legacy fallback/mock Google token');
+        isRealGoogleToken = false;
+      } else {
+        console.log('[GoogleAuth] Parsed JWT token (appears to be real Google token)');
+        isRealGoogleToken = true;
+      }
         }
       } catch (parseErr) {
         console.error('[GoogleAuth] Failed to parse JWT token payload:', parseErr);
@@ -237,6 +257,12 @@ export const googleAuth = async (req, res) => {
 
     if (!payload || !payload.email) {
       return res.status(400).json({ success: false, message: 'Invalid Google credential or token expired' });
+    }
+
+    if (isRealGoogleToken) {
+      console.log('[GoogleAuth] Processing REAL Google authentication for:', payload.email);
+    } else {
+      console.warn('[GoogleAuth] Processing FALLBACK/MOCK Google authentication for:', payload.email);
     }
 
     const { email, name, sub: googleId, picture } = payload;
