@@ -104,7 +104,21 @@ export default function LoginPage() {
     setErrorMessage('');
     setSuccessNotice('');
     try {
-      const { credential } = await promptGoogleSignIn();
+      const authResult = await promptGoogleSignIn();
+      if (authResult?.error) {
+        if (authResult.error === 'popup_closed_by_user' || authResult.error === 'access_denied') {
+          return;
+        }
+        setErrorMessage(`Google Sign-In: ${authResult.error}`);
+        return;
+      }
+      const { credential, profile } = authResult;
+      if (!credential) return;
+
+      if (profile?.email) {
+        setSuccessNotice(`Signed in with Google as ${profile.email}`);
+      }
+
       const res = await loginWithGoogle({
         credential,
         role: isPartner ? 'partner' : 'user',

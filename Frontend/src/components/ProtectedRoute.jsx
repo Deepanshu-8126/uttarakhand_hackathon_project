@@ -44,7 +44,17 @@ function InlineAuthGate({ isCopilot }) {
     setSubmitting(true);
     setLocalError('');
     try {
-      const { credential } = await promptGoogleSignIn();
+      const authResult = await promptGoogleSignIn();
+      if (authResult?.error) {
+        if (authResult.error === 'popup_closed_by_user' || authResult.error === 'access_denied') {
+          return;
+        }
+        setLocalError(`Google Sign-In: ${authResult.error}`);
+        return;
+      }
+      const { credential } = authResult;
+      if (!credential) return;
+
       const res = await loginWithGoogle({
         credential,
         role: 'user',
