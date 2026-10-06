@@ -22,5 +22,11 @@
     }
   ],
   "java.configuration.updateBuildConfiguration": "disabled",
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  "kilocode.customProvider": {
+    "name": "OmniRoute",
+    "baseURL": "http://localhost:20128/v1",
+    "apiKey": "sk-2a161848ec53d14f-8af7f7-50d169ad"
+  },
+  "kilocode.defaultModel": "auto/best-free"
 }
