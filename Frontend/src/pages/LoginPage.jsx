@@ -100,6 +100,53 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successNotice, setSuccessNotice] = useState('');
   const [showDemoDropdown, setShowDemoDropdown] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+
+  // Clear inputs on initial mount so old cached/autofilled credentials do not persist
+  useEffect(() => {
+    setIdentifier('');
+    setEmail('');
+    setFullName('');
+    setMobile('');
+    setPassword('');
+    setConfirmPassword('');
+    setOtpCode('');
+    setForgotEmail('');
+    setErrorMessage('');
+    setSuccessNotice('');
+  }, []);
+
+  const switchToRegister = () => {
+    setIsRegister(true);
+    setIdentifier('');
+    setEmail('');
+    setFullName('');
+    setMobile('');
+    setPassword('');
+    setConfirmPassword('');
+    setErrorMessage('');
+    setSuccessNotice('');
+  };
+
+  const switchToLogin = () => {
+    setIsRegister(false);
+    setIdentifier('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setErrorMessage('');
+    setSuccessNotice('');
+  };
+
+  const switchToForgotPassword = () => {
+    setAuthStep('forgot_password');
+    setForgotEmail('');
+    setOtpCode('');
+    setPassword('');
+    setConfirmPassword('');
+    setErrorMessage('');
+    setSuccessNotice('');
+  };
 
   // 60-Second Cooldown Timer for OTP Resend
   useEffect(() => {
@@ -186,7 +233,7 @@ export default function LoginPage() {
     try {
       if (isRegister) {
         // Registration validation
-        const targetEmail = (email || identifier).trim().toLowerCase();
+        const targetEmail = email.trim().toLowerCase();
         if (!fullName.trim() || !targetEmail || !password.trim()) {
           setErrorMessage('Please fill in your name, email, and password.');
           setSubmitting(false);
@@ -236,12 +283,8 @@ export default function LoginPage() {
           setOtpPurpose('signup');
           setResendCooldown(60);
           setAuthStep('verify_otp');
-          if (res?.devOtp) {
-            setOtpCode(res.devOtp);
-            setSuccessNotice(`Account created! Verification Code: ${res.devOtp} (Auto-filled)`);
-          } else {
-            setSuccessNotice('Account created! A 6-digit OTP code has been dispatched to your email.');
-          }
+          setOtpCode('');
+          setSuccessNotice('Account created! A 6-digit verification code has been dispatched to your email.');
           return;
         }
 
@@ -345,13 +388,8 @@ export default function LoginPage() {
 
       if (res?.success) {
         setResendCooldown(60);
-        const code = res?.data?.devOtp;
-        if (code) {
-          setOtpCode(code);
-          setSuccessNotice(`New code generated: ${code} (Auto-filled)`);
-        } else {
-          setSuccessNotice('New verification code sent to your email.');
-        }
+        setOtpCode('');
+        setSuccessNotice('New verification code sent to your email.');
       } else {
         setErrorMessage(res?.message || 'Failed to resend code.');
       }
@@ -366,7 +404,7 @@ export default function LoginPage() {
     setErrorMessage('');
     setSuccessNotice('');
 
-    const target = (email || identifier).trim();
+    const target = forgotEmail.trim().toLowerCase();
     if (!target) {
       setErrorMessage('Please enter your registered email address.');
       return;
@@ -379,13 +417,16 @@ export default function LoginPage() {
         setOtpDestination(target);
         setOtpPurpose('forgot-password');
         setResendCooldown(60);
+        setOtpCode('');
+        setPassword('');
+        setConfirmPassword('');
         setAuthStep('reset_password');
-        setSuccessNotice('If an account exists, a 6-digit password reset code has been sent.');
+        setSuccessNotice(res.message || 'A 6-digit password reset code has been sent to your email.');
       } else {
-        setErrorMessage(res?.message || 'Unable to process password reset request.');
+        setErrorMessage(res?.message || 'This email is not registered in our database.');
       }
     } catch (err) {
-      setErrorMessage(err.message || 'An error occurred.');
+      setErrorMessage(err.message || 'Unable to process password reset request.');
     } finally {
       setSubmitting(false);
     }
@@ -426,12 +467,13 @@ export default function LoginPage() {
         setTimeout(() => {
           setAuthStep('auth');
           setIsRegister(false);
-          setOtpCode('');
+          setIdentifier(otpDestination);
           setPassword('');
           setConfirmPassword('');
+          setOtpCode('');
         }, 1200);
       } else {
-        setErrorMessage(res?.message || 'Password reset failed.');
+        setErrorMessage(res?.message || 'Password reset failed. Please check your verification code.');
       }
     } catch (err) {
       setErrorMessage(err.message || 'Password reset failed.');
@@ -705,13 +747,12 @@ export default function LoginPage() {
                   <div className="relative">
                     <input
                       id="forgotEmailInput"
+                      name="forgot_email_field"
                       type="email"
                       required
-                      value={email || identifier}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setIdentifier(e.target.value);
-                      }}
+                      autoComplete="off"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder="name@example.com"
                       className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                     />
@@ -720,7 +761,7 @@ export default function LoginPage() {
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    We will send a 6-digit verification code to reset your password.
+                    Enter your registered email. We will verify your account and send a 6-digit reset code.
                   </p>
                 </div>
 
@@ -732,7 +773,7 @@ export default function LoginPage() {
                   {submitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin text-white" />
-                      <span>Sending Code…</span>
+                      <span>Verifying &amp; Sending Code…</span>
                     </>
                   ) : (
                     <>
@@ -745,10 +786,7 @@ export default function LoginPage() {
                 <div className="text-center pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setAuthStep('auth');
-                      setErrorMessage('');
-                    }}
+                    onClick={switchToLogin}
                     className="text-xs text-[#0f3d2e] hover:underline font-bold cursor-pointer"
                   >
                     ← Back to Sign In
@@ -770,9 +808,11 @@ export default function LoginPage() {
                   </label>
                   <input
                     id="resetOtpInput"
+                    name="reset_otp_field"
                     type="text"
                     maxLength={6}
                     required
+                    autoComplete="off"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="123456"
@@ -787,8 +827,10 @@ export default function LoginPage() {
                   <div className="relative">
                     <input
                       id="resetNewPassword"
+                      name="reset_new_password"
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min 8 chars, 1 uppercase, 1 number"
@@ -814,8 +856,10 @@ export default function LoginPage() {
                   <div className="relative">
                     <input
                       id="resetConfirmPassword"
+                      name="reset_confirm_password"
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter new password"
@@ -844,6 +888,28 @@ export default function LoginPage() {
                     </>
                   )}
                 </button>
+
+                <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0}
+                    className="text-[#0f3d2e] hover:underline font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:no-underline"
+                  >
+                    <RefreshCw size={12} className={resendCooldown > 0 ? '' : 'text-emerald-700'} />
+                    <span>
+                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend Code'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={switchToLogin}
+                    className="text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
               </form>
             )}
 
@@ -1040,13 +1106,12 @@ export default function LoginPage() {
                         <div className="relative">
                           <input
                             id="regEmail"
+                            name="registration_email_field"
                             type="email"
                             required
-                            value={email || identifier}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              setIdentifier(e.target.value);
-                            }}
+                            autoComplete="off"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="name@example.com"
                             className="w-full bg-stone-50 text-slate-900 text-sm font-medium border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl pl-10 pr-3 py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                           />
@@ -1131,10 +1196,10 @@ export default function LoginPage() {
                       <div className="relative">
                         <input
                           id="identity"
-                          name="identity"
+                          name="login_identity_field"
                           type="text"
                           required
-                          autoComplete="username"
+                          autoComplete="off"
                           value={identifier}
                           onChange={(e) => setIdentifier(e.target.value)}
                           placeholder={isPartner ? 'partner@business.com or +91 98765 43210' : 'name@example.com or +91 98765 43210'}
@@ -1156,10 +1221,7 @@ export default function LoginPage() {
                       {!isRegister && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setAuthStep('forgot_password');
-                            setErrorMessage('');
-                          }}
+                          onClick={switchToForgotPassword}
                           className="text-xs text-[#0f3d2e] hover:underline font-semibold transition cursor-pointer"
                         >
                           Forgot password?
@@ -1253,7 +1315,7 @@ export default function LoginPage() {
                       Already have an account?{' '}
                       <button
                         type="button"
-                        onClick={() => { setIsRegister(false); setErrorMessage(''); }}
+                        onClick={switchToLogin}
                         className="text-[#0f3d2e] hover:underline font-bold ml-0.5 cursor-pointer whitespace-nowrap"
                       >
                         Sign In
@@ -1264,7 +1326,7 @@ export default function LoginPage() {
                       New to Discovery Uttarakhand?{' '}
                       <button
                         type="button"
-                        onClick={() => { setIsRegister(true); setErrorMessage(''); }}
+                        onClick={switchToRegister}
                         className="text-[#0f3d2e] hover:underline font-bold ml-0.5 cursor-pointer whitespace-nowrap"
                       >
                         Register Now

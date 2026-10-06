@@ -7,6 +7,19 @@ const sessionSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  userEmail: {
+    type: String,
+    default: '',
+    index: true,
+  },
+  userName: {
+    type: String,
+    default: '',
+  },
+  role: {
+    type: String,
+    default: 'user',
+  },
   refreshTokenHash: {
     type: String,
     required: true,

@@ -141,7 +141,6 @@ export const AuthProvider = ({ children }) => {
             requiresVerification: true,
             email: res.data.email,
             message: res.message,
-            devOtp: res.data.devOtp,
           };
         }
         handleAuthSuccess(res.data);
@@ -166,7 +165,6 @@ export const AuthProvider = ({ children }) => {
             requiresVerification: true,
             email: res.data.email,
             message: res.message,
-            devOtp: res.data.devOtp,
           };
         }
         handleAuthSuccess(res.data);

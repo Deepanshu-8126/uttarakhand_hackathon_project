@@ -171,7 +171,6 @@ export const registerUser = async (req, res) => {
         userId: user._id,
         email: user.email,
         requiresVerification: true,
-        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -257,7 +256,6 @@ export const registerPartner = async (req, res) => {
         email: user.email,
         role: user.role,
         requiresVerification: true,
-        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -418,7 +416,6 @@ export const resendOtp = async (req, res) => {
       message: `A new 6-digit verification code has been dispatched to your ${result.channel}.`,
       data: {
         expiresInSeconds: result.expiresInSeconds,
-        devOtp: result.devOtp,
       },
     });
   } catch (error) {
@@ -618,26 +615,41 @@ export const forgotPassword = async (req, res) => {
       $or: [{ email: target }, { mobile: target }, { phone: target }],
     });
 
-    if (user && user.isActive) {
-      try {
-        await createAndSendOtp({
-          userId: user._id,
-          destination: user.email,
-          channel: 'email',
-          purpose: 'forgot-password',
-          name: user.name,
-        });
-      } catch (err) {
-        console.warn('[ForgotPassword] OTP send warning:', err.message);
-      }
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'This email is not registered in our database. Please check your email or create an account.',
+      });
     }
 
-    // Generic response to prevent account enumeration
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'This account has been deactivated. Please contact support.',
+      });
+    }
+
+    try {
+      await createAndSendOtp({
+        userId: user._id,
+        destination: user.email,
+        channel: 'email',
+        purpose: 'forgot-password',
+        name: user.name,
+      });
+    } catch (err) {
+      console.warn('[ForgotPassword] OTP send warning:', err.message);
+      return res.status(err.statusCode || 500).json({
+        success: false,
+        message: err.message || 'Failed to dispatch verification code to your email. Please try again later.',
+      });
+    }
+
     return res.json({
       success: true,
-      message: 'If an account exists with this email, a verification code has been sent.',
+      message: 'A 6-digit password reset verification code has been sent to your email.',
       data: {
-        destination: target,
+        destination: user.email,
       },
     });
   } catch (error) {
@@ -767,7 +779,8 @@ export const resetPassword = async (req, res) => {
     });
   } catch (error) {
     console.error('[ResetPassword Error]:', error);
-    return res.status(500).json({
+    const status = error.statusCode || 400;
+    return res.status(status).json({
       success: false,
       message: error.message || 'Failed to reset password.',
     });

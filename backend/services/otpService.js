@@ -111,7 +111,6 @@ export const createAndSendOtp = async ({
     channel,
     expiresInSeconds: Math.floor(OTP_EXPIRY_MS / 1000),
     otpId: otpDoc._id,
-    devOtp: process.env.NODE_ENV !== 'production' ? rawOtp : undefined,
   };
 };
 

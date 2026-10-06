@@ -96,40 +96,42 @@ userSchema.index({ 'location.coordinates': '2dsphere' }, { sparse: true });
 userSchema.index({ 'location.city': 1 });
 userSchema.index({ 'location.district': 1 });
 
-// Ensure location.coordinates is strictly valid GeoJSON Point or undefined to satisfy MongoDB 2dsphere index
+// Ensure location and coordinates are strictly valid GeoJSON Point or undefined to satisfy MongoDB 2dsphere index
 userSchema.pre('validate', function () {
-  if (this.location && typeof this.location === 'object') {
-    const loc = this.location;
-    if (loc.coordinates) {
-      if (Array.isArray(loc.coordinates) && loc.coordinates.length === 2) {
-        const [lng, lat] = loc.coordinates;
+  try {
+    if (typeof this.location === 'string') {
+      this.location = { city: this.location };
+    }
+    if (this.location && typeof this.location === 'object') {
+      const coords = this.location.coordinates;
+      if (!coords) {
+        this.location.coordinates = undefined;
+        return;
+      }
+      if (Array.isArray(coords) && coords.length === 2) {
+        const [lng, lat] = coords;
         if (typeof lng === 'number' && typeof lat === 'number' && !isNaN(lng) && !isNaN(lat)) {
-          loc.coordinates = {
+          this.location.coordinates = {
             type: 'Point',
             coordinates: [lng, lat]
           };
         } else {
-          loc.coordinates = undefined;
+          this.location.coordinates = undefined;
         }
-      } else if (typeof loc.coordinates === 'object') {
-        const coords = loc.coordinates.coordinates;
-        if (
-          Array.isArray(coords) &&
-          coords.length === 2 &&
-          typeof coords[0] === 'number' &&
-          typeof coords[1] === 'number' &&
-          !isNaN(coords[0]) &&
-          !isNaN(coords[1])
-        ) {
-          loc.coordinates.type = 'Point';
+      } else if (typeof coords === 'object' && coords !== null && Array.isArray(coords.coordinates)) {
+        const pt = coords.coordinates;
+        if (pt.length === 2 && typeof pt[0] === 'number' && typeof pt[1] === 'number' && !isNaN(pt[0]) && !isNaN(pt[1])) {
+          coords.type = 'Point';
         } else {
-          loc.coordinates = undefined;
+          this.location.coordinates = undefined;
         }
       } else {
-        loc.coordinates = undefined;
+        this.location.coordinates = undefined;
       }
-    } else {
-      loc.coordinates = undefined;
+    }
+  } catch (err) {
+    if (this.location && typeof this.location === 'object') {
+      this.location.coordinates = undefined;
     }
   }
 });

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
+import LoginHistory from '../models/LoginHistory.js';
 
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
@@ -47,14 +48,17 @@ export const hashToken = (token) => {
  * Create a new user session with refresh token in MongoDB
  */
 export const createSession = async ({ user, req }) => {
-  const userAgent = req.headers['user-agent'] || 'Unknown device';
-  const ipAddress = req.ip || req.connection?.remoteAddress || 'Unknown IP';
+  const userAgent = req?.headers?.['user-agent'] || 'Unknown device';
+  const ipAddress = req?.ip || req?.connection?.remoteAddress || 'Unknown IP';
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   // Pre-generate session ID to embed in refresh token payload
   const session = new Session({
     userId: user._id || user.id,
+    userEmail: user.email || '',
+    userName: user.name || '',
+    role: user.role || 'user',
     refreshTokenHash: 'pending',
     userAgent,
     ipAddress,
@@ -64,6 +68,22 @@ export const createSession = async ({ user, req }) => {
   const refreshToken = generateRefreshToken(user, session._id.toString());
   session.refreshTokenHash = hashToken(refreshToken);
   await session.save();
+
+  // Also log into dedicated 'logins' collection for full visibility
+  try {
+    await LoginHistory.create({
+      userId: user._id || user.id,
+      userEmail: user.email || 'unknown',
+      userName: user.name || 'User',
+      role: user.role || 'user',
+      ipAddress,
+      userAgent,
+      loginAt: new Date(),
+      status: 'SUCCESS',
+    });
+  } catch (lhErr) {
+    console.warn('[LoginHistory] Logging notice:', lhErr.message);
+  }
 
   const accessToken = generateAccessToken(user);
 
