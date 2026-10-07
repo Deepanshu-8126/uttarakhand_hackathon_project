@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const MONGO_URI = 'mongodb+srv://DeepanshuKapri:Deepanshu12@cluster0.fqvhyww.mongodb.net/cityos?retryWrites=true&w=majority';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/discovery_uttarakhand';
 
 async function run() {
   const conn = await mongoose.connect(MONGO_URI, {
