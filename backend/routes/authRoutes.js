@@ -1,27 +1,58 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
-import { registerUser, loginUser, getMe, logoutUser, registerPartner, googleAuth } from '../controllers/authController.js';
+import {
+  registerUser,
+  registerPartner,
+  loginUser,
+  verifyOtp,
+  resendOtp,
+  refreshSession,
+  logoutUser,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
+  changePassword,
+  sendEmailVerification,
+  verifyEmail,
+  getMe,
+  googleAuth,
+} from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import {
+  loginLimiter,
+  otpVerifyLimiter,
+  otpResendLimiter,
+  authActionLimiter,
+} from '../middleware/authRateLimiters.js';
 
 const router = express.Router();
 
-// Strict Rate Limiting on Auth endpoints to prevent brute-force credential stuffing
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'test' ? 1000 : 20,
-  message: {
-    success: false,
-    message: 'Too many authentication attempts from this IP. Please try again after 15 minutes.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
-});
+// Registration / Signup
+router.post('/signup', authActionLimiter, registerUser);
+router.post('/register', authActionLimiter, registerUser); // Backwards compatibility alias
+router.post('/register-partner', authActionLimiter, registerPartner);
 
-router.post('/register', authLimiter, registerUser);
-router.post('/register-partner', authLimiter, registerPartner);
-router.post('/login', authLimiter, loginUser);
-router.post('/google', authLimiter, googleAuth);
-router.get('/me', protect, getMe);
+// OTP Verification & Resend
+router.post('/verify-otp', otpVerifyLimiter, verifyOtp);
+router.post('/send-otp', otpResendLimiter, resendOtp);
+router.post('/resend-otp', otpResendLimiter, resendOtp);
+
+// Authentication / Login / Logout
+router.post('/login', loginLimiter, loginUser);
+router.post('/refresh', refreshSession);
 router.post('/logout', logoutUser);
+router.post('/google', authActionLimiter, googleAuth);
+
+// Password Management
+router.post('/forgot-password', authActionLimiter, forgotPassword);
+router.post('/verify-reset-otp', otpVerifyLimiter, verifyResetOtp);
+router.post('/reset-password', authActionLimiter, resetPassword);
+router.post('/change-password', protect, changePassword);
+
+// Email Verification
+router.post('/send-email-verification', protect, sendEmailVerification);
+router.post('/verify-email', protect, otpVerifyLimiter, verifyEmail);
+
+// User Profile
+router.get('/me', protect, getMe);
 
 export default router;

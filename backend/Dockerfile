@@ -3,18 +3,16 @@
 # Multi-stage production container for Node.js Express API
 # ==============================================================================
 
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install all dependencies including devDependencies for build
-RUN npm ci --legacy-peer-deps
-
-# Copy source code (respecting .dockerignore)
-COPY . .
+# Install production dependencies only with legacy peer deps support
+# Resolves peer dependency conflict between multer-storage-cloudinary and cloudinary@2.x
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
 # ==============================================================================
 # Production Runner Stage
@@ -33,14 +31,14 @@ RUN apk add --no-cache curl
 RUN addgroup -S nodejs -g 1001 && \
     adduser -S nodeapp -u 1001 -G nodejs
 
-# Copy dependency manifests and install production dependencies only
-COPY package*.json ./
-RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+# Copy package manifests and production node_modules from deps stage
+COPY --chown=nodeapp:nodejs package*.json ./
+COPY --from=deps --chown=nodeapp:nodejs /app/node_modules ./node_modules
 
-# Copy application files from builder
-COPY --from=builder --chown=nodeapp:nodejs /app /app
+# Copy source code (respecting .dockerignore)
+COPY --chown=nodeapp:nodejs . .
 
-# Ensure uploads directory has correct write permissions
+# Ensure uploads directory exists with correct write permissions
 RUN mkdir -p /app/uploads && chown -R nodeapp:nodejs /app/uploads
 
 # Switch to non-root user

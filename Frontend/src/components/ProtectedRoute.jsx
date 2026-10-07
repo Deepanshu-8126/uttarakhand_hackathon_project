@@ -271,7 +271,7 @@ function InlineAuthGate({ isCopilot }) {
   );
 }
 
-const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false, requireVerifiedEmail = false }) => {
   const { 
     isAuthenticated, 
     isLoading, 

@@ -1,10 +1,17 @@
 import mongoose from 'mongoose';
+import fs from 'fs';
 
 export const connectDB = async () => {
-  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  let uri = process.env.MONGODB_URI || process.env.MONGO_URI;
   if (!uri) {
     console.error('CRITICAL: Neither MONGODB_URI nor MONGO_URI is set.');
     process.exit(1);
+  }
+
+  // If running inside a container and uri points to localhost/127.0.0.1, route to host.docker.internal
+  const isInsideContainer = process.env.RUNNING_IN_DOCKER === 'true' || (typeof process !== 'undefined' && process.platform !== 'win32' && fs.existsSync('/.dockerenv'));
+  if (isInsideContainer && (uri.includes('127.0.0.1:27017') || uri.includes('localhost:27017'))) {
+    uri = uri.replace('127.0.0.1:27017', 'host.docker.internal:27017').replace('localhost:27017', 'host.docker.internal:27017');
   }
 
   const connectWithRetry = async (retries = 5, delay = 2000) => {

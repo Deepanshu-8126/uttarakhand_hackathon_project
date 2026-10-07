@@ -8,6 +8,7 @@ import expressWs from 'express-ws';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.js';
@@ -97,6 +98,9 @@ app.use(cors({
 
 // Serve static uploaded assets
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Parse HTTP-only cookies
+app.use(cookieParser());
 
 // We need raw body for Stripe/Razorpay webhooks (must be strictly before express.json)
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));

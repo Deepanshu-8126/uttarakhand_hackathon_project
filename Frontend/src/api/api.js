@@ -16,7 +16,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30s timeout to comfortably accommodate free tier cold-starts
+  withCredentials: true, // Enables HTTP-only cookies transmission
+  timeout: 30000,
 });
 
 api.interceptors.request.use((config) => {
@@ -29,35 +30,72 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Automatic seamless failover to Live Production Backend if local server is unreachable
+// Automatic token refresh interceptor & server failover
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Gracefully clean expired/invalid auth tokens on 401
-    if (error.response && error.response.status === 401) {
-      if (typeof window !== 'undefined' && localStorage.getItem('token')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    // Handle 401 Unauthorized with Refresh Token rotation
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/login') &&
+      !originalRequest.url?.includes('/auth/refresh') &&
+      !originalRequest.url?.includes('/auth/signup')
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        const refreshRes = await axios.post(
+          `${api.defaults.baseURL || baseURL}/auth/refresh`,
+          { refreshToken: storedRefreshToken || undefined },
+          { withCredentials: true }
+        );
+
+        if (refreshRes.data && refreshRes.data.success) {
+          const newToken = refreshRes.data.data?.token || refreshRes.data.token;
+          const newRefreshToken = refreshRes.data.data?.refreshToken || refreshRes.data.refreshToken;
+
+          if (newToken) {
+            localStorage.setItem('token', newToken);
+            if (newRefreshToken) {
+              localStorage.setItem('refreshToken', newRefreshToken);
+            }
+            api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          }
+        }
+      } catch (refreshErr) {
+        // Refresh token failed or expired -> clean session
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+        }
       }
     }
 
+    // Failover to Live Production Backend if local server is unreachable
     const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED';
     const isLocalhost = originalRequest && (
       (originalRequest.baseURL && originalRequest.baseURL.includes('localhost')) ||
       (originalRequest.url && originalRequest.url.startsWith('http://localhost'))
     );
 
-    if (isNetworkError && isLocalhost && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (isNetworkError && isLocalhost && !originalRequest._failoverRetry) {
+      originalRequest._failoverRetry = true;
       originalRequest.baseURL = LIVE_BACKEND_URL;
       api.defaults.baseURL = LIVE_BACKEND_URL;
       return api(originalRequest);
     }
+
     return Promise.reject(error);
   }
 );
 
 export default api;
-
