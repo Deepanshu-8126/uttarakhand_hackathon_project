@@ -83,4 +83,22 @@ export function getFirstValidImage(images, category = 'Listing') {
   return getEntityPlaceholderSvg({ name: 'Tourism Service', category });
 }
 
+export function formatLocation(item, fallback = 'Uttarakhand') {
+  if (!item) return fallback;
+  if (typeof item === 'string') return item;
+  if (typeof item.city === 'string' && item.city.trim()) return item.city.trim();
+  if (typeof item.location === 'string' && item.location.trim()) return item.location.trim();
+  if (typeof item.locationString === 'string' && item.locationString.trim()) return item.locationString.trim();
+  if (typeof item.district === 'string' && item.district.trim()) return item.district.trim();
+  if (typeof item.region === 'string' && item.region.trim()) return item.region.trim();
+  if (item.location && typeof item.location === 'object' && Array.isArray(item.location.coordinates)) {
+    const [lng, lat] = item.location.coordinates;
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      return `${lat.toFixed(2)}°N, ${lng.toFixed(2)}°E`;
+    }
+  }
+  return fallback;
+}
+
+
 

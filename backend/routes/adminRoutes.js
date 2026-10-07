@@ -1,5 +1,12 @@
 import express from 'express';
-import { getAdminStats, getAllBookings, updateBookingStatus } from '../controllers/adminController.js';
+import { 
+  getAdminStats, 
+  getAllBookings, 
+  updateBookingStatus,
+  getAllUsers,
+  updateUserRole,
+  deleteUser
+} from '../controllers/adminController.js';
 import { getAllReviewsAdmin, updateReviewStatusAdmin, deleteReviewAdmin } from '../controllers/reviewController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
@@ -20,6 +27,12 @@ import {
 router.get('/stats', protect, adminOnly, getAdminStats);
 router.get('/bookings', protect, adminOnly, getAllBookings);
 router.patch('/bookings/:id/status', protect, adminOnly, updateBookingStatus);
+
+// Users
+router.get('/users', protect, adminOnly, getAllUsers);
+router.patch('/users/:id/role', protect, adminOnly, updateUserRole);
+router.delete('/users/:id', protect, adminOnly, deleteUser);
+
 
 // Reviews
 router.get('/reviews', protect, adminOnly, getAllReviewsAdmin);

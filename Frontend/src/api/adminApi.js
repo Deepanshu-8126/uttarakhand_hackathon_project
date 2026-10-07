@@ -7,7 +7,13 @@ export const getAdminStats = async () => {
 
 // Generic CRUD operations
 export const fetchItems = async (type) => {
-  const response = await api.get(`/${type}`);
+  let endpoint = `/${type}`;
+  if (type === 'bookings') endpoint = '/admin/bookings';
+  else if (type === 'reviews') endpoint = '/admin/reviews';
+  else if (type === 'users') endpoint = '/admin/users';
+  else if (type === 'partners') endpoint = '/admin/partners';
+  
+  const response = await api.get(endpoint);
   return response.data;
 };
 
@@ -17,12 +23,21 @@ export const createItem = async (type, data) => {
 };
 
 export const updateItem = async (type, id, data) => {
-  const response = await api.patch(`/${type}/${id}`, data);
+  let endpoint = `/${type}/${id}`;
+  if (type === 'bookings') endpoint = `/admin/bookings/${id}/status`;
+  else if (type === 'reviews') endpoint = `/admin/reviews/${id}/status`;
+  else if (type === 'users') endpoint = `/admin/users/${id}/role`;
+  
+  const response = await api.patch(endpoint, data);
   return response.data;
 };
 
 export const deleteItem = async (type, id) => {
-  const response = await api.delete(`/${type}/${id}`);
+  let endpoint = `/${type}/${id}`;
+  if (type === 'reviews') endpoint = `/admin/reviews/${id}`;
+  else if (type === 'users') endpoint = `/admin/users/${id}`;
+  
+  const response = await api.delete(endpoint);
   return response.data;
 };
 
@@ -53,6 +68,17 @@ export const deleteReviewAdmin = async (id) => {
   return response.data;
 };
 
+// Users
+export const getAllUsersAdmin = async () => {
+  const response = await api.get('/admin/users');
+  return response.data;
+};
+
+export const updateUserRoleAdmin = async (id, role) => {
+  const response = await api.patch(`/admin/users/${id}/role`, { role });
+  return response.data;
+};
+
 // Images
 export const uploadAdminImage = async (file) => {
   const formData = new FormData();
@@ -67,3 +93,4 @@ export const deleteAdminImage = async (publicId) => {
   const response = await api.delete(`/upload/${encodeURIComponent(publicId)}`);
   return response.data;
 };
+
