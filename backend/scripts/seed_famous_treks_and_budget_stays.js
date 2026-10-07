@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://deepanshu:Deepanshu8126@cluster0.n1bsp.mongodb.net/discover_uttarakhand?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/discovery_uttarakhand';
 
 // ─── 10 Iconic Uttarakhand Himalayan Treks ──────────────────
 const famousTreks = [

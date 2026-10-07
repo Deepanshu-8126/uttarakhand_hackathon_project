@@ -27,8 +27,10 @@ export const validateEnv = () => {
     process.env.FRONTEND_URL = '*';
   }
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-    console.warn('[WARN] SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASSWORD) are not configured. Email OTP delivery will fail until set.');
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const smtpPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  if (!smtpUser || !smtpPass) {
+    console.warn('[WARN] SMTP credentials (SMTP_USER/EMAIL_USER, SMTP_PASSWORD/EMAIL_PASS) are not configured. Email OTP delivery will run in simulated fallback.');
   }
 
   if (missing.length > 0) {

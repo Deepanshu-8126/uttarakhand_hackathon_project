@@ -2,37 +2,91 @@ import nodemailer from 'nodemailer';
 
 let transporter = null;
 
+const getResolvedSmtpConfig = () => {
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT || '465', 10);
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const from = process.env.SMTP_FROM || process.env.EMAIL_FROM || (user ? `"Discovery Uttarakhand" <${user}>` : '"Discovery Uttarakhand" <noreply@discoveryuttarakhand.com>');
+
+  return { host, port, user, pass, from };
+};
+
 const getTransporter = () => {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASSWORD;
+  const { host, port, user, pass } = getResolvedSmtpConfig();
 
-  if (!host || !user || !pass) {
-    console.warn('[EmailService] SMTP credentials not fully configured in environment variables.');
+  if (!user || !pass) {
+    console.warn('[EmailService] SMTP credentials not configured (SMTP_USER / EMAIL_USER or SMTP_PASSWORD / EMAIL_PASS missing).');
     return null;
   }
 
-  transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
-    tls: {
-      rejectUnauthorized: process.env.NODE_ENV === 'production',
-    },
-  });
+  const isGmail = host.toLowerCase().includes('gmail.com');
+  const transportOptions = isGmail && (port === 465 || port === 587)
+    ? {
+        service: 'gmail',
+        auth: { user, pass },
+        tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
+      }
+    : {
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
+      };
 
+  transporter = nodemailer.createTransport(transportOptions);
   return transporter;
 };
 
 const getFromAddress = () => {
-  return process.env.SMTP_FROM || '"Discovery Uttarakhand" <noreply@discoveryuttarakhand.com>';
+  const { from } = getResolvedSmtpConfig();
+  return from;
+};
+
+/**
+ * Startup and pre-flight SMTP diagnostic verifier
+ * Safely tests transporter connectivity without leaking credentials.
+ */
+export const verifySmtpTransporter = async () => {
+  const { host, port, user, pass } = getResolvedSmtpConfig();
+
+  if (!user || !pass) {
+    console.warn('[EmailService] ⚠️ SMTP credentials not configured in environment variables.');
+    console.warn('[EmailService]   Set SMTP_USER (or EMAIL_USER) and SMTP_PASSWORD (or EMAIL_PASS) in backend/.env.');
+    console.warn('[EmailService]   Email OTPs will run in simulated development mode.');
+    return { configured: false, verified: false, message: 'SMTP credentials missing' };
+  }
+
+  const mailer = getTransporter();
+  if (!mailer) {
+    return { configured: false, verified: false, message: 'Could not initialize transporter' };
+  }
+
+  try {
+    await mailer.verify();
+    const serviceName = host.toLowerCase().includes('gmail') ? 'Gmail SMTP' : `${host}:${port}`;
+    console.log(`[EmailService] ✅ SMTP verified successfully (${serviceName}) — Ready to dispatch emails.`);
+    return { configured: true, verified: true, service: serviceName };
+  } catch (error) {
+    const code = error.code || 'UNKNOWN';
+    const sanitizedMsg = error.message ? error.message.replace(pass, '********') : 'Verification failed';
+    console.error(`[EmailService] ❌ SMTP verification failed [${code}]: ${sanitizedMsg}`);
+
+    if (code === 'EAUTH') {
+      console.warn('[EmailService] 💡 Troubleshooting EAUTH:');
+      console.warn('  1. Use a 16-character Google App Password (not your personal Google account password).');
+      console.warn('  2. Verify 2-Step Verification is enabled on your Google account.');
+      console.warn('  3. Ensure there are no surrounding quotes or trailing spaces in .env.');
+    } else if (code === 'ECONNECTION' || code === 'ETIMEDOUT' || code === 'ECONNREFUSED') {
+      console.warn('[EmailService] 💡 Troubleshooting Connection:');
+      console.warn('  1. Check outbound internet connectivity or firewall rules for port 465/587.');
+      console.warn('  2. Try setting SMTP_PORT=465 in .env for direct SSL connection.');
+    }
+    return { configured: true, verified: false, error: code, message: sanitizedMsg };
+  }
 };
 
 /**
@@ -40,6 +94,7 @@ const getFromAddress = () => {
  */
 export const sendEmail = async ({ to, subject, text, html }) => {
   const mailer = getTransporter();
+  const { pass } = getResolvedSmtpConfig();
 
   if (!mailer) {
     if (process.env.NODE_ENV === 'production') {
@@ -62,8 +117,9 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     const info = await mailer.sendMail(mailOptions);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('[EmailService] Failed to send email:', error.message);
-    throw error;
+    const sanitizedMsg = error.message ? error.message.replace(pass, '********') : 'Email sending failed';
+    console.error('[EmailService] Failed to send email:', sanitizedMsg);
+    throw new Error(sanitizedMsg);
   }
 };
 

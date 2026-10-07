@@ -1,8 +1,9 @@
+import './config/loadEnv.js';
 import { cacheGet, cacheSet } from './config/redis.js';
 import { AgentRouter } from './ai/workflows/agentRouter.js';
 import { synthesizeStudioVoice } from './services/studioVoiceService.js';
 import { transcribeAudioBuffer } from './routes/voiceRoutes.js';
-import 'dotenv/config';
+import { verifySmtpTransporter } from './services/emailService.js';
 import express from 'express';
 import expressWs from 'express-ws';
 import cors from 'cors';
@@ -379,6 +380,16 @@ app.get(['/api/health/ready', '/api/ready'], (req, res) => {
   }
 });
 
+// Safe SMTP Health & Diagnostic probe (Returns sanitized status, no secrets)
+app.get(['/api/health/smtp', '/api/smtp/health'], async (req, res) => {
+  const result = await verifySmtpTransporter();
+  res.status(result.verified ? 200 : (result.configured ? 502 : 200)).json({
+    success: result.verified,
+    status: result.verified ? 'SMTP TEST: SUCCESS' : (result.configured ? 'SMTP TEST: FAILED' : 'SMTP: NOT CONFIGURED (SIMULATED)'),
+    ...result
+  });
+});
+
 // Basic error handling for unknown routes
 app.use((req, res, next) => {
   res.status(404).json({
@@ -395,6 +406,8 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log('Discovery Uttarakhand API');
   console.log(`Server running on port ${PORT}`);
+  // Safe SMTP verification diagnostic check (non-blocking)
+  verifySmtpTransporter().catch(() => {});
 });
 
 process.on('unhandledRejection', (err) => {
