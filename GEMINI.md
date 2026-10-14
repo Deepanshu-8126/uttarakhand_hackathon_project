@@ -50,7 +50,6 @@ Follow these rules strictly without exception to prevent user frustration.
 - **Backend Port:** 5000 (`http://localhost:5000/api`)
 - **Live Production Backend:** `https://uttarakhand-hackathon-project.onrender.com/api` (Render, kept awake via UptimeRobot)
 - **Database:** MongoDB Atlas + Upstash Serverless Redis In-Memory Cache (TTL: 600s).
-- **Frontend Framework:** React + Vite + Tailwind CSS + Lucide Icons + Leaflet (Map).
-- **Mobile App**: Flutter Android / iOS App (`mobile_app/`).
+- **Architecture**: Responsive Full-Stack Web Application (React + Vite + Tailwind CSS + Node.js backend). Mobile app and legacy archives decommissioned.
 - **Core Domain:** Discovery Uttarakhand (AI + Web3 Hackathon Project).
   - Features: Explore Destinations, Homestays & Stays, Bike/Car Rentals, Himalayan Corridors, Web3 Blockchain Partner & Vehicle Verification, AI Trip Copilot.
