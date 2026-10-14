@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import OTP from '../models/OTP.js';
-import { sendVerificationOTP, sendLoginOTP, sendPasswordResetOTP } from './emailService.js';
+import { sendVerificationOTP, sendLoginOTP, sendPasswordResetOTP, isSmtpConfigured } from './emailService.js';
 import { sendSmsOTP, isSmsConfigured } from './smsService.js';
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
@@ -111,6 +111,7 @@ export const createAndSendOtp = async ({
     channel,
     expiresInSeconds: Math.floor(OTP_EXPIRY_MS / 1000),
     otpId: otpDoc._id,
+    devOtp: (!isSmtpConfigured() || process.env.NODE_ENV !== 'production') ? rawOtp : undefined,
   };
 };
 

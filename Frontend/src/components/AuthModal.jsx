@@ -111,6 +111,18 @@ export default function AuthModal() {
         result = await register({ name: form.name.trim(), email: form.email.trim(), password: form.password.trim() });
       }
 
+      if (result?.requiresVerification) {
+        close();
+        navigate('/login', {
+          state: {
+            email: result.email,
+            requiresVerification: true,
+            devOtp: result.devOtp,
+          },
+        });
+        return;
+      }
+
       if (result?.success) {
         const role = result.user?.role;
         if (role === 'admin') {

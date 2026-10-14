@@ -12,7 +12,7 @@ import {
   setAuthCookies,
   clearAuthCookies,
 } from '../services/tokenService.js';
-import { sendWelcomeEmail } from '../services/emailService.js';
+import { sendWelcomeEmail, isSmtpConfigured } from '../services/emailService.js';
 
 const RESET_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'reset-secret';
 
@@ -89,9 +89,46 @@ export const registerUser = async (req, res) => {
     // Check duplicate email
     const emailExists = await User.findOne({ email: cleanEmail });
     if (emailExists) {
+      if (!emailExists.isEmailVerified) {
+        // Unverified account: allow re-registration by updating password & dispatching fresh OTP
+        emailExists.password = password;
+        if (cleanName) emailExists.name = cleanName;
+        if (cleanMobile) {
+          emailExists.mobile = cleanMobile;
+          emailExists.phone = cleanMobile;
+        }
+        await emailExists.save();
+
+        let otpResult = null;
+        try {
+          otpResult = await createAndSendOtp({
+            userId: emailExists._id,
+            destination: emailExists.email,
+            channel: 'email',
+            purpose: 'signup',
+            name: emailExists.name,
+          });
+        } catch (otpErr) {
+          console.warn('[Signup Re-verify] OTP dispatch notice:', otpErr.message);
+        }
+
+        return res.status(201).json({
+          success: true,
+          message: isSmtpConfigured()
+            ? 'Account was pending verification. A fresh 6-digit code has been dispatched to your email.'
+            : 'Account was pending verification. Verification code generated.',
+          data: {
+            userId: emailExists._id,
+            email: emailExists.email,
+            requiresVerification: true,
+            devOtp: otpResult?.devOtp,
+          },
+        });
+      }
+
       return res.status(400).json({
         success: false,
-        message: 'An account with this email address already exists.',
+        message: 'An account with this email address already exists. Please log in.',
       });
     }
 
@@ -166,11 +203,14 @@ export const registerUser = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Registration successful! A 6-digit verification code has been sent to your email.',
+      message: isSmtpConfigured()
+        ? 'Registration successful! A 6-digit verification code has been sent to your email.'
+        : 'Registration successful! Verification code generated.',
       data: {
         userId: user._id,
         email: user.email,
         requiresVerification: true,
+        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -250,12 +290,15 @@ export const registerPartner = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Partner account created! Please verify your email with the 6-digit code sent.',
+      message: isSmtpConfigured()
+        ? 'Partner account created! Please verify your email with the 6-digit code sent.'
+        : 'Partner account created! Verification code generated.',
       data: {
         userId: user._id,
         email: user.email,
         role: user.role,
         requiresVerification: true,
+        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -413,9 +456,12 @@ export const resendOtp = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `A new 6-digit verification code has been dispatched to your ${result.channel}.`,
+      message: isSmtpConfigured()
+        ? `A new 6-digit verification code has been dispatched to your ${result.channel}.`
+        : `A new 6-digit verification code has been generated.`,
       data: {
         expiresInSeconds: result.expiresInSeconds,
+        devOtp: result?.devOtp,
       },
     });
   } catch (error) {
@@ -481,8 +527,9 @@ export const loginUser = async (req, res) => {
     // Check account verification status
     if (!user.isEmailVerified && !user.googleId) {
       // Auto-dispatch verification OTP so user can immediately verify
+      let otpResult = null;
       try {
-        await createAndSendOtp({
+        otpResult = await createAndSendOtp({
           userId: user._id,
           destination: user.email,
           channel: 'email',
@@ -496,11 +543,14 @@ export const loginUser = async (req, res) => {
       return res.status(403).json({
         success: false,
         code: 'ACCOUNT_NOT_VERIFIED',
-        message: 'Account not verified. A 6-digit OTP has been sent to your email. Please verify to continue.',
+        message: isSmtpConfigured()
+          ? 'Account not verified. A 6-digit OTP has been sent to your email. Please verify to continue.'
+          : 'Account not verified. Verification code generated.',
         data: {
           userId: user._id,
           email: user.email,
           requiresVerification: true,
+          devOtp: otpResult?.devOtp,
         },
       });
     }
@@ -629,8 +679,9 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
+    let otpResult = null;
     try {
-      await createAndSendOtp({
+      otpResult = await createAndSendOtp({
         userId: user._id,
         destination: user.email,
         channel: 'email',
@@ -647,9 +698,12 @@ export const forgotPassword = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'A 6-digit password reset verification code has been sent to your email.',
+      message: isSmtpConfigured()
+        ? 'A 6-digit password reset verification code has been sent to your email.'
+        : 'Password reset code generated.',
       data: {
         destination: user.email,
+        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {

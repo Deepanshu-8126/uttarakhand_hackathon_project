@@ -12,6 +12,11 @@ const getResolvedSmtpConfig = () => {
   return { host, port, user, pass, from };
 };
 
+export const isSmtpConfigured = () => {
+  const { user, pass } = getResolvedSmtpConfig();
+  return Boolean(user && pass);
+};
+
 const getTransporter = () => {
   if (transporter) return transporter;
 
