@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useMapStore } from '../store/mapStore';
-import { updateProfile, uploadImage, getSavedItems, deleteExploreLater } from '../api/userApi';
+import { updateProfile, uploadImage, deleteProfilePhoto, getSavedItems, deleteExploreLater } from '../api/userApi';
 import { getMyBookings } from '../api/bookingApi';
 import { getMyReviews } from '../api/reviewApi';
 import { getTrips } from '../api/tripApi';
@@ -33,7 +33,8 @@ import {
   Building,
   Phone,
   Lock,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react';
 import PartnerListingsManager from '../components/partner/PartnerListingsManager';
 import MyBookings from '../components/booking/MyBookings';
@@ -96,17 +97,28 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState(tabParam || 'personal');
   const [favCategory, setFavCategory] = useState('all');
 
+  // Helper to format location object or string into readable text
+  const formatLocation = (loc) => {
+    if (!loc) return '';
+    if (typeof loc === 'string') return loc;
+    if (loc.city && loc.district && loc.city !== loc.district) {
+      return `${loc.city}, ${loc.district}`;
+    }
+    return loc.city || loc.district || loc.address || loc.name || '';
+  };
+
   // Edit Profile Modal States
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveMsg, setProfileSaveMsg] = useState({ text: '', type: '' });
   const [profileForm, setProfileForm] = useState({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
-    phone: currentUser?.phone || '',
-    location: currentUser?.location || ''
+    phone: currentUser?.phone || currentUser?.mobile || '',
+    location: formatLocation(currentUser?.location)
   });
 
   useEffect(() => {
@@ -114,8 +126,8 @@ const ProfilePage = () => {
       setProfileForm({
         name: currentUser.name || '',
         email: currentUser.email || '',
-        phone: currentUser.phone || '',
-        location: currentUser.location || ''
+        phone: currentUser.phone || currentUser.mobile || '',
+        location: formatLocation(currentUser.location)
       });
     }
   }, [currentUser]);
@@ -267,23 +279,33 @@ const ProfilePage = () => {
     setIsSavingProfile(true);
 
     try {
-      let uploadedImageUrl = null;
+      let uploadedImageData = null;
 
       if (selectedFile) {
-        setProfileSaveMsg({ text: 'Uploading profile photo...', type: 'info' });
+        setProfileSaveMsg({ text: 'Uploading profile photo to Cloudinary...', type: 'info' });
         try {
-          const uploadRes = await uploadImage(selectedFile);
+          const uploadRes = await uploadImage(selectedFile, 'profile-photos');
           if (uploadRes?.success && uploadRes?.image?.url) {
-            uploadedImageUrl = uploadRes.image.url;
+            uploadedImageData = {
+              url: uploadRes.image.url,
+              publicId: uploadRes.image.publicId || null,
+            };
           } else if (uploadRes?.success && uploadRes?.data?.url) {
-            uploadedImageUrl = uploadRes.data.url;
+            uploadedImageData = {
+              url: uploadRes.data.url,
+              publicId: uploadRes.data.publicId || null,
+            };
           } else if (uploadRes?.url) {
-            uploadedImageUrl = uploadRes.url;
+            uploadedImageData = {
+              url: uploadRes.url,
+              publicId: uploadRes.publicId || null,
+            };
           }
         } catch (uploadErr) {
           console.warn('Upload endpoint error:', uploadErr);
+          const errorMsg = uploadErr?.response?.data?.message || 'Unable to upload photo to server. Please try a different photo.';
           setProfileSaveMsg({ 
-            text: 'Unable to upload photo to server. Please try a different photo or keep existing.', 
+            text: errorMsg, 
             type: 'error' 
           });
           setIsSavingProfile(false);
@@ -293,14 +315,26 @@ const ProfilePage = () => {
 
       setProfileSaveMsg({ text: 'Saving your profile...', type: 'info' });
 
+      // Safely extract location string or object
+      const rawLoc = profileForm.location;
+      const locationVal = typeof rawLoc === 'string'
+        ? rawLoc.trim()
+        : (rawLoc?.city || rawLoc?.address || rawLoc?.name || '');
+
       const payload = {
         name: trimmedName,
         phone: trimmedPhone,
-        location: (profileForm.location || '').trim()
+        location: locationVal,
       };
 
-      if (uploadedImageUrl) {
-        payload.profileImage = uploadedImageUrl;
+      if (photoRemoved) {
+        payload.removeProfilePhoto = true;
+        payload.profileImage = null;
+      } else if (uploadedImageData) {
+        payload.profileImage = {
+          url: uploadedImageData.url,
+          publicId: uploadedImageData.publicId,
+        };
       }
 
       const res = await updateProfile(payload);
@@ -312,14 +346,15 @@ const ProfilePage = () => {
         setProfileForm({
           name: res.data.name || '',
           email: res.data.email || '',
-          phone: res.data.phone || '',
-          location: res.data.location || ''
+          phone: res.data.phone || res.data.mobile || '',
+          location: formatLocation(res.data.location),
         });
         setTimeout(() => {
           setShowEditModal(false);
           setProfileSaveMsg({ text: '', type: '' });
           setSelectedFile(null);
           setPreviewUrl(null);
+          setPhotoRemoved(false);
         }, 1200);
       } else {
         setProfileSaveMsg({ text: res?.message || 'Failed to update profile.', type: 'error' });
@@ -361,12 +396,16 @@ const ProfilePage = () => {
     : 'U';
 
   const rawAvatarUrl =
+    currentUser?.avatar ||
+    currentUser?.avatarUrl ||
     currentUser?.profileImage?.url ||
     (typeof currentUser?.profileImage === 'string' ? currentUser?.profileImage : null);
 
   const avatarUrl = rawAvatarUrl && rawAvatarUrl.startsWith('http:')
     ? rawAvatarUrl.replace('http:', 'https:')
     : rawAvatarUrl;
+
+  const modalAvatarUrl = previewUrl || (photoRemoved ? null : avatarUrl);
 
   return (
     <div className="min-h-screen bg-[#faf9f6] pt-4 sm:pt-6 pb-28 sm:pb-16 px-3 sm:px-6 lg:px-8">
@@ -1196,36 +1235,54 @@ const ProfilePage = () => {
               {/* Profile Image Preview & Picker */}
               <div className="flex items-center gap-4 pb-2 border-b border-border-light/60">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-forest-green text-white font-black text-xl flex items-center justify-center shrink-0 border-2 border-beige shadow-sm">
-                  {previewUrl ? (
-                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  {modalAvatarUrl ? (
+                    <img src={modalAvatarUrl} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
-                    initials
+                    <span>{initials}</span>
                   )}
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs font-bold text-text-dark mb-1">
                     Profile Photo
                   </label>
-                  <label className="inline-block cursor-pointer px-3 py-1.5 bg-beige hover:bg-beige/80 text-forest-green text-xs font-bold rounded-xl border border-border-light transition-colors">
-                    <span>Choose Photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 5 * 1024 * 1024) {
-                            setProfileSaveMsg({ text: 'Image must be under 5MB', type: 'error' });
-                            return;
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <label className="inline-block cursor-pointer px-3 py-1.5 bg-beige hover:bg-beige/80 text-forest-green text-xs font-bold rounded-xl border border-border-light transition-colors">
+                      <span>Choose Photo</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/jpg"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              setProfileSaveMsg({ text: 'Image must be under 5MB', type: 'error' });
+                              return;
+                            }
+                            setSelectedFile(file);
+                            setPreviewUrl(URL.createObjectURL(file));
+                            setPhotoRemoved(false);
+                            setProfileSaveMsg({ text: '', type: '' });
                           }
-                          setSelectedFile(file);
-                          setPreviewUrl(URL.createObjectURL(file));
-                          setProfileSaveMsg({ text: '', type: '' });
-                        }
-                      }}
-                      className="hidden"
-                    />
-                  </label>
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    {(modalAvatarUrl || currentUser?.profileImage || currentUser?.avatarUrl) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setPreviewUrl(null);
+                          setPhotoRemoved(true);
+                          setProfileSaveMsg({ text: 'Photo will be removed when you save changes.', type: 'info' });
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                        <span>Remove Photo</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

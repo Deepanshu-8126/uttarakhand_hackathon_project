@@ -10,12 +10,20 @@ export const updateProfile = async (userData) => {
   return response.data;
 };
 
-export const uploadImage = async (file) => {
+export const uploadImage = async (file, folder = 'profile-photos') => {
   const formData = new FormData();
   formData.append('image', file);
-  const response = await api.post('/upload', formData, {
+  if (folder) {
+    formData.append('folder', folder);
+  }
+  const response = await api.post(`/upload?folder=${encodeURIComponent(folder)}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+  return response.data;
+};
+
+export const deleteProfilePhoto = async () => {
+  const response = await api.delete('/users/profile/photo');
   return response.data;
 };
 

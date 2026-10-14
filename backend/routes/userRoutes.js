@@ -3,6 +3,7 @@ import { protect } from '../middleware/authMiddleware.js';
 import { 
   getUserProfile, 
   updateUserProfile,
+  deleteProfilePhoto,
   getUserReviews,
   getUserTrips,
   getSavedItems,
@@ -21,6 +22,7 @@ router.use(protect); // Protect all routes below
 router.get('/profile', getUserProfile);
 router.put('/profile', updateUserProfile);
 router.patch('/profile', updateUserProfile);
+router.delete('/profile/photo', deleteProfilePhoto);
 router.get('/bookings', getMyBookings);
 router.post('/bookings', createBooking);
 router.get('/reviews', getUserReviews);

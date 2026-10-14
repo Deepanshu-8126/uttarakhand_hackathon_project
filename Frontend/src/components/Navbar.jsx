@@ -45,6 +45,12 @@ export default function Navbar() {
 
   const userRef = useRef(null);
 
+  const userPhotoUrl =
+    currentUser?.avatar ||
+    currentUser?.avatarUrl ||
+    currentUser?.profileImage?.url ||
+    (typeof currentUser?.profileImage === 'string' ? currentUser?.profileImage : null);
+
   // Sync global location updates
   useEffect(() => {
     const handleLocationUpdate = (e) => {
@@ -256,8 +262,14 @@ export default function Navbar() {
                     }`}
                     aria-label="User Menu"
                   >
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                      {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={13} />}
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden border border-emerald-600/30">
+                      {userPhotoUrl ? (
+                        <img src={userPhotoUrl} alt={currentUser?.name || 'User'} className="w-full h-full object-cover" />
+                      ) : currentUser?.name ? (
+                        currentUser.name[0].toUpperCase()
+                      ) : (
+                        <User size={13} />
+                      )}
                     </div>
                     <ChevronDown size={13} className="text-stone-400 pr-1 hidden sm:block shrink-0" />
                   </button>
@@ -634,8 +646,14 @@ export default function Navbar() {
               {/* User Profile / Auth Card in Drawer */}
               <div className="bg-white rounded-2xl p-3 border border-stone-200/80 shadow-xs flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
-                    {isAuthenticated ? (currentUser?.name?.[0]?.toUpperCase() || 'U') : <User size={16} />}
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden border border-emerald-300/40">
+                    {userPhotoUrl ? (
+                      <img src={userPhotoUrl} alt={currentUser?.name || 'User'} className="w-full h-full object-cover" />
+                    ) : isAuthenticated ? (
+                      currentUser?.name?.[0]?.toUpperCase() || 'U'
+                    ) : (
+                      <User size={16} />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-stone-900 truncate">

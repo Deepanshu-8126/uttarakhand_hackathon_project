@@ -24,7 +24,9 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
   if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     try {
       let folderName = 'general';
-      if (req.baseUrl && req.baseUrl.includes('user')) folderName = 'users';
+      if (req.query?.folder) folderName = req.query.folder;
+      else if (req.body?.folder) folderName = req.body.folder;
+      else if (req.baseUrl && req.baseUrl.includes('user')) folderName = 'profile-photos';
       else if (req.baseUrl && req.baseUrl.includes('destination')) folderName = 'destinations';
       else if (req.baseUrl && req.baseUrl.includes('rental')) folderName = 'rentals';
       else if (req.baseUrl && req.baseUrl.includes('stay')) folderName = 'stays';
@@ -32,7 +34,8 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
       const result = await cloudinary.uploader.upload(localFilePath, {
         folder: `discovery-uttarakhand/${folderName}`,
-        public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+        public_id: `profile-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+        resource_type: 'image'
       });
 
       // Cleanup local file after successful Cloudinary upload

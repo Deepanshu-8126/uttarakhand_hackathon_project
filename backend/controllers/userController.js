@@ -12,6 +12,7 @@ import Activity from '../models/Activity.js';
 import Stay from '../models/Stay.js';
 import Rental from '../models/Rental.js';
 import Guide from '../models/Guide.js';
+import cloudinary from '../config/cloudinary.js';
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -27,6 +28,7 @@ export const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
+    const avatarUrl = user.avatarUrl || user.profileImage?.url || null;
     res.json({ 
       success: true, 
       data: {
@@ -34,9 +36,12 @@ export const getUserProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone || '',
+        phone: user.phone || user.mobile || '',
+        mobile: user.mobile || user.phone || '',
         role: user.role,
         profileImage: user.profileImage || null,
+        avatar: avatarUrl,
+        avatarUrl: avatarUrl,
         location: user.location || '',
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
@@ -98,15 +103,43 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
-    // 5. Location
+    // 5. Location (Safely handle String OR Object without throwing TypeError)
     if (req.body.location !== undefined) {
-      user.location = typeof req.body.location === 'string' 
-        ? req.body.location.trim() 
-        : (req.body.location?.address || req.body.location?.name || '');
+      if (typeof req.body.location === 'string') {
+        const trimmedLoc = req.body.location.trim();
+        user.location = {
+          city: trimmedLoc,
+          district: user.location?.district || '',
+          state: user.location?.state || 'Uttarakhand',
+          country: user.location?.country || 'India',
+        };
+      } else if (typeof req.body.location === 'object' && req.body.location !== null) {
+        user.location = {
+          city: req.body.location.city || req.body.location.name || req.body.location.address || '',
+          district: req.body.location.district || '',
+          state: req.body.location.state || 'Uttarakhand',
+          country: req.body.location.country || 'India',
+          coordinates: req.body.location.coordinates || undefined
+        };
+      }
     }
 
-    // 6. Profile Photo (Section 6: No huge base64 in MongoDB)
-    if (req.body.profileImage) {
+    // 6. Profile Photo (Upload, Replace, or Explicit Removal)
+    if (req.body.removeProfilePhoto === true || req.body.profileImage === null) {
+      // Remove profile photo & destroy existing Cloudinary asset if publicId exists
+      if (user.profileImage?.publicId && process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+        try {
+          await cloudinary.uploader.destroy(user.profileImage.publicId);
+        } catch (cErr) {
+          console.warn('[Cloudinary Delete Notice]', cErr.message || cErr);
+        }
+      }
+      user.profileImage = null;
+      user.avatarUrl = null;
+    } else if (req.body.profileImage) {
+      let photoUrl = '';
+      let photoPublicId = null;
+
       if (typeof req.body.profileImage === 'string') {
         const imgStr = req.body.profileImage.trim();
         if (imgStr.startsWith('data:image') && imgStr.length > 2048) {
@@ -115,20 +148,37 @@ export const updateUserProfile = async (req, res) => {
             message: 'Direct base64 photo storage is not allowed. Please upload via Cloudinary or standard photo URL.' 
           });
         }
-        if (imgStr) {
-          user.profileImage = {
-            url: imgStr,
-            source: 'User Upload',
-            alt: `${user.name} Profile Photo`
-          };
-        }
+        photoUrl = imgStr;
+        photoPublicId = req.body.publicId || req.body.profileImagePublicId || null;
       } else if (typeof req.body.profileImage === 'object' && req.body.profileImage.url) {
+        photoUrl = String(req.body.profileImage.url).trim();
+        photoPublicId = req.body.profileImage.publicId || null;
+      }
+
+      if (photoUrl) {
+        // If replacing an existing Cloudinary asset with a different one, clean up the previous asset
+        if (
+          user.profileImage?.publicId &&
+          photoPublicId &&
+          user.profileImage.publicId !== photoPublicId &&
+          process.env.CLOUDINARY_CLOUD_NAME &&
+          process.env.CLOUDINARY_API_KEY &&
+          process.env.CLOUDINARY_API_SECRET
+        ) {
+          try {
+            await cloudinary.uploader.destroy(user.profileImage.publicId);
+          } catch (cErr) {
+            console.warn('[Cloudinary Replace Notice]', cErr.message || cErr);
+          }
+        }
+
         user.profileImage = {
-          url: req.body.profileImage.url,
-          publicId: req.body.profileImage.publicId || null,
-          source: req.body.profileImage.source || 'User Upload',
-          alt: req.body.profileImage.alt || `${user.name} Profile Photo`
+          url: photoUrl,
+          publicId: photoPublicId,
+          source: 'User Upload',
+          alt: `${user.name} Profile Photo`
         };
+        user.avatarUrl = photoUrl;
       }
     }
 
@@ -137,12 +187,13 @@ export const updateUserProfile = async (req, res) => {
       user.password = req.body.password;
     }
 
-    // 8. STRICT ROLE PROTECTION (Section 13: Normal user cannot elevate role or privileges)
+    // 8. STRICT ROLE PROTECTION (Normal user cannot elevate role or privileges)
     // user.role is intentionally NOT updated from req.body
 
     const updatedUser = await user.save();
+    const finalAvatar = updatedUser.avatarUrl || updatedUser.profileImage?.url || null;
 
-    // 9. Safe User DTO (Section 11: Never return password or passwordHash)
+    // 9. Safe User DTO (Never return password or sensitive fields)
     res.json({
       success: true,
       message: 'Profile updated successfully',
@@ -151,9 +202,12 @@ export const updateUserProfile = async (req, res) => {
         id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
-        phone: updatedUser.phone || '',
+        phone: updatedUser.phone || updatedUser.mobile || '',
+        mobile: updatedUser.mobile || updatedUser.phone || '',
         role: updatedUser.role,
         profileImage: updatedUser.profileImage || null,
+        avatar: finalAvatar,
+        avatarUrl: finalAvatar,
         location: updatedUser.location || '',
         createdAt: updatedUser.createdAt,
         updatedAt: updatedUser.updatedAt
@@ -162,6 +216,59 @@ export const updateUserProfile = async (req, res) => {
   } catch (error) {
     console.error('[UpdateUserProfile Error]', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to update profile.' });
+  }
+};
+
+// @desc    Delete/Remove User Profile Photo
+// @route   DELETE /api/users/profile/photo
+// @access  Private
+export const deleteProfilePhoto = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Safely delete Cloudinary asset if publicId exists
+    if (user.profileImage?.publicId && process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+      try {
+        await cloudinary.uploader.destroy(user.profileImage.publicId);
+      } catch (cErr) {
+        console.warn('[Cloudinary Delete Notice]', cErr.message || cErr);
+      }
+    }
+
+    user.profileImage = null;
+    user.avatarUrl = null;
+    const updatedUser = await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile photo removed successfully.',
+      data: {
+        _id: updatedUser._id,
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || updatedUser.mobile || '',
+        mobile: updatedUser.mobile || updatedUser.phone || '',
+        role: updatedUser.role,
+        profileImage: null,
+        avatar: null,
+        avatarUrl: null,
+        location: updatedUser.location || '',
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('[DeleteProfilePhoto Error]', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to remove profile photo.' });
   }
 };
 
