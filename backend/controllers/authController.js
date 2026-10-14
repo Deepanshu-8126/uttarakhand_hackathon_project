@@ -213,7 +213,6 @@ export const registerUser = async (req, res) => {
         userId: user._id,
         email: user.email,
         requiresVerification: true,
-        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {

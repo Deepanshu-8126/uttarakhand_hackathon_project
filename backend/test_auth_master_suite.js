@@ -15,6 +15,13 @@
  */
 
 import './config/loadEnv.js';
+import dns from 'dns';
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Ignore if custom DNS cannot be set
+}
+
 import mongoose from 'mongoose';
 import User from './models/User.js';
 import OTP from './models/OTP.js';
