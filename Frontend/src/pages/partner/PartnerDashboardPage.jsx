@@ -47,7 +47,7 @@ import NotificationsTab from '../../components/partner/tabs/NotificationsTab';
 import SupportTab from '../../components/partner/tabs/SupportTab';
 import SettingsTab from '../../components/partner/tabs/SettingsTab';
 import CustomerPreviewModal from '../../components/partner/CustomerPreviewModal';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Building2, ArrowRight } from 'lucide-react';
 
 const validTabs = [
   'overview', 'listings', 'services', 'add-listing', 'bookings',
@@ -140,7 +140,16 @@ const PartnerDashboardPage = () => {
         getPartnerActionItems().catch(() => ({ success: false }))
       ]);
 
-      if (profileRes?.success) setPartnerProfile(profileRes.partner || profileRes.data);
+      if (profileRes?.status === 401) {
+        setError('AUTH_REQUIRED');
+        return;
+      }
+      if (profileRes?.success) {
+        setPartnerProfile(profileRes.partner || profileRes.data);
+      } else if (profileRes?.status === 404) {
+        setPartnerProfile(null);
+      }
+
       if (statsRes?.success) setDashboardStats(statsRes.stats || statsRes.data);
       if (listingsRes?.success) setListings(listingsRes.listings || listingsRes.data || []);
       if (bookingsRes?.success) setBookings(bookingsRes.bookings || bookingsRes.data || []);
@@ -161,7 +170,7 @@ const PartnerDashboardPage = () => {
       }
     } catch (err) {
       console.error('Failed to load partner dashboard data:', err);
-      setError('Unable to load partner business data. Please check connection and try again.');
+      setError('Unable to load partner business data. Please check your connection.');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -424,6 +433,50 @@ const PartnerDashboardPage = () => {
     );
   }
 
+  if (error === 'AUTH_REQUIRED') {
+    return (
+      <div className="min-h-screen bg-[#fdfbf7] flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-stone-200 shadow-xl p-8 text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-[#0f3d2e] mb-5 shadow-xs">
+            <Building2 size={28} />
+          </div>
+          <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 mb-3">
+            Partner Business Hub
+          </span>
+          <h2 className="text-xl font-black text-stone-900 tracking-tight mb-2">
+            Partner Sign-In Required
+          </h2>
+          <p className="text-xs text-stone-600 leading-relaxed mb-6">
+            Sign in with your partner business account to manage your listings, tariffs, guest reservations, and payouts.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/partner/login')}
+              className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[#0f3d2e] hover:bg-emerald-900 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+            >
+              <span>Sign In to Partner Portal</span>
+              <ArrowRight size={14} />
+            </button>
+            <button
+              onClick={() => navigate('/partner/onboarding')}
+              className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-stone-700 bg-stone-100 hover:bg-stone-200 transition-all"
+            >
+              Register New Partner Business
+            </button>
+          </div>
+          <div className="mt-6 pt-4 border-t border-stone-100">
+            <button
+              onClick={() => navigate('/')}
+              className="text-xs text-stone-500 hover:text-stone-800 transition"
+            >
+              ← Back to Discovery Uttarakhand
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex font-sans selection:bg-emerald-500 selection:text-white">
       {/* Sidebar Navigation */}
@@ -455,6 +508,28 @@ const PartnerDashboardPage = () => {
 
         {/* Tab Content Container */}
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+          {/* Welcome / Onboarding Banner if partner has not registered a profile yet */}
+          {!partnerProfile && (
+            <div className="mb-6 p-6 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#0f3d2e] to-stone-900 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 mb-2">
+                  Partner Registration Required
+                </span>
+                <h3 className="text-base font-black tracking-tight">Complete Your Partner Onboarding</h3>
+                <p className="text-xs text-emerald-100/80 mt-1 max-w-xl">
+                  Register your homestay, bike/car rental fleet, or guide business in 2 minutes to start listing on Discovery Uttarakhand and receiving verified bookings.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/partner/onboarding')}
+                className="px-5 py-2.5 rounded-xl bg-white text-[#0f3d2e] font-bold text-xs uppercase tracking-wider hover:bg-emerald-50 transition shadow-sm shrink-0 whitespace-nowrap flex items-center gap-2"
+              >
+                <span>Register Business</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
               <AlertCircle size={16} />

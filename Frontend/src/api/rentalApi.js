@@ -62,14 +62,23 @@ export const getRentals = async (params = {}) => {
           });
         });
       } else {
-        const rawUrl = (biz.images && biz.images[0]?.url) || biz.coverImage?.url || getVehiclePlaceholder(biz.name, biz.category);
-        const dailyPrice = biz.pricePerDay || biz.price?.amount || null;
+        const rawUrl = (biz.images && biz.images[0]?.url) || 
+                       (typeof biz.images?.[0] === 'string' ? biz.images[0] : null) || 
+                       (Array.isArray(biz.photos) && biz.photos[0]) || 
+                       biz.coverImage?.url || 
+                       (typeof biz.image === 'string' ? biz.image : biz.image?.url) ||
+                       getVehiclePlaceholder(biz.name || biz.title, biz.category);
+        const dailyPrice = biz.pricePerDay || biz.pricingDetails?.pricePerDay || biz.pricing?.amount || biz.price?.amount || null;
 
         flattened.push({
           ...biz,
           id: biz._id || biz.id,
           _id: biz._id || biz.id,
           compositeId: `${biz._id || biz.id}_0`,
+          name: biz.name || biz.title || 'Rental Vehicle',
+          vehicleName: biz.vehicleName || biz.title || biz.name || 'Rental Vehicle',
+          title: biz.title || biz.name,
+          businessName: biz.businessName || biz.name || biz.title,
           location: displayLocation,
           displayLocation,
           price: dailyPrice ? { amount: dailyPrice, currency: 'INR', unit: 'day', provenance: 'VERIFIED' } : { amount: null, provenance: 'UNKNOWN' },
@@ -80,7 +89,8 @@ export const getRentals = async (params = {}) => {
           images: [{ url: rawUrl }],
           rating: biz.rating || null,
           reviewsCount: biz.reviewsCount || 0,
-          isVerified: biz.isVerified !== false
+          isVerified: biz.isVerified !== false,
+          isPartnerListing: biz.isPartnerListing || true
         });
       }
     });

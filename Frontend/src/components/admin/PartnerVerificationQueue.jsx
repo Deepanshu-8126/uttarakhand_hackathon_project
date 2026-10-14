@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   AlertTriangle, 
@@ -18,6 +18,7 @@ import {
   getListingForAdmin, 
   verifyListingAdmin, 
   rejectListingAdmin,
+  activateListingAdmin,
   getVerificationLogsAdmin 
 } from '../../api/partnerApi';
 
@@ -125,9 +126,30 @@ export default function PartnerVerificationQueue() {
     }
   };
 
+  const handleActivate = async (id) => {
+    if (!window.confirm('Force-activate this listing for the public marketplace? (Skips on-chain attestation)')) {
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      const res = await activateListingAdmin(id, 'Manually activated by platform admin.');
+      if (res.success) {
+        setStatusMessage({ type: 'success', text: 'Listing force-activated and is now live on the public marketplace.' });
+        setInspectModalOpen(false);
+        loadData();
+      } else {
+        alert(res.message || 'Activation failed');
+      }
+    } catch (err) {
+      alert('Error activating listing');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl p-6 border border-border-light shadow-sm">
-      {/* ── Tab Switcher & Header ─────────────────────────── */}
+      {/* â”€â”€ Tab Switcher & Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -176,11 +198,11 @@ export default function PartnerVerificationQueue() {
 
       {statusMessage && (
         <div className="mb-4 p-3 rounded-xl text-xs font-bold bg-green-50 text-forest-green border border-green-200">
-          ✓ {statusMessage.text}
+          âœ“ {statusMessage.text}
         </div>
       )}
 
-      {/* ── Tab 1: Pending Queue ──────────────────────────── */}
+      {/* â”€â”€ Tab 1: Pending Queue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'queue' && (
         <div>
           {loading ? (
@@ -230,7 +252,7 @@ export default function PartnerVerificationQueue() {
                       </td>
                       <td className="py-3.5">
                         <div className="font-mono font-bold text-text-dark">
-                          ₹{listing.pricing?.amount} / {listing.pricing?.unit}
+                          â‚¹{listing.pricing?.amount} / {listing.pricing?.unit}
                         </div>
                         <span className="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                           {listing.pricing?.provenance || 'PARTNER_CLAIMED'}
@@ -247,13 +269,23 @@ export default function PartnerVerificationQueue() {
                           >
                             <Eye size={12} /> Inspect
                           </button>
-                          <button
-                            onClick={() => handleApprove(listing._id)}
-                            disabled={isProcessing}
-                            className="px-2.5 py-1 text-xs font-bold text-white bg-forest-green hover:bg-forest-green/90 rounded-lg flex items-center gap-1 shadow-2xs transition-all"
-                          >
-                            <CheckCircle size={12} /> Approve
-                          </button>
+                          {listing.status === 'VERIFIED' ? (
+                            <button
+                              onClick={() => handleActivate(listing._id)}
+                              disabled={isProcessing}
+                              className="px-2.5 py-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg flex items-center gap-1 shadow-sm transition-all"
+                            >
+                              <CheckCircle size={12} /> Force Activate
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleApprove(listing._id)}
+                              disabled={isProcessing}
+                              className="px-2.5 py-1 text-xs font-bold text-white bg-forest-green hover:bg-forest-green/90 rounded-lg flex items-center gap-1 shadow-2xs transition-all"
+                            >
+                              <CheckCircle size={12} /> Approve
+                            </button>
+                          )}
                           <button
                             onClick={() => handleOpenReject(listing)}
                             disabled={isProcessing}
@@ -272,7 +304,7 @@ export default function PartnerVerificationQueue() {
         </div>
       )}
 
-      {/* ── Tab 2: Audit Logs ─────────────────────────────── */}
+      {/* â”€â”€ Tab 2: Audit Logs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'logs' && (
         <div className="space-y-3">
           {auditLogs.length === 0 ? (
@@ -289,7 +321,7 @@ export default function PartnerVerificationQueue() {
                         {log.action}
                       </span>
                       <span className="font-bold text-text-dark">
-                        {log.previousStatus} ➔ {log.newStatus}
+                        {log.previousStatus} âž” {log.newStatus}
                       </span>
                       <span className="text-[10px] text-muted-text">
                         (v{log.verificationVersion || 1})
@@ -299,7 +331,7 @@ export default function PartnerVerificationQueue() {
                       Reason: "{log.reason || 'None stated'}"
                     </p>
                     <span className="text-[10px] text-muted-text/80 mt-0.5 block">
-                      Admin: {log.admin?.name || log.admin?.email || 'Platform Admin'} • {new Date(log.timestamp).toLocaleString()}
+                      Admin: {log.admin?.name || log.admin?.email || 'Platform Admin'} â€¢ {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -309,7 +341,7 @@ export default function PartnerVerificationQueue() {
         </div>
       )}
 
-      {/* ── Inspect Modal ─────────────────────────────────── */}
+      {/* â”€â”€ Inspect Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {inspectModalOpen && selectedListing && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-xl border border-border-light">
@@ -324,7 +356,7 @@ export default function PartnerVerificationQueue() {
                 onClick={() => setInspectModalOpen(false)}
                 className="text-muted-text hover:text-text-dark p-1"
               >
-                ✕
+                âœ•
               </button>
             </div>
 
@@ -337,7 +369,7 @@ export default function PartnerVerificationQueue() {
                 <div>
                   <span className="text-muted-text block text-[10px]">Claimed Tariff</span>
                   <span className="font-bold text-forest-green font-mono">
-                    ₹{selectedListing.pricing?.amount} / {selectedListing.pricing?.unit}
+                    â‚¹{selectedListing.pricing?.amount} / {selectedListing.pricing?.unit}
                   </span>
                 </div>
                 <div>
@@ -379,19 +411,29 @@ export default function PartnerVerificationQueue() {
               >
                 Reject with Feedback
               </button>
-              <button
-                onClick={() => handleApprove(selectedListing._id)}
-                disabled={isProcessing}
-                className="btn-primary text-xs py-2 px-5 rounded-xl flex items-center gap-1.5"
-              >
-                <CheckCircle size={14} /> Approve & Activate
-              </button>
+              {selectedListing.status === 'VERIFIED' ? (
+                <button
+                  onClick={() => handleActivate(selectedListing._id)}
+                  disabled={isProcessing}
+                  className="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl flex items-center gap-1.5 shadow-sm"
+                >
+                  <CheckCircle size={14} /> Force Activate (Live)
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleApprove(selectedListing._id)}
+                  disabled={isProcessing}
+                  className="btn-primary text-xs py-2 px-5 rounded-xl flex items-center gap-1.5"
+                >
+                  <CheckCircle size={14} /> Approve & Activate
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Rejection Reason Modal ────────────────────────── */}
+      {/* â”€â”€ Rejection Reason Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {rejectModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-red-200">

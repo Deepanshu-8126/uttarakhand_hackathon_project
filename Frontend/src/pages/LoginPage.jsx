@@ -18,7 +18,6 @@ import {
   Car,
   CheckCircle2,
   Sparkles,
-  ChevronDown,
   MapPin,
   Crosshair,
   Phone,
@@ -99,7 +98,6 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successNotice, setSuccessNotice] = useState('');
-  const [showDemoDropdown, setShowDemoDropdown] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
 
   // Clear inputs on initial mount so old cached/autofilled credentials do not persist
@@ -284,7 +282,11 @@ export default function LoginPage() {
           setResendCooldown(60);
           setAuthStep('verify_otp');
           setOtpCode('');
-          setSuccessNotice('Account created! A 6-digit verification code has been dispatched to your email.');
+          setSuccessNotice(
+            res.devOtp
+              ? `Account created! (Verification Code: ${res.devOtp})`
+              : 'Account created! A 6-digit verification code has been dispatched to your email.'
+          );
           return;
         }
 
@@ -357,18 +359,57 @@ export default function LoginPage() {
 
       if (res?.success) {
         setSuccessNotice('✅ Verification successful! Activating your session...');
+        const userRole = res.data?.role || res.data?.user?.role;
         setTimeout(() => {
-          if (isPartner) {
+          if (isPartner || userRole === 'partner') {
             navigate('/partner');
+          } else if (userRole === 'admin') {
+            navigate('/admin');
           } else {
             navigate(redirectPath || '/profile');
           }
-        }, 600);
+        }, 500);
       } else {
         setErrorMessage(res?.message || 'Verification failed. Please check your OTP.');
       }
     } catch (err) {
       setErrorMessage(err.message || 'Verification failed.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Request Direct One-Time Passcode Login
+  const handleRequestLoginOtp = async () => {
+    const target = identifier.trim().toLowerCase();
+    if (!target) {
+      setErrorMessage('Please enter your email or mobile number first.');
+      return;
+    }
+    setErrorMessage('');
+    setSuccessNotice('');
+    setSubmitting(true);
+    try {
+      const res = await resendOtp({
+        destination: target,
+        purpose: 'login',
+      });
+      if (res?.success) {
+        setOtpDestination(target);
+        setOtpPurpose('login');
+        setResendCooldown(60);
+        setAuthStep('verify_otp');
+        setOtpCode('');
+        setSuccessNotice(
+          res.data?.devOtp
+            ? `One-time login passcode dispatched! (Dev Code: ${res.data.devOtp})`
+            : `One-time login passcode dispatched to ${target}. Enter it to sign in.`
+        );
+      } else {
+        setErrorMessage(res?.message || 'Failed to dispatch login OTP.');
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to dispatch login OTP.');
     } finally {
       setSubmitting(false);
     }
@@ -389,7 +430,11 @@ export default function LoginPage() {
       if (res?.success) {
         setResendCooldown(60);
         setOtpCode('');
-        setSuccessNotice('New verification code sent to your email.');
+        setSuccessNotice(
+          res.data?.devOtp
+            ? `New verification code: ${res.data.devOtp}`
+            : 'New verification code sent to your email.'
+        );
       } else {
         setErrorMessage(res?.message || 'Failed to resend code.');
       }
@@ -479,43 +524,6 @@ export default function LoginPage() {
       setErrorMessage(err.message || 'Password reset failed.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  // Hackathon Quick Mock Logins
-  const handleQuickMockLogin = (role) => {
-    localStorage.setItem('role', role);
-    if (role === 'trekker') {
-      const mockUser = {
-        id: 'usr_trekker_1',
-        name: 'Aryan Negi',
-        email: 'trekker@test.com',
-        role: 'trekker',
-        trekId: 'TRK-82341'
-      };
-      localStorage.setItem('mockUser', JSON.stringify(mockUser));
-      localStorage.setItem('token', 'mock_trekker_token_82341');
-      navigate('/trekker');
-    } else if (role === 'guide') {
-      const mockUser = {
-        id: 'usr_guide_1',
-        name: 'Ramesh Rawat',
-        email: 'guide@test.com',
-        role: 'guide'
-      };
-      localStorage.setItem('mockUser', JSON.stringify(mockUser));
-      localStorage.setItem('token', 'mock_guide_token_1234');
-      navigate('/guide');
-    } else if (role === 'admin') {
-      const mockUser = {
-        id: 'usr_admin_1',
-        name: 'Rescue Ops Commander',
-        email: 'admin@test.com',
-        role: 'admin'
-      };
-      localStorage.setItem('mockUser', JSON.stringify(mockUser));
-      localStorage.setItem('token', 'mock_admin_token_9999');
-      navigate('/rescue-ops');
     }
   };
 
@@ -951,73 +959,6 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {/* Judge / Hackathon Demo Account Drawer */}
-                <div className="mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowDemoDropdown(!showDemoDropdown)}
-                    className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200/80 text-emerald-900 text-xs font-bold transition cursor-pointer whitespace-nowrap"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-emerald-700 shrink-0" />
-                      <span>⚡ Hackathon Judge Demo Accounts</span>
-                    </div>
-                    <ChevronDown size={14} className={`text-emerald-700 transition-transform ${showDemoDropdown ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {showDemoDropdown && (
-                    <div className="mt-2 p-2 rounded-2xl bg-stone-50 border border-stone-200 space-y-1.5 animate-in fade-in duration-150">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAccountMode('traveler');
-                          setIdentifier('traveler@discovery.com');
-                          setPassword('traveler123');
-                          setShowDemoDropdown(false);
-                          setSuccessNotice('Filled Traveler Demo: traveler@discovery.com');
-                        }}
-                        className="w-full p-2 rounded-xl bg-white hover:bg-emerald-50 border border-stone-200 text-left text-xs font-bold text-slate-800 flex items-center justify-between transition cursor-pointer"
-                      >
-                        <span>🧑🎒 Traveler Demo (traveler@discovery.com)</span>
-                        <span className="text-[10px] text-emerald-700 font-mono">Fill Form</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAccountMode('partner');
-                          setIdentifier('partner@discovery.com');
-                          setPassword('partner123');
-                          setShowDemoDropdown(false);
-                          setSuccessNotice('Filled Partner Demo: partner@discovery.com');
-                        }}
-                        className="w-full p-2 rounded-xl bg-white hover:bg-emerald-50 border border-stone-200 text-left text-xs font-bold text-slate-800 flex items-center justify-between transition cursor-pointer"
-                      >
-                        <span>🏢 Partner Demo (partner@discovery.com)</span>
-                        <span className="text-[10px] text-emerald-700 font-mono">Fill Form</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleQuickMockLogin('trekker')}
-                        className="w-full p-2 rounded-xl bg-white hover:bg-emerald-50 border border-stone-200 text-left text-xs font-bold text-slate-800 flex items-center justify-between transition cursor-pointer"
-                      >
-                        <span>🚀 1-Click Trekker SOS Dashboard</span>
-                        <ArrowRight size={13} className="text-emerald-700 shrink-0" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleQuickMockLogin('admin')}
-                        className="w-full p-2 rounded-xl bg-white hover:bg-emerald-50 border border-stone-200 text-left text-xs font-bold text-slate-800 flex items-center justify-between transition cursor-pointer"
-                      >
-                        <span>🛡️ 1-Click Rescue Ops Command</span>
-                        <ArrowRight size={13} className="text-emerald-700 shrink-0" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
                 {/* Partner Sub-Category Selection */}
                 {isPartner && (
                   <div className="mb-4 p-3 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 animate-in fade-in duration-150">
@@ -1219,13 +1160,23 @@ export default function LoginPage() {
                         Password
                       </label>
                       {!isRegister && (
-                        <button
-                          type="button"
-                          onClick={switchToForgotPassword}
-                          className="text-xs text-[#0f3d2e] hover:underline font-semibold transition cursor-pointer"
-                        >
-                          Forgot password?
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleRequestLoginOtp}
+                            className="text-xs text-emerald-800 hover:text-emerald-950 font-bold transition cursor-pointer"
+                          >
+                            Sign In with OTP
+                          </button>
+                          <span className="text-slate-300">•</span>
+                          <button
+                            type="button"
+                            onClick={switchToForgotPassword}
+                            className="text-xs text-[#0f3d2e] hover:underline font-semibold transition cursor-pointer"
+                          >
+                            Forgot?
+                          </button>
+                        </div>
                       )}
                     </div>
                     <div className="relative">

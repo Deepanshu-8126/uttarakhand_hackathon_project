@@ -171,6 +171,7 @@ export const registerUser = async (req, res) => {
         userId: user._id,
         email: user.email,
         requiresVerification: true,
+        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -256,6 +257,7 @@ export const registerPartner = async (req, res) => {
         email: user.email,
         role: user.role,
         requiresVerification: true,
+        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -401,6 +403,13 @@ export const resendOtp = async (req, res) => {
       $or: [{ email: target }, { mobile: target }, { phone: target }],
     });
 
+    if ((purpose === 'login' || purpose === 'forgot-password') && !user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No registered account found with this email or mobile number.',
+      });
+    }
+
     const name = user ? user.name : 'Explorer';
 
     const result = await createAndSendOtp({
@@ -416,6 +425,7 @@ export const resendOtp = async (req, res) => {
       message: `A new 6-digit verification code has been dispatched to your ${result.channel}.`,
       data: {
         expiresInSeconds: result.expiresInSeconds,
+        devOtp: result.devOtp,
       },
     });
   } catch (error) {

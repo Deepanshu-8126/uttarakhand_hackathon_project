@@ -119,7 +119,7 @@ export const authorizeRoles = (...roles) => {
 };
 
 export const adminOnly = authorizeRoles('admin');
-export const partnerOnly = authorizeRoles('partner');
+export const partnerOnly = authorizeRoles('partner', 'admin');
 export const requireAuth = protect;
 
 /**

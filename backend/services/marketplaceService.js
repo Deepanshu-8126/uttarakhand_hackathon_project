@@ -63,7 +63,8 @@ export async function getPublicStays(filters = {}) {
   // 2. Fetch ACTIVE partner stay listings
   const partnerQuery = {
     listingType: { $in: ['Stay', 'stay', 'Homestay', 'homestay', 'Hotel', 'hotel'] },
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    isActive: { $ne: false }
   };
   if (query.district) partnerQuery.district = query.district;
   if (query.city) partnerQuery.city = query.city;
@@ -184,7 +185,8 @@ export async function getPublicRentals(filters = {}) {
   // 2. Fetch ACTIVE partner rental listings
   const partnerQuery = {
     listingType: { $in: ['Rental', 'rental', 'Vehicle', 'vehicle', 'Bike', 'Car'] },
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    isActive: { $ne: false }
   };
   if (query.district) partnerQuery.district = query.district;
   if (query.city) partnerQuery.city = query.city;
@@ -302,7 +304,8 @@ export async function getPublicGuides(filters = {}) {
   // 2. Fetch ACTIVE partner guide listings
   const partnerQuery = {
     listingType: { $in: ['Guide', 'guide', 'Activity', 'Trek'] },
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    isActive: { $ne: false }
   };
   if (query.districts) partnerQuery.district = query.districts;
 

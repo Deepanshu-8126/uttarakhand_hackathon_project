@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Building2, 
@@ -48,7 +48,7 @@ function GoogleIcon() {
 export default function PartnerLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, verifyOtp, resendOtp } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -56,11 +56,25 @@ export default function PartnerLoginPage() {
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successNotice, setSuccessNotice] = useState('');
 
   const redirectPath = location.state?.from?.pathname || '/partner';
+
+  // 60-Second Cooldown Timer for Resending OTP
+  useEffect(() => {
+    let interval = null;
+    if (resendCooldown > 0) {
+      interval = setInterval(() => {
+        setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [resendCooldown]);
 
   // Handle One-Click Google Authentication for Partners
   const handleGoogleAuth = async () => {
@@ -107,33 +121,50 @@ export default function PartnerLoginPage() {
           return;
         }
         setSubmitting(true);
-        setTimeout(() => {
+        try {
+          const res = await resendOtp({
+            destination: identifier.trim(),
+            purpose: 'login',
+          });
+          if (res?.success) {
+            setOtpSent(true);
+            setResendCooldown(60);
+            setSuccessNotice(
+              res.data?.devOtp
+                ? `Verification code dispatched! (Development Code: ${res.data.devOtp})`
+                : `6-digit verification code dispatched to ${identifier.trim()}. Enter it below to sign in.`
+            );
+          } else {
+            setErrorMessage(res?.message || 'Failed to dispatch verification code.');
+          }
+        } catch (err) {
+          setErrorMessage(err.message || 'Failed to dispatch verification code.');
+        } finally {
           setSubmitting(false);
-          setOtpSent(true);
-          setSuccessNotice(`6-digit OTP sent to ${identifier}. Enter code to verify.`);
-        }, 600);
+        }
         return;
       }
 
-      if (otpCode.length < 4) {
-        setErrorMessage('Please enter the verification OTP code.');
+      if (!otpCode.trim() || otpCode.trim().length !== 6) {
+        setErrorMessage('Please enter the complete 6-digit verification code.');
         return;
       }
 
       setSubmitting(true);
       try {
-        // OTP login simulation / fallback to partner account
-        const res = await login({
-          email: identifier.includes('@') ? identifier : 'partner@discovery.com',
-          password: 'partner123'
+        const res = await verifyOtp({
+          destination: identifier.trim(),
+          otp: otpCode.trim(),
+          purpose: 'login',
         });
         if (res?.success) {
-          navigate(redirectPath);
+          setSuccessNotice('Authentication successful! Opening Partner Hub...');
+          setTimeout(() => navigate(redirectPath || '/partner'), 400);
         } else {
-          setErrorMessage(res?.message || 'Invalid OTP code.');
+          setErrorMessage(res?.message || 'Invalid verification code. Please check and try again.');
         }
       } catch (err) {
-        setErrorMessage(err.message || 'OTP authentication failed.');
+        setErrorMessage(err.message || 'Verification failed. Please try again.');
       } finally {
         setSubmitting(false);
       }
@@ -165,30 +196,6 @@ export default function PartnerLoginPage() {
       }
     } catch (err) {
       setErrorMessage(err.message || 'Authentication error. Please verify your credentials.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // 1-Click Demo Login for Hackathon Judges
-  const handleQuickDemo = async () => {
-    setIdentifier('partner@discovery.com');
-    setPassword('partner123');
-    setSubmitting(true);
-    setErrorMessage('');
-    try {
-      const res = await login({
-        email: 'partner@discovery.com',
-        password: 'partner123'
-      });
-      if (res?.success) {
-        setSuccessNotice('Demo Partner Authenticated! Opening Partner Hub...');
-        setTimeout(() => navigate('/partner'), 350);
-      } else {
-        setErrorMessage(res?.message || 'Demo credentials invalid.');
-      }
-    } catch (err) {
-      setErrorMessage(err.message || 'Failed to authenticate demo partner.');
     } finally {
       setSubmitting(false);
     }
@@ -302,22 +309,6 @@ export default function PartnerLoginPage() {
                   ? 'Sign in securely with one-time verification passcode.' 
                   : 'Manage bookings, services, payouts, and traveler reservations.'}
               </p>
-            </div>
-
-            {/* Quick Demo Login Pill (Judges / Hackathon) */}
-            <div className="mb-4 p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles size={15} className="text-emerald-700" />
-                <span className="text-xs font-bold text-emerald-900">Demo Partner Account</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleQuickDemo}
-                disabled={submitting}
-                className="px-3 py-1 rounded-xl bg-[#0f3d2e] text-white hover:bg-[#144c3a] text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
-              >
-                1-Click Sign In
-              </button>
             </div>
 
             {/* Google Host SSO Button */}
@@ -435,16 +426,49 @@ export default function PartnerLoginPage() {
                       className="w-full bg-stone-50 text-slate-900 text-center tracking-widest text-lg font-mono font-bold border border-stone-200 focus:bg-white focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/20 rounded-xl py-2.5 placeholder:text-slate-400 focus:outline-none transition"
                     />
                   </div>
-                  <div className="flex justify-between items-center mt-1 text-[11px] text-slate-500">
-                    <span>Didn't receive code?</span>
+                  <div className="flex justify-between items-center mt-2 text-[11px] text-slate-500">
                     <button
                       type="button"
                       onClick={() => {
-                        setSuccessNotice(`Resent new 6-digit OTP code to ${identifier}`);
+                        setOtpSent(false);
+                        setOtpCode('');
+                        setErrorMessage('');
+                        setSuccessNotice('');
                       }}
-                      className="font-bold text-[#0f3d2e] hover:underline cursor-pointer"
+                      className="text-stone-500 hover:text-stone-800 font-semibold cursor-pointer"
                     >
-                      Resend OTP
+                      Change Contact
+                    </button>
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0}
+                      onClick={async () => {
+                        if (resendCooldown > 0) return;
+                        setErrorMessage('');
+                        setSuccessNotice('');
+                        try {
+                          const res = await resendOtp({
+                            destination: identifier.trim(),
+                            purpose: 'login',
+                          });
+                          if (res?.success) {
+                            setResendCooldown(60);
+                            setOtpCode('');
+                            setSuccessNotice(
+                              res.data?.devOtp
+                                ? `New verification code generated! (Development Code: ${res.data.devOtp})`
+                                : `New 6-digit verification code sent to ${identifier.trim()}.`
+                            );
+                          } else {
+                            setErrorMessage(res?.message || 'Failed to resend code.');
+                          }
+                        } catch (err) {
+                          setErrorMessage(err.message || 'Failed to resend code.');
+                        }
+                      }}
+                      className="font-bold text-[#0f3d2e] hover:underline cursor-pointer disabled:opacity-50 disabled:no-underline"
+                    >
+                      {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
                     </button>
                   </div>
                 </div>
@@ -479,6 +503,8 @@ export default function PartnerLoginPage() {
                   type="button"
                   onClick={() => {
                     setIsOtpMode(!isOtpMode);
+                    setOtpSent(false);
+                    setOtpCode('');
                     setErrorMessage('');
                     setSuccessNotice('');
                   }}

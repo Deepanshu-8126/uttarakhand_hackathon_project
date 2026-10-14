@@ -73,19 +73,19 @@ const AdminDashboard = () => {
   }, [activeTab]);
 
   const statItems = [
-    { label: 'Destinations', type: 'destinations', count: stats?.destinations || 0, icon: Compass, color: 'from-emerald-600 to-teal-700', desc: 'Himalayan peaks, valleys & towns' },
-    { label: 'Stays', type: 'stays', count: stats?.stays || 0, icon: Hotel, color: 'from-amber-600 to-orange-700', desc: 'Homestays, KMVN & alpine resorts' },
-    { label: 'Rentals', type: 'rentals', count: stats?.rentals || 0, icon: Bike, color: 'from-blue-600 to-indigo-700', desc: 'Bikes, scooters & 4x4 vehicles' },
-    { label: 'Spiritual', type: 'spiritual', count: stats?.spiritual || 0, icon: Landmark, color: 'from-purple-600 to-pink-700', desc: 'Char Dham, Panch Kedar & temples' },
-    { label: 'Activities', type: 'activities', count: stats?.activities || 0, icon: Mountain, color: 'from-green-600 to-emerald-700', desc: 'Treks, rafting, skiing & safaris' },
-    { label: 'Culture', type: 'culture', count: stats?.culture || 0, icon: Sparkles, color: 'from-rose-600 to-red-700', desc: 'Folklore, crafts & heritage spots' },
-    { label: 'Guides', type: 'guides', count: stats?.guides || 0, icon: UserCheck, color: 'from-teal-600 to-cyan-700', desc: 'Certified mountain & cultural guides' },
-    { label: 'Users', type: 'users', count: stats?.users || 0, icon: Users, color: 'from-slate-700 to-stone-800', desc: 'Tourists, partners & officers' },
+    { label: 'Destinations', type: 'destinations', count: stats?.destinations || 0, icon: Compass, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', desc: 'Himalayan peaks, valleys & towns' },
+    { label: 'Stays', type: 'stays', count: stats?.stays || 0, icon: Hotel, color: 'text-amber-700 bg-amber-50 border-amber-200', desc: 'Homestays, KMVN & alpine resorts' },
+    { label: 'Rentals', type: 'rentals', count: stats?.rentals || 0, icon: Bike, color: 'text-blue-700 bg-blue-50 border-blue-200', desc: 'Bikes, scooters & 4x4 vehicles' },
+    { label: 'Spiritual', type: 'spiritual', count: stats?.spiritual || 0, icon: Landmark, color: 'text-purple-700 bg-purple-50 border-purple-200', desc: 'Char Dham, Panch Kedar & shrines' },
+    { label: 'Activities', type: 'activities', count: stats?.activities || 0, icon: Mountain, color: 'text-teal-700 bg-teal-50 border-teal-200', desc: 'Treks, rafting, skiing & safaris' },
+    { label: 'Culture', type: 'culture', count: stats?.culture || 0, icon: Sparkles, color: 'text-rose-700 bg-rose-50 border-rose-200', desc: 'Folklore, crafts & heritage spots' },
+    { label: 'Guides', type: 'guides', count: stats?.guides || 0, icon: UserCheck, color: 'text-cyan-700 bg-cyan-50 border-cyan-200', desc: 'Certified mountain & cultural guides' },
+    { label: 'Users', type: 'users', count: stats?.users || 0, icon: Users, color: 'text-slate-700 bg-slate-100 border-slate-200', desc: 'Tourists, partners & officers' },
   ];
 
   const operationalStats = [
-    { label: 'Bookings', type: 'bookings', count: stats?.bookingsByStatus ? Object.values(stats.bookingsByStatus).reduce((a, b) => a + b, 0) : 0, icon: CalendarCheck, color: 'text-emerald-500' },
-    { label: 'Reviews', type: 'reviews', count: stats?.reviewsByStatus ? Object.values(stats.reviewsByStatus).reduce((a, b) => a + b, 0) : 0, icon: Star, color: 'text-amber-500' },
+    { label: 'Bookings', type: 'bookings', count: stats?.bookingsByStatus ? Object.values(stats.bookingsByStatus).reduce((a, b) => a + b, 0) : 0, icon: CalendarCheck, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+    { label: 'Reviews', type: 'reviews', count: stats?.reviewsByStatus ? Object.values(stats.reviewsByStatus).reduce((a, b) => a + b, 0) : 0, icon: Star, color: 'text-amber-700 bg-amber-50 border-amber-200' },
   ];
 
   const filteredSamples = sampleItems.filter(item => {
@@ -95,52 +95,46 @@ const AdminDashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#06140e] text-stone-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative">
-      {/* Ambient Mountain Lighting */}
-      <div className="fixed inset-0 pointer-events-none opacity-40">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-emerald-600/10 blur-[140px] rounded-full"></div>
-        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-teal-500/10 blur-[150px] rounded-full"></div>
-      </div>
-
+    <div className="min-h-screen bg-[#fdfbf7] text-slate-800 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 relative z-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
         
-        {/* Header Hero Bar */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f3d2e] via-[#09261e] to-stone-950 p-6 sm:p-10 border border-emerald-500/30 shadow-2xl backdrop-blur-xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        {/* Header Hero Bar (Signature Himalayan Emerald + Clean White Structure) */}
+        <div className="rounded-3xl bg-gradient-to-r from-[#0f3d2e] via-[#144c3a] to-[#0f3d2e] p-6 sm:p-8 text-white shadow-md border border-emerald-900/30 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
           
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-mono font-bold uppercase tracking-wider">
-                <ShieldCheck size={14} className="text-emerald-400" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                <ShieldCheck size={14} className="text-emerald-300" />
                 State Tourism Administration Suite
               </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
                 Himalayan Master Admin Portal
               </h1>
-              <p className="text-stone-300 text-sm sm:text-base max-w-2xl">
-                Logged in as <span className="text-emerald-400 font-semibold">{currentUser?.name || 'Administrator'}</span> ({currentUser?.email}) — Full clearance to manage real photography, stays, rentals, shrines, guides, and bookings.
+              <p className="text-emerald-100 text-xs sm:text-sm max-w-2xl font-medium leading-relaxed">
+                Logged in as <span className="text-white font-bold underline decoration-emerald-400">{currentUser?.name || 'Administrator'}</span> ({currentUser?.email}) — Full clearance to manage real photography, stays, rentals, shrines, guides, and bookings.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 shrink-0">
               <Link 
                 to="/audit" 
-                className="px-4 py-2.5 rounded-xl bg-stone-900/90 hover:bg-stone-800 text-emerald-300 border border-emerald-500/40 font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-emerald-950/50 hover:-translate-y-0.5"
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
               >
                 <span>⚡ System Health & Audit</span>
               </Link>
               <Link
                 to="/innovations"
-                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 backdrop-blur-md hover:-translate-y-0.5"
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95"
               >
-                <Sparkles size={14} className="text-amber-400" />
+                <Sparkles size={14} className="text-amber-300" />
                 <span>Showcase</span>
               </Link>
               <button 
                 onClick={logout} 
-                className="px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition-all hover:-translate-y-0.5"
+                className="px-4 py-2.5 rounded-xl bg-rose-600/90 hover:bg-rose-700 text-white text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer shadow-xs"
               >
                 Logout
               </button>
@@ -148,52 +142,50 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Core Categories Grid */}
+        {/* Core Categories Grid (Clean White Cards) */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                <Layers className="text-emerald-400" size={24} />
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                <Layers className="text-[#0f3d2e]" size={22} />
                 Live Tourism Inventories
               </h2>
-              <p className="text-xs sm:text-sm text-stone-400">
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                 Click any category card to view, add, inspect photography, and edit live items.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {statItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link 
                   to={`/admin/${item.type}`} 
                   key={item.type} 
-                  className="group relative bg-stone-900/90 rounded-2xl p-5 border border-stone-800 hover:border-emerald-500/50 shadow-lg hover:shadow-[0_0_25px_rgba(0,255,136,0.12)] transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1"
+                  className="group bg-white rounded-3xl p-5 border border-stone-200/90 shadow-sm hover:border-[#0f3d2e] hover:shadow-md transition-all duration-200 flex flex-col justify-between hover:-translate-y-0.5"
                 >
-                  <div className={`absolute top-0 right-0 w-28 h-28 bg-gradient-to-br ${item.color} opacity-15 rounded-full blur-2xl group-hover:opacity-30 transition-opacity`}></div>
-                  
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform`}>
+                      <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center font-bold ${item.color}`}>
                         <Icon size={22} />
                       </div>
-                      <span className="text-2xl sm:text-3xl font-black text-white">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-900">
                         {loading ? '...' : item.count}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-[#0f3d2e] transition-colors">
                         {item.label}
                       </h3>
-                      <p className="text-xs text-stone-400 line-clamp-1 mt-0.5">
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 font-medium">
                         {item.desc}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-3 border-t border-stone-800 flex items-center justify-between text-xs font-semibold text-emerald-400">
-                    <span>Manage & Add Photos</span>
+                  <div className="pt-3.5 mt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-[#0f3d2e]">
+                    <span>Manage &amp; Add Photos</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </div>
                 </Link>
@@ -210,20 +202,22 @@ const AdminDashboard = () => {
               <Link
                 to={`/admin/${item.type}`}
                 key={item.type}
-                className="bg-stone-900/90 rounded-2xl p-5 border border-stone-800 hover:border-emerald-500/40 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,136,0.1)] flex items-center justify-between transition-all hover:-translate-y-0.5"
+                className="bg-white rounded-3xl p-5 border border-stone-200/90 shadow-sm hover:border-[#0f3d2e] hover:shadow-md flex items-center justify-between transition-all hover:-translate-y-0.5 group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-stone-800/80 border border-stone-700/60 flex items-center justify-center">
-                    <Icon size={24} className={item.color} />
+                  <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center ${item.color}`}>
+                    <Icon size={22} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-white text-base">Live {item.label}</h4>
-                    <p className="text-xs text-stone-400">Manage orders, clearance and verification status</p>
+                    <h4 className="font-bold text-slate-900 text-base group-hover:text-[#0f3d2e] transition-colors">
+                      Live {item.label}
+                    </h4>
+                    <p className="text-xs text-slate-500 font-medium">Manage orders, clearance and verification status</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-black text-white">{loading ? '...' : item.count}</span>
-                  <ArrowRight size={16} className="text-stone-400 group-hover:text-emerald-400" />
+                  <span className="text-2xl font-black text-slate-900">{loading ? '...' : item.count}</span>
+                  <ArrowRight size={16} className="text-slate-400 group-hover:text-[#0f3d2e] group-hover:translate-x-1 transition-all" />
                 </div>
               </Link>
             );
@@ -231,22 +225,22 @@ const AdminDashboard = () => {
         </div>
 
         {/* Live Photography & Data Showcase Stream */}
-        <section className="bg-stone-900/80 rounded-3xl p-6 sm:p-8 border border-emerald-500/20 shadow-2xl backdrop-blur-xl space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-5">
+        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-sm space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-100 pb-5">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <h3 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-white">
-                  Real Website Data & Photography Showcase
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                <h3 className="text-lg sm:text-xl font-black text-slate-900">
+                  Real Website Data &amp; Photography Showcase
                 </h3>
               </div>
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-xs text-slate-500 font-medium mt-1">
                 Visual preview of actual inventory active on the tourism portal.
               </p>
             </div>
 
             {/* Category Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-stone-950/80 p-1.5 rounded-2xl border border-stone-800">
+            <div className="flex flex-wrap items-center gap-1.5 bg-stone-100 p-1.5 rounded-2xl border border-stone-200/80">
               {[
                 { id: 'destinations', label: 'Destinations' },
                 { id: 'stays', label: 'Stays' },
@@ -258,10 +252,10 @@ const AdminDashboard = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-95 ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
-                      : 'text-stone-400 hover:text-white hover:bg-stone-800/60'
+                      ? 'bg-[#0f3d2e] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-stone-200/60'
                   }`}
                 >
                   {tab.label}
@@ -273,26 +267,26 @@ const AdminDashboard = () => {
           {/* Quick Filter Search & Action */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Search ${activeTab} by name or location...`}
-                className="w-full pl-9 pr-4 py-2.5 bg-stone-950/80 border border-stone-800 text-stone-100 placeholder-stone-500 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 bg-stone-50 border border-stone-200 text-slate-900 placeholder-slate-400 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/20 focus:border-[#0f3d2e] transition-all"
               />
             </div>
             
             <div className="flex items-center gap-2">
               <Link
                 to={`/admin/${activeTab}`}
-                className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/50 hover:-translate-y-0.5"
+                className="px-4 py-2.5 bg-[#0f3d2e] hover:bg-[#144c3a] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs whitespace-nowrap active:scale-95 cursor-pointer"
               >
                 <Plus size={14} /> Add New {activeTab.slice(0, -1)}
               </Link>
               <Link
                 to={`/admin/${activeTab}`}
-                className="px-4 py-2.5 bg-stone-800/90 hover:bg-stone-750 text-stone-200 border border-stone-700/80 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5"
+                className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-slate-700 border border-stone-200 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer"
               >
                 Manage All ({sampleItems.length})
               </Link>
@@ -301,7 +295,7 @@ const AdminDashboard = () => {
 
           {/* Visual Cards Grid */}
           {samplesLoading ? (
-            <div className="py-12 text-center text-stone-400 text-sm animate-pulse">
+            <div className="py-12 text-center text-slate-400 text-sm animate-pulse font-medium">
               Loading photography and live records...
             </div>
           ) : filteredSamples.length > 0 ? (
@@ -315,9 +309,9 @@ const AdminDashboard = () => {
                 return (
                   <div 
                     key={item._id}
-                    className="group bg-stone-900/90 rounded-2xl border border-stone-800/90 overflow-hidden shadow-md hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
+                    className="group bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-xs hover:shadow-md hover:border-[#0f3d2e] transition-all duration-200 flex flex-col justify-between hover:-translate-y-0.5"
                   >
-                    <div className="relative aspect-[16/10] overflow-hidden bg-stone-950">
+                    <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
                       <img 
                         src={img} 
                         alt={title}
@@ -326,17 +320,17 @@ const AdminDashboard = () => {
                           e.target.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80';
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                       
                       {price && (
-                        <span className="absolute bottom-2.5 left-2.5 bg-emerald-600/90 text-white font-bold text-xs px-2.5 py-1 rounded-lg backdrop-blur-sm shadow border border-emerald-400/20">
+                        <span className="absolute bottom-2.5 left-2.5 bg-[#0f3d2e] text-white font-bold text-xs px-2.5 py-1 rounded-lg shadow-xs">
                           ₹{price.toLocaleString()} {item.pricePerDay ? '/ day' : item.pricePerNight ? '/ night' : 'onwards'}
                         </span>
                       )}
 
                       {item.rating && (
-                        <span className="absolute top-2.5 right-2.5 bg-black/70 text-amber-400 font-bold text-xs px-2 py-0.5 rounded-md backdrop-blur-sm flex items-center gap-1 border border-white/10">
-                          <Star size={12} className="fill-amber-400" />
+                        <span className="absolute top-2.5 right-2.5 bg-white/90 text-slate-800 font-bold text-xs px-2 py-0.5 rounded-md backdrop-blur-sm flex items-center gap-1 border border-stone-200 shadow-2xs">
+                          <Star size={12} className="fill-amber-400 text-amber-500" />
                           {item.rating}
                         </span>
                       )}
@@ -344,26 +338,26 @@ const AdminDashboard = () => {
 
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
-                        <h4 className="font-bold text-white text-base group-hover:text-emerald-400 transition-colors line-clamp-1">
+                        <h4 className="font-bold text-slate-900 text-base group-hover:text-[#0f3d2e] transition-colors line-clamp-1">
                           {title}
                         </h4>
-                        <p className="text-xs text-stone-400 line-clamp-1 mt-0.5">
+                        <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 font-medium">
                           📍 {loc}
                         </p>
                       </div>
 
-                      <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs">
+                      <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                         <Link
                           to={`/admin/${activeTab}`}
-                          className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                          className="font-bold text-[#0f3d2e] hover:underline transition-colors"
                         >
-                          Edit & Photos →
+                          Edit &amp; Photos →
                         </Link>
                         {item.slug && (
                           <Link
                             to={activeTab === 'destinations' ? `/destinations/${item.slug}` : `/${activeTab}/${item.slug}`}
                             target="_blank"
-                            className="text-stone-400 hover:text-white flex items-center gap-1 transition-colors"
+                            className="text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors font-medium"
                           >
                             <span>Live View</span>
                             <ExternalLink size={12} />
@@ -376,14 +370,14 @@ const AdminDashboard = () => {
               })}
             </div>
           ) : (
-            <div className="p-8 text-center text-stone-400 text-sm">
+            <div className="p-8 text-center text-slate-400 text-sm font-medium">
               No items matching your query in {activeTab}.
             </div>
           )}
         </section>
 
         {/* Phase 3: Partner Verification Queue & Officer Clearance */}
-        <section className="bg-stone-900/80 rounded-3xl p-6 sm:p-8 border border-emerald-500/20 shadow-2xl backdrop-blur-xl">
+        <section>
           <PartnerVerificationQueue />
         </section>
       </main>
@@ -394,4 +388,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-
