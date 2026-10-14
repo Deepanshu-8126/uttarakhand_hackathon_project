@@ -1,58 +1,31 @@
-# Task Plan: Modular Conversational AI Architecture Refactoring
+# Task Plan: Clean Code, Directory Hygiene & Architecture Modularization
 
-Inspired by `langchain-ai/agent-chat-ui` & `langchain-ai/voice-demo`.
-
-## Critical Constraints
-- **Preserve Existing Website UI/UX Design**: Colors, layouts, cards, pages, navigation, theme and branding remain strictly intact.
-- **Complete Replacement**: Replace only the AI chat engine, conversation handling, memory, agent workflow, and chat APIs.
-- **Zero Legacy Code**: Remove legacy/dead chatbot code and dependencies.
-- **Target Architecture**:
-  - `Frontend/src/chat/`: `ChatWindow`, `ChatInput`, `MessageRenderer`, `AgentThinking`, `VoiceControls`, `SuggestedActions`, `ChatState`
-  - `backend/ai/`: `agents/`, `tools/`, `memory/`, `prompts/`, `workflows/`, `voice/`, `retrieval/`
+## Objective
+Refactor and clean the full-stack codebase (Frontend & Backend, skipping `mobile_app/`), remove loose images/media from the root folder, break down monolithic codefiles into clean, maintainable modules (Anti-Slop), and enforce the Design System lock with zero regressions.
 
 ---
 
 ## Phases & Tasks
 
-### Phase 1: Audit & Discovery (STEP 1 & STEP 2)
-- [x] 1.1 Identify all old chatbot files across `Frontend/src/components/copilot/`, `backend/controllers/`, `backend/routes/`, and `ai/`
-- [x] 1.2 List all imports across the frontend and backend referencing the old chatbot
-- [x] 1.3 Map data flow, models (`Chat.js`, `SavedTrip.js`), and socket/API endpoints
-- [x] 1.4 Document all findings in `findings.md`
+### Phase 1: Directory Hygiene & Asset Cleanup
+- [x] 1.1 Relocate loose root media (`copilot_v3_verified.png`, `WhatsApp Video 2026-09-27 at 17.13.25.mp4`, and `UI/` screenshot files) into `docs/assets/archive/`
+- [x] 1.2 Clean up temporary root scratch batch/PowerShell scripts (`test3.bat`, `test_backend2.bat`, `trim.ps1`, `trim2.ps1`)
+- [x] 1.3 Verify repository root structure is pristine and well-organized
 
+### Phase 2: Backend Clean Code & Monolith Decomposition
+- [x] 2.1 Audit and decompose bloated `backend/controllers/partnerController.js` (1679 lines):
+  - Extracted `partnerProfileController.js` (Onboarding, profile resolution, admin test auto-provisioning)
+  - Extracted `partnerListingController.js` (Drafts, state transitions, attestation preparation, images, pricing)
+  - Extracted `partnerOpsController.js` (Bookings, availability, ledger, expenses, analytics, reviews, documents, action items)
+  - Re-exported via `partnerController.js` facade for 100% backward route compatibility
+- [x] 2.2 Clean repetitive code smells, enforce Single Responsibility Principle, and explicit error boundaries
 
-### Phase 2: Design & Backend AI Architecture (STEP 4 & STEP 5)
-- [x] 2.1 Scaffold target backend structure: `backend/ai/`
-  - `backend/ai/prompts/` (System instructions, Persona, Uttarakhand context)
-  - `backend/ai/memory/` (Multi-turn session persistence, trip context, user preferences)
-  - `backend/ai/retrieval/` (Destination, trek, stay, rental, weather grounding)
-  - `backend/ai/tools/` (Destination search, Stay search, Rental search, Activities, Itinerary builder, Budget calculator)
-  - `backend/ai/agents/` (Planner, Destination, Budget, Safety, Rental, Festival agents)
-  - `backend/ai/workflows/` (Agent Router & Orchestrator with streaming SSE/WebSocket)
-  - `backend/ai/voice/` (Gemini Live native Aoede voice + ultra-low latency fallback)
-- [x] 2.2 Wire backend API routes (`/api/chat/stream`, `/api/chat/history`, `/api/chat/session`) with SSE streaming and tool events
+### Phase 3: Frontend Clean Code & Design System Lock
+- [x] 3.1 Audit frontend directory and ensure design system tokens (`#0f3d2e`, `#fdfbf7`, stone borders) are cleanly structured
+- [x] 3.2 Ensure zero inline styles, no broken mock references, and clean imports
+- [x] 3.3 Verify responsive layouts across partner, admin, and marketplace views
 
-### Phase 3: Frontend Chat Architecture (STEP 6, STEP 7, STEP 8)
-- [x] 3.1 Scaffold target frontend structure: `Frontend/src/chat/`
-  - `ChatState.js` (Unified conversational state, streaming buffer, active agent, memory sync)
-  - `ChatWindow.jsx` (Container preserving design drawer & launcher)
-  - `ChatInput.jsx` (Auto-resizing input, quick submit, voice triggers)
-  - `MessageRenderer.jsx` (Markdown, travel cards, route badges, rich media)
-  - `AgentThinking.jsx` (Expandable tool call thoughts, step timeline like agent-chat-ui)
-  - `VoiceControls.jsx` (Integrated Gemini Live voice orb, speech visualizer, instant barge-in)
-  - `SuggestedActions.jsx` (Context-aware chips, quick prompts)
-- [x] 3.2 Connect drawer and launcher (`AICopilotDrawer.jsx`, `ChatArea.jsx`, `GlobalAiCopilotLauncher.jsx`) to `Frontend/src/chat/`
-
-### Phase 4: Migration & Legacy Cleanup (STEP 3 & STEP 4)
-- [x] 4.1 Redirect all page/component imports to the new modular `chat/` architecture
-- [x] 4.2 Safely remove dead/deprecated legacy chatbot code
-- [x] 4.3 Ensure no broken imports across the entire repository
-
-### Phase 5: Verification & Regression Testing (STEP 10)
-- [x] 5.1 Test text streaming with multi-turn memory
-- [x] 5.2 Test agent routing (Planner, Destination, Budget, Safety, Rental, Festival)
-- [x] 5.3 Test tool calling (destinations, homestays, weather, safety, budget)
-- [x] 5.4 Test voice interactions (real-time stream, speech-to-text, Aoede voice)
-- [x] 5.5 Verify UI aesthetics, responsive drawer, buttons, inputs, error states, and empty states
-- [x] 5.6 Compile comprehensive PASS/FAIL/WARNING regression report
-
+### Phase 4: Verification & Regression Testing
+- [x] 4.1 Run production build: `npm run build` in `Frontend/` (Passed: 0 errors in 2.02s)
+- [x] 4.2 Verify backend health probe and live routing on port 5000 (Passed: status alive)
+- [x] 4.3 Git status inspection and verification
