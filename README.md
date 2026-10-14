@@ -519,48 +519,143 @@ docker compose down             # Stop all containers
 
 ---
 
-### 💻 Option 2: Manual Local Setup
+### 💻 Option 2: Manual Local Setup (Fresh Clone Guide)
 
-#### Prerequisites:
-- **Node.js**: v18.0.0 or higher
-- **MongoDB**: Local instance or MongoDB Atlas URI
-- **Python**: v3.10+ (for Python LangGraph runtime)
+Follow these exact steps to clone and run the project from the `feature` branch on any computer:
 
-#### 1. Backend Setup:
+#### Prerequisites
+- **Node.js**: v18.0.0 or higher (`node -v`)
+- **Package Manager**: npm v9+ (`npm -v`)
+- **MongoDB**: Local MongoDB instance (`mongodb://127.0.0.1:27017/discovery_uttarakhand`) or a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster connection string.
+- **Gmail Account (for live OTP emails)**: 2-Step Verification enabled + 16-character [Google App Password](https://myaccount.google.com/apppasswords).
+- **Cloudinary Account (for permanent CDN profile photos)**: Free [Cloudinary](https://cloudinary.com/) Cloud Name, API Key, and API Secret.
+
+---
+
+#### 1. Clone the Feature Branch
 ```bash
-cd backend
-npm install
-cp .env.example .env
-# Edit .env with your MONGODB_URI and JWT_SECRET
-npm run dev
+git clone --branch feature --single-branch https://github.com/Deepanshu-8126/uttarakhand_hackathon_project.git
+cd uttarakhand_hackathon_project
 ```
 
-#### 2. Frontend Setup:
+---
+
+#### 2. Backend Setup & Configuration
+
+1. Install dependencies:
+   ```bash
+   cd backend
+   npm install
+   ```
+
+2. Create your local environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Open `backend/.env` and configure your credentials:
+   ```env
+   PORT=5000
+   NODE_ENV=development
+   FRONTEND_URL=http://localhost:5173
+
+   # 1. Database (Local or MongoDB Atlas)
+   MONGODB_URI=mongodb://127.0.0.1:27017/discovery_uttarakhand
+   MONGO_URI=mongodb://127.0.0.1:27017/discovery_uttarakhand
+
+   # 2. JWT Secrets (Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+   JWT_SECRET=your_secure_random_jwt_secret_here
+   JWT_ACCESS_SECRET=your_secure_random_jwt_secret_here
+   JWT_REFRESH_SECRET=your_secure_random_jwt_refresh_secret_here
+
+   # 3. Email OTP Service (Nodemailer Gmail SMTP)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_USER=your_email@gmail.com
+   SMTP_PASSWORD=your_16_character_google_app_password
+   SMTP_FROM="Discovery Uttarakhand" <your_email@gmail.com>
+
+   # 4. Cloudinary (Permanent Profile Photos & Media CDN)
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   ```
+
+4. Verify your SMTP email delivery (non-sensitive check):
+   ```bash
+   node scripts/verify_smtp.js
+   ```
+
+5. Start the backend API server:
+   ```bash
+   node server.js
+   ```
+   *The backend starts on `http://localhost:5000` and automatically tests SMTP connection.*
+
+---
+
+#### 3. Frontend Setup
+
+In a new terminal window:
 ```bash
 cd Frontend
 npm install
+cp .env.example .env
 npm run dev
 ```
+*The frontend Vite dev server will start at `http://localhost:5173`.*
 
-#### 3. Smart Contracts Setup (Optional for Web3 Development):
+---
+
+#### 4. End-to-End Feature Verification Checklist
+
+1. **User Registration & OTP Email**:
+   - Navigate to `http://localhost:5173/login` and switch to the **Register** tab.
+   - Enter your name, email, and a password (min 8 characters with 1 uppercase, 1 lowercase, 1 digit).
+   - Click submit: you will receive a 6-digit branded OTP in your email inbox within seconds.
+   - Enter the 6-digit code to activate your account and log in.
+
+2. **Profile Photo Upload & Cloudinary Sync**:
+   - Go to `http://localhost:5173/profile`.
+   - Click the camera button on your avatar to open **Edit Profile**.
+   - Click **Choose Photo**, select any JPG, PNG, or WebP image, and click **Save Changes**.
+   - The photo uploads to Cloudinary, stores the public ID and secure URL in MongoDB, and updates both your profile header and the top navbar in real time.
+
+3. **Multi-Device & Session Persistence**:
+   - Refresh the page or log out and log in again: your profile photo remains saved.
+   - Log in from another browser or device: the same photo loads seamlessly from MongoDB.
+
+4. **Safe Photo Removal**:
+   - Open **Edit Profile**, click **Remove Photo**, and click **Save Changes**.
+   - The previous asset is safely deleted from Cloudinary, and your avatar reverts to initials.
+
+---
+
+#### 5. Automated Test Suites
+
+Run these commands from `backend/` to verify complete system integrity:
 ```bash
-cd contracts
-npm install
-npx hardhat compile
-npx hardhat test
+# 1. Master Authentication & Session Suite (47 automated tests)
+node test_auth_master_suite.js
+
+# 2. Profile Photo, Location & Cloudinary Flow Test
+node scripts/test_profile_photo_flow.js
+
+# 3. Live Email Dispatch & Cooldown Test
+node scripts/test_live_auth_flow.js
 ```
 
-#### 4. Python LangGraph AI Setup:
-```bash
-cd ai
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.api.main:app --port 8000 --reload
-```
+---
+
+#### 6. Troubleshooting Common Issues
+
+| Issue | Cause | Solution |
+| :--- | :--- | :--- |
+| `connect EACCES 2404:6800...:465` | Windows attempting IPv6 connection to Gmail | Our `emailService.js` forces `family: 4` (IPv4). Ensure you are running latest code. |
+| `EAUTH (Invalid login)` | Using personal Google password instead of App Password | Go to [Google App Passwords](https://myaccount.google.com/apppasswords) and generate a 16-character password. |
+| `Unknown API key` (Cloudinary) | Incorrect Cloudinary API Key or Cloud Name | Check your [Cloudinary Dashboard](https://console.cloudinary.com/) and update `backend/.env`. System will gracefully fall back to local uploads if misconfigured. |
+| `MongoDB connection refused` | Local MongoDB service not started | Start MongoDB locally (`mongod` or Services app) or provide a cloud Atlas URI in `MONGODB_URI`. |
+| `CORS Error in Browser` | Backend not running or port mismatch | Ensure backend is running on port 5000 and `VITE_API_BASE_URL=http://localhost:5000/api` in `Frontend/.env`. |
 
 ---
 
