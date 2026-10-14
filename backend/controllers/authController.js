@@ -99,9 +99,8 @@ export const registerUser = async (req, res) => {
         }
         await emailExists.save();
 
-        let otpResult = null;
         try {
-          otpResult = await createAndSendOtp({
+          await createAndSendOtp({
             userId: emailExists._id,
             destination: emailExists.email,
             channel: 'email',
@@ -109,7 +108,11 @@ export const registerUser = async (req, res) => {
             name: emailExists.name,
           });
         } catch (otpErr) {
-          console.warn('[Signup Re-verify] OTP dispatch notice:', otpErr.message);
+          console.error('[Signup Re-verify] OTP dispatch error:', otpErr.message);
+          return res.status(otpErr.statusCode || 500).json({
+            success: false,
+            message: otpErr.message || 'Unable to dispatch verification email. Please check your email address or try again.',
+          });
         }
 
         return res.status(201).json({
@@ -185,9 +188,8 @@ export const registerUser = async (req, res) => {
     });
 
     // Generate & Dispatch Email Verification OTP
-    let otpResult = null;
     try {
-      otpResult = await createAndSendOtp({
+      await createAndSendOtp({
         userId: user._id,
         destination: user.email,
         channel: 'email',
@@ -195,7 +197,13 @@ export const registerUser = async (req, res) => {
         name: user.name,
       });
     } catch (otpErr) {
-      console.warn('[Signup] OTP dispatch notice:', otpErr.message);
+      console.error('[Signup] OTP dispatch error:', otpErr.message);
+      // Clean up newly created unverified user document so user can retry cleanly
+      await User.findByIdAndDelete(user._id).catch(() => {});
+      return res.status(otpErr.statusCode || 500).json({
+        success: false,
+        message: otpErr.message || 'Unable to dispatch verification email. Please check your email address or try again.',
+      });
     }
 
     return res.status(201).json({
@@ -269,9 +277,8 @@ export const registerPartner = async (req, res) => {
       isActive: true,
     });
 
-    let otpResult = null;
     try {
-      otpResult = await createAndSendOtp({
+      await createAndSendOtp({
         userId: user._id,
         destination: user.email,
         channel: 'email',
@@ -279,7 +286,13 @@ export const registerPartner = async (req, res) => {
         name: user.name,
       });
     } catch (otpErr) {
-      console.warn('[RegisterPartner] OTP dispatch notice:', otpErr.message);
+      console.error('[RegisterPartner] OTP dispatch error:', otpErr.message);
+      // Clean up newly created partner user document so partner can retry cleanly
+      await User.findByIdAndDelete(user._id).catch(() => {});
+      return res.status(otpErr.statusCode || 500).json({
+        success: false,
+        message: otpErr.message || 'Unable to dispatch verification email. Please check your email address or try again.',
+      });
     }
 
     return res.status(201).json({
@@ -514,10 +527,9 @@ export const loginUser = async (req, res) => {
 
     // Check account verification status
     if (!user.isEmailVerified && !user.googleId) {
-      // Auto-dispatch verification OTP so user can immediately verify
-      let otpResult = null;
+      let otpDispatched = true;
       try {
-        otpResult = await createAndSendOtp({
+        await createAndSendOtp({
           userId: user._id,
           destination: user.email,
           channel: 'email',
@@ -525,13 +537,16 @@ export const loginUser = async (req, res) => {
           name: user.name,
         });
       } catch (otpErr) {
-        console.warn('[Login Notice] OTP dispatch error:', otpErr.message);
+        console.warn('[Login Notice] OTP dispatch warning:', otpErr.message);
+        otpDispatched = false;
       }
 
       return res.status(403).json({
         success: false,
         code: 'ACCOUNT_NOT_VERIFIED',
-        message: 'Account not verified. A 6-digit OTP has been sent to your email. Please verify to continue.',
+        message: otpDispatched
+          ? 'Account not verified. A 6-digit OTP has been sent to your email. Please verify to continue.'
+          : 'Account not verified. Please click "Resend Code" to receive your verification code.',
         data: {
           userId: user._id,
           email: user.email,

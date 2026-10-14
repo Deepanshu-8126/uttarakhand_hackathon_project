@@ -94,19 +94,25 @@ export const createAndSendOtp = async ({
   });
 
   // Dispatch OTP via appropriate channel
-  if (channel === 'sms') {
-    await sendSmsOTP({ phone: destination, otp: rawOtp, purpose });
-  } else {
-    // Channel: email
-    if (purpose === 'signup' || purpose === 'email-verification') {
-      await sendVerificationOTP(cleanDestination, name, rawOtp);
-    } else if (purpose === 'login') {
-      await sendLoginOTP(cleanDestination, name, rawOtp);
-    } else if (purpose === 'forgot-password') {
-      await sendPasswordResetOTP(cleanDestination, name, rawOtp);
+  try {
+    if (channel === 'sms') {
+      await sendSmsOTP({ phone: destination, otp: rawOtp, purpose });
     } else {
-      await sendVerificationOTP(cleanDestination, name, rawOtp);
+      // Channel: email
+      if (purpose === 'signup' || purpose === 'email-verification') {
+        await sendVerificationOTP(cleanDestination, name, rawOtp);
+      } else if (purpose === 'login') {
+        await sendLoginOTP(cleanDestination, name, rawOtp);
+      } else if (purpose === 'forgot-password') {
+        await sendPasswordResetOTP(cleanDestination, name, rawOtp);
+      } else {
+        await sendVerificationOTP(cleanDestination, name, rawOtp);
+      }
     }
+  } catch (dispatchErr) {
+    // Delete orphan OTP record if delivery failed to prevent locking the user out
+    await OTP.findByIdAndDelete(otpDoc._id).catch(() => {});
+    throw dispatchErr;
   }
 
   return {

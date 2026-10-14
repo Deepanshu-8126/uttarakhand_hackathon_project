@@ -28,19 +28,20 @@ const getTransporter = () => {
   }
 
   const isGmail = host.toLowerCase().includes('gmail.com');
-  const transportOptions = isGmail && (port === 465 || port === 587)
-    ? {
-        service: 'gmail',
-        auth: { user, pass },
-        tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
-      }
-    : {
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-        tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
-      };
+  const transportOptions = {
+    host: isGmail ? 'smtp.gmail.com' : host,
+    port,
+    secure: port === 465,
+    family: 4, // CRITICAL: Force IPv4 to prevent Windows EACCES socket error on IPv6
+    auth: { user, pass },
+    tls: {
+      rejectUnauthorized: process.env.NODE_ENV === 'production',
+      minVersion: 'TLSv1.2',
+    },
+    connectionTimeout: 10000, // 10s timeout
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+  };
 
   transporter = nodemailer.createTransport(transportOptions);
   return transporter;

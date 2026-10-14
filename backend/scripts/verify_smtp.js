@@ -41,19 +41,14 @@ if (!user || !pass) {
 }
 
 const isGmail = host.includes('gmail.com');
-const transporterOptions = isGmail && (port === 465 || port === 587)
-  ? {
-      service: 'gmail',
-      auth: { user, pass },
-      tls: { rejectUnauthorized: false }
-    }
-  : {
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-      tls: { rejectUnauthorized: false }
-    };
+const transporterOptions = {
+  host: isGmail ? 'smtp.gmail.com' : host,
+  port,
+  secure: port === 465,
+  family: 4,
+  auth: { user, pass },
+  tls: { rejectUnauthorized: false }
+};
 
 const transporter = nodemailer.createTransport(transporterOptions);
 
