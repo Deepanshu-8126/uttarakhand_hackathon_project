@@ -13,17 +13,27 @@ const getHeaders = () => {
   };
 };
 
-// ── Safe Network Fetcher with Mock Fallback ───────────────────────────
+// ── Safe Network Fetcher with Real Backend Integrity ──────────────────
 async function safeFetch(url, options = {}, fallbackData = null) {
   try {
     const res = await fetch(url, options);
-    if (!res.ok) {
-      if (fallbackData) return fallbackData;
-      return { success: false, status: res.status };
+    let data = null;
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await res.json();
     }
-    const data = await res.json();
-    return data;
+
+    if (!res.ok) {
+      // Preserve real server error messages and validation details
+      if (res.status === 401 || res.status === 403 || res.status === 404 || res.status === 400) {
+        return data || { success: false, status: res.status, message: `Request error (${res.status})` };
+      }
+      if (fallbackData) return fallbackData;
+      return data || { success: false, status: res.status };
+    }
+    return data || { success: true };
   } catch (err) {
+    console.warn(`[safeFetch] Network issue calling ${url}:`, err.message);
     if (fallbackData) return fallbackData;
     return { success: false, message: err.message };
   }
@@ -597,6 +607,14 @@ export const rejectListingAdmin = async (id, reason) => {
     headers: getHeaders(),
     body: JSON.stringify({ reason })
   }, { success: true, message: 'Listing rejected.' });
+};
+
+export const activateListingAdmin = async (id, notes = '') => {
+  return await safeFetch(`${API_BASE_URL}/admin/listings/${id}/activate`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ notes })
+  }, { success: true, message: 'Listing activated.' });
 };
 
 export const getVerificationLogsAdmin = async () => {

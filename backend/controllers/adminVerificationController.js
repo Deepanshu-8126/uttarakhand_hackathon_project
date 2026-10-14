@@ -9,6 +9,20 @@ import PartnerListing from '../models/PartnerListing.js';
 import VerificationAuditLog from '../models/VerificationAuditLog.js';
 import web3Service from '../services/web3Service.js';
 import { generateSalt, buildListingCanonicalPayload, computeListingVerificationHash } from '../services/cryptoService.js';
+import { cacheDelPattern } from '../config/redis.js';
+
+const invalidateListingCaches = async () => {
+  try {
+    await Promise.allSettled([
+      cacheDelPattern('rentals:*'),
+      cacheDelPattern('stays:*'),
+      cacheDelPattern('marketplace:*'),
+      cacheDelPattern('destinations:*')
+    ]);
+  } catch (err) {
+    console.warn('[AdminVerification] Cache invalidation notice:', err.message);
+  }
+};
 
 /**
  * List all registered partners
@@ -142,6 +156,7 @@ export const verifyListing = async (req, res) => {
 
       // On confirmation, activate listing and record proof
       listing.status = 'ACTIVE';
+      listing.isActive = true;
       listing.verifiedAt = now;
       listing.web3Sync.syncStatus = 'CONFIRMED';
       listing.web3Sync.onChainStatus = 'ACTIVE';
@@ -153,14 +168,26 @@ export const verifyListing = async (req, res) => {
       listing.web3Sync.attestedVersion = onChainResult.attestedVersion;
       listing.web3Sync.lastSyncedAt = now;
     } catch (web3Err) {
-      // Fail-safe semantics: listing remains VERIFIED, syncStatus FAILED, booking blocked
+      // Fail-safe semantics: if blockchain is disabled/unavailable, activate immediately off-chain.
+      // If blockchain IS required, keep as VERIFIED (pending manual activation).
       console.warn('[AdminVerification] On-chain attestation failed:', web3Err.message);
-      listing.status = 'VERIFIED';
-      listing.web3Sync.syncStatus = 'FAILED';
-      listing.web3Sync.lastSyncError = web3Err.message;
+      const blockchainRequired = process.env.BLOCKCHAIN_ENABLED === 'true';
+      if (!blockchainRequired) {
+        // Off-chain fast path: admin approval is sufficient to go live
+        listing.status = 'ACTIVE';
+        listing.isActive = true;
+        listing.verifiedAt = now;
+        listing.web3Sync.syncStatus = 'FAILED';
+        listing.web3Sync.lastSyncError = `[Off-chain approved] ${web3Err.message}`;
+      } else {
+        listing.status = 'VERIFIED';
+        listing.web3Sync.syncStatus = 'FAILED';
+        listing.web3Sync.lastSyncError = web3Err.message;
+      }
     }
 
     await listing.save();
+    await invalidateListingCaches();
 
     // Create immutable audit log entry
     await VerificationAuditLog.create({
@@ -211,6 +238,7 @@ export const activateListing = async (req, res) => {
     listing.status = 'ACTIVE';
     listing.isActive = true;
     await listing.save();
+    await invalidateListingCaches();
 
     await VerificationAuditLog.create({
       admin: req.user._id,
@@ -259,6 +287,7 @@ export const suspendListing = async (req, res) => {
     }
 
     await listing.save();
+    await invalidateListingCaches();
 
     await VerificationAuditLog.create({
       admin: req.user._id,
@@ -301,6 +330,7 @@ export const revokeListing = async (req, res) => {
     }
 
     await listing.save();
+    await invalidateListingCaches();
 
     await VerificationAuditLog.create({
       admin: req.user._id,

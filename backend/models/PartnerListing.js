@@ -166,6 +166,10 @@ const partnerListingSchema = new mongoose.Schema({
     enum: ['DRAFT', 'PENDING_VERIFICATION', 'VERIFIED', 'ACTIVE', 'REJECTED', 'SUSPENDED', 'REVOKED'],
     default: 'DRAFT'
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   verificationVersion: {
     type: Number,
     default: 1

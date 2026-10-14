@@ -71,11 +71,11 @@ const ImageUploader = ({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400">{label}</label>
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">{label}</label>
         <button
           type="button"
           onClick={() => setShowUrlField(!showUrlField)}
-          className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+          className="text-xs font-semibold text-[#0f3d2e] hover:text-[#144c3a] flex items-center gap-1 transition-colors cursor-pointer"
         >
           <LinkIcon size={12} />
           {showUrlField ? 'Hide URL input' : '+ Add via Image URL'}
@@ -83,13 +83,13 @@ const ImageUploader = ({
       </div>
 
       {showUrlField && (
-        <div className="flex items-center gap-2 mb-3 p-3 bg-stone-900/90 rounded-xl border border-emerald-500/30 animate-in fade-in">
+        <div className="flex items-center gap-2 mb-3 p-3 bg-stone-50 rounded-xl border border-stone-200 animate-in fade-in">
           <input
             type="url"
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="Paste image link (https://images.unsplash.com/... or https://...)"
-            className="flex-1 px-3 py-1.5 text-xs bg-stone-950 border border-stone-700 rounded-lg text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            className="flex-1 px-3 py-1.5 text-xs bg-white border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/20 focus:border-[#0f3d2e]"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -100,7 +100,7 @@ const ImageUploader = ({
           <button
             type="button"
             onClick={handleAddUrl}
-            className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 shadow-sm"
+            className="px-3.5 py-1.5 bg-[#0f3d2e] hover:bg-[#144c3a] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 shadow-sm"
           >
             <Plus size={14} /> Add
           </button>
@@ -115,7 +115,7 @@ const ImageUploader = ({
           return (
             <div 
               key={idx} 
-              className="relative aspect-square rounded-xl border border-stone-800 overflow-hidden bg-stone-950 group shadow-md"
+              className="relative aspect-square rounded-xl border border-stone-200 overflow-hidden bg-stone-100 group shadow-sm"
             >
               <img 
                 src={src} 
@@ -141,11 +141,11 @@ const ImageUploader = ({
               </button>
 
               {/* Overlay controls */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
                 <button
                   type="button"
                   onClick={() => setPreviewImage(src)}
-                  className="p-1.5 bg-stone-800/90 text-stone-200 rounded-full hover:bg-stone-700 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow cursor-pointer"
+                  className="p-1.5 bg-white text-slate-800 rounded-full hover:bg-stone-100 transition-all hover:scale-110 pointer-events-auto shadow cursor-pointer"
                   title="View large preview"
                 >
                   <Eye size={14} />
@@ -153,7 +153,7 @@ const ImageUploader = ({
               </div>
 
               {idx === 0 && (
-                <span className="absolute bottom-1.5 left-1.5 bg-emerald-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none border border-emerald-400/30">
+                <span className="absolute bottom-1.5 left-1.5 bg-[#0f3d2e] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow pointer-events-none">
                   Cover
                 </span>
               )}
@@ -165,11 +165,11 @@ const ImageUploader = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="aspect-square rounded-xl border-2 border-dashed border-stone-800 hover:border-emerald-500 bg-stone-950/60 hover:bg-emerald-950/20 transition-all flex flex-col items-center justify-center text-stone-400 hover:text-emerald-300 p-2 text-center"
+            className="aspect-square rounded-xl border-2 border-dashed border-stone-300 hover:border-[#0f3d2e] bg-stone-50 hover:bg-emerald-50/40 transition-all flex flex-col items-center justify-center text-slate-600 hover:text-[#0f3d2e] p-2 text-center cursor-pointer group active:scale-95"
           >
-            <Upload size={22} className="mb-1.5 text-stone-500 group-hover:text-emerald-400" />
-            <span className="text-xs font-bold text-stone-300">Upload File</span>
-            <span className="text-[10px] text-stone-500">or drop image</span>
+            <Upload size={22} className="mb-1.5 text-stone-400 group-hover:text-[#0f3d2e] transition-colors" />
+            <span className="text-xs font-bold text-slate-700 group-hover:text-[#0f3d2e]">Upload File</span>
+            <span className="text-[10px] text-slate-400">or drop image</span>
           </button>
         )}
       </div>
@@ -182,7 +182,7 @@ const ImageUploader = ({
         accept="image/jpeg, image/png, image/webp, image/avif"
         multiple={multiple}
       />
-      <div className="flex justify-between items-center text-[11px] text-stone-500 dark:text-stone-400 mt-1">
+      <div className="flex justify-between items-center text-[11px] text-slate-500 mt-1">
         <span>Accepts JPG, PNG, WEBP (Max 10MB) or direct Web URLs</span>
         {multiple && <span>{images.length} / {maxFiles} images</span>}
       </div>
