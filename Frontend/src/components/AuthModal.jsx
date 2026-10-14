@@ -117,7 +117,6 @@ export default function AuthModal() {
           state: {
             email: result.email,
             requiresVerification: true,
-            devOtp: result.devOtp,
           },
         });
         return;

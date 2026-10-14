@@ -65,9 +65,12 @@ export const createAndSendOtp = async ({
   const otpHash = hashOtp(rawOtp, cleanDestination);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[AUTH OTP DEV] Generated OTP for ${cleanDestination} (${purpose}): ${rawOtp}`);
-  }
+  // Sanitize destination for logs (e.g. te***@domain.com)
+  const maskedDestination = cleanDestination.includes('@')
+    ? cleanDestination.replace(/^(.)(.*)(@.*)$/, (_, first, mid, dom) => first + '*'.repeat(Math.min(mid.length, 4)) + dom)
+    : cleanDestination.slice(0, 2) + '******' + cleanDestination.slice(-2);
+
+  console.log(`[Auth OTP] Secure 6-digit challenge generated and dispatched to ${maskedDestination} (${purpose}).`);
 
   // Invalidate any old unused OTPs for this destination and purpose
   await OTP.updateMany(
@@ -111,7 +114,6 @@ export const createAndSendOtp = async ({
     channel,
     expiresInSeconds: Math.floor(OTP_EXPIRY_MS / 1000),
     otpId: otpDoc._id,
-    devOtp: (!isSmtpConfigured() || process.env.NODE_ENV !== 'production') ? rawOtp : undefined,
   };
 };
 

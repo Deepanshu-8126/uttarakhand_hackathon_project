@@ -92,7 +92,6 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState('');
   const [otpDestination, setOtpDestination] = useState('');
   const [otpPurpose, setOtpPurpose] = useState('signup');
-  const [devOtp, setDevOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resetToken, setResetToken] = useState('');
 
@@ -108,14 +107,9 @@ export default function LoginPage() {
     if (location.state?.requiresVerification && location.state?.email) {
       setOtpDestination(location.state.email);
       setOtpPurpose('signup');
-      const incomingDev = location.state.devOtp || '';
-      setDevOtp(incomingDev);
-      if (incomingDev) setOtpCode(incomingDev);
       setResendCooldown(60);
       setAuthStep('verify_otp');
-      setSuccessNotice(incomingDev
-        ? `Verification code: ${incomingDev}`
-        : 'Please enter the 6-digit code sent to your email.');
+      setSuccessNotice('Please enter the 6-digit code sent to your email.');
       return;
     }
 
@@ -133,7 +127,6 @@ export default function LoginPage() {
 
   const switchToRegister = () => {
     setIsRegister(true);
-    setDevOtp('');
     setIdentifier('');
     setEmail('');
     setFullName('');
@@ -146,7 +139,6 @@ export default function LoginPage() {
 
   const switchToLogin = () => {
     setIsRegister(false);
-    setDevOtp('');
     setIdentifier('');
     setEmail('');
     setPassword('');
@@ -299,14 +291,9 @@ export default function LoginPage() {
         if (res?.requiresVerification) {
           setOtpDestination(res.email || targetEmail);
           setOtpPurpose('signup');
-          const incomingDev = res.devOtp || '';
-          setDevOtp(incomingDev);
-          if (incomingDev) setOtpCode(incomingDev);
           setResendCooldown(60);
           setAuthStep('verify_otp');
-          setSuccessNotice(incomingDev
-            ? `Account created! Verification code: ${incomingDev}`
-            : 'Account created! A 6-digit verification code has been dispatched to your email.');
+          setSuccessNotice('Account created! A 6-digit verification code has been dispatched to your email.');
           return;
         }
 
@@ -332,14 +319,9 @@ export default function LoginPage() {
         if (res?.requiresVerification) {
           setOtpDestination(res.email || identifier.trim());
           setOtpPurpose('signup');
-          const incomingDev = res.devOtp || '';
-          setDevOtp(incomingDev);
-          if (incomingDev) setOtpCode(incomingDev);
           setResendCooldown(60);
           setAuthStep('verify_otp');
-          setSuccessNotice(incomingDev
-            ? `Account not yet verified. Verification code: ${incomingDev}`
-            : 'Account not yet verified. A fresh OTP code has been dispatched to your email.');
+          setSuccessNotice('Account not yet verified. A fresh OTP code has been dispatched to your email.');
           return;
         }
 
@@ -415,12 +397,7 @@ export default function LoginPage() {
 
       if (res?.success) {
         setResendCooldown(60);
-        const incomingDev = res.devOtp || '';
-        setDevOtp(incomingDev);
-        if (incomingDev) setOtpCode(incomingDev);
-        setSuccessNotice(incomingDev
-          ? `New verification code: ${incomingDev}`
-          : 'New verification code sent to your email.');
+        setSuccessNotice('New verification code sent to your email.');
       } else {
         setErrorMessage(res?.message || 'Failed to resend code.');
       }
@@ -447,16 +424,11 @@ export default function LoginPage() {
       if (res?.success) {
         setOtpDestination(target);
         setOtpPurpose('forgot-password');
-        const incomingDev = res.devOtp || '';
-        setDevOtp(incomingDev);
-        if (incomingDev) setOtpCode(incomingDev);
         setResendCooldown(60);
         setPassword('');
         setConfirmPassword('');
         setAuthStep('reset_password');
-        setSuccessNotice(incomingDev
-          ? `Reset code generated: ${incomingDev}`
-          : (res.message || 'A 6-digit password reset code has been sent to your email.'));
+        setSuccessNotice(res.message || 'A 6-digit password reset code has been sent to your email.');
       } else {
         setErrorMessage(res?.message || 'This email is not registered in our database.');
       }
@@ -697,30 +669,19 @@ export default function LoginPage() {
             {/* ── VIEW A: VERIFY OTP SCREEN ── */}
             {authStep === 'verify_otp' && (
               <form onSubmit={handleVerifyOtpSubmit} className="space-y-4">
-                {devOtp && (
-                  <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-300 flex items-center justify-between text-xs shadow-xs animate-in fade-in">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-[#0f3d2e] text-emerald-300 flex items-center justify-center font-black shrink-0 shadow-xs">
-                        <Sparkles size={16} />
-                      </div>
-                      <div>
-                        <span className="font-extrabold text-emerald-950 block text-[10px] uppercase tracking-wider">
-                          Verification Code (Quick Access)
-                        </span>
-                        <span className="font-mono text-base font-black text-[#0f3d2e] tracking-[4px]">
-                          {devOtp}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setOtpCode(devOtp)}
-                      className="px-3 py-1.5 bg-[#0f3d2e] hover:bg-[#15533f] text-white rounded-xl font-black text-xs shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
-                    >
-                      Auto-Fill
-                    </button>
+                <div className="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200 flex items-center gap-3 text-xs text-emerald-950">
+                  <div className="w-8 h-8 rounded-xl bg-[#0f3d2e] text-emerald-300 flex items-center justify-center shrink-0 shadow-xs">
+                    <Mail size={16} />
                   </div>
-                )}
+                  <div>
+                    <span className="font-bold block text-[11px] text-emerald-900">
+                      Check Your Email Inbox
+                    </span>
+                    <span className="text-[11px] text-emerald-800">
+                      A 6-digit code has been sent to <strong className="font-mono">{otpDestination}</strong>. (Check spam/junk if not in inbox).
+                    </span>
+                  </div>
+                </div>
                 <div className="p-4 bg-emerald-50/70 rounded-2xl border border-emerald-200 text-center">
                   <span className="text-xs font-semibold text-emerald-900 block mb-1">
                     Verification Code Sent To:
@@ -857,30 +818,19 @@ export default function LoginPage() {
             {/* ── VIEW C: RESET PASSWORD SCREEN ── */}
             {authStep === 'reset_password' && (
               <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
-                {devOtp && (
-                  <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-300 flex items-center justify-between text-xs shadow-xs animate-in fade-in">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-[#0f3d2e] text-emerald-300 flex items-center justify-center font-black shrink-0 shadow-xs">
-                        <Sparkles size={16} />
-                      </div>
-                      <div>
-                        <span className="font-extrabold text-emerald-950 block text-[10px] uppercase tracking-wider">
-                          Password Reset Code (Quick Access)
-                        </span>
-                        <span className="font-mono text-base font-black text-[#0f3d2e] tracking-[4px]">
-                          {devOtp}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setOtpCode(devOtp)}
-                      className="px-3 py-1.5 bg-[#0f3d2e] hover:bg-[#15533f] text-white rounded-xl font-black text-xs shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
-                    >
-                      Auto-Fill
-                    </button>
+                <div className="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200 flex items-center gap-3 text-xs text-emerald-950">
+                  <div className="w-8 h-8 rounded-xl bg-[#0f3d2e] text-emerald-300 flex items-center justify-center shrink-0 shadow-xs">
+                    <Lock size={16} />
                   </div>
-                )}
+                  <div>
+                    <span className="font-bold block text-[11px] text-emerald-900">
+                      Password Reset Code Dispatched
+                    </span>
+                    <span className="text-[11px] text-emerald-800">
+                      Enter the 6-digit code sent to <strong className="font-mono">{otpDestination}</strong> and create your new password.
+                    </span>
+                  </div>
+                </div>
                 <div className="p-3 bg-emerald-50 rounded-xl text-xs text-emerald-800 font-medium">
                   Enter the 6-digit code sent to <strong className="font-mono">{otpDestination}</strong> and choose your new password.
                 </div>

@@ -114,14 +114,11 @@ export const registerUser = async (req, res) => {
 
         return res.status(201).json({
           success: true,
-          message: isSmtpConfigured()
-            ? 'Account was pending verification. A fresh 6-digit code has been dispatched to your email.'
-            : 'Account was pending verification. Verification code generated.',
+          message: 'Account was pending verification. A fresh 6-digit verification code has been dispatched to your email.',
           data: {
             userId: emailExists._id,
             email: emailExists.email,
             requiresVerification: true,
-            devOtp: otpResult?.devOtp,
           },
         });
       }
@@ -203,14 +200,11 @@ export const registerUser = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: isSmtpConfigured()
-        ? 'Registration successful! A 6-digit verification code has been sent to your email.'
-        : 'Registration successful! Verification code generated.',
+      message: 'Registration successful! A 6-digit verification code has been dispatched to your email.',
       data: {
         userId: user._id,
         email: user.email,
         requiresVerification: true,
-        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -290,15 +284,12 @@ export const registerPartner = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: isSmtpConfigured()
-        ? 'Partner account created! Please verify your email with the 6-digit code sent.'
-        : 'Partner account created! Verification code generated.',
+      message: 'Partner account created! Please verify your email with the 6-digit code sent.',
       data: {
         userId: user._id,
         email: user.email,
         role: user.role,
         requiresVerification: true,
-        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {
@@ -456,12 +447,9 @@ export const resendOtp = async (req, res) => {
 
     return res.json({
       success: true,
-      message: isSmtpConfigured()
-        ? `A new 6-digit verification code has been dispatched to your ${result.channel}.`
-        : `A new 6-digit verification code has been generated.`,
+      message: `A fresh 6-digit verification code has been dispatched to your ${result.channel}.`,
       data: {
         expiresInSeconds: result.expiresInSeconds,
-        devOtp: result?.devOtp,
       },
     });
   } catch (error) {
@@ -543,14 +531,11 @@ export const loginUser = async (req, res) => {
       return res.status(403).json({
         success: false,
         code: 'ACCOUNT_NOT_VERIFIED',
-        message: isSmtpConfigured()
-          ? 'Account not verified. A 6-digit OTP has been sent to your email. Please verify to continue.'
-          : 'Account not verified. Verification code generated.',
+        message: 'Account not verified. A 6-digit OTP has been sent to your email. Please verify to continue.',
         data: {
           userId: user._id,
           email: user.email,
           requiresVerification: true,
-          devOtp: otpResult?.devOtp,
         },
       });
     }
@@ -666,9 +651,10 @@ export const forgotPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'This email is not registered in our database. Please check your email or create an account.',
+      return res.json({
+        success: true,
+        message: 'If an account associated with this email exists, a 6-digit password reset code has been sent.',
+        data: { destination: target },
       });
     }
 
@@ -679,9 +665,8 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    let otpResult = null;
     try {
-      otpResult = await createAndSendOtp({
+      await createAndSendOtp({
         userId: user._id,
         destination: user.email,
         channel: 'email',
@@ -698,12 +683,9 @@ export const forgotPassword = async (req, res) => {
 
     return res.json({
       success: true,
-      message: isSmtpConfigured()
-        ? 'A 6-digit password reset verification code has been sent to your email.'
-        : 'Password reset code generated.',
+      message: 'If an account associated with this email exists, a 6-digit password reset code has been sent.',
       data: {
         destination: user.email,
-        devOtp: otpResult?.devOtp,
       },
     });
   } catch (error) {

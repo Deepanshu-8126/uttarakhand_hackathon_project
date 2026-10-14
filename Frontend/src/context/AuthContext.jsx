@@ -107,7 +107,6 @@ export const AuthProvider = ({ children }) => {
           requiresVerification: true,
           email: respData?.data?.email || credentials.email || credentials.identifier,
           message: respData.message || 'Please verify your email address to log in.',
-          devOtp: respData?.data?.devOtp,
         };
       }
       const msg = respData?.message || error.message || 'Login failed. Please try again.';
@@ -147,7 +146,6 @@ export const AuthProvider = ({ children }) => {
             requiresVerification: true,
             email: res.data.email,
             message: res.message,
-            devOtp: res.data.devOtp,
           };
         }
         handleAuthSuccess(res.data);
@@ -172,7 +170,6 @@ export const AuthProvider = ({ children }) => {
             requiresVerification: true,
             email: res.data.email,
             message: res.message,
-            devOtp: res.data.devOtp,
           };
         }
         handleAuthSuccess(res.data);
@@ -209,10 +206,7 @@ export const AuthProvider = ({ children }) => {
   const resendOtp = async (payload) => {
     try {
       const res = await apiResendOtp(payload);
-      return {
-        ...res,
-        devOtp: res.data?.devOtp,
-      };
+      return res;
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Failed to resend code.';
       return { success: false, message: msg };
@@ -222,10 +216,7 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = async (payload) => {
     try {
       const res = await apiForgotPassword(payload);
-      return {
-        ...res,
-        devOtp: res.data?.devOtp,
-      };
+      return res;
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Failed to process request.';
       return { success: false, message: msg };

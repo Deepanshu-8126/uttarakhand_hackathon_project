@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import User from '../models/User.js';
 import Session from '../models/Session.js';
 import LoginHistory from '../models/LoginHistory.js';
 
@@ -135,7 +136,15 @@ export const rotateRefreshToken = async (oldRefreshToken, req) => {
   session.isRevoked = true;
   await session.save();
 
-  return await createSession({ user: { _id: userId, id: userId, role: decoded.role }, req });
+  // Retrieve fresh user document to ensure active status and preserve actual role
+  const user = await User.findById(userId).select('-password');
+  if (!user || !user.isActive) {
+    const error = new Error('User account is deactivated or no longer exists.');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  return await createSession({ user, req });
 };
 
 /**

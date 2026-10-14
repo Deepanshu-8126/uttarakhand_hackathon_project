@@ -1,9 +1,9 @@
 import './config/loadEnv.js';
-import { cacheGet, cacheSet } from './config/redis.js';
+import { cacheGet, cacheSet, isRedisAvailable } from './config/redis.js';
 import { AgentRouter } from './ai/workflows/agentRouter.js';
 import { synthesizeStudioVoice } from './services/studioVoiceService.js';
 import { transcribeAudioBuffer } from './routes/voiceRoutes.js';
-import { verifySmtpTransporter } from './services/emailService.js';
+import { verifySmtpTransporter, isSmtpConfigured } from './services/emailService.js';
 import express from 'express';
 import expressWs from 'express-ws';
 import cors from 'cors';
@@ -50,12 +50,13 @@ import photoRoutes from './routes/photoRoutes.js';
 import hiddenLocationRoutes from './routes/hiddenLocationRoutes.js';
 import personalizedRoutes from './routes/personalizedRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
+import { bootstrapAdmin } from './config/adminBootstrap.js';
 
 // Validate production environment variables
 validateEnv();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and bootstrap admin if configured
+connectDB().then(() => bootstrapAdmin()).catch(() => {});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -344,6 +345,8 @@ app.get(['/', '/api'], (req, res) => {
 // Liveness & Application Health Check
 app.get('/api/health', (req, res) => {
   const isMongoConnected = mongoose.connection.readyState === 1;
+  const isRedisActive = isRedisAvailable();
+  const isEmailConfigured = isSmtpConfigured();
   const isCloudinaryConfigured = Boolean(
     process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
@@ -357,6 +360,8 @@ app.get('/api/health', (req, res) => {
     status: isMongoConnected ? 'healthy' : 'degraded',
     services: {
       database: isMongoConnected ? 'connected' : 'disconnected',
+      redis: isRedisActive ? 'active' : 'in_memory_fallback',
+      email: isEmailConfigured ? 'configured' : 'sandbox_fallback',
       ai: 'available',
       aiProvider: activeAi,
       cloudinary: isCloudinaryConfigured ? 'configured' : 'local_fallback'
