@@ -1,35 +1,57 @@
 import { buildQuery } from '../utils/queryHelper.js';
 import { destroyCloudinaryImage, destroyMultipleCloudinaryImages, handleImageUpdates, handleMultipleImageUpdates } from '../utils/cloudinaryHelper.js';
 import { cacheGet, cacheSet, cacheDelPattern } from '../config/redis.js';
+import PartnerListing from '../models/PartnerListing.js';
 
 export const stripProvenance = (body) => {
   const immutable = ['sourceName', 'sourceUrl', 'sourcePageUrl', 'contentLicense', 'lastVerified', 'slug'];
   const data = { ...body };
   immutable.forEach(key => delete data[key]);
   
-  // Strip image provenance
+  // Safely normalize and strip image provenance
   if (data.coverImage) {
-    delete data.coverImage.sourcePage;
-    delete data.coverImage.license;
-    delete data.coverImage.attribution;
-    delete data.coverImage.source;
+    if (typeof data.coverImage === 'string') {
+      data.coverImage = { url: data.coverImage };
+    } else if (typeof data.coverImage === 'object') {
+      const cleaned = { ...data.coverImage };
+      delete cleaned.sourcePage;
+      delete cleaned.license;
+      delete cleaned.attribution;
+      delete cleaned.source;
+      data.coverImage = cleaned;
+    }
   }
-  if (data.gallery && Array.isArray(data.gallery)) {
-    data.gallery.forEach(img => {
-      delete img.sourcePage;
-      delete img.license;
-      delete img.attribution;
-      delete img.source;
-    });
+
+  if (Array.isArray(data.gallery)) {
+    data.gallery = data.gallery.map(img => {
+      if (typeof img === 'string') return { url: img };
+      if (img && typeof img === 'object') {
+        const cleaned = { ...img };
+        delete cleaned.sourcePage;
+        delete cleaned.license;
+        delete cleaned.attribution;
+        delete cleaned.source;
+        return cleaned;
+      }
+      return img;
+    }).filter(Boolean);
   }
-  if (data.images && Array.isArray(data.images)) {
-    data.images.forEach(img => {
-      delete img.sourcePage;
-      delete img.license;
-      delete img.attribution;
-      delete img.source;
-    });
+
+  if (Array.isArray(data.images)) {
+    data.images = data.images.map(img => {
+      if (typeof img === 'string') return { url: img };
+      if (img && typeof img === 'object') {
+        const cleaned = { ...img };
+        delete cleaned.sourcePage;
+        delete cleaned.license;
+        delete cleaned.attribution;
+        delete cleaned.source;
+        return cleaned;
+      }
+      return img;
+    }).filter(Boolean);
   }
+
   return data;
 };
 
@@ -84,6 +106,12 @@ export const createController = (Model, isTextIndexed = false) => {
         if (!doc && identifier && identifier.match(/^[0-9a-fA-F]{24}$/)) {
           doc = await Model.findById(identifier);
         }
+        if (!doc) {
+          doc = await PartnerListing.findOne({ slug: identifier });
+          if (!doc && identifier && identifier.match(/^[0-9a-fA-F]{24}$/)) {
+            doc = await PartnerListing.findById(identifier);
+          }
+        }
 
         if (!doc) return res.status(404).json({ success: false, message: 'Not found' });
         
@@ -109,15 +137,45 @@ export const createController = (Model, isTextIndexed = false) => {
 
     update: async (req, res) => {
       try {
-        const existing = await Model.findById(req.params.id);
-        if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
-        
         const safeData = stripProvenance(req.body);
+        let existing = await Model.findById(req.params.id);
+
+        if (!existing) {
+          const partnerDoc = await PartnerListing.findById(req.params.id);
+          if (partnerDoc) {
+            if (safeData.title || safeData.name) partnerDoc.title = safeData.title || safeData.name;
+            if (safeData.description) partnerDoc.description = safeData.description;
+            if (safeData.district) partnerDoc.district = safeData.district;
+            if (safeData.city) partnerDoc.city = safeData.city;
+            if (safeData.images) partnerDoc.images = safeData.images;
+            if (safeData.coverImage) {
+              const cover = typeof safeData.coverImage === 'string' ? { url: safeData.coverImage } : safeData.coverImage;
+              partnerDoc.images = [cover, ...(Array.isArray(partnerDoc.images) ? partnerDoc.images.slice(1) : [])];
+            }
+            if (safeData.price || safeData.pricePerDay || safeData.pricePerNight) {
+              const amount = typeof safeData.price === 'object' ? safeData.price.amount : (safeData.price || safeData.pricePerDay || safeData.pricePerNight);
+              partnerDoc.pricing = {
+                ...(partnerDoc.pricing || {}),
+                amount: Number(amount) || partnerDoc.pricing?.amount || 0,
+                provenance: 'VERIFIED',
+                lastVerifiedAt: new Date()
+              };
+            }
+            await partnerDoc.save();
+            await cacheDelPattern(`${modelName}:*`);
+            await cacheDelPattern('rentals:*');
+            await cacheDelPattern('stays:*');
+            return res.status(200).json({ success: true, data: partnerDoc });
+          }
+          return res.status(404).json({ success: false, message: 'Not found' });
+        }
 
         const doc = await Model.findByIdAndUpdate(req.params.id, safeData, { new: true, runValidators: true });
         
         // Invalidate cache for this model
         await cacheDelPattern(`${modelName}:*`);
+        await cacheDelPattern('rentals:*');
+        await cacheDelPattern('stays:*');
         
         res.status(200).json({ success: true, data: doc });
       } catch (error) {
@@ -128,11 +186,23 @@ export const createController = (Model, isTextIndexed = false) => {
     remove: async (req, res) => {
       try {
         const doc = await Model.findById(req.params.id);
-        if (!doc) return res.status(404).json({ success: false, message: 'Not found' });
+        if (!doc) {
+          const partnerDoc = await PartnerListing.findById(req.params.id);
+          if (partnerDoc) {
+            await PartnerListing.findByIdAndDelete(req.params.id);
+            await cacheDelPattern(`${modelName}:*`);
+            await cacheDelPattern('rentals:*');
+            await cacheDelPattern('stays:*');
+            return res.status(200).json({ success: true, message: 'Deleted successfully' });
+          }
+          return res.status(404).json({ success: false, message: 'Not found' });
+        }
         await Model.findByIdAndDelete(req.params.id);
         
         // Invalidate cache
         await cacheDelPattern(`${modelName}:*`);
+        await cacheDelPattern('rentals:*');
+        await cacheDelPattern('stays:*');
         
         res.status(200).json({ success: true, message: 'Deleted successfully' });
       } catch (error) {

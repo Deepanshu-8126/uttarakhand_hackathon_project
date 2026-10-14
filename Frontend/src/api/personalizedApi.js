@@ -5,8 +5,41 @@ import api from './api';
  * @param {Object} [params] - Optional query params ({ city, district, lat, lng, radius, refresh })
  */
 export const getPersonalizedHome = async (params = {}) => {
-  const response = await api.get('/personalized/home', { params });
-  return response.data;
+  try {
+    const response = await api.get('/personalized/home', { params });
+    return response.data;
+  } catch (err) {
+    try {
+      const [destRes, staysRes] = await Promise.all([
+        api.get('/destinations').catch(() => ({ data: [] })),
+        api.get('/stays').catch(() => ({ data: [] }))
+      ]);
+      const destinations = destRes?.data?.data || destRes?.data || [];
+      const stays = staysRes?.data?.data || staysRes?.data || [];
+
+      return {
+        success: true,
+        detectedLocation: {
+          city: params.city || 'Dehradun',
+          district: params.district || 'Dehradun',
+          source: 'curated_fallback'
+        },
+        data: {
+          destinations: Array.isArray(destinations) ? destinations.slice(0, 6) : [],
+          stays: Array.isArray(stays) ? stays.slice(0, 4) : [],
+          rentals: [],
+          guides: [],
+          activities: []
+        }
+      };
+    } catch (fallbackErr) {
+      return {
+        success: true,
+        detectedLocation: { city: 'Dehradun', district: 'Dehradun', source: 'default' },
+        data: { destinations: [], stays: [], rentals: [], guides: [], activities: [] }
+      };
+    }
+  }
 };
 
 /**

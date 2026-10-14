@@ -95,18 +95,24 @@ const AdminDashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-[#06140e] text-stone-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative">
+      {/* Ambient Mountain Lighting */}
+      <div className="fixed inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-emerald-600/10 blur-[140px] rounded-full"></div>
+        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-teal-500/10 blur-[150px] rounded-full"></div>
+      </div>
+
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 relative z-10">
         
         {/* Header Hero Bar */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f3d2e] via-[#09261e] to-stone-950 p-6 sm:p-10 border border-emerald-500/20 shadow-2xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f3d2e] via-[#09261e] to-stone-950 p-6 sm:p-10 border border-emerald-500/30 shadow-2xl backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
           
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-mono font-bold uppercase tracking-wider">
                 <ShieldCheck size={14} className="text-emerald-400" />
                 State Tourism Administration Suite
               </div>
@@ -121,7 +127,7 @@ const AdminDashboard = () => {
             <div className="flex flex-wrap items-center gap-3 shrink-0">
               <Link 
                 to="/audit" 
-                className="px-4 py-2.5 rounded-xl bg-stone-900/90 hover:bg-stone-800 text-emerald-400 border border-emerald-500/30 font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-emerald-950/50 hover:-translate-y-0.5"
+                className="px-4 py-2.5 rounded-xl bg-stone-900/90 hover:bg-stone-800 text-emerald-300 border border-emerald-500/40 font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-emerald-950/50 hover:-translate-y-0.5"
               >
                 <span>⚡ System Health & Audit</span>
               </Link>
@@ -134,7 +140,7 @@ const AdminDashboard = () => {
               </Link>
               <button 
                 onClick={logout} 
-                className="px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition-all"
+                className="px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition-all hover:-translate-y-0.5"
               >
                 Logout
               </button>
@@ -146,11 +152,11 @@ const AdminDashboard = () => {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 dark:text-white flex items-center gap-2">
-                <Layers className="text-emerald-600 dark:text-emerald-400" size={24} />
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                <Layers className="text-emerald-400" size={24} />
                 Live Tourism Inventories
               </h2>
-              <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400">
+              <p className="text-xs sm:text-sm text-stone-400">
                 Click any category card to view, add, inspect photography, and edit live items.
               </p>
             </div>
@@ -163,30 +169,30 @@ const AdminDashboard = () => {
                 <Link 
                   to={`/admin/${item.type}`} 
                   key={item.type} 
-                  className="group relative bg-white dark:bg-stone-900/90 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-xl hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1"
+                  className="group relative bg-stone-900/90 rounded-2xl p-5 border border-stone-800 hover:border-emerald-500/50 shadow-lg hover:shadow-[0_0_25px_rgba(0,255,136,0.12)] transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1"
                 >
-                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${item.color} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity`}></div>
+                  <div className={`absolute top-0 right-0 w-28 h-28 bg-gradient-to-br ${item.color} opacity-15 rounded-full blur-2xl group-hover:opacity-30 transition-opacity`}></div>
                   
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform`}>
                         <Icon size={22} />
                       </div>
-                      <span className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-white">
+                      <span className="text-2xl sm:text-3xl font-black text-white">
                         {loading ? '...' : item.count}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-stone-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
                         {item.label}
                       </h3>
-                      <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-1 mt-0.5">
+                      <p className="text-xs text-stone-400 line-clamp-1 mt-0.5">
                         {item.desc}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <div className="pt-4 mt-3 border-t border-stone-800 flex items-center justify-between text-xs font-semibold text-emerald-400">
                     <span>Manage & Add Photos</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -204,20 +210,20 @@ const AdminDashboard = () => {
               <Link
                 to={`/admin/${item.type}`}
                 key={item.type}
-                className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md flex items-center justify-between transition-all hover:border-emerald-500/40"
+                className="bg-stone-900/90 rounded-2xl p-5 border border-stone-800 hover:border-emerald-500/40 shadow-lg hover:shadow-[0_0_20px_rgba(0,255,136,0.1)] flex items-center justify-between transition-all hover:-translate-y-0.5"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-stone-800/80 border border-stone-700/60 flex items-center justify-center">
                     <Icon size={24} className={item.color} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-stone-900 dark:text-white text-base">Live {item.label}</h4>
-                    <p className="text-xs text-stone-500">Manage orders, clearance and verification status</p>
+                    <h4 className="font-bold text-white text-base">Live {item.label}</h4>
+                    <p className="text-xs text-stone-400">Manage orders, clearance and verification status</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-black text-stone-900 dark:text-white">{loading ? '...' : item.count}</span>
-                  <ArrowRight size={16} className="text-stone-400" />
+                  <span className="text-2xl font-black text-white">{loading ? '...' : item.count}</span>
+                  <ArrowRight size={16} className="text-stone-400 group-hover:text-emerald-400" />
                 </div>
               </Link>
             );
@@ -225,7 +231,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Live Photography & Data Showcase Stream */}
-        <section className="bg-white dark:bg-stone-900/80 rounded-3xl p-6 sm:p-8 border border-stone-200 dark:border-stone-800 shadow-xl space-y-6">
+        <section className="bg-stone-900/80 rounded-3xl p-6 sm:p-8 border border-emerald-500/20 shadow-2xl backdrop-blur-xl space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-5">
             <div>
               <div className="flex items-center gap-2">
@@ -234,13 +240,13 @@ const AdminDashboard = () => {
                   Real Website Data & Photography Showcase
                 </h3>
               </div>
-              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              <p className="text-xs text-stone-400 mt-1">
                 Visual preview of actual inventory active on the tourism portal.
               </p>
             </div>
 
             {/* Category Tabs */}
-            <div className="flex flex-wrap items-center gap-2 bg-stone-100 dark:bg-stone-800/80 p-1.5 rounded-2xl">
+            <div className="flex flex-wrap items-center gap-1.5 bg-stone-950/80 p-1.5 rounded-2xl border border-stone-800">
               {[
                 { id: 'destinations', label: 'Destinations' },
                 { id: 'stays', label: 'Stays' },
@@ -254,8 +260,8 @@ const AdminDashboard = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     activeTab === tab.id
-                      ? 'bg-emerald-700 text-white shadow-sm'
-                      : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                      : 'text-stone-400 hover:text-white hover:bg-stone-800/60'
                   }`}
                 >
                   {tab.label}
@@ -267,26 +273,26 @@ const AdminDashboard = () => {
           {/* Quick Filter Search & Action */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" size={16} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Search ${activeTab} by name or location...`}
-                className="w-full pl-9 pr-4 py-2 bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full pl-9 pr-4 py-2.5 bg-stone-950/80 border border-stone-800 text-stone-100 placeholder-stone-500 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
               />
             </div>
             
             <div className="flex items-center gap-2">
               <Link
                 to={`/admin/${activeTab}`}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/50 hover:-translate-y-0.5"
               >
                 <Plus size={14} /> Add New {activeTab.slice(0, -1)}
               </Link>
               <Link
                 to={`/admin/${activeTab}`}
-                className="px-4 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 rounded-xl text-xs font-bold transition-all"
+                className="px-4 py-2.5 bg-stone-800/90 hover:bg-stone-750 text-stone-200 border border-stone-700/80 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5"
               >
                 Manage All ({sampleItems.length})
               </Link>
@@ -309,9 +315,9 @@ const AdminDashboard = () => {
                 return (
                   <div 
                     key={item._id}
-                    className="group bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700/70 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
+                    className="group bg-stone-900/90 rounded-2xl border border-stone-800/90 overflow-hidden shadow-md hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
                   >
-                    <div className="relative aspect-[16/10] overflow-hidden bg-stone-200 dark:bg-stone-800">
+                    <div className="relative aspect-[16/10] overflow-hidden bg-stone-950">
                       <img 
                         src={img} 
                         alt={title}
@@ -320,16 +326,16 @@ const AdminDashboard = () => {
                           e.target.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80';
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                       
                       {price && (
-                        <span className="absolute bottom-2.5 left-2.5 bg-emerald-600/90 text-white font-bold text-xs px-2.5 py-1 rounded-lg backdrop-blur-sm shadow">
+                        <span className="absolute bottom-2.5 left-2.5 bg-emerald-600/90 text-white font-bold text-xs px-2.5 py-1 rounded-lg backdrop-blur-sm shadow border border-emerald-400/20">
                           ₹{price.toLocaleString()} {item.pricePerDay ? '/ day' : item.pricePerNight ? '/ night' : 'onwards'}
                         </span>
                       )}
 
                       {item.rating && (
-                        <span className="absolute top-2.5 right-2.5 bg-black/60 text-amber-400 font-bold text-xs px-2 py-0.5 rounded-md backdrop-blur-sm flex items-center gap-1">
+                        <span className="absolute top-2.5 right-2.5 bg-black/70 text-amber-400 font-bold text-xs px-2 py-0.5 rounded-md backdrop-blur-sm flex items-center gap-1 border border-white/10">
                           <Star size={12} className="fill-amber-400" />
                           {item.rating}
                         </span>
@@ -338,18 +344,18 @@ const AdminDashboard = () => {
 
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
-                        <h4 className="font-bold text-stone-900 dark:text-white text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+                        <h4 className="font-bold text-white text-base group-hover:text-emerald-400 transition-colors line-clamp-1">
                           {title}
                         </h4>
-                        <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-1 mt-0.5">
+                        <p className="text-xs text-stone-400 line-clamp-1 mt-0.5">
                           📍 {loc}
                         </p>
                       </div>
 
-                      <div className="pt-3 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between text-xs">
+                      <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs">
                         <Link
                           to={`/admin/${activeTab}`}
-                          className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                          className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
                         >
                           Edit & Photos →
                         </Link>
@@ -357,7 +363,7 @@ const AdminDashboard = () => {
                           <Link
                             to={activeTab === 'destinations' ? `/destinations/${item.slug}` : `/${activeTab}/${item.slug}`}
                             target="_blank"
-                            className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 flex items-center gap-1"
+                            className="text-stone-400 hover:text-white flex items-center gap-1 transition-colors"
                           >
                             <span>Live View</span>
                             <ExternalLink size={12} />
@@ -377,7 +383,7 @@ const AdminDashboard = () => {
         </section>
 
         {/* Phase 3: Partner Verification Queue & Officer Clearance */}
-        <section className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200 dark:border-stone-800 shadow-xl">
+        <section className="bg-stone-900/80 rounded-3xl p-6 sm:p-8 border border-emerald-500/20 shadow-2xl backdrop-blur-xl">
           <PartnerVerificationQueue />
         </section>
       </main>

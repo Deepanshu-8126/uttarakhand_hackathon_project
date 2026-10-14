@@ -33,6 +33,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
       try {
         const res = await getMe();
         if (res.success && res.data) {
@@ -40,7 +46,6 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
         }
       } catch (error) {
-        // Only wipe if token was invalid and refresh also failed
         if (token) {
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');

@@ -1,54 +1,40 @@
-import destinationsData from '../data/destinations.json';
+/**
+ * Destination Service — Real MongoDB API Client Proxy
+ */
+import api from '../api/api';
 
-export const getAllDestinations = () => {
-  return destinationsData;
+export const getAllDestinations = async () => {
+  try {
+    const res = await api.get('/destinations');
+    return res.data?.destinations || res.data?.data || res.data || [];
+  } catch (err) {
+    console.error('Failed to fetch destinations from MongoDB:', err);
+    return [];
+  }
 };
 
-export const getDestinationById = (id) => {
-  return destinationsData.find((d) => d.id === id) || null;
+export const getDestinationById = async (id) => {
+  try {
+    const res = await api.get(`/destinations/${id}`);
+    return res.data?.destination || res.data?.data || res.data || null;
+  } catch (err) {
+    console.error(`Failed to fetch destination ${id} from MongoDB:`, err);
+    return null;
+  }
 };
 
-export const filterDestinations = ({ category = 'all', region = 'all', searchQuery = '' } = {}) => {
-  return destinationsData.filter((dest) => {
-    // Filter by category
-    if (category !== 'all' && dest.category !== category) {
-      return false;
-    }
-
-    // Filter by region (Garhwal vs Kumaon)
-    if (region !== 'all' && dest.region?.toLowerCase() !== region?.toLowerCase()) {
-      return false;
-    }
-
-    // Filter by search text
+export const filterDestinations = (destinations = [], { category = 'all', region = 'all', searchQuery = '' } = {}) => {
+  return destinations.filter((dest) => {
+    if (category !== 'all' && dest.category !== category) return false;
+    if (region !== 'all' && dest.region?.toLowerCase() !== region?.toLowerCase()) return false;
     if (searchQuery && searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase().trim();
-      const matchName = dest.name?.toLowerCase().includes(q);
-      const matchDistrict = dest.district?.toLowerCase().includes(q);
+      const matchName = dest.name?.toLowerCase().includes(q) || dest.title?.toLowerCase().includes(q);
+      const matchDistrict = dest.district?.toLowerCase().includes(q) || dest.location?.district?.toLowerCase().includes(q);
       const matchTags = dest.tags && dest.tags.some((t) => t.toLowerCase().includes(q));
-      const matchDesc = dest.shortDesc && dest.shortDesc.toLowerCase().includes(q);
-      if (!matchName && !matchDistrict && !matchTags && !matchDesc) {
-        return false;
-      }
+      const matchDesc = (dest.shortDesc || dest.description || '').toLowerCase().includes(q);
+      if (!matchName && !matchDistrict && !matchTags && !matchDesc) return false;
     }
-
     return true;
   });
-};
-
-export const getNearbyDestinations = (destId, limit = 3) => {
-  const target = getDestinationById(destId);
-  if (!target || !target.coordinates) return [];
-
-  // Sort other destinations by proximity
-  return destinationsData
-    .filter((d) => d.id !== destId && d.coordinates && Array.isArray(d.coordinates))
-    .map((d) => {
-      const dLat = (d.coordinates[0] || 0) - (target.coordinates[0] || 0);
-      const dLng = (d.coordinates[1] || 0) - (target.coordinates[1] || 0);
-      const distSquared = dLat * dLat + dLng * dLng;
-      return { ...d, distSquared };
-    })
-    .sort((a, b) => a.distSquared - b.distSquared)
-    .slice(0, limit);
 };

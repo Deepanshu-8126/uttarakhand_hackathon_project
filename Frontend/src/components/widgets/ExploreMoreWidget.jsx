@@ -1,15 +1,27 @@
 import React from 'react';
 import { useMapStore } from '../../store/mapStore';
-import { getNearbyDestinations } from '../../services/destinationService';
 import { MdNearMe, MdStar } from 'react-icons/md';
 import { getHimalayanFallbackImage } from '../../utils/imageHelpers';
 
 export default function ExploreMoreWidget() {
-  const { selectedDestination, setSelectedDestination } = useMapStore();
+  const { selectedDestination, setSelectedDestination, allDestinations } = useMapStore();
 
   if (!selectedDestination) return null;
 
-  const nearby = getNearbyDestinations(selectedDestination.id, 2);
+  const targetCoords = selectedDestination.coordinates || 
+    (selectedDestination.location?.coordinates ? [selectedDestination.location.coordinates[1], selectedDestination.location.coordinates[0]] : null);
+
+  const nearby = (allDestinations || [])
+    .filter((d) => (d._id || d.id) !== (selectedDestination._id || selectedDestination.id))
+    .map((d) => {
+      const coords = d.coordinates || (d.location?.coordinates ? [d.location.coordinates[1], d.location.coordinates[0]] : null);
+      if (!coords || !targetCoords) return { ...d, distSquared: 999999 };
+      const dLat = (coords[0] || 0) - (targetCoords[0] || 0);
+      const dLng = (coords[1] || 0) - (targetCoords[1] || 0);
+      return { ...d, distSquared: dLat * dLat + dLng * dLng };
+    })
+    .sort((a, b) => a.distSquared - b.distSquared)
+    .slice(0, 2);
 
   if (nearby.length === 0) return null;
 

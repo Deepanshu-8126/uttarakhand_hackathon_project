@@ -5,13 +5,17 @@ export class PlannerAgent {
   static name = "PlannerAgent";
   static description = "Specialist in building day-by-day itineraries, mountain transit pacing, and scenic stops.";
 
-  static async handle(query, context, emitThinking) {
-    emitThinking("Analyzing mountain terrain, driving hours, and daylight safety...");
-    const dest = context.entities.destination || "Kedarnath";
-    const days = parseInt(context.entities.duration) || 3;
-    const origin = context.entities.origin || "Delhi";
+  static async handle(query, context = {}, emitThinking = () => {}) {
+    if (typeof emitThinking === 'function') {
+      emitThinking("Analyzing mountain terrain, driving hours, and daylight safety...");
+    }
+    const dest = context?.entities?.destination || query || "Kedarnath";
+    const days = parseInt(context?.entities?.duration) || 3;
+    const origin = context?.entities?.origin || "Delhi";
 
-    emitThinking(`Generating ${days}-day optimized route for ${dest} from ${origin}...`);
+    if (typeof emitThinking === 'function') {
+      emitThinking(`Generating ${days}-day optimized route for ${dest} from ${origin}...`);
+    }
     const itinerary = await executeAiTool("build_itinerary", { destination: dest, days, origin });
     const weather = await executeAiTool("get_weather", { destination: dest });
 
@@ -29,3 +33,4 @@ export class PlannerAgent {
     };
   }
 }
+

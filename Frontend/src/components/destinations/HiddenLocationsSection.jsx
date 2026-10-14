@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, MapPin, Compass, Thermometer, Navigation, ExternalLink, ShieldCheck, Eye, CloudSun, Snowflake, CloudRain, Sun } from 'lucide-react';
+import api from '../../api/api';
 
 const FALLBACK_LOCATIONS = [
   {
@@ -252,11 +253,10 @@ export default function HiddenLocationsSection() {
   const [weatherMap, setWeatherMap] = useState({});
 
   useEffect(() => {
-    // 1. Fetch locations from backend API
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-    fetch(`${apiBase}/hidden-locations?withWeather=true`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+    // 1. Fetch locations from backend API with fallback
+    api.get('/hidden-locations', { params: { withWeather: true } })
+      .then((res) => {
+        const data = res.data;
         if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
           setLocations(data.data);
           const initialMap = {};
@@ -268,7 +268,9 @@ export default function HiddenLocationsSection() {
           setWeatherMap(initialMap);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to FALLBACK_LOCATIONS without throwing console errors
+      });
   }, []);
 
   // Fetch real-time Open-Meteo weather for locations if not loaded from backend

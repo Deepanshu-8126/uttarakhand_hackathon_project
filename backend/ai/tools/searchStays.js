@@ -39,15 +39,19 @@ export async function searchStays({ location = "", query = "", maxPrice = null }
   }
 
   const lowerLoc = loc.toLowerCase();
-  let matches = HOMESTAYS_DB.filter((stay) => {
-    const stayText = `${stay.name} ${stay.location} ${stay.district}`.toLowerCase();
+  let matches = (HOMESTAYS_DB || []).filter((stay) => {
+    const sName = String(stay.name || "");
+    const sLoc = typeof stay.location === "string" ? stay.location : (stay.city || "");
+    const sDist = String(stay.district || "");
+    const stayText = `${sName} ${sLoc} ${sDist}`.toLowerCase();
+    
     if (targetedLocations.length > 0) {
       return targetedLocations.some(k => stayText.includes(k));
     }
     if (!lowerLoc) return true;
-    return stay.location.toLowerCase().includes(lowerLoc) ||
-           stay.district.toLowerCase().includes(lowerLoc) ||
-           stay.name.toLowerCase().includes(lowerLoc);
+    return sLoc.toLowerCase().includes(lowerLoc) ||
+           sDist.toLowerCase().includes(lowerLoc) ||
+           sName.toLowerCase().includes(lowerLoc);
   });
 
   return {

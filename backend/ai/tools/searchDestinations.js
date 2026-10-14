@@ -34,17 +34,17 @@ export async function searchDestinations({ query = "", region = "", maxAltitude 
     // If DB query fails or uninitialized, proceed to fallback
   }
 
-  let matches = DESTINATIONS_DB.filter((d) => {
+  let matches = (DESTINATIONS_DB || []).filter((d) => {
     let match = true;
     if (q) {
       const lower = q.toLowerCase();
-      match = d.name.toLowerCase().includes(lower) ||
-              d.district.toLowerCase().includes(lower) ||
-              d.category.toLowerCase().includes(lower) ||
-              d.highlights.some(h => h.toLowerCase().includes(lower));
+      match = (d.name && d.name.toLowerCase().includes(lower)) ||
+              (d.district && d.district.toLowerCase().includes(lower)) ||
+              (d.category && d.category.toLowerCase().includes(lower)) ||
+              (Array.isArray(d.highlights) && d.highlights.some(h => typeof h === 'string' && h.toLowerCase().includes(lower)));
     }
     if (reg && match) {
-      match = d.region.toLowerCase().includes(reg.toLowerCase());
+      match = d.region && d.region.toLowerCase().includes(reg.toLowerCase());
     }
     if (maxAltitude && match) {
       match = d.altitudeMeters <= Number(maxAltitude);

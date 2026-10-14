@@ -115,3 +115,15 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+export const deleteBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    res.json({ success: true, message: 'Booking removed successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

@@ -5,12 +5,16 @@ export class DestinationAgent {
   static name = "DestinationAgent";
   static description = "Specialist in Uttarakhand destinations, treks, heritage, temples, and altitude exploration.";
 
-  static async handle(query, context, emitThinking) {
-    emitThinking("Searching destination knowledge base and regional maps...");
-    const dest = context.entities.destination || query;
+  static async handle(query, context = {}, emitThinking = () => {}) {
+    if (typeof emitThinking === 'function') {
+      emitThinking("Searching destination knowledge base and regional maps...");
+    }
+    const dest = context?.entities?.destination || query || "Uttarakhand";
 
     const destinations = await executeAiTool("search_destinations", { query: dest });
-    emitThinking("Fetching live mountain weather and current conditions...");
+    if (typeof emitThinking === 'function') {
+      emitThinking("Fetching live mountain weather and current conditions...");
+    }
     const weather = await executeAiTool("get_weather", { destination: dest });
 
     return {
@@ -27,3 +31,4 @@ export class DestinationAgent {
     };
   }
 }
+

@@ -5,9 +5,11 @@ export class RentalAgent {
   static name = "RentalAgent";
   static description = "Specialist in bike rentals (Royal Enfield Himalayan), 4x4 self-drive, cabs, and mountain gear.";
 
-  static async handle(query, context, emitThinking) {
-    emitThinking("Scanning verified fleet providers in Rishikesh, Dehradun, and Haridwar...");
-    const origin = context.entities.origin || "Rishikesh";
+  static async handle(query, context = {}, emitThinking = () => {}) {
+    if (typeof emitThinking === 'function') {
+      emitThinking("Scanning verified fleet providers in Rishikesh, Dehradun, and Haridwar...");
+    }
+    const origin = context?.entities?.origin || context?.entities?.destination || "Rishikesh";
     const rentals = await executeAiTool("search_rentals", { location: origin });
 
     return {
@@ -24,3 +26,4 @@ export class RentalAgent {
     };
   }
 }
+

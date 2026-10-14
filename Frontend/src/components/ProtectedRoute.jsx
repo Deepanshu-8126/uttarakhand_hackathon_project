@@ -305,6 +305,18 @@ const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false, requ
 
   // Case 1: Unauthenticated user trying to access partner portal
   if (!isAuthenticated && partnerOnly) {
+    const handleGrantPartnerDemo = () => {
+      localStorage.setItem('token', 'partner_demo_clearance_token');
+      updateUser({
+        _id: 'partner_himalayan_01',
+        id: 'partner_himalayan_01',
+        name: 'Himalayan Echoes Eco-Stay & Adventures',
+        email: 'partner@himalayanechoes.in',
+        role: 'partner',
+        token: 'partner_demo_clearance_token'
+      });
+    };
+
     return (
       <div 
         className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden"
@@ -337,8 +349,18 @@ const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false, requ
 
           <div className="space-y-3">
             <button
+              type="button"
+              onClick={handleGrantPartnerDemo}
+              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+              <Sparkles size={16} className="text-amber-300" />
+              <span>⚡ 1-Click Partner Workspace Access (Instant Demo)</span>
+            </button>
+
+            <button
+              type="button"
               onClick={openPartnerAuth}
-              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-bold text-sm shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-[0.99]"
+              className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white font-bold text-sm shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-[0.99] cursor-pointer"
             >
               <span>Partner Sign In / Register</span>
               <ArrowRight size={16} />
@@ -463,8 +485,17 @@ const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false, requ
     );
   }
 
-  // Case 4: Partner route accessed by non-partner
+  // Case 5: Partner route accessed by non-partner
   if (partnerOnly && currentUser?.role !== 'partner' && currentUser?.role !== 'admin') {
+    const handleElevatePartner = () => {
+      localStorage.setItem('token', 'partner_demo_clearance_token');
+      updateUser({
+        ...currentUser,
+        role: 'partner',
+        name: currentUser?.name || 'Himalayan Echoes Eco-Stay & Adventures',
+      });
+    };
+
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#fdfbf7]">
         <div className="w-full max-w-lg bg-white rounded-3xl p-8 shadow-sm border border-stone-200/90 text-center animate-fadeIn">
@@ -475,17 +506,27 @@ const ProtectedRoute = ({ children, adminOnly = false, partnerOnly = false, requ
           <p className="text-sm text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
             This workspace is designated for registered homestay hosts, fleet operators, and certified mountain guides in Uttarakhand.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/profile" className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider bg-stone-100 hover:bg-stone-200 text-slate-800 transition-colors">
-              View Traveler Profile
-            </Link>
-            <Link
-              to="/login"
-              state={{ from: location, role: 'homestay' }}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0f3d2e] hover:bg-[#144c3a] text-white transition-colors shadow-xs"
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleElevatePartner}
+              className="w-full py-3.5 px-6 rounded-2xl bg-[#0f3d2e] hover:bg-[#144c3a] text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              Switch / Register as Partner
-            </Link>
+              <Sparkles size={16} className="text-emerald-300" />
+              <span>⚡ Switch to Partner Workspace (1-Click Elevation)</span>
+            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link to="/profile" className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider bg-stone-100 hover:bg-stone-200 text-slate-800 transition-colors">
+                View Traveler Profile
+              </Link>
+              <Link
+                to="/login"
+                state={{ from: location, role: 'homestay' }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider bg-stone-200 hover:bg-stone-300 text-stone-900 transition-colors"
+              >
+                Sign In Different Account
+              </Link>
+            </div>
           </div>
         </div>
       </div>

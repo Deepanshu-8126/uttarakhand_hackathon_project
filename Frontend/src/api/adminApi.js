@@ -36,6 +36,8 @@ export const deleteItem = async (type, id) => {
   let endpoint = `/${type}/${id}`;
   if (type === 'reviews') endpoint = `/admin/reviews/${id}`;
   else if (type === 'users') endpoint = `/admin/users/${id}`;
+  else if (type === 'bookings') endpoint = `/admin/bookings/${id}`;
+  else if (type === 'partners') endpoint = `/admin/partners/${id}`;
   
   const response = await api.delete(endpoint);
   return response.data;

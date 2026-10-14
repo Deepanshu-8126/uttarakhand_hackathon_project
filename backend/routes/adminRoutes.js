@@ -3,6 +3,7 @@ import {
   getAdminStats, 
   getAllBookings, 
   updateBookingStatus,
+  deleteBooking,
   getAllUsers,
   updateUserRole,
   deleteUser
@@ -14,6 +15,7 @@ const router = express.Router();
 
 import {
   getAllPartners,
+  deletePartner,
   getPendingListings,
   getListingForAdmin,
   verifyListing,
@@ -27,6 +29,7 @@ import {
 router.get('/stats', protect, adminOnly, getAdminStats);
 router.get('/bookings', protect, adminOnly, getAllBookings);
 router.patch('/bookings/:id/status', protect, adminOnly, updateBookingStatus);
+router.delete('/bookings/:id', protect, adminOnly, deleteBooking);
 
 // Users
 router.get('/users', protect, adminOnly, getAllUsers);
@@ -41,6 +44,7 @@ router.delete('/reviews/:id', protect, adminOnly, deleteReviewAdmin);
 
 // Partner Marketplace Verification
 router.get('/partners', protect, adminOnly, getAllPartners);
+router.delete('/partners/:id', protect, adminOnly, deletePartner);
 router.get('/listings/pending', protect, adminOnly, getPendingListings);
 router.get('/listings/:id', protect, adminOnly, getListingForAdmin);
 router.post('/listings/:id/verify', protect, adminOnly, verifyListing);

@@ -90,9 +90,26 @@ export async function promptGoogleSignIn({
                     isRealOAuth: true
                   });
                   return;
+                } else {
+                  console.warn('[GoogleAuth] Google userinfo returned status:', userInfoRes.status);
+                  if (!isResolved) {
+                    isResolved = true;
+                    resolve({ error: `Failed to fetch profile (${userInfoRes.status})` });
+                  }
+                  return;
                 }
               } catch (fetchErr) {
                 console.warn('[GoogleAuth] Failed to fetch userinfo from Google:', fetchErr.message);
+                if (!isResolved) {
+                  isResolved = true;
+                  resolve({ error: fetchErr.message });
+                }
+                return;
+              }
+            } else {
+              if (!isResolved) {
+                isResolved = true;
+                resolve({ error: 'No access token received from Google' });
               }
             }
           },

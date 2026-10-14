@@ -24,6 +24,24 @@ export const getAllPartners = async (req, res) => {
 };
 
 /**
+ * Delete a partner profile
+ * DELETE /api/admin/partners/:id
+ */
+export const deletePartner = async (req, res) => {
+  try {
+    const partner = await Partner.findByIdAndDelete(req.params.id);
+    if (!partner) {
+      return res.status(404).json({ success: false, message: 'Partner not found.' });
+    }
+    // Also remove associated partner listings
+    await PartnerListing.deleteMany({ partner: req.params.id });
+    res.status(200).json({ success: true, message: 'Partner and associated listings removed successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
  * List all listings currently in PENDING_VERIFICATION queue
  * GET /api/admin/listings/pending
  */

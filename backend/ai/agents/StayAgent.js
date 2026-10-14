@@ -5,15 +5,17 @@ export class StayAgent {
   static name = "StayAgent";
   static description = "Specialist in verified Pahadi homestays, riverside camps, GMVN retreats, and local host connections.";
 
-  static async handle(query, context, emitThinking) {
-    emitThinking("Scanning verified Pahadi homestays in database and local host networks...");
-    const dest = context.entities.destination || "";
+  static async handle(query, context = {}, emitThinking = () => {}) {
+    if (typeof emitThinking === 'function') {
+      emitThinking("Scanning verified Pahadi homestays in database and local host networks...");
+    }
+    const dest = context?.entities?.destination || query || "";
     const staysResult = await executeAiTool("search_stays", { location: dest, query });
 
     return {
       agent: StayAgent.name,
       toolsUsed: ["search_stays"],
-      data: { stays: staysResult.stays, query },
+      data: { stays: staysResult?.stays || [], query },
       systemPrompt: AGENT_PERSONAS.STAY || AGENT_PERSONAS.DESTINATION,
       suggestions: [
         "Homestay contact & booking",
@@ -24,3 +26,4 @@ export class StayAgent {
     };
   }
 }
+

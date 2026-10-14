@@ -66,7 +66,8 @@ expressWs(app);
 
 // Middleware - allow cross-origin resource policy so uploaded images can be loaded from frontend port
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
 }));
 
 // Universal Permissive CORS middleware for Vercel, Render & Localhost

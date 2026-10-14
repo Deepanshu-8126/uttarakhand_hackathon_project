@@ -5,14 +5,16 @@ export class SafetyAgent {
   static name = "SafetyAgent";
   static description = "Specialist in Himalayan altitude safety, AMS medical precautions, emergency SOS, and weather.";
 
-  static async handle(query, context, emitThinking) {
-    emitThinking("Checking altitude elevation, AMS thresholds, and SDRF mountain protocols...");
-    const dest = context.entities.destination || "Kedarnath";
+  static async handle(query, context = {}, emitThinking = () => {}) {
+    if (typeof emitThinking === 'function') {
+      emitThinking("Checking altitude elevation, AMS thresholds, and SDRF mountain protocols...");
+    }
+    const dest = context?.entities?.destination || query || "Kedarnath";
 
     const destinations = await executeAiTool("search_destinations", { query: dest });
     const weather = await executeAiTool("get_weather", { destination: dest });
 
-    const matchedDest = destinations.destinations?.[0] || {};
+    const matchedDest = destinations?.destinations?.[0] || {};
     const altitude = matchedDest.altitudeMeters || 3584;
 
     const safetyProtocol = {
@@ -46,3 +48,4 @@ export class SafetyAgent {
     };
   }
 }
+

@@ -165,8 +165,14 @@ const AdminManagement = () => {
         setCoverImages(item.coverImage ? [item.coverImage] : (item.images && item.images[0] ? [item.images[0]] : []));
         setGalleryImages(item.gallery || (item.images ? item.images.slice(1) : []));
       } else if (type === 'rentals' || type === 'stays') {
-        setCoverImages(item.image ? [item.image] : (item.images && item.images[0] ? [item.images[0]] : []));
-        setGalleryImages(item.images ? (item.image ? item.images.filter(img => img !== item.image) : item.images) : []);
+        const primaryImg = item.image || (item.images && item.images[0] ? item.images[0] : null);
+        setCoverImages(primaryImg ? [primaryImg] : []);
+        const rawImages = Array.isArray(item.images) ? item.images : [];
+        const primUrl = typeof primaryImg === 'string' ? primaryImg : primaryImg?.url;
+        setGalleryImages(rawImages.filter(img => {
+          const u = typeof img === 'string' ? img : img?.url;
+          return u && u !== primUrl;
+        }));
       } else if (type === 'guides') {
         setCoverImages(item.profileImage ? [item.profileImage] : (item.image ? [item.image] : []));
         setGalleryImages([]);
@@ -235,14 +241,23 @@ const AdminManagement = () => {
       const processedGallery = await handleUploadImages(galleryImages);
 
       if (['destinations', 'spiritual', 'culture', 'activities'].includes(type)) {
-        payload.coverImage = processedCover[0] || null;
-        payload.gallery = processedGallery;
-      } else if (type === 'rentals' || type === 'stays') {
-        payload.image = processedCover[0]?.url || (typeof processedCover[0] === 'string' ? processedCover[0] : null);
+        payload.coverImage = processedCover[0] 
+          ? (typeof processedCover[0] === 'string' ? { url: processedCover[0] } : (processedCover[0]?.url ? processedCover[0] : { url: processedCover[0] }))
+          : null;
+        payload.gallery = processedGallery.map(img => typeof img === 'string' ? { url: img } : (img?.url ? img : { url: img })).filter(Boolean);
         payload.images = [
-          ...(processedCover.map(c => typeof c === 'string' ? c : c?.url).filter(Boolean)),
-          ...(processedGallery.map(g => typeof g === 'string' ? g : g?.url).filter(Boolean))
+          ...(payload.coverImage ? [payload.coverImage] : []),
+          ...payload.gallery
         ];
+      } else if (type === 'rentals' || type === 'stays') {
+        const coverObj = processedCover[0] 
+          ? (typeof processedCover[0] === 'string' ? { url: processedCover[0] } : (processedCover[0]?.url ? processedCover[0] : { url: processedCover[0] })) 
+          : null;
+        payload.image = coverObj ? coverObj.url : null;
+        payload.images = [
+          ...(coverObj ? [coverObj] : []),
+          ...processedGallery.map(g => typeof g === 'string' ? { url: g } : (g?.url ? g : { url: g }))
+        ].filter(Boolean);
       } else if (type === 'guides') {
         payload.profileImage = processedCover[0]?.url || (typeof processedCover[0] === 'string' ? processedCover[0] : null);
         payload.image = payload.profileImage;
@@ -322,25 +337,31 @@ const AdminManagement = () => {
   const isSpecialCategory = ['bookings', 'reviews', 'users', 'partners'].includes(type);
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#06140e] text-stone-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative">
+      {/* Ambient Mountain Lighting */}
+      <div className="fixed inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-emerald-600/10 blur-[140px] rounded-full"></div>
+        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-teal-500/10 blur-[150px] rounded-full"></div>
+      </div>
+
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 relative z-10">
         
         {/* Navigation Breadcrumb & Title Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-stone-900 p-6 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-stone-900/90 p-6 rounded-3xl border border-emerald-500/20 shadow-xl backdrop-blur-xl">
           <div className="space-y-1">
             <Link 
               to="/admin" 
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
             >
               <ArrowLeft size={14} /> Back to Master Admin Dashboard
             </Link>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-extrabold capitalize text-stone-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold capitalize text-white tracking-tight">
                 Manage {type}
               </h1>
-              <span className="px-3 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono text-xs font-bold border border-emerald-300 dark:border-emerald-800">
+              <span className="px-3 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/40">
                 {items.length} records
               </span>
             </div>
@@ -349,7 +370,7 @@ const AdminManagement = () => {
           {!isSpecialCategory && (
             <button 
               onClick={() => openModal()} 
-              className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-md hover:shadow-emerald-900/30 text-sm shrink-0"
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-950/50 text-sm shrink-0 hover:-translate-y-0.5"
             >
               <Plus size={16} /> Add New {type.slice(0, -1)}
             </button>
@@ -358,24 +379,24 @@ const AdminManagement = () => {
 
         {/* Action Toast Notification */}
         {actionSuccessMsg && (
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-500/40 rounded-2xl text-emerald-800 dark:text-emerald-200 text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-            <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
+          <div className="p-4 bg-emerald-950/90 border border-emerald-400/50 rounded-2xl text-emerald-200 text-sm font-bold flex items-center gap-2 shadow-lg animate-in fade-in slide-in-from-top-2">
+            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
             <span>{actionSuccessMsg}</span>
           </div>
         )}
 
         {/* Filter and View Controls Bar */}
-        <div className="bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-stone-900/90 p-4 sm:p-5 rounded-2xl border border-emerald-500/20 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-xl">
           
           {/* Search Input */}
           <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-500" size={16} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search ${type} by name, city, district...`}
-              className="w-full pl-10 pr-4 py-2 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-2 bg-stone-950/80 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
             />
           </div>
 
@@ -385,7 +406,7 @@ const AdminManagement = () => {
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="px-3 py-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-800 dark:text-stone-200 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="px-3 py-2 bg-stone-950/80 border border-stone-800 rounded-xl text-xs text-stone-200 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all"
               >
                 <option value="all">All Locations ({items.length})</option>
                 {allDistricts.map(d => (
@@ -398,7 +419,7 @@ const AdminManagement = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-800 dark:text-stone-200 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="px-3 py-2 bg-stone-950/80 border border-stone-800 rounded-xl text-xs text-stone-200 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all"
               >
                 <option value="name">Sort by Name</option>
                 <option value="price">Sort by Price (High to Low)</option>
@@ -407,17 +428,17 @@ const AdminManagement = () => {
             )}
 
             {/* View Mode Switcher */}
-            <div className="flex items-center bg-stone-100 dark:bg-stone-800 p-1 rounded-xl border border-stone-200 dark:border-stone-700">
+            <div className="flex items-center bg-stone-950/80 p-1 rounded-xl border border-stone-800">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white dark:bg-stone-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-stone-400'}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-stone-800 text-emerald-400 shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}
                 title="Grid / Photo Card View"
               >
                 <LayoutGrid size={16} />
               </button>
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white dark:bg-stone-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-stone-400'}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-stone-800 text-emerald-400 shadow-sm' : 'text-stone-500 hover:text-stone-300'}`}
                 title="Table / List View"
               >
                 <List size={16} />
@@ -429,8 +450,8 @@ const AdminManagement = () => {
         {/* Content Display: Loading / Empty / Grid / Table */}
         {loading ? (
           <div className="py-24 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-sm font-semibold text-stone-500">Loading {type} records and high-res photography...</p>
+            <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-sm font-semibold text-stone-400">Loading {type} records and high-res photography...</p>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="bg-white dark:bg-stone-900 rounded-3xl p-12 text-center border border-stone-200 dark:border-stone-800 space-y-4">
@@ -449,11 +470,11 @@ const AdminManagement = () => {
             )}
           </div>
         ) : isSpecialCategory ? (
-          /* Special Categories View: Bookings, Reviews, Users */
-          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 overflow-hidden shadow-sm">
+          /* Special Categories View: Bookings, Reviews, Users, Partners */
+          <div className="bg-stone-900/90 rounded-3xl border border-emerald-500/20 overflow-hidden shadow-2xl backdrop-blur-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-stone-100 dark:bg-stone-800/60 border-b border-stone-200 dark:border-stone-700 font-bold text-stone-600 dark:text-stone-300">
+                <thead className="bg-stone-950/80 border-b border-stone-800 font-bold text-emerald-400">
                   {type === 'bookings' && (
                     <tr>
                       <th className="p-4">Booking ID</th>
@@ -484,29 +505,39 @@ const AdminManagement = () => {
                       <th className="p-4 text-right">Actions</th>
                     </tr>
                   )}
+                  {type === 'partners' && (
+                    <tr>
+                      <th className="p-4">Business / Partner</th>
+                      <th className="p-4">Owner Account</th>
+                      <th className="p-4">Category</th>
+                      <th className="p-4">Region</th>
+                      <th className="p-4">Clearance Status</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  )}
                 </thead>
-                <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+                <tbody className="divide-y divide-stone-800">
                   {filteredItems.map(item => (
-                    <tr key={item._id} className="hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors">
+                    <tr key={item._id} className="hover:bg-stone-800/40 transition-colors">
                       {type === 'bookings' && (
                         <>
-                          <td className="p-4 font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                          <td className="p-4 font-mono font-bold text-emerald-400">
                             #{item._id?.slice(-6)}
                           </td>
                           <td className="p-4">
-                            <div className="font-bold">{item.user?.name || 'Guest User'}</div>
-                            <div className="text-stone-400 text-[11px]">{item.user?.email || '-'}</div>
+                            <div className="font-bold text-white">{item.user?.name || 'Guest User'}</div>
+                            <div className="text-stone-400 text-[11px] font-mono">{item.user?.email || '-'}</div>
                           </td>
-                          <td className="p-4 font-semibold">{item.item?.name || item.bookingType || 'Uttarakhand Service'}</td>
-                          <td className="p-4 font-bold text-stone-900 dark:text-white">₹{item.totalAmount?.toLocaleString() || '0'}</td>
-                          <td className="p-4 text-stone-500">
+                          <td className="p-4 font-semibold text-stone-200">{item.item?.name || item.bookingType || 'Uttarakhand Service'}</td>
+                          <td className="p-4 font-bold text-emerald-400">₹{item.totalAmount?.toLocaleString() || '0'}</td>
+                          <td className="p-4 text-stone-400">
                             {item.startDate ? new Date(item.startDate).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="p-4">
                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                              item.status === 'confirmed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' :
-                              item.status === 'cancelled' ? 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300' :
-                              'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
+                              item.status === 'confirmed' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' :
+                              item.status === 'cancelled' ? 'bg-red-950 text-red-300 border border-red-500/30' :
+                              'bg-amber-950 text-amber-300 border border-amber-500/30'
                             }`}>
                               {item.status || 'pending'}
                             </span>
@@ -514,15 +545,21 @@ const AdminManagement = () => {
                           <td className="p-4 text-right space-x-2 whitespace-nowrap">
                             <button
                               onClick={() => handleBookingStatusChange(item._id, 'confirmed', 'paid')}
-                              className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold"
+                              className="px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleBookingStatusChange(item._id, 'cancelled')}
-                              className="px-2.5 py-1 bg-stone-200 dark:bg-stone-700 hover:bg-red-500 hover:text-white text-stone-700 dark:text-stone-200 rounded-lg text-xs font-bold"
+                              className="px-2.5 py-1 bg-stone-800 hover:bg-red-950 hover:text-red-300 text-stone-300 rounded-lg text-xs font-bold transition-all border border-stone-700/60"
                             >
                               Cancel
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item._id)}
+                              className="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold transition-all"
+                            >
+                              Delete
                             </button>
                           </td>
                         </>
@@ -530,20 +567,20 @@ const AdminManagement = () => {
 
                       {type === 'reviews' && (
                         <>
-                          <td className="p-4 font-bold">{item.user?.name || item.userName || 'Anonymous'}</td>
-                          <td className="p-4 font-semibold">{item.itemType || item.targetSlug || 'Listing'}</td>
+                          <td className="p-4 font-bold text-white">{item.user?.name || item.userName || 'Anonymous'}</td>
+                          <td className="p-4 font-semibold text-stone-300">{item.itemType || item.targetSlug || 'Listing'}</td>
                           <td className="p-4">
-                            <div className="flex items-center gap-1 text-amber-500 font-bold">
+                            <div className="flex items-center gap-1 text-amber-400 font-bold">
                               <Star size={14} className="fill-amber-400" />
                               {item.rating || 5}
                             </div>
                           </td>
-                          <td className="p-4 text-stone-600 dark:text-stone-300 max-w-sm truncate">{item.comment || '-'}</td>
+                          <td className="p-4 text-stone-300 max-w-sm truncate">{item.comment || '-'}</td>
                           <td className="p-4">
                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                              item.status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' :
-                              item.status === 'flagged' ? 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300' :
-                              'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
+                              item.status === 'approved' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' :
+                              item.status === 'flagged' ? 'bg-red-950 text-red-300 border border-red-500/30' :
+                              'bg-amber-950 text-amber-300 border border-amber-500/30'
                             }`}>
                               {item.status || 'pending'}
                             </span>
@@ -551,13 +588,13 @@ const AdminManagement = () => {
                           <td className="p-4 text-right space-x-2 whitespace-nowrap">
                             <button
                               onClick={() => handleReviewStatusChange(item._id, 'approved')}
-                              className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold"
+                              className="px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleDelete(item._id)}
-                              className="px-2.5 py-1 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded-lg text-xs font-bold"
+                              className="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold transition-all"
                             >
                               Delete
                             </button>
@@ -567,19 +604,19 @@ const AdminManagement = () => {
 
                       {type === 'users' && (
                         <>
-                          <td className="p-4 font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold">
+                          <td className="p-4 font-bold text-white flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs">
                               {(item.name || 'U').charAt(0).toUpperCase()}
                             </div>
                             {item.name || 'Anonymous User'}
                           </td>
-                          <td className="p-4 font-mono text-stone-500">{item.email}</td>
+                          <td className="p-4 font-mono text-stone-400">{item.email}</td>
                           <td className="p-4">
                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${
-                              item.role === 'admin' ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300' :
-                              item.role === 'officer' ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300' :
-                              item.role === 'partner' ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300' :
-                              'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                              item.role === 'admin' ? 'bg-purple-950 text-purple-300 border border-purple-500/40' :
+                              item.role === 'officer' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40' :
+                              item.role === 'partner' ? 'bg-amber-950 text-amber-300 border border-amber-500/40' :
+                              'bg-stone-800 text-stone-300 border border-stone-700/60'
                             }`}>
                               {item.role || 'user'}
                             </span>
@@ -588,7 +625,7 @@ const AdminManagement = () => {
                             <select
                               value={item.role || 'user'}
                               onChange={(e) => handleUserRoleChange(item._id, e.target.value)}
-                              className="px-2.5 py-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-emerald-500"
+                              className="px-2.5 py-1 bg-stone-950 border border-stone-800 rounded-lg text-xs font-semibold text-stone-200 focus:ring-2 focus:ring-emerald-400 transition-all"
                             >
                               <option value="user">User / Explorer</option>
                               <option value="partner">Partner (Vendor)</option>
@@ -599,7 +636,43 @@ const AdminManagement = () => {
                           <td className="p-4 text-right">
                             <button
                               onClick={() => handleDelete(item._id)}
-                              className="text-red-500 hover:text-red-700 font-bold text-xs"
+                              className="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold transition-all"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </>
+                      )}
+
+                      {type === 'partners' && (
+                        <>
+                          <td className="p-4 font-bold text-white">
+                            <div>{item.businessName || item.name || 'Partner Business'}</div>
+                            <div className="text-[11px] text-stone-400 font-mono">{item.phone || item.email || '-'}</div>
+                          </td>
+                          <td className="p-4 font-medium text-stone-300">
+                            <div>{item.user?.name || '-'}</div>
+                            <div className="text-[11px] text-stone-500 font-mono">{item.user?.email || '-'}</div>
+                          </td>
+                          <td className="p-4 font-semibold text-emerald-400">
+                            {item.partnerType || item.category || 'Vendor'}
+                          </td>
+                          <td className="p-4 text-stone-300">
+                            {item.district || item.city || 'Uttarakhand'}
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${
+                              item.isVerified || item.status === 'VERIFIED' || item.status === 'ACTIVE'
+                                ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-amber-950 text-amber-400 border border-amber-500/30'
+                            }`}>
+                              {item.status || (item.isVerified ? 'VERIFIED' : 'PENDING')}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => handleDelete(item._id)}
+                              className="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold transition-all"
                             >
                               Remove
                             </button>
@@ -625,10 +698,10 @@ const AdminManagement = () => {
               return (
                 <div 
                   key={item._id}
-                  className="group bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
+                  className="group bg-stone-900/90 rounded-3xl border border-stone-800 hover:border-emerald-500/40 overflow-hidden shadow-xl hover:shadow-[0_0_25px_rgba(0,255,136,0.12)] transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
                 >
                   {/* Card Image Banner */}
-                  <div className="relative aspect-[16/10] overflow-hidden bg-stone-200 dark:bg-stone-800">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-stone-950">
                     <img 
                       src={img} 
                       alt={title}
@@ -643,7 +716,7 @@ const AdminManagement = () => {
                     {/* Image count pill */}
                     <button
                       onClick={() => setLightboxImage(img)}
-                      className="absolute top-3 left-3 bg-black/60 hover:bg-black/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow"
+                      className="absolute top-3 left-3 bg-black/70 hover:bg-black text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5 shadow border border-white/10"
                     >
                       <Eye size={12} />
                       <span>{photoCount} {photoCount === 1 ? 'photo' : 'photos'}</span>
@@ -651,7 +724,7 @@ const AdminManagement = () => {
 
                     {/* Rating badge */}
                     {item.rating && (
-                      <span className="absolute top-3 right-3 bg-black/60 text-amber-400 font-bold text-xs px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1">
+                      <span className="absolute top-3 right-3 bg-black/70 text-amber-400 font-bold text-xs px-2.5 py-1 rounded-full backdrop-blur-md flex items-center gap-1 border border-white/10">
                         <Star size={12} className="fill-amber-400" />
                         {item.rating}
                       </span>
@@ -660,7 +733,7 @@ const AdminManagement = () => {
                     {/* Price banner */}
                     {price && (
                       <div className="absolute bottom-3 left-3">
-                        <span className="bg-emerald-700/90 text-white font-bold text-xs px-3 py-1 rounded-lg backdrop-blur-md shadow">
+                        <span className="bg-emerald-600/90 text-white font-bold text-xs px-3 py-1 rounded-lg backdrop-blur-md shadow border border-emerald-400/20">
                           ₹{price.toLocaleString()} {item.pricePerDay ? '/ day' : item.pricePerNight ? '/ night' : 'starting'}
                         </span>
                       </div>
@@ -671,37 +744,37 @@ const AdminManagement = () => {
                   <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-stone-800 text-stone-300 border border-stone-700/60">
                           {item.category || item.vehicleType || item.propertyType || type}
                         </span>
                         {item.district && (
-                          <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
-                            <MapPin size={12} className="text-emerald-600" /> {item.district}
+                          <span className="text-[11px] text-stone-400 font-medium flex items-center gap-1">
+                            <MapPin size={12} className="text-emerald-400" /> {item.district}
                           </span>
                         )}
                       </div>
 
-                      <h3 className="font-bold text-lg text-stone-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+                      <h3 className="font-bold text-lg text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
                         {title}
                       </h3>
 
-                      <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2">
+                      <p className="text-xs text-stone-400 line-clamp-2">
                         {item.shortDescription || item.description || item.bio || 'Authentic Himalayan experience listed in Discovery Uttarakhand.'}
                       </p>
                     </div>
 
                     {/* Card Actions Footer */}
-                    <div className="pt-4 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between gap-2">
+                    <div className="pt-4 border-t border-stone-800 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => openModal(item)}
-                          className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                          className="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
                         >
                           <Edit3 size={13} /> Edit
                         </button>
                         <button
                           onClick={() => handleDelete(item._id)}
-                          className="px-3 py-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-colors flex items-center gap-1"
+                          className="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -711,7 +784,7 @@ const AdminManagement = () => {
                         <Link
                           to={type === 'destinations' ? `/destinations/${item.slug}` : `/${type}/${item.slug}`}
                           target="_blank"
-                          className="text-stone-400 hover:text-emerald-600 text-xs font-semibold flex items-center gap-1"
+                          className="text-stone-400 hover:text-emerald-400 text-xs font-semibold flex items-center gap-1 transition-colors"
                           title="Open live on website"
                         >
                           <span>Live Link</span>
@@ -726,10 +799,10 @@ const AdminManagement = () => {
           </div>
         ) : (
           /* Table View: Compact & Fast */
-          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 overflow-hidden shadow-sm">
+          <div className="bg-stone-900/90 rounded-3xl border border-emerald-500/20 overflow-hidden shadow-2xl backdrop-blur-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-stone-100 dark:bg-stone-800/60 border-b border-stone-200 dark:border-stone-700 font-bold text-stone-600 dark:text-stone-300">
+                <thead className="bg-stone-950/80 border-b border-stone-800 font-bold text-emerald-400">
                   <tr>
                     <th className="p-4 w-16">Photo</th>
                     <th className="p-4">Name / Title</th>
@@ -740,7 +813,7 @@ const AdminManagement = () => {
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+                <tbody className="divide-y divide-stone-800">
                   {filteredItems.map(item => {
                     const img = resolveEntityImage(item, type);
                     const title = item.name || item.title || item.vehicleName || 'Item';
@@ -748,31 +821,31 @@ const AdminManagement = () => {
                     const price = item.price || item.pricePerDay || item.pricePerNight || item.startingPrice;
 
                     return (
-                      <tr key={item._id} className="hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors">
+                      <tr key={item._id} className="hover:bg-stone-800/50 transition-colors">
                         <td className="p-3">
                           <img
                             src={img}
                             alt={title}
-                            className="w-12 h-12 rounded-xl object-cover cursor-pointer hover:scale-110 transition-transform shadow-sm"
+                            className="w-12 h-12 rounded-xl object-cover cursor-pointer hover:scale-110 transition-transform shadow-md"
                             onClick={() => setLightboxImage(img)}
                           />
                         </td>
-                        <td className="p-4 font-bold text-stone-900 dark:text-white max-w-xs">
+                        <td className="p-4 font-bold text-white max-w-xs">
                           <div>{title}</div>
                           {item.slug && <div className="text-[10px] text-stone-400 font-mono font-normal">/{item.slug}</div>}
                         </td>
                         <td className="p-4">
-                          <span className="px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-[10px] font-bold">
+                          <span className="px-2 py-0.5 rounded bg-stone-800 text-[10px] font-bold text-stone-300 border border-stone-700/60">
                             {item.category || item.vehicleType || item.propertyType || type}
                           </span>
                         </td>
-                        <td className="p-4 text-stone-600 dark:text-stone-300">{loc}</td>
-                        <td className="p-4 font-bold text-emerald-700 dark:text-emerald-400">
+                        <td className="p-4 text-stone-300">{loc}</td>
+                        <td className="p-4 font-bold text-emerald-400">
                           {price ? `₹${price.toLocaleString()}` : '-'}
                         </td>
                         <td className="p-4">
                           {item.rating ? (
-                            <span className="flex items-center gap-1 font-bold text-amber-500">
+                            <span className="flex items-center gap-1 font-bold text-amber-400">
                               <Star size={12} className="fill-amber-400" /> {item.rating}
                             </span>
                           ) : '-'}
@@ -780,13 +853,13 @@ const AdminManagement = () => {
                         <td className="p-4 text-right space-x-2 whitespace-nowrap">
                           <button
                             onClick={() => openModal(item)}
-                            className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100"
+                            className="px-3 py-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold hover:bg-emerald-900 transition-colors"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(item._id)}
-                            className="px-3 py-1.5 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-100"
+                            className="px-3 py-1.5 bg-red-950/60 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold hover:bg-red-900 transition-colors"
                           >
                             Delete
                           </button>
@@ -803,34 +876,34 @@ const AdminManagement = () => {
 
       {/* Comprehensive Add / Edit Item Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto pt-20 pb-12">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl shadow-2xl w-full max-w-4xl border border-stone-200 dark:border-stone-800 overflow-hidden my-auto animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto pt-20 pb-12">
+          <div className="bg-stone-950 border border-emerald-500/30 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden my-auto animate-in zoom-in-95 text-stone-100">
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-5 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/60">
+            <div className="flex justify-between items-center px-6 py-5 border-b border-stone-800 bg-gradient-to-r from-[#0f3d2e] via-stone-900 to-stone-950">
               <div>
-                <h2 className="text-xl font-bold text-stone-900 dark:text-white capitalize">
+                <h2 className="text-xl font-bold text-white capitalize">
                   {editingItem ? `Edit ${type.slice(0, -1)}: ${formData.name || formData.title || ''}` : `Add New ${type.slice(0, -1)} to Portal`}
                 </h2>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-stone-400 mt-0.5">
                   Complete metadata, geo-coordinates, and high-resolution photography.
                 </p>
               </div>
               <button 
                 onClick={() => setShowModal(false)} 
-                className="p-2 text-stone-400 hover:text-stone-700 dark:hover:text-white rounded-full transition-colors"
+                className="p-2 text-stone-400 hover:text-white hover:bg-stone-800/80 rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSave} className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSave} className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto bg-stone-950/90">
               
               {/* Core Identity */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     {type === 'rentals' ? 'Vehicle Name & Model' : 'Name / Title'} *
                   </label>
                   <input
@@ -848,12 +921,12 @@ const AdminManagement = () => {
                       }));
                     }}
                     placeholder="e.g. Royal Enfield Himalayan 450 or Kedarkantha Sanctuary"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs font-medium text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     URL Slug (Unique identifier) *
                   </label>
                   <input
@@ -863,7 +936,7 @@ const AdminManagement = () => {
                     value={formData.slug || ''}
                     onChange={handleInputChange}
                     placeholder="e.g. himalayan-450-dehradun"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs font-mono text-emerald-300 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
               </div>
@@ -871,7 +944,7 @@ const AdminManagement = () => {
               {/* Geographic & Classification */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     District / Region
                   </label>
                   <input
@@ -880,12 +953,12 @@ const AdminManagement = () => {
                     value={formData.district || ''}
                     onChange={handleInputChange}
                     placeholder="e.g. Uttarkashi, Nainital, Chamoli"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     City / Local Hub
                   </label>
                   <input
@@ -894,12 +967,12 @@ const AdminManagement = () => {
                     value={formData.city || formData.location || ''}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value, location: e.target.value })}
                     placeholder="e.g. Rishikesh, Joshimath, Dehradun"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     Category / Type
                   </label>
                   <input
@@ -908,7 +981,7 @@ const AdminManagement = () => {
                     value={formData.category || formData.vehicleType || formData.propertyType || ''}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value, vehicleType: e.target.value, propertyType: e.target.value })}
                     placeholder="e.g. Bike, Homestay, Trek, Temple"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
               </div>
@@ -916,7 +989,7 @@ const AdminManagement = () => {
               {/* Pricing & Ratings */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     {type === 'rentals' ? 'Price Per Day (₹)' : type === 'stays' ? 'Price Per Night (₹)' : 'Starting Price (₹)'}
                   </label>
                   <input
@@ -934,12 +1007,12 @@ const AdminManagement = () => {
                       });
                     }}
                     placeholder="e.g. 1500"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs font-bold text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     Star Rating (0 to 5)
                   </label>
                   <input
@@ -950,12 +1023,12 @@ const AdminManagement = () => {
                     name="rating"
                     value={formData.rating || 4.8}
                     onChange={handleInputChange}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs font-bold text-amber-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     Best Season / Ideal Duration
                   </label>
                   <input
@@ -964,7 +1037,7 @@ const AdminManagement = () => {
                     value={formData.bestTimeToVisit || formData.idealDuration || ''}
                     onChange={handleInputChange}
                     placeholder="e.g. May to Oct, 3-4 Days"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
               </div>
@@ -972,7 +1045,7 @@ const AdminManagement = () => {
               {/* Geo Coordinates */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     Latitude (e.g. 30.3165)
                   </label>
                   <input
@@ -982,11 +1055,11 @@ const AdminManagement = () => {
                     value={formData.lat || ''}
                     onChange={handleInputChange}
                     placeholder="30.3165"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs font-mono text-emerald-300 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                     Longitude (e.g. 78.0322)
                   </label>
                   <input
@@ -996,7 +1069,7 @@ const AdminManagement = () => {
                     value={formData.lng || ''}
                     onChange={handleInputChange}
                     placeholder="78.0322"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs font-mono text-emerald-300 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                   />
                 </div>
               </div>
@@ -1004,7 +1077,7 @@ const AdminManagement = () => {
               {/* Stays / Homestay Specifics: Amenities Chips */}
               {type === 'stays' && (
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400">
                     Amenities & Facilities
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -1017,8 +1090,8 @@ const AdminManagement = () => {
                           onClick={() => toggleAmenity(amenity)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                             selected 
-                              ? 'bg-emerald-700 text-white shadow-sm' 
-                              : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200'
+                              ? 'bg-emerald-600 text-white shadow-md border border-emerald-500' 
+                              : 'bg-stone-900 text-stone-300 border border-stone-800 hover:border-emerald-500/40'
                           }`}
                         >
                           {selected && <Check size={12} />}
@@ -1032,7 +1105,7 @@ const AdminManagement = () => {
 
               {/* Highlights & Tags */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                   Highlights & Key Points (Comma separated)
                 </label>
                 <input
@@ -1041,13 +1114,13 @@ const AdminManagement = () => {
                   value={formData.highlightsText || ''}
                   onChange={handleInputChange}
                   placeholder="e.g. Panoramic Himalayan views, Ancient cedar forest, Sunrise viewpoint"
-                  className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1.5">
                   Detailed Description & Authentic Story
                 </label>
                 <textarea
@@ -1056,12 +1129,12 @@ const AdminManagement = () => {
                   value={formData.description || formData.bio || ''}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value, bio: e.target.value })}
                   placeholder="Describe the atmosphere, cultural history, accessibility, and local experiences..."
-                  className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700/80 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                 />
               </div>
 
               {/* Image & Photo Management */}
-              <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+              <div className="pt-4 border-t border-stone-800">
                 <ImageUploader
                   label="Primary Cover Photo (Main Card Banner)"
                   images={coverImages}
@@ -1081,20 +1154,27 @@ const AdminManagement = () => {
               </div>
 
               {/* Submit / Cancel Buttons */}
-              <div className="flex items-center gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
+              <div className="flex items-center gap-3 pt-5 border-t border-stone-800">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                  className="flex-1 px-4 py-3 border border-stone-700/80 rounded-xl text-xs font-bold text-stone-300 hover:bg-stone-900 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 px-4 py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-emerald-900/30 disabled:opacity-50"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-950/50 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {isSaving ? 'Saving to Database...' : (editingItem ? 'Save Changes' : `Create ${type.slice(0, -1)}`)}
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Saving to Database...</span>
+                    </>
+                  ) : (
+                    <span>{editingItem ? 'Save Changes' : `Create ${type.slice(0, -1)}`}</span>
+                  )}
                 </button>
               </div>
             </form>

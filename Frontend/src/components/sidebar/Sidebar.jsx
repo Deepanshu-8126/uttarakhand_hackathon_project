@@ -4,7 +4,6 @@ import SidebarItem from './SidebarItem';
 import LayerControls from './LayerControls';
 import { CATEGORIES } from '../../utils/mapConstants';
 import routesData from '../../data/routes.json';
-import spiritualData from '../../data/spiritual.json';
 import { 
   MdExplore, 
   MdAltRoute, 

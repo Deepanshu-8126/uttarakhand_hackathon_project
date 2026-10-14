@@ -4,8 +4,10 @@ export class FestivalAgent {
   static name = "FestivalAgent";
   static description = "Specialist in Uttarakhand cultural fairs, festivals, Pahari folk traditions, and local rituals.";
 
-  static async handle(query, context, emitThinking) {
-    emitThinking("Consulting Uttarakhand cultural calendar and festival almanac...");
+  static async handle(query, context = {}, emitThinking = () => {}) {
+    if (typeof emitThinking === 'function') {
+      emitThinking("Consulting Uttarakhand cultural calendar and festival almanac...");
+    }
 
     const festivals = [
       { name: "Phool Dei", season: "Spring (Mid-March)", significance: "Festival of flowers where young girls place first spring blossoms on village doorsteps.", region: "All Uttarakhand" },
@@ -29,3 +31,4 @@ export class FestivalAgent {
     };
   }
 }
+

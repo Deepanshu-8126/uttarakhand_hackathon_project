@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PhoneCall, Sparkles, Compass, Shield, MapPin, MessageSquare } from 'lucide-react';
+import ChatWindow from '../chat/ChatWindow';
 
 export default function CopilotPage() {
+  const [chatOpen, setChatOpen] = useState(false);
+
   const handleStartCall = () => {
     window.dispatchEvent(new CustomEvent('open-voice-call'));
   };
@@ -22,22 +25,37 @@ export default function CopilotPage() {
         Full-duplex real-time voice call agent powered by official Gemini Live studio voice <strong className="text-emerald-700">Aoede</strong> with ultra-fast Redis streaming.
       </p>
 
-      {/* Primary Call Action */}
-      <div className="p-8 bg-white border border-stone-200 rounded-3xl shadow-xl flex flex-col items-center max-w-md w-full mb-10">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-xl shadow-emerald-900/30 mb-5 animate-pulse">
-          <PhoneCall size={40} />
+      {/* Action Cards */}
+      <div className="flex flex-col sm:flex-row gap-4 max-w-md w-full mb-10">
+        {/* Voice Call Card */}
+        <div className="flex-1 p-6 bg-white border border-stone-200 rounded-3xl shadow-xl flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-900/30 mb-4 animate-pulse">
+            <PhoneCall size={28} />
+          </div>
+          <button
+            onClick={handleStartCall}
+            className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 transition cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <PhoneCall size={16} />
+            Start Voice Call
+          </button>
+          <p className="text-[10px] text-stone-400 mt-2">Aoede · Redis WS · Chrome/Brave</p>
         </div>
 
-        <button
-          onClick={handleStartCall}
-          className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base tracking-wide flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/30 transition cursor-pointer hover:scale-102 active:scale-98"
-        >
-          <PhoneCall size={20} />
-          Start Live Voice Call
-        </button>
-        <p className="text-[11px] text-stone-400 mt-3">
-          Aoede Studio Voice â€¢ Redis WS Acceleration â€¢ Brave & Chrome
-        </p>
+        {/* Text Chat Card */}
+        <div className="flex-1 p-6 bg-white border border-stone-200 rounded-3xl shadow-xl flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-violet-900/30 mb-4">
+            <MessageSquare size={28} />
+          </div>
+          <button
+            onClick={() => setChatOpen(true)}
+            className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white font-black text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-violet-900/30 transition cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <MessageSquare size={16} />
+            Open Text Chat
+          </button>
+          <p className="text-[10px] text-stone-400 mt-2">Markdown · Route Cards · Bilingual</p>
+        </div>
       </div>
 
       {/* Features Grid */}
@@ -58,6 +76,8 @@ export default function CopilotPage() {
           <p className="text-xs text-stone-500">Rental bikes and verified homestay recommendations on the go.</p>
         </div>
       </div>
+
+      <ChatWindow isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }
