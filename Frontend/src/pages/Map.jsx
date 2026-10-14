@@ -246,10 +246,18 @@ function MapResizerAndFlyTo({ coords, selectedTile }) {
   const map = useMap();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-    return () => clearTimeout(timer);
+    const resizeMap = () => {
+      if (map) map.invalidateSize();
+    };
+    resizeMap();
+    const t1 = setTimeout(resizeMap, 100);
+    const t2 = setTimeout(resizeMap, 400);
+    window.addEventListener('resize', resizeMap);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', resizeMap);
+    };
   }, [map, selectedTile]);
 
   useEffect(() => {
@@ -369,6 +377,34 @@ export default function MapPage() {
   const [travelMode, setTravelMode] = useState('road'); // 'road' | 'transit' | 'trek'
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeResult, setRouteResult] = useState(null);
+  const [activeRouteIndex, setActiveRouteIndex] = useState(0);
+
+  // Active route derived from multi-route result
+  const currentRoute = useMemo(() => {
+    if (!routeResult) return null;
+    if (routeResult.routes && routeResult.routes[activeRouteIndex]) {
+      return routeResult.routes[activeRouteIndex];
+    }
+    return routeResult;
+  }, [routeResult, activeRouteIndex]);
+
+  // Auto-fit map to active route bounds when route or selected alternative changes
+  useEffect(() => {
+    if (currentRoute && currentRoute.geometry && Array.isArray(currentRoute.geometry) && currentRoute.geometry.length > 0) {
+      const lats = currentRoute.geometry.map((pt) => pt[0]);
+      const lngs = currentRoute.geometry.map((pt) => pt[1]);
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+      setFlyCoords({
+        bounds: [
+          [minLat, minLng],
+          [maxLat, maxLng],
+        ],
+      });
+    }
+  }, [currentRoute]);
 
   // ── 1. Handle URL Query Parameters (AI Agent Integration: OPEN_MAP) ──
   useEffect(() => {
@@ -428,6 +464,7 @@ export default function MapPage() {
 
       if (res && res.success) {
         setRouteResult(res);
+        setActiveRouteIndex(0);
 
         // Auto-fit map to route bounds
         if (res.geometry && Array.isArray(res.geometry) && res.geometry.length > 0) {
@@ -596,7 +633,7 @@ export default function MapPage() {
       <Navbar />
 
       {/* ── 2. Full-Bleed Map Canvas with Floating Controls ── */}
-      <main className="flex-1 relative w-full h-full overflow-hidden">
+      <main className="flex-1 relative w-full h-full min-h-0 min-w-0 overflow-hidden">
         {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-[700]">
@@ -621,6 +658,8 @@ export default function MapPage() {
             onReset={handleResetRoute}
             isCalculating={isCalculating}
             routeResult={routeResult}
+            activeRouteIndex={activeRouteIndex}
+            onSelectRouteIndex={setActiveRouteIndex}
             onLocateOrigin={handleLocateUser}
             isLocating={isLocating}
             hasGpsLocation={!!userLocation}
@@ -762,7 +801,7 @@ export default function MapPage() {
           maxZoom={MAP_MAX_ZOOM}
           zoomControl={false}
           scrollWheelZoom
-          className="w-full h-full"
+          className="absolute inset-0 w-full h-full"
         >
           <TileLayer
             url={currentTile.url}
@@ -841,43 +880,91 @@ export default function MapPage() {
               )}
 
               {/* Real Road / Route Polyline Geometry */}
-              {routeResult.geometry && (
+              {routeResult && (
                 <>
-                  {/* Outer Ambient Glow Halo */}
-                  <Polyline
-                    positions={routeResult.geometry}
-                    pathOptions={{
-                      color: travelMode === 'transit' ? '#0284c7' : travelMode === 'trek' ? '#ca8a04' : '#00FF88',
-                      weight: 12,
-                      opacity: 0.35,
-                      lineCap: 'round',
-                      lineJoin: 'round',
-                    }}
-                  />
+                  {/* Alternative Inactive Routes (Subtle Dotted Lines, Clickable) */}
+                  {routeResult.routes && routeResult.routes.map((altRoute, idx) => {
+                    if (idx === activeRouteIndex || !altRoute.geometry) return null;
+                    return (
+                      <Polyline
+                        key={`alt-route-${idx}`}
+                        positions={altRoute.geometry}
+                        pathOptions={{
+                          color: '#64748b',
+                          weight: 4,
+                          opacity: 0.65,
+                          dashArray: '8, 8',
+                          lineCap: 'round',
+                          lineJoin: 'round',
+                        }}
+                        eventHandlers={{
+                          click: () => setActiveRouteIndex(idx),
+                        }}
+                      >
+                        <Tooltip sticky>
+                          <div className="p-1 font-sans text-xs">
+                            <strong className="text-stone-700 block">{altRoute.name}</strong>
+                            <span className="text-stone-500 block text-[11px]">
+                              {altRoute.totalDistanceKm ? `${altRoute.totalDistanceKm} km` : ''} • {altRoute.estimatedTime} — Click to switch
+                            </span>
+                          </div>
+                        </Tooltip>
+                      </Polyline>
+                    );
+                  })}
 
-                  {/* Main Route Core Polyline */}
-                  <Polyline
-                    positions={routeResult.geometry}
-                    pathOptions={{
-                      color: travelMode === 'transit' ? '#0369a1' : travelMode === 'trek' ? '#a16207' : '#0f3d2e',
-                      weight: 5,
-                      opacity: 0.95,
-                      dashArray: travelMode === 'transit' ? '10, 8' : travelMode === 'trek' ? '6, 6' : undefined,
-                      lineCap: 'round',
-                      lineJoin: 'round',
-                    }}
-                  >
-                    <Tooltip sticky>
-                      <div className="p-1 font-sans text-xs">
-                        <strong className="text-[#0f3d2e] block font-bold">
-                          {origin.name} → {destination.name}
-                        </strong>
-                        <span className="text-slate-700 block text-[11px]">
-                          {routeResult.totalDistanceKm ? `${routeResult.totalDistanceKm} km` : ''} • {routeResult.estimatedTime}
-                        </span>
-                      </div>
-                    </Tooltip>
-                  </Polyline>
+                  {/* Active Selected Route Geometry */}
+                  {currentRoute?.geometry && (
+                    <>
+                      {/* Outer Ambient Glow Halo */}
+                      <Polyline
+                        positions={currentRoute.geometry}
+                        pathOptions={{
+                          color: currentRoute.isTrek
+                            ? '#c084fc'
+                            : travelMode === 'transit'
+                            ? '#38bdf8'
+                            : currentRoute.isShortcut
+                            ? '#2dd4bf'
+                            : '#00FF88',
+                          weight: 12,
+                          opacity: 0.38,
+                          lineCap: 'round',
+                          lineJoin: 'round',
+                        }}
+                      />
+
+                      {/* Main Route Core Polyline */}
+                      <Polyline
+                        positions={currentRoute.geometry}
+                        pathOptions={{
+                          color: currentRoute.isTrek
+                            ? '#7e22ce'
+                            : travelMode === 'transit'
+                            ? '#0369a1'
+                            : currentRoute.isShortcut
+                            ? '#0f766e'
+                            : '#0f3d2e',
+                          weight: 5,
+                          opacity: 0.95,
+                          dashArray: travelMode === 'transit' ? '10, 8' : currentRoute.isTrek ? '6, 6' : undefined,
+                          lineCap: 'round',
+                          lineJoin: 'round',
+                        }}
+                      >
+                        <Tooltip sticky>
+                          <div className="p-1 font-sans text-xs">
+                            <strong className="text-[#0f3d2e] block font-bold">
+                              {currentRoute.name || `${origin?.name} → ${destination?.name}`}
+                            </strong>
+                            <span className="text-slate-700 block text-[11px]">
+                              {currentRoute.totalDistanceKm ? `${currentRoute.totalDistanceKm} km` : ''} • {currentRoute.estimatedTime}
+                            </span>
+                          </div>
+                        </Tooltip>
+                      </Polyline>
+                    </>
+                  )}
                 </>
               )}
 
@@ -1020,6 +1107,8 @@ export default function MapPage() {
                   onReset={handleResetRoute}
                   isCalculating={isCalculating}
                   routeResult={routeResult}
+                  activeRouteIndex={activeRouteIndex}
+                  onSelectRouteIndex={setActiveRouteIndex}
                   onLocateOrigin={handleLocateUser}
                   isLocating={isLocating}
                   hasGpsLocation={!!userLocation}

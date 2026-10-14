@@ -8,6 +8,7 @@ import Pagination from './common/Pagination';
 import { useDestinations } from '../hooks/useDestinations';
 import { useMapStore } from '../store/mapStore';
 import api from '../api/api';
+import { useFreshImage } from '../utils/images';
 
 const ITEMS_PER_PAGE = 12;
 

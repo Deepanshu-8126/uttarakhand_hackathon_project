@@ -9,6 +9,69 @@
  *    Entity Image #1 -> Same Entity Image #2 -> Same Entity Image #3 -> Entity-Specific Placeholder.
  */
 
+// Verified Pexels Himalayan Category Fallbacks (Zero-Placeholder Guarantee)
+export const HIMALAYAN_THEME_FALLBACKS = {
+  wildlife: [
+    'https://images.pexels.com/photos/145939/pexels-photo-145939.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.pexels.com/photos/247376/pexels-photo-247376.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.pexels.com/photos/34098/south-africa-hluhluwe-imfolozi-park-wilderness.jpg?auto=compress&cs=tinysrgb&w=1200'
+  ],
+  temple: [
+    'https://images.pexels.com/photos/2161467/pexels-photo-2161467.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.pexels.com/photos/1603650/pexels-photo-1603650.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80'
+  ],
+  lake: [
+    'https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.pexels.com/photos/1574843/pexels-photo-1574843.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80'
+  ],
+  trek: [
+    'https://images.pexels.com/photos/933054/pexels-photo-933054.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.pexels.com/photos/618833/pexels-photo-618833.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80'
+  ],
+  mountain: [
+    'https://images.pexels.com/photos/673020/pexels-photo-673020.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.pexels.com/photos/1366919/pexels-photo-1366919.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80'
+  ],
+  homestay: [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80'
+  ],
+  river: [
+    'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=1200&q=80',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Ram_Jhula_Rishikesh.jpg/1280px-Ram_Jhula_Rishikesh.jpg'
+  ]
+};
+
+export function getHimalayanCategoryPhoto(item) {
+  if (!item) return HIMALAYAN_THEME_FALLBACKS.mountain[0];
+  const name = (typeof item === 'string' ? item : item.name || item.title || '').toLowerCase();
+  const cat = (typeof item === 'object' && (item.category || item.type || item.itemType || ''))?.toLowerCase() || '';
+  if (cat.includes('wild') || cat.includes('sanctuary') || cat.includes('park') || name.includes('park') || name.includes('sanctuary') || name.includes('corbett') || name.includes('rajaji')) {
+    return HIMALAYAN_THEME_FALLBACKS.wildlife[0];
+  }
+  if (cat.includes('temple') || cat.includes('dham') || cat.includes('spiritual') || name.includes('temple') || name.includes('mandir') || name.includes('dham') || name.includes('shrine') || name.includes('math') || name.includes('ashram')) {
+    return HIMALAYAN_THEME_FALLBACKS.temple[0];
+  }
+  if (cat.includes('lake') || cat.includes('tal') || name.includes('lake') || name.includes('tal') || name.includes('waterfall') || name.includes('falls')) {
+    return HIMALAYAN_THEME_FALLBACKS.lake[0];
+  }
+  if (cat.includes('trek') || cat.includes('hiking') || cat.includes('adventure') || cat.includes('bugyal') || name.includes('trek') || name.includes('bugyal') || name.includes('pass') || name.includes('peak')) {
+    return HIMALAYAN_THEME_FALLBACKS.trek[0];
+  }
+  if (cat.includes('stay') || cat.includes('homestay') || cat.includes('hotel') || cat.includes('resort') || cat.includes('cottage')) {
+    return HIMALAYAN_THEME_FALLBACKS.homestay[0];
+  }
+  if (name.includes('ganga') || name.includes('river') || name.includes('ghat') || name.includes('rafting')) {
+    return HIMALAYAN_THEME_FALLBACKS.river[0];
+  }
+  return HIMALAYAN_THEME_FALLBACKS.mountain[0];
+}
+
 // ── Helper to prefix public assets with Vite BASE_URL for GitHub Pages ───
 export const getAssetUrl = (path) => {
   if (!path || typeof path !== 'string') return '';
@@ -427,20 +490,15 @@ export function getRealVehicleAsset(name = '', type = '', vehicles = []) {
  * Returns exact verified asset if available, else entity-specific placeholder.
  */
 export function getHimalayanFallbackImage(item) {
-  if (!item) return getEntityPlaceholderSvg({ name: 'Destination' });
-  
+  if (!item) return getHimalayanCategoryPhoto(null);
   const name = (item.name || item.title || '').toLowerCase().trim();
   const slug = (item.slug || '').toLowerCase().trim();
-
-  // Check direct exact name lookup
   for (const [key, url] of Object.entries(DESTINATION_NAMED_IMAGES)) {
     if (name === key || (slug && (slug === key || slug === key.replace(/\s+/g, '-')))) {
       return url;
     }
   }
-
-  // Strict Rule 3: Kedarnath image missing -> Kedarnath-specific placeholder.
-  return getEntityPlaceholderSvg(item);
+  return getHimalayanCategoryPhoto(item);
 }
 
 /**
@@ -521,11 +579,10 @@ export function getCardImages(item, fallbackUrl = null) {
   }
 
   // 4. Strict Entity-Specific Placeholder (Zero Cross-Destination Fallback)
-  const placeholder = fallbackUrl && fallbackUrl.startsWith('data:image/svg')
+  const photo = (fallbackUrl && !fallbackUrl.startsWith('data:image/svg'))
     ? fallbackUrl
-    : getEntityPlaceholderSvg(item);
-
-  return [placeholder];
+    : getHimalayanCategoryPhoto(item);
+  return [photo];
 }
 
 /**
@@ -545,7 +602,7 @@ export function handleEntityImageError(e, item, allImages = []) {
     }
   }
 
-  e.target.src = getEntityPlaceholderSvg(item);
+  e.target.src = getHimalayanCategoryPhoto(item);
 }
 
 /**

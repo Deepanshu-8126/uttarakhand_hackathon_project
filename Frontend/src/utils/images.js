@@ -140,8 +140,11 @@ export async function getFreshImage(destinationKey = '', fallbackUrl = null) {
  * React hook to safely resolve verified photograph, with async Pexels/Wikimedia dynamic fallback.
  */
 export function useFreshImage(destinationKey, fallbackUrl = null, category = 'Destination') {
+  const cleanKey = destinationKey ? String(destinationKey).toLowerCase().trim().replace(/[\s_]+/g, '-') : '';
   const local = getVerifiedLocalPhoto(destinationKey);
-  const placeholder = fallbackUrl || getEntityPlaceholderSvg({ name: destinationKey || 'Destination', category });
+  const placeholder = (fallbackUrl && !fallbackUrl.startsWith('data:image/svg')) 
+    ? fallbackUrl 
+    : (local || getEntityPlaceholderSvg({ name: destinationKey, category }));
   const [imageSrc, setImageSrc] = useState(local || placeholder);
 
   useEffect(() => {
