@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { CANONICAL_DESTINATIONS } from './destinationRegistryData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,38 +68,21 @@ export function initDestinationRegistry() {
 
   const destMap = new Map();
 
-  // Load from seed JSONs
-  const seedPaths = [
-    path.join(__dirname, '../seed/destinations.json'),
-    path.join(__dirname, '../seed/spiritual.json'),
-    path.join(__dirname, '../seed/activities.json'),
-    path.join(__dirname, '../seed/culture.json')
-  ];
-
-  for (const p of seedPaths) {
-    try {
-      if (fs.existsSync(p)) {
-        const raw = fs.readFileSync(p, 'utf8');
-        const items = JSON.parse(raw);
-        if (Array.isArray(items)) {
-          for (const item of items) {
-            if (item.name && typeof item.name === 'string') {
-              const cleanName = item.name.trim();
-              if (!destMap.has(cleanName.toLowerCase())) {
-                destMap.set(cleanName.toLowerCase(), {
-                  name: cleanName,
-                  slug: item.slug || cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-                  district: item.district || null,
-                  region: item.region || null,
-                  category: item.category || 'destination'
-                });
-              }
-            }
-          }
+  // Load from pre-indexed canonical destinations (verified from MongoDB Atlas)
+  if (Array.isArray(CANONICAL_DESTINATIONS)) {
+    for (const item of CANONICAL_DESTINATIONS) {
+      if (item.name && typeof item.name === 'string') {
+        const cleanName = item.name.trim();
+        if (!destMap.has(cleanName.toLowerCase())) {
+          destMap.set(cleanName.toLowerCase(), {
+            name: cleanName,
+            slug: item.slug || cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            district: item.district || null,
+            region: item.region || null,
+            category: item.category || 'destination'
+          });
         }
       }
-    } catch (err) {
-      console.error(`[DestinationResolver] Error reading ${p}:`, err.message);
     }
   }
 
@@ -116,7 +100,7 @@ export function initDestinationRegistry() {
   }
 
   isInitialized = true;
-  console.log(`[DestinationResolver] Initialized with ${destinationCache.length} canonical destinations.`);
+  console.log(`[DestinationResolver] Initialized with ${destinationCache.length} canonical destinations from MongoDB Atlas registry.`);
 }
 
 // Auto-initialize on module load

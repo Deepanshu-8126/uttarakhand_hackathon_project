@@ -15,25 +15,23 @@ import Destination from '../models/Destination.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// In-memory cache & inverted index of 106 seed destinations for instant sub-millisecond search
+import { CANONICAL_DESTINATIONS } from './destinationRegistryData.js';
+
 let seedDestinations = [];
 const seedTokenMap = new Map();
 
 try {
-  const seedPath = path.resolve(__dirname, '../seed/destinations.json');
-  if (fs.existsSync(seedPath)) {
-    seedDestinations = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-    seedDestinations.forEach(d => {
-      const combined = `${d.name || ''} ${d.district || ''} ${d.region || ''}`.toLowerCase();
-      const words = combined.split(/[^a-z0-9]+/).filter(w => w.length >= 3);
-      words.forEach(w => {
-        if (!seedTokenMap.has(w)) seedTokenMap.set(w, new Set());
-        seedTokenMap.get(w).add(d);
-      });
+  seedDestinations = CANONICAL_DESTINATIONS || [];
+  seedDestinations.forEach(d => {
+    const combined = `${d.name || ''} ${d.district || ''} ${d.region || ''}`.toLowerCase();
+    const words = combined.split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+    words.forEach(w => {
+      if (!seedTokenMap.has(w)) seedTokenMap.set(w, new Set());
+      seedTokenMap.get(w).add(d);
     });
-  }
+  });
 } catch (e) {
-  console.warn('[HybridRAG] Could not load seed destinations:', e.message);
+  console.warn('[HybridRAG] Could not load canonical destinations:', e.message);
 }
 
 /**
